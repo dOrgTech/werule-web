@@ -19,6 +19,10 @@ class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
 }
 
 class _TopMenuState extends State<TopMenu> {
+  final List<String> items = ['  Mainnet', '  Ghostnet'];
+
+  // The current selected value of the dropdown
+  String? selectedValue = '  Mainnet';
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -33,8 +37,6 @@ class _TopMenuState extends State<TopMenu> {
           elevation: 0.2,
           title: 
            Container(
-          
-        
         padding: const EdgeInsets.only(top:16.0),
          child: Row(
         children: [
@@ -42,6 +44,7 @@ class _TopMenuState extends State<TopMenu> {
         'assets/logos/homebase_logo.svg',
         semanticsLabel: 'Acme Logo'
         ,height: 33,
+        color: Theme.of(context).indicatorColor,
            ),
            SizedBox(width: 10),
            const Text(
@@ -54,16 +57,29 @@ class _TopMenuState extends State<TopMenu> {
           
           
           actions: <Widget>[
-            TextButton.icon(
-              icon: const Icon(Icons.donut_small),
-              label: const Text('Mainnet'),
-              
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('This is a snackbar')));
-              },
+            Padding(
+              padding: const EdgeInsets.only(top:10.0),
+              child: DropdownButton<String>(
+                      value: selectedValue,
+                      hint: const Text('Select an item'),
+                      items: items.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+              setState(() {
+                selectedValue = newValue;
+              });
+                      },
+                    ),
             ),
-            TextButton(onPressed:(){}, child: Text("Connect wallet"))
+            const SizedBox(width: 20 ),
+            Padding(
+                 padding: const EdgeInsets.only(top:10.0),
+              child: TextButton(onPressed:(){}, child: Text("Connect wallet")),
+            )
              
           ],
         ),
