@@ -45,6 +45,7 @@ class _TopMenuState extends State<TopMenu> {
         semanticsLabel: 'Acme Logo'
         ,height: 33,
         color: Theme.of(context).indicatorColor,
+        // color: Colors.red,
            ),
            SizedBox(width: 10),
            const Text(

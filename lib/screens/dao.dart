@@ -1,9 +1,10 @@
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
+
+import 'home.dart';
 class DAO extends StatefulWidget {
   const DAO({super.key});
-
   @override
   State<DAO> createState() => _DAOState();
 }
@@ -34,8 +35,6 @@ class _DAOState extends State<DAO> {
                 menuItem(MenuItem("Treasury",Icon(Icons.money))),
                 menuItem(MenuItem("Registry",Icon(Icons.list))),
                 menuItem(MenuItem("NFTs",Icon(Icons.art_track))),
-                
-                
               ],
             ), 
                    ),
@@ -46,11 +45,11 @@ class _DAOState extends State<DAO> {
                        // Expanded start
               child: TabBarView( // TabBarView start
                 children: [
-                  Center(child: Text('Home')),
-                  Center(child: Text('Star')),
-                  Center(child: Text('Settings')),
-                  Center(child: Text('Cart')),
-                  Center(child: Text('Profile')),
+                  Home(),
+                  Center(child: Text('Proposals')),
+                  Center(child: Text('Treasury')),
+                  Center(child: Text('Registry')),
+                  Center(child: Text('NFTs')),
                 ],
               ), // TabBarView end
             ), // Ex
@@ -70,7 +69,7 @@ class _DAOState extends State<DAO> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children:[
                     id.icon,
-                    SizedBox(width: 8),
+                   const SizedBox(width: 8),
                     Text( id.name,style: const TextStyle(fontSize: 18),),
                     ]),
                 )
