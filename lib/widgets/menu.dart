@@ -27,32 +27,41 @@ class _TopMenuState extends State<TopMenu> {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.center,
-
       child: Container(
         alignment: Alignment.center,
         width: 1200,
         child: AppBar(
-         
           backgroundColor: Theme.of(context).canvasColor,
           elevation: 0.2,
           title: 
            Container(
+            width: 180,
         padding: const EdgeInsets.only(top:16.0),
-         child: Row(
-        children: [
-           SvgPicture.asset(
-        'assets/logos/homebase_logo.svg',
-        semanticsLabel: 'Acme Logo'
-        ,height: 33,
-        color: Theme.of(context).indicatorColor,
-        // color: Colors.red,
+         child: InkWell(
+          hoverColor: Colors.transparent,
+          onTap: () => 
+          //pull up the widget Explorer:
+          Navigator.pushNamed(context, '/explorer'),
+
+           child: Row(
+                 children: [
+                
+                SvgPicture.asset(
+                       'assets/logos/homebase_logo.svg',
+                       semanticsLabel: 'Acme Logo'
+                       ,height: 33,
+                       color: Theme.of(context).indicatorColor,
+                       // color: Colors.red,
+                 ),
+               
+             
+             SizedBox(width: 10),
+             const Text(
+                 'Homebase',
+                 style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 26, fontWeight: FontWeight.w100),
+             ),
+                 ],
            ),
-           SizedBox(width: 10),
-           const Text(
-        'Homebase',
-        style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 26, fontWeight: FontWeight.w100),
-           ),
-        ],
          ),
            ),     
           

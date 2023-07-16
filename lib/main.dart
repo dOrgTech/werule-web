@@ -16,6 +16,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      //remove debug banner
+      debugShowCheckedModeBanner: false,
       title: 'Homebase',
       theme: ThemeData(
         fontFamily: 'CascadiaCode',
@@ -58,9 +60,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
  
     return Scaffold(
-      appBar: TopMenu(),
-      body: DAO()
-      // body: Explorer()
+      // appBar: TopMenu(),
+      // body: DAO()
+      body: Explorer()
     );
   }
 }
