@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:homebase/screens/dao.dart';
+import 'package:homebase/screens/explorer.dart';
 
 
 
@@ -31,6 +33,7 @@ class _TopMenuState extends State<TopMenu> {
         alignment: Alignment.center,
         width: 1200,
         child: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: Theme.of(context).canvasColor,
           elevation: 0.2,
           title: 
@@ -40,9 +43,10 @@ class _TopMenuState extends State<TopMenu> {
          child: InkWell(
           hoverColor: Colors.transparent,
           onTap: () => 
-          //pull up the widget Explorer:
-          Navigator.pushNamed(context, '/explorer'),
-
+         Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) =>Explorer()),
+),
            child: Row(
                  children: [
                 

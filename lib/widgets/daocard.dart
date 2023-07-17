@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:homebase/screens/dao.dart';
 
 class DAOCard extends StatelessWidget {
   const DAOCard({super.key});
@@ -10,7 +11,12 @@ class DAOCard extends StatelessWidget {
     
     return Card(
       child: TextButton(
-        onPressed: () {},
+        onPressed: () {
+       Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) =>DAO())
+  ) ;
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical:14.0),
           child: SizedBox(
