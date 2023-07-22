@@ -2,6 +2,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:homebase/screens/proposals.dart';
+import 'package:homebase/screens/treasury.dart';
 import 'package:homebase/widgets/menu.dart';
 
 import 'home.dart';
@@ -18,7 +19,7 @@ class _DAOState extends State<DAO> {
       body: Container(
         alignment:Alignment.topCenter,
           child: DefaultTabController(
-            initialIndex: 1,
+            initialIndex: 2,
             length: 5,
             child: ListView( // Start of ListView
               shrinkWrap: true, // Set this property to true
@@ -54,7 +55,7 @@ class _DAOState extends State<DAO> {
                   children: [
                     Home(),
                     Center(child: Proposals()),
-                    Center(child: Text('Treasury')),
+                    Center(child: Treasury()),
                     Center(child: Text('Registry')),
                     Center(child: Text('NFTs')),
                   ],
