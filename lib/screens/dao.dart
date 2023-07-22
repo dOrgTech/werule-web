@@ -1,6 +1,7 @@
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
+import 'package:homebase/screens/proposals.dart';
 import 'package:homebase/widgets/menu.dart';
 
 import 'home.dart';
@@ -17,6 +18,7 @@ class _DAOState extends State<DAO> {
       body: Container(
         alignment:Alignment.topCenter,
           child: DefaultTabController(
+            initialIndex: 1,
             length: 5,
             child: ListView( // Start of ListView
               shrinkWrap: true, // Set this property to true
@@ -31,13 +33,15 @@ class _DAOState extends State<DAO> {
                       constraints: BoxConstraints(maxWidth: 1200),
                       height: 50,
                       color: Color.fromARGB(255, 68, 68, 68),
-                      child:TabBar( // TabBar start
+                      child:TabBar( 
+                        
+                    
                 tabs: [
                   menuItem(MenuItem("Home",Icon(Icons.home))),
                   menuItem(MenuItem( "Proposals",Icon(Icons.front_hand))),
                   menuItem(MenuItem("Treasury",Icon(Icons.money))),
                   menuItem(MenuItem("Registry",Icon(Icons.list))),
-                  menuItem(MenuItem("NFTs",Icon(Icons.art_track))),
+                  menuItem(MenuItem("Account",Icon(Icons.person))),
                 ],
               ), 
                      ),
@@ -49,7 +53,7 @@ class _DAOState extends State<DAO> {
                 child: TabBarView( // TabBarView start
                   children: [
                     Home(),
-                    Center(child: Text('Proposals')),
+                    Center(child: Proposals()),
                     Center(child: Text('Treasury')),
                     Center(child: Text('Registry')),
                     Center(child: Text('NFTs')),
