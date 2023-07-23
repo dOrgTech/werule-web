@@ -20,7 +20,7 @@ class DAOCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical:14.0),
           child: SizedBox(
-            width: 367,
+            width: 350,
             height: 145,
             child: Row(
               mainAxisSize: MainAxisSize.min,

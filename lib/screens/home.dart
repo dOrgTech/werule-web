@@ -21,7 +21,7 @@ class _HomeState extends State<Home> {
         children: [
           const SizedBox(height: 20,),
           Container(
-            height: 150,
+            height: 180,
              color:Theme.of(context).cardColor,
             child: Column(
               children: [
@@ -35,10 +35,7 @@ class _HomeState extends State<Home> {
                       
                     ),
                     const SizedBox(width: 10),
-                    Padding(
-                      padding: const EdgeInsets.all(18.0),
-                      child: ElevatedButton(onPressed: (){}, child: const Text("Execute")),
-                    ),
+                   
                    
                     Padding(
                       padding: const EdgeInsets.all(18.0),
@@ -50,6 +47,23 @@ class _HomeState extends State<Home> {
                     )
                   ],
                 ),
+                 SizedBox(
+                  height: 40,
+                   child: Center(
+                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            
+                            Text("Contract Address: "),
+                            Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                            const SizedBox(width: 2,),
+                            TextButton(
+                              onPressed: (){},
+                              child: const Icon(Icons.copy)),
+                          ],
+                        ),
+                   ),
+                 ),
                 Container(
                   constraints: const BoxConstraints(
                     maxWidth: 850,

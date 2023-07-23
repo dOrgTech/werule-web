@@ -15,6 +15,14 @@ class Proposals extends StatefulWidget {
 }
 
 class _ProposalsState extends State<Proposals> {
+  String? selectedType = 'All';
+  final List<String> types = ['All', 'Off-Chain', 
+  'Transfer', 'Add Lambda', 'Remove Lambda', 'Execute Lambda',
+   'Change Config','Change Guardian','Change Delegate'];
+  String? selectedStatus = 'All';
+  final List<String> statuses = ['All', 'Active', 
+  'Dropped', 'Passed','Executable', 'Executed', 'Expired',
+   'No Quorum','Pending','Rejected'];
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -26,31 +34,60 @@ class _ProposalsState extends State<Proposals> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: EdgeInsets.only(left: 50),
-                  width: 500,
-                  child: TextField(
-                      decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(width: 0.1),
-                          ),
-                        prefixIcon: Icon(Icons.search),
-                        hintText: 'Search by Title or Author',
-                        // other properties
-                      ),
-                      // other properties
+               const SizedBox(width: 40),
+               const Text("Type:"),
+               const SizedBox(width: 10),
+
+                DropdownButton<String>(
+                      value: selectedType,
+                      focusColor: Colors.transparent,
+                      items: types.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+              setState(() {
+                selectedType = newValue;
+              });
+                  },
                     ),
-                ),
+                      const SizedBox(width: 40),
+               const Text("Status:"),
+               const SizedBox(width: 10),
+
+                DropdownButton<String>(
+                      value: selectedStatus,
+                      focusColor: Colors.transparent,
+                      items: statuses.map((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+              setState(() {
+                selectedStatus = newValue;
+              });
+                  },
+                    ),
+                    Spacer(),
+                     Padding(
+                      padding: const EdgeInsets.only(right:18.0),
+                      child: SizedBox(
+                        height: 40,
+                        child: ElevatedButton(onPressed: (){}, child: const Text("Execute/Drop All"))),
+                    ),
                 Container(
                   padding: EdgeInsets.only(right: 50),
                   height: 40,
                   child: ElevatedButton(
                     child: Text("Create Proposal",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
                     ),
                     style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor)),
-                    onPressed: (){}, ),
+                    onPressed: (){},),
                 ),
               ],
             )
@@ -77,7 +114,6 @@ class _ProposalsState extends State<Proposals> {
                   )),
               ),
               Container(
-                
                 width: 230,
                 child: Center(child: Text("Author"))),
               SizedBox(width:150,child: Center(child: Text("Posted"))),

@@ -2,9 +2,9 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:homebase/screens/proposals.dart';
+import 'package:homebase/screens/registry.dart';
 import 'package:homebase/screens/treasury.dart';
 import 'package:homebase/widgets/menu.dart';
-
 import 'home.dart';
 class DAO extends StatefulWidget {
   const DAO({super.key});
@@ -19,7 +19,7 @@ class _DAOState extends State<DAO> {
       body: Container(
         alignment:Alignment.topCenter,
           child: DefaultTabController(
-            initialIndex: 2,
+            initialIndex: 0,
             length: 5,
             child: ListView( // Start of ListView
               shrinkWrap: true, // Set this property to true
@@ -35,7 +35,6 @@ class _DAOState extends State<DAO> {
                       height: 50,
                       color: Color.fromARGB(255, 68, 68, 68),
                       child:TabBar( 
-                        
                     
                 tabs: [
                   menuItem(MenuItem("Home",Icon(Icons.home))),
@@ -56,7 +55,7 @@ class _DAOState extends State<DAO> {
                     Home(),
                     Center(child: Proposals()),
                     Center(child: Treasury()),
-                    Center(child: Text('Registry')),
+                    Center(child: Registry()),
                     Center(child: Text('NFTs')),
                   ],
                 ), // TabBarView end

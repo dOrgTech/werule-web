@@ -17,7 +17,7 @@ class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
   
   @override
   // TODO: implement preferredSize
-  Size get preferredSize => const Size.fromHeight(75);
+  Size get preferredSize => const Size.fromHeight(50);
 }
 
 class _TopMenuState extends State<TopMenu> {
@@ -38,8 +38,8 @@ class _TopMenuState extends State<TopMenu> {
           elevation: 0.2,
           title: 
            Container(
-            width: 180,
-        padding: const EdgeInsets.only(top:16.0),
+            width: 140,
+        padding: const EdgeInsets.only(top:2.0),
          child: InkWell(
           hoverColor: Colors.transparent,
           onTap: () => 
@@ -53,7 +53,7 @@ class _TopMenuState extends State<TopMenu> {
                 SvgPicture.asset(
                        'assets/logos/homebase_logo.svg',
                        semanticsLabel: 'Acme Logo'
-                       ,height: 33,
+                       ,height: 25,
                        color: Theme.of(context).indicatorColor,
                        // color: Colors.red,
                  ),
@@ -62,7 +62,7 @@ class _TopMenuState extends State<TopMenu> {
              SizedBox(width: 10),
              const Text(
                  'Homebase',
-                 style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 26, fontWeight: FontWeight.w100),
+                 style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
              ),
                  ],
            ),
@@ -72,10 +72,10 @@ class _TopMenuState extends State<TopMenu> {
           
           actions: <Widget>[
             Padding(
-              padding: const EdgeInsets.only(top:10.0),
+              padding: const EdgeInsets.only(top:1.0),
               child: DropdownButton<String>(
                       value: selectedValue,
-                      hint: const Text('Select an item'),
+                      focusColor: Colors.transparent,
                       items: items.map((String value) {
               return DropdownMenuItem<String>(
                 value: value,
@@ -91,7 +91,7 @@ class _TopMenuState extends State<TopMenu> {
             ),
             const SizedBox(width: 20 ),
             Padding(
-                 padding: const EdgeInsets.only(top:10.0),
+                 padding: const EdgeInsets.only(top:1.0, right:15),
               child: TextButton(onPressed:(){}, child: Text("Connect wallet")),
             )
              

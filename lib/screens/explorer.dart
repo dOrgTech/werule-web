@@ -19,7 +19,7 @@ class _ExplorerState extends State<Explorer> {
       daos.add(DAOCard());
     }
     return Scaffold(
-      appBar: TopMenu(),
+      appBar: const TopMenu(),
       body: Container(
           alignment: Alignment.topCenter,
           child: ListView( // Start of ListView
@@ -30,6 +30,7 @@ class _ExplorerState extends State<Explorer> {
                 mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically
                 children: [
                     Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                        height: 80, 
                        width: double.infinity,
                         constraints: BoxConstraints(maxWidth: 1200),
@@ -42,8 +43,7 @@ class _ExplorerState extends State<Explorer> {
                             width: 
                             MediaQuery.of(context).size.width>1200?
                             550:
-                            MediaQuery.of(context).size.width * 0.5
-                            ,
+                            MediaQuery.of(context).size.width * 0.5,
                             child: TextField(
                               decoration: InputDecoration(
                                   border: OutlineInputBorder(
@@ -52,7 +52,7 @@ class _ExplorerState extends State<Explorer> {
                                   
                                   ),
                                 prefixIcon: Icon(Icons.search),
-                                hintText: 'Search',
+                                hintText: 'Search by DAO Name or Token Symbol',
                                 // other properties
                               ),
                               // other properties
@@ -80,11 +80,12 @@ class _ExplorerState extends State<Explorer> {
                       ),
                     SizedBox(height: 10,),
                    Container(
+                    alignment: Alignment.topCenter,
                     width: double.infinity,
                         constraints: BoxConstraints(maxWidth: 1200),
                      child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                      spacing: 8,
+                      runSpacing: 8,
                       alignment: WrapAlignment.start,
                       children: daos as List<Widget>,
                      ),
