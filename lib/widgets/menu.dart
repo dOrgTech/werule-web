@@ -4,9 +4,8 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:homebase/screens/dao.dart';
 import 'package:homebase/screens/explorer.dart';
-
-
-
+import 'package:toggle_switch/toggle_switch.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
@@ -35,10 +34,13 @@ class _TopMenuState extends State<TopMenu> {
         child: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: Theme.of(context).canvasColor,
-          elevation: 0.2,
+          elevation: 0,
           title: 
-           Container(
-            width: 140,
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               Container(
+                width: 140,
         padding: const EdgeInsets.only(top:2.0),
          child: InkWell(
           hoverColor: Colors.transparent,
@@ -47,26 +49,69 @@ class _TopMenuState extends State<TopMenu> {
   context,
   MaterialPageRoute(builder: (context) =>Explorer()),
 ),
-           child: Row(
-                 children: [
-                
-                SvgPicture.asset(
-                       'assets/logos/homebase_logo.svg',
-                       semanticsLabel: 'Acme Logo'
-                       ,height: 25,
-                       color: Theme.of(context).indicatorColor,
-                       // color: Colors.red,
+               child: Row(
+                     children: [
+                    
+                    SvgPicture.asset(
+                           'assets/logos/homebase_logo.svg',
+                           semanticsLabel: 'Acme Logo'
+                           ,height: 25,
+                           color: Theme.of(context).indicatorColor,
+                           // color: Colors.red,
+                     ),
+                   
+                 
+                 SizedBox(width: 10),
+                 const Text(
+                     'Homebase',
+                     style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
                  ),
-               
-             
-             SizedBox(width: 10),
-             const Text(
-                 'Homebase',
-                 style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
-             ),
-                 ],
-           ),
+                     ],
+               ),
          ),
+               ),
+                SizedBox(
+              height: 32,
+              child: ToggleSwitch(
+                initialLabelIndex: 0,
+                totalSwitches: 2,
+                borderWidth: 1.5,
+                activeBgColor: [Theme.of(context).cardColor],
+                inactiveBgColor: Theme.of(context).canvasColor,
+                borderColor: [Theme.of(context).cardColor],
+                labels: ['DAO', 'Court'],
+                onToggle: (index) {
+                  print('switched to: $index');
+              },
+            ),
+            ),
+              Padding(
+                padding: const EdgeInsets.only(right:24),
+                child: Row(
+                  children: [
+                    SizedBox(
+                          height: 38,
+                              width: 38,
+                          child: TextButton(
+                            onPressed: () {launch("https://discord.gg/DtdHV2wWqt");},
+                            child: Image.network(
+                              "https://i.ibb.co/Nr7Psjm/discord.png",
+                              color: Color.fromARGB(255, 196, 196, 196),
+                              
+                            ),)
+                        ),
+                    SizedBox(
+                      height: 38,
+                              width: 38,
+                      child: TextButton(
+                        child: Icon(Icons.info),
+                        onPressed: (){}),
+                    )
+                  ],
+                ),
+              ),
+      
+             ],
            ),     
           
           

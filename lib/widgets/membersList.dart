@@ -3,8 +3,8 @@ String add1="https://i.ibb.co/2WbL5nC/add1.png";
 String add2="https://i.ibb.co/6rmksXk/add2.png";
 
 
-class Members extends StatelessWidget {
-  const Members({super.key});
+class MembersList extends StatelessWidget {
+  const MembersList({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -90,19 +90,22 @@ Opacity(
           
           TableRow(
             children: <Widget>[
-              Container(
-                height: 42,
-                color: const Color.fromARGB(0, 76, 175, 79),
-                child:  Padding(
-                  padding: EdgeInsets.only(top:8.0,left:35),
-                  child: Row(
-                    children: [
-                      Image.network(add1),
-                      SizedBox(width: 10),
-                      Text("tz1UVpbXS6pAtwPSQdQjPyPoGmVkCsNwn1K5", style: TextStyle(fontSize: 13),),
-                      SizedBox(width: 10),
-                      TextButton(onPressed: (){}, child: Icon(Icons.copy))
-                    ],
+              InkWell(
+                onTap: (){},
+                child: Container(
+                  height: 42,
+                  color: const Color.fromARGB(0, 76, 175, 79),
+                  child:  Padding(
+                    padding: EdgeInsets.only(top:8.0,left:35),
+                    child: Row(
+                      children: [
+                        Image.network(add1),
+                        SizedBox(width: 10),
+                        Text("tz1UVpbXS6pAtwPSQdQjPyPoGmVkCsNwn1K5", style: TextStyle(fontSize: 13),),
+                        SizedBox(width: 10),
+                        TextButton(onPressed: (){}, child: Icon(Icons.copy))
+                      ],
+                    ),
                   ),
                 ),
               ),

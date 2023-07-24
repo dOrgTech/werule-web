@@ -77,7 +77,7 @@ class _TreasuryState extends State<Treasury> {
                       height: 40,
                       child: ElevatedButton(
                         child: Text("Propose Transfer",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16,color: Colors.black87),
+                        style: TextStyle(fontSize: 16),
                         ),
                         style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor)),
                         onPressed: (){},),

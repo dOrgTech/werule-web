@@ -65,13 +65,16 @@ class _ExplorerState extends State<Explorer> {
                             children: [
                               Text("21 DAOs"),
                               SizedBox(width: 30,),
-                              ElevatedButton(onPressed: (){}, 
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).indicatorColor),
-                              child: Text("Create DAO", 
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontFamily: 'CascadiaCode', fontSize: 18, fontWeight: FontWeight.w100),))
+                              SizedBox(
+                                height: 40,
+                                child: ElevatedButton(onPressed: (){}, 
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).indicatorColor),
+                                child: Text("Create DAO", 
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontFamily: 'CascadiaCode', fontSize: 18, fontWeight: FontWeight.w100),)),
+                              )
                             ],
                           ),
                         )

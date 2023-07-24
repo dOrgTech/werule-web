@@ -23,63 +23,84 @@ class _HomeState extends State<Home> {
           Container(
             height: 180,
              color:Theme.of(context).cardColor,
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.all(18.0),
-                      child: Text("Crunchy.Network", 
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
-                      
-                    ),
-                    const SizedBox(width: 10),
-                   
-                   
-                    Padding(
-                      padding: const EdgeInsets.all(18.0),
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                         side: BorderSide(width: 0.2, color: Theme.of(context).hintColor),
+                        SizedBox(height: 12),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(18.0),
+                          child: Text("Crunchy.Network", 
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
+                          
                         ),
-                        onPressed: (){}, child: const Text("View Config", style: TextStyle(fontSize: 12))),
-                    )
+                        const SizedBox(width: 10),
+                        Padding(
+                          padding: const EdgeInsets.all(18.0),
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                             side: BorderSide(width: 0.2, color: Theme.of(context).hintColor),
+                            ),
+                            onPressed: (){}, child: const Text("View Config", style: TextStyle(fontSize: 12))),
+                        )
+                      ],
+                    ),
+                     SizedBox(
+                      height: 40,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Contract Address: "),
+                                Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                                const SizedBox(width: 2,),
+                                TextButton(
+                                  onPressed: (){},
+                                  child: const Icon(Icons.copy)),
+                              ],
+                            ),
+                       ),
+                     ),
+                      SizedBox(
+                      height: 40,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Governance Token Address: "),
+                                Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                                const SizedBox(width: 2,),
+                                TextButton(
+                                  onPressed: (){},
+                                  child: const Icon(Icons.copy)),
+                              ],
+                            ),
+                       ),
+                     ),
+                    
                   ],
                 ),
-                 SizedBox(
-                  height: 40,
-                   child: Center(
-                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            
-                            Text("Contract Address: "),
-                            Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
-                            const SizedBox(width: 2,),
-                            TextButton(
-                              onPressed: (){},
-                              child: const Icon(Icons.copy)),
-                          ],
-                        ),
-                   ),
-                 ),
                 Container(
-                  constraints: const BoxConstraints(
-                    maxWidth: 850,
-                  ),
-                  padding: const EdgeInsets.all(11.0),
-                  child: const Text(
-                    "This is the rescription of the DAO. It can be long or short, but in case it's long, we need to make sure it fits. We can have a character limit of course, but as of right now I'm not sure what that should be. Probably something like 250.",
-                    
-                    textAlign: TextAlign.center,
+                      constraints: const BoxConstraints(
+                        maxWidth: 450,
+                      ),
+                      padding: const EdgeInsets.all(11.0),
+                      child: const Text(
+                        "This is the rescription of the DAO. It can be long or short, but in case it's long, we need to make sure it fits. We can have a character limit of course, but as of right now I'm not sure what that should be. Probably something like 250.",
+                        
+                        textAlign: TextAlign.center,
+                        ),
                     ),
-                ),
               ],
             ),
           ),
           const SizedBox(height: 20,),
-         
             Wrap(
               spacing: 20,
               runSpacing: 20,
@@ -214,18 +235,8 @@ class _HomeState extends State<Home> {
                
               ]),
               const SizedBox(height: 44),
-        Container(
-                  padding: const EdgeInsets.only(top:20),
-            height: 50,
-            width: double.infinity,
-            //  color:Theme.of(context).cardColor,
-            child: 
-                const Padding(
-                  padding: EdgeInsets.only(left:22.0),
-                  child: Text("Members", style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal))),
-                
-              ),
-          Members()
+       
+         
        
         ],
         

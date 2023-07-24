@@ -10,7 +10,7 @@ class ProposalCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal:8.0),
       child: Card(
-        elevation: 7,
+        elevation: 3,
         child: InkWell(
           onTap: (){},
           child: SizedBox(

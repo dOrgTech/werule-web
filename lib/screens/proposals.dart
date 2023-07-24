@@ -56,7 +56,6 @@ class _ProposalsState extends State<Proposals> {
                       const SizedBox(width: 40),
                const Text("Status:"),
                const SizedBox(width: 10),
-
                 DropdownButton<String>(
                       value: selectedStatus,
                       focusColor: Colors.transparent,
@@ -84,9 +83,11 @@ class _ProposalsState extends State<Proposals> {
                   height: 40,
                   child: ElevatedButton(
                     child: Text("Create Proposal",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                    style: TextStyle( fontSize: 16, color: Theme.of(context).primaryColorDark),
                     ),
-                    style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor)),
+                    style: ButtonStyle(
+                      elevation:MaterialStatePropertyAll(0.0),
+                      backgroundColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor)),
                     onPressed: (){},),
                 ),
               ],
@@ -115,15 +116,20 @@ class _ProposalsState extends State<Proposals> {
               ),
               Container(
                 width: 230,
-                child: Center(child: Text("Author"))),
+                child: Center(child: Text("Author"))),    
               SizedBox(width:150,child: Center(child: Text("Posted"))),
               SizedBox(width: 150, child: Center(child: Text("Type "))),
               SizedBox(width:100, child: Center(child: Text("Status "))),
             ],
           ),
       ),
-    ),
-        
+    ), 
+        ProposalCard(),
+        ProposalCard(),
+        ProposalCard(),
+        ProposalCard(),
+        ProposalCard(),
+        ProposalCard(),
         ProposalCard(),
         ProposalCard()
         ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/regitemCard.dart';
+
 
 
 class Registry extends StatefulWidget {
@@ -41,7 +43,7 @@ class _RegistryState extends State<Registry> {
                       height: 40,
                       child: ElevatedButton(
                         child: Text("Add/Edit Item",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16,color: Colors.black87),
+                        style: TextStyle(fontSize: 16,color: Colors.black87),
                         ),
                         style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor)),
                         onPressed: (){},),
@@ -49,6 +51,35 @@ class _RegistryState extends State<Registry> {
             ],
           )
         ),
+         SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal:48.0),
+      child:  Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left:15.0),
+              child: Container(
+                padding: EdgeInsets.only(left:15  ),
+                width: 140,
+                child: Text("Key")),
+            ),
+            Expanded(
+              child: Container(
+                width:230, child: Padding(
+                  padding: const EdgeInsets.only(left:48.0),
+                  child: Text("Value"),
+                )),
+            ),
+              
+            SizedBox(width:150,child: Center(child: Text("Last Updated"))),
+            SizedBox(width:150,child: Center(child: Text(""))),
+            
+          ],
+        ),
+    ), 
+    Divider(),
+    RegItemCard(),
       ],
     );
   }
