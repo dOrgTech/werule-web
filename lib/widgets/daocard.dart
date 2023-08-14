@@ -14,7 +14,7 @@ class DAOCard extends StatelessWidget {
         onPressed: () {
        Navigator.push(
   context,
-  MaterialPageRoute(builder: (context) =>DAO())
+  MaterialPageRoute(builder: (context) =>DAO(InitialTabIndex: 0))
   ) ;
         },
         child: Padding(

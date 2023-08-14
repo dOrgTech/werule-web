@@ -18,14 +18,14 @@ class ProposalCard extends StatelessWidget {
         elevation: 3,
         child: InkWell(
           onTap: (){
-            print("tapped on proposalCard");
-             Navigator.push(
-  context,
-  MaterialPageRoute(builder: (context) =>
-    DAO(InitialTabIndex: 1,)
-  )
-  ) ;
-          },
+              print("tapped on proposalCard");
+              Navigator.push(context,
+              MaterialPageRoute(
+                builder: (context) => DAO(InitialTabIndex: 1
+                
+                )));
+              print("more instructions");
+            },
           child: SizedBox(
             height: 44,
             child: Row(

@@ -95,7 +95,7 @@ class _ProposalsState extends State<Proposals> {
                       showDialog(
                               context: context,
                               builder: (BuildContext context) {
-                                return  AlertDialog(
+                                return const AlertDialog(
                                   title: Padding(
                                     padding: const EdgeInsets.only(left:18.0),
                                     child: Text("Select a proposal type"),
@@ -133,7 +133,7 @@ class _ProposalsState extends State<Proposals> {
               ),
               Container(
                 width: 230,
-                child: Center(child: Text("Author"))),    
+                child: Center(child: Text("Author"))),
               SizedBox(width:150,child: Center(child: Text("Posted"))),
               SizedBox(width: 150, child: Center(child: Text("Type "))),
               SizedBox(width:100, child: Center(child: Text("Status "))),

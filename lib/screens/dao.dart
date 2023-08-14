@@ -2,6 +2,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:homebase/screens/account.dart';
+import 'package:homebase/screens/proposalDetails.dart';
 import 'package:homebase/screens/proposals.dart';
 import 'package:homebase/screens/registry.dart';
 import 'package:homebase/screens/treasury.dart';
@@ -10,8 +11,9 @@ import 'package:homebase/widgets/menu.dart';
 import 'home.dart';
 import 'members.dart';
 class DAO extends StatefulWidget {
-  DAO({super.key, this.InitialTabIndex=0});
+  DAO({super.key, this.InitialTabIndex=1});
   int InitialTabIndex;
+  
   @override
   State<DAO> createState() => _DAOState();
 }
@@ -64,7 +66,9 @@ class _DAOState extends State<DAO> {
                 child: TabBarView( // TabBarView start
                   children: [
                     Home(),
-                    Center(child: Proposals(which: "all",)),
+                    widget.InitialTabIndex==0?Center(child: Proposals(which: "all",))
+                    :Center(child: ProposalDetails(),)
+                    ,
                     Center(child: Treasury()),
                     Center(child: Registry()),
                     Center(child: Members()),

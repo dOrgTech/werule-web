@@ -119,8 +119,8 @@ class _NewProjectState extends State<NewProject> {
                   width: 170,
                   child: TextButton(
                     style: ButtonStyle(
-                      overlayColor: MaterialStateProperty.all<Color>(Color.fromARGB(255, 134, 0, 0)),
-                      backgroundColor: MaterialStateProperty.all<Color>(Color.fromARGB(255, 85, 31, 31)),
+                      overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                      backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
                       elevation: MaterialStateProperty.all(1.0),
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(
@@ -129,20 +129,20 @@ class _NewProjectState extends State<NewProject> {
                       ),
                     ),
                     onPressed: ()async{
-                      
-                      setState(() {widget.loading=true;});
-                      String projectAddress=await createClientProject(
-                        widget.project,
-                        this,
+
+                      // setState(() {widget.loading=true;});
+                      // String projectAddress=await createClientProject(
+                      //   widget.project,
+                      //   this,
                        
-                        );
+                      //   );
                       //   receivePort.listen((message) {
                       //   projectAddress=message;
-                      //  });               
-                       print("asivenit "+projectAddress);
+                      // //  });               
+                      Navigator.of(context).pop();
                     },
                      child: const Center(
-                    child: Text("CREATE PROJECT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color.fromARGB(221, 255, 255, 255)),),
+                    child: Text("CREATE PROJECT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
                   )),
                 )
                 ],
