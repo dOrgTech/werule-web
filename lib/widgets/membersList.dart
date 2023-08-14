@@ -68,11 +68,7 @@ Opacity(
     padding: const EdgeInsets.symmetric(horizontal:29.0),
     child: Divider(),
   )),
-        
-
-
-
-         Table(
+      Table(
         border: TableBorder.all(
           color: Colors.transparent
         ),
@@ -113,8 +109,7 @@ Opacity(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
                 child: const Center(child: Text("394213121"))
-                ),
-              
+                ),           
                 Container(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
@@ -135,7 +130,7 @@ Opacity(
               Container(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
-                child:  Padding(
+                child: Padding(
                   padding: EdgeInsets.only(top:8.0,left:35),
                   child: Row(
                     children: [
@@ -146,14 +141,14 @@ Opacity(
                       TextButton(onPressed: (){}, child: Icon(Icons.copy))
                     ],
                   ),
-                ),
+                ),  
               ),
               Container(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
                 child: const Center(child: Text("1524566"))
                 ),
-              
+               
                 Container(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
@@ -167,13 +162,9 @@ Opacity(
                 color: const Color.fromARGB(0, 76, 175, 79),
                 child: const Center(child: Text("1"))),
             ],
-
           )
-         
           ],
         ),
-
-
       ],
     );
   }

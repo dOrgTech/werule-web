@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homebase/screens/dao.dart';
 import 'package:homebase/screens/explorer.dart';
 import 'package:homebase/utils/theme.dart';
@@ -6,7 +7,7 @@ import 'package:homebase/widgets/daocard.dart';
 import 'package:homebase/widgets/menu.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -61,8 +62,8 @@ class _MyHomePageState extends State<MyHomePage> {
  
     return Scaffold(
       // appBar: TopMenu(),
-      // body: DAO()
-      body: Explorer()
+      body: DAO()
+      // body: Explorer()
     );
   }
 }

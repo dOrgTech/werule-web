@@ -22,7 +22,7 @@ class _DAOState extends State<DAO> {
       body: Container(
         alignment:Alignment.topCenter,
           child: DefaultTabController(
-            initialIndex: 0,
+            initialIndex: 1,
             length: 6,
             child: ListView( // Start of ListView
               shrinkWrap: true, // Set this property to true

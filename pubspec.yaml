@@ -33,6 +33,8 @@ dependencies:
   flutter_svg: ^2.0.5
   firebase_core: ^2.13.1
   cupertino_icons: ^1.0.2
+  flutter_riverpod:
+  hooks_riverpod:
   beamer: 
   riverpod:
   toggle_switch: ^2.1.0

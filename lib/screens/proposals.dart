@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
+import 'package:homebase/entities/proposal.dart';
 import 'package:homebase/utils/theme.dart';
 import 'package:homebase/widgets/proposalCard.dart';
 
@@ -88,7 +89,22 @@ class _ProposalsState extends State<Proposals> {
                     style: ButtonStyle(
                       elevation:MaterialStatePropertyAll(0.0),
                       backgroundColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor)),
-                    onPressed: (){},),
+                    onPressed: (){
+                      showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return  AlertDialog(
+                                  title: Padding(
+                                    padding: const EdgeInsets.only(left:18.0),
+                                    child: Text("Select a proposal type"),
+                                  ),
+                                  content: ProposalList(),
+                                  
+                                );
+                              },
+                            );
+
+                    },),
                 ),
               ],
             )
@@ -134,6 +150,81 @@ class _ProposalsState extends State<Proposals> {
         ProposalCard()
         ],
       ),
+    );
+  }
+}
+
+
+class ProposalList extends StatelessWidget {
+  const ProposalList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget>propuneri=[];
+
+    for (String item in proposalTypes.keys){
+      propuneri.add(Card(
+        child: Container(
+          color: Theme.of(context).hoverColor,
+          padding: EdgeInsets.all(3),
+          width: 300, height: 160,
+          child: TextButton(
+            onPressed: (){},
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Text(item), Text(proposalTypes[item]!)
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ));
+    }
+
+    var marime=MediaQuery.of(context).size;
+    return SizedBox(
+      width: MediaQuery.of(context).size.aspectRatio>1?
+      marime.width/2:marime.width*0.9,
+      height:  MediaQuery.of(context).size.aspectRatio>1?
+      marime.height/1.4:marime.height*0.9
+      ,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+             
+              Padding(
+                padding: const EdgeInsets.only(left:12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    
+                    Text("Learn about the different types of Homebase proposals from ", style: TextStyle(fontSize: 12),),
+                    Text("here.", style:TextStyle(color: Theme.of(context).indicatorColor,fontSize: 12)),
+                  ],
+                ),
+              ),
+              SizedBox(height: 52,),
+              Center(
+                child: Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  alignment: WrapAlignment.center,
+                  runAlignment: WrapAlignment.center,
+                  children: propuneri,
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
     );
   }
 }
