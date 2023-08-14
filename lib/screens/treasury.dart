@@ -19,26 +19,6 @@ class _TreasuryState extends State<Treasury> {
           child:Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Padding(
-              //   padding: const EdgeInsets.only(left:28.0),
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     mainAxisAlignment: MainAxisAlignment.center,
-              //     children: [
-              //       Text("DAO Contract Address", style: TextStyle(fontSize: 19),),
-              //       SizedBox(height: 11),
-              //       Row(
-              //         children: [
-              //           Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5"),
-              //           const SizedBox(width: 20,),
-              //           TextButton(
-              //             onPressed: (){},
-              //             child: const Icon(Icons.copy)),
-              //         ],
-              //       )
-              //     ],
-              //   ),
-              // ),
               Container(
                   padding: EdgeInsets.only(left: 50),
                   width: 500,

@@ -7,6 +7,8 @@ import 'package:homebase/widgets/daocard.dart';
 import 'package:homebase/widgets/menu.dart';
 import 'package:homebase/widgets/newProject.dart';
 
+import 'screens/proposalDetails.dart';
+
 void main() {
   runApp(const ProviderScope(child: const MyApp()));
 }

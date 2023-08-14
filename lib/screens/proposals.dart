@@ -5,12 +5,13 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
 import 'package:homebase/entities/proposal.dart';
+import 'package:homebase/screens/proposalDetails.dart';
 import 'package:homebase/utils/theme.dart';
 import 'package:homebase/widgets/proposalCard.dart';
 
 class Proposals extends StatefulWidget {
-  const Proposals({super.key});
-
+  Proposals({super.key, required this.which});
+  String? which="all";
   @override
   State<Proposals> createState() => _ProposalsState();
 }
@@ -26,7 +27,8 @@ class _ProposalsState extends State<Proposals> {
    'No Quorum','Pending','Rejected'];
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return widget.which=="all"?
+    Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -103,7 +105,6 @@ class _ProposalsState extends State<Proposals> {
                                 );
                               },
                             );
-
                     },),
                 ),
               ],
@@ -153,18 +154,18 @@ class _ProposalsState extends State<Proposals> {
        
         ],
       ),
-    );
+    ):     ProposalDetails();
+    
+    ;
   }
 }
 
 
 class ProposalList extends StatelessWidget {
   const ProposalList({super.key});
-
   @override
   Widget build(BuildContext context) {
     List<Widget>propuneri=[];
-
     for (String item in proposalTypes.keys){
       propuneri.add(Card(
         child: Container(
@@ -181,7 +182,6 @@ class ProposalList extends StatelessWidget {
                                     child: Text(item.toString()),
                                   ),
                                   content: newProposalWidgets[item],
-                                  
                                 );
                               },
                             );

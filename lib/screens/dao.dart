@@ -10,7 +10,8 @@ import 'package:homebase/widgets/menu.dart';
 import 'home.dart';
 import 'members.dart';
 class DAO extends StatefulWidget {
-  const DAO({super.key});
+  DAO({super.key, this.InitialTabIndex=0});
+  int InitialTabIndex;
   @override
   State<DAO> createState() => _DAOState();
 }
@@ -22,7 +23,7 @@ class _DAOState extends State<DAO> {
       body: Container(
         alignment:Alignment.topCenter,
           child: DefaultTabController(
-            initialIndex: 1,
+            initialIndex: widget.InitialTabIndex,
             length: 6,
             child: ListView( // Start of ListView
               shrinkWrap: true, // Set this property to true
@@ -60,10 +61,10 @@ class _DAOState extends State<DAO> {
                          width: double.infinity,
                       constraints: const BoxConstraints(maxWidth: 1200),
                          // Expanded start
-                child: const TabBarView( // TabBarView start
+                child: TabBarView( // TabBarView start
                   children: [
                     Home(),
-                    Center(child: Proposals()),
+                    Center(child: Proposals(which: "all",)),
                     Center(child: Treasury()),
                     Center(child: Registry()),
                     Center(child: Members()),

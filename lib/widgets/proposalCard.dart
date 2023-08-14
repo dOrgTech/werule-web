@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:homebase/screens/proposalDetails.dart';
 
 import '../entities/proposal.dart';
+import '../screens/dao.dart';
 
 class ProposalCard extends StatelessWidget {
   ProposalCard({super.key,required this.proposal});
@@ -15,7 +17,15 @@ class ProposalCard extends StatelessWidget {
       child: Card(
         elevation: 3,
         child: InkWell(
-          onTap: (){},
+          onTap: (){
+            print("tapped on proposalCard");
+             Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) =>
+    DAO(InitialTabIndex: 1,)
+  )
+  ) ;
+          },
           child: SizedBox(
             height: 44,
             child: Row(
@@ -25,7 +35,7 @@ class ProposalCard extends StatelessWidget {
                   padding: const EdgeInsets.only(left:25.0),
                   child: Container(
                     width: 90,
-                    child: Text("431")),
+                    child: const Text("431")),
                 ),
                 Expanded(
                   child: Padding(

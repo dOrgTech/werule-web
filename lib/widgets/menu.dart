@@ -102,7 +102,7 @@ class _TopMenuState extends State<TopMenu> {
                         ),
                     SizedBox(
                       height: 38,
-                              width: 38,
+                      width: 38,
                       child: TextButton(
                         child: Icon(Icons.info),
                         onPressed: (){}),
