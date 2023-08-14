@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 
+import '../entities/proposal.dart';
+
 class ProposalCard extends StatelessWidget {
-  const ProposalCard({super.key});
+  ProposalCard({super.key,required this.proposal});
+  Proposal proposal;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +30,7 @@ class ProposalCard extends StatelessWidget {
                 Expanded(
                   child: Padding(
                      padding: const EdgeInsets.only(left:8.0),
-                     child: Text("Title of the proposal max 80 characters"),
+                     child: Text(proposal.name!),
                    ),
                 ),
                 Container(
@@ -40,7 +43,7 @@ class ProposalCard extends StatelessWidget {
                     ],
                   )),
                 SizedBox(width:150,child: Center(child: Text("6/8/2022 11:43"))),
-                SizedBox(width: 150, child: Center(child: Text("Transfer"))),
+                SizedBox(width: 150, child: Center(child: Text(proposal.type!))),
                 SizedBox(width:100, child: Center(child: Text("ACTIVE"))),
               ],
             ),

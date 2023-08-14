@@ -5,6 +5,7 @@ import 'package:homebase/screens/explorer.dart';
 import 'package:homebase/utils/theme.dart';
 import 'package:homebase/widgets/daocard.dart';
 import 'package:homebase/widgets/menu.dart';
+import 'package:homebase/widgets/newProject.dart';
 
 void main() {
   runApp(const ProviderScope(child: const MyApp()));
@@ -61,9 +62,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
  
     return Scaffold(
-      // appBar: TopMenu(),
       body: DAO()
       // body: Explorer()
+      // body: NewProject()
     );
   }
 }

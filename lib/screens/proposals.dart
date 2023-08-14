@@ -140,14 +140,17 @@ class _ProposalsState extends State<Proposals> {
           ),
       ),
     ), 
-        ProposalCard(),
-        ProposalCard(),
-        ProposalCard(),
-        ProposalCard(),
-        ProposalCard(),
-        ProposalCard(),
-        ProposalCard(),
-        ProposalCard()
+        ProposalCard(proposal:new Proposal(type: "New Project", name: "Engagement with another DAO")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+       
         ],
       ),
     );
@@ -169,7 +172,20 @@ class ProposalList extends StatelessWidget {
           padding: EdgeInsets.all(3),
           width: 300, height: 160,
           child: TextButton(
-            onPressed: (){},
+            onPressed: (){
+              Navigator.of(context).pop();
+              showDialog( context:context,  builder: (BuildContext context) {
+                                return  AlertDialog(
+                                  title: Padding(
+                                    padding: const EdgeInsets.only(left:18.0),
+                                    child: Text(item.toString()),
+                                  ),
+                                  content: newProposalWidgets[item],
+                                  
+                                );
+                              },
+                            );
+            },
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
@@ -205,7 +221,6 @@ class ProposalList extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    
                     Text("Learn about the different types of Homebase proposals from ", style: TextStyle(fontSize: 12),),
                     Text("here.", style:TextStyle(color: Theme.of(context).indicatorColor,fontSize: 12)),
                   ],

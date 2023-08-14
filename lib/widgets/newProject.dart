@@ -14,15 +14,24 @@ import '../entities/project.dart';
 
 const String escape = '\uE00C';
 
+
+class Dobli extends StatelessWidget {
+  const Dobli({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(height: 400,width:500, child:Text("NEW PROPOSAL"));
+  }
+}
+
 class NewProject extends StatefulWidget {
 bool loading=false;
 bool done=false;
 bool error=false;
 Project project=Project();
 
-State state;
 // ignore: use_key_in_widget_constructors
-NewProject({required this.state}) ;
+NewProject() ;
 
   @override
   _NewProjectState createState() => _NewProjectState();
@@ -34,38 +43,13 @@ class _NewProjectState extends State<NewProject> {
   Widget build(BuildContext context) {
     DateTime.now().add(Duration(days:1825 ));
     List<DropdownMenuItem<int>> paymentTokens=[];
-    return 
-    widget.loading&&!widget.done && !widget.error?
-   Center(child: Column(
-     mainAxisAlignment: MainAxisAlignment.center,
-     crossAxisAlignment: CrossAxisAlignment.center,
-      children:  [
-        Text("Creating proposal for new client project...", style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
-        const SizedBox(height: 80),
-        SizedBox(
-          height: 100,width: 100,
-          child: CircularProgressIndicator(),),
-      ],
-    ),):
-    !widget.loading && !widget.done && !widget.error?
-     Consumer(
-      builder: (context, watch,child) {
-        // final om=watch(human);
-        // final stati=watch(stats);
-        // print("lungimea la chestii ${stati.paymentTokens.keys.length}");
-        // for (int i = 0; i < stati.paymentTokens.entries.length; i++) {
-        //   print("facem si desfacem ${stati.paymentTokens.keys.elementAt(i)}" );
-        //   String token=stati.paymentTokens.keys.elementAt(i).symbol;
-        //   paymentTokens.add(DropdownMenuItem(child: Text(token),value:i));
-        // }
-        paymentTokens.add(const DropdownMenuItem(child: const Text("USDC"),value:0));
-        paymentTokens.add(const DropdownMenuItem(child: Text("MATIC"),value:1));
-        return Container(
+    return
+    Container(
           padding: EdgeInsets.symmetric(horizontal: 60),
           decoration: BoxDecoration(
             border: Border.all(
-              color: Colors.black,
-              width: 1,
+              color: Theme.of(context).highlightColor,
+              width: 0.3,
             ),
           ),
           // width: MediaQuery.of(context).size.width*0.7,
@@ -80,7 +64,7 @@ class _NewProjectState extends State<NewProject> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      UploadPic(widget.project),
+                      UploadPic(),
                       const SizedBox(width: 30,),
                       Column(
                         children: [
@@ -92,33 +76,10 @@ class _NewProjectState extends State<NewProject> {
                     ],
                   ),
                   const SizedBox(height: 8,),
-                Container(
-                  width:270,
-                  height:50,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.black,
-                      width: 0.1,
-                    ),
-                    color: const Color.fromARGB(31, 95, 95, 95),
-                  ),
-                  child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text("Payment Token ",style: TextStyle(fontSize: 16),),
-                            const SizedBox(width: 10),
-                              DropdownButton(
-                            value: pmttoken,
-                            onChanged: (value) {
-                              int numar=value as int;
-                              setState(() {pmttoken=numar;});
-                                },
-                            items:paymentTokens)
-                        ]),
-                ),
-                const SizedBox(height: 20,),
+              
+                const SizedBox(height: 60,),
                SizedBox(
-                  width:380,
+                  width:430,
                   child: TextField(
                     onChanged: (value) {
                       widget.project.client=value;
@@ -127,24 +88,22 @@ class _NewProjectState extends State<NewProject> {
                     style: TextStyle(fontSize: 16),
                     decoration: InputDecoration(
                       labelText: "Client Address",
-                      hintText: 'Client Address'),),
+                      ),),
                 ),
                  // ignore: prefer_const_constructors
                  SizedBox(
-                  width:380,
+                  width:430,
                   // ignore: prefer_const_constructors
                   child: TextField(
-                    controller:TextEditingController()..text =
-                     '0x85F407ad0d51900d0F9A0a0dcBc13d7Ab15315C4',
-                    readOnly:true,
+                    
                     maxLength: 42,
                     style: const TextStyle(fontSize: 16),
                     decoration: const InputDecoration(
                       labelText: "Arbiter Address",
-                      hintText: 'Arbiter Address'),),
+                      ),),
                 ),
                 SizedBox(
-                  width:380,
+                  width:430,
                   child: TextField(
                     onChanged: (value) {
                       widget.project.link=value;
@@ -170,6 +129,7 @@ class _NewProjectState extends State<NewProject> {
                       ),
                     ),
                     onPressed: ()async{
+                      
                       setState(() {widget.loading=true;});
                       String projectAddress=await createClientProject(
                         widget.project,
@@ -187,32 +147,10 @@ class _NewProjectState extends State<NewProject> {
                 )
                 ],
               ),
-            ),
-          ),
-        );
-      }
-    ):
-    !widget.error?
-    Center(child: 
-      SizedBox(
-        height:300,width: 300,
-        child:Column(children: [
-          Text("Project created successfully!",style: TextStyle(fontSize: 18),),
-          // const SizedBox(height: 20,),
-          // ElevatedButton(onPressed: (){Navigator.of(context).pop();}, child: const Text("Yeeey!",style: TextStyle(fontSize: 20),)),
-        ],)
-      )
-    )
-    :
-    Center(child: 
-      SizedBox(
-        height:300,width: 300,
-        child:Column(children: [
-          Text("Transaction reverted.",style: TextStyle(fontSize: 18),),
-          const SizedBox(height: 20,),
-          ElevatedButton(onPressed: (){Navigator.of(context).pop();}, child: const Text("Ok",style: TextStyle(fontSize: 20),)),
-        ],)
-      )
+          ))
+          
+        
+      
     );
 
   }
@@ -220,24 +158,12 @@ class _NewProjectState extends State<NewProject> {
   bool pressedName = false;
   bool pressedDesc = false;
 
-  UploadPic(Project project){print("upload pic");}
+  UploadPic(){return SizedBox(
+    width: 150,height: 150,
+    child: Placeholder());}
   createClientProject(project,state){print("create project");}
   Widget agentName() {
-    var whatis = !pressedName
-        ? SizedBox(
-            width: 400,
-            height: 50,
-            child: TextButton(
-              onPressed: () => setState(() => pressedName = true),
-              child: Row(
-                children: const [
-                  Icon(Icons.edit),SizedBox(width: 5,),
-                  Text('Set name', style: TextStyle(fontSize: 21))
-                ],
-              ),
-            ),
-          )
-        : SizedBox(
+    var whatis =  SizedBox(
           width:400,
           height: 50,
           child: TextField(
@@ -259,23 +185,7 @@ class _NewProjectState extends State<NewProject> {
     );
   }
   Widget agentDescription() {
-    var whatis = !pressedDesc
-        ? SizedBox(
-            width: 470,
-            height: 90,
-            child: TextButton(
-              onPressed: () => setState(() => pressedDesc = true),
-              child: Row(
-                children: const [
-                  Icon(Icons.edit),SizedBox(width: 5,),
-                  Text(
-                    'Set description',
-                  )
-                ],
-              ),
-            ),
-          )
-        : TextField(
+    var whatis = TextField(
             maxLength: 200,
             maxLines: 4,
             decoration: const InputDecoration(
