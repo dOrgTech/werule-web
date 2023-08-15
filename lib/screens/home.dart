@@ -211,7 +211,7 @@ class _HomeState extends State<Home> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text("Voting Addresses" , style: TextStyle(color: Theme.of(context).indicatorColor ),),
-                                  const SizedBox(height: 10,),
+                                    const SizedBox(height: 10,),
                                   const Text("32", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                                 ],
                               ),

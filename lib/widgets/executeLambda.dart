@@ -12,7 +12,7 @@ String? selectedValue = 'Engagement with another DAO';
 Widget getComponent(context){
   Map<String,Widget> components={
   "Transfer":transfer(context),
-  "Engagement with another DAO":engagement(context),
+  "Engagement with another DAO":engagement(context,"dao"),
   'Change Config':notImpl()
   ,'Change Guardian':notImpl()
   ,'Change Delegate':notImpl()
@@ -35,10 +35,9 @@ class _ExecuteLambdaState extends State<ExecuteLambda> {
   Widget build(BuildContext context) {
     
     return Container(
-          constraints: const BoxConstraints(maxWidth: 1200),
+          constraints: const BoxConstraints(maxWidth: 900),
           padding: const EdgeInsets.symmetric(horizontal: 60),
           decoration: BoxDecoration(
-            
             border: Border.all(
               color: Theme.of(context).highlightColor,
               width: 0.3,
@@ -77,9 +76,7 @@ class _ExecuteLambdaState extends State<ExecuteLambda> {
                         ),
                     ],
                   ),
-
                   const SizedBox(height: 8,),
-              
                 getComponent(context)
                 ],
               ),
@@ -89,245 +86,8 @@ class _ExecuteLambdaState extends State<ExecuteLambda> {
 }
 
 
-Widget engagement(context){
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(13.0),
-          child: SizedBox(
-                      height: 40,
-                       child: Center(
-                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Funds in escrow: ",style: TextStyle(fontSize: 18)),
-                                Text("28400.00", style: TextStyle(fontSize: 18,color: Theme.of(context).indicatorColor),),
-                                const SizedBox(width: 8),
-                                Text("USDT", style: TextStyle(fontSize: 18,color: Theme.of(context).indicatorColor),),
-                                const SizedBox(width: 20),
-                                 Text("from ", style: TextStyle(fontSize: 18)),
-                                const SizedBox(width: 10),
-                                 
-                                Text("9 senders", style: TextStyle(fontSize: 18, color: Theme.of(context).indicatorColor),),
-                                const SizedBox(width: 30),
-                                
-                                ElevatedButton(onPressed: (){}, child: Text("View"))
-                                
-                              ],
-                            ),
-                       ),
-                     ),
-        ),
-         SizedBox(
-                    height: 40,
-                     child: Center(
-                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("Arbiter Address: "),
-                              Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
-                              const SizedBox(width: 2,),
-                              TextButton(
-                                onPressed: (){},
-                                child: const Icon(Icons.copy)),
-                            ],
-                          ),
-                     ),
-                   ),
-                   SizedBox(
-                    height: 40,
-                     child: Center(
-                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("Terms of Engagement: "),
-                              Text("https://ipfs/QmNrgEMcUygbKzZe...", style: TextStyle(fontSize: 11),),
-                              const SizedBox(width: 2,),
-                              TextButton(
-                                onPressed: (){},
-                                child: const Icon(Icons.copy)),
-                            ],
-                          ),
-                     ),
-                   ),
-
-
-
-        Container(
-          padding: EdgeInsets.all(30),
-          child: Wrap(
-            spacing: 30,
-            runSpacing: 30,
-            children: [
-              
-                  Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.all(50),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: const  Text("Release funds to DAO (client only)",
-                     style: TextStyle(fontSize: 19), 
-                      ),
-                  ),
-                  SizedBox(height: 30),
-                SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-
-                    
-                ],
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.all(50),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: const  Text("Propose to throw the project into arbitration",
-                     style: TextStyle(fontSize: 19), 
-                      ),
-                  ),
-                  SizedBox(height: 30),
-                  SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-                ],
-              ),
-            ),
-                 Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.all(50),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: Center(
-                      child: const  Text("Send funds into escrow",
-                       style: TextStyle(fontSize: 19), 
-                        ),
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-                ],
-              ),
-            ),
-          Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.only(top:50,bottom:50,left:40,right:40),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 380,
-                    child: const  Text("Return all funds to their senders",
-                     style: TextStyle(fontSize: 19), 
-                      ),
-                  ),
-                  SizedBox(height: 30),
-                  SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-                ],
-              ),
-            ),
-   
-        
-          
-            ]
-          )
-          ),
-      ],
-    );
+Widget engagement(context, which){
+    return Engagement(which: "dao");
   }
 
   
@@ -410,3 +170,246 @@ Widget transfer(context){
       ),
     );
   }
+
+
+
+class Engagement extends StatelessWidget {
+  Engagement({super.key, required this.which});
+  String which;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(13.0),
+          child: SizedBox(
+                      height: 40,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Funds in escrow: ",style: TextStyle(fontSize: 18)),
+                                Text("28400.00", style: TextStyle(fontSize: 18,color: Theme.of(context).indicatorColor),),
+                                const SizedBox(width: 8),
+                                Text("USDT", style: TextStyle(fontSize: 18,color: Theme.of(context).indicatorColor),),
+                                const SizedBox(width: 20),
+                                Text("from ", style: TextStyle(fontSize: 18)),
+                                const SizedBox(width: 10),
+                                Text("9 senders", style: TextStyle(fontSize: 18, color: Theme.of(context).indicatorColor),),
+                                const SizedBox(width: 30),
+                                ElevatedButton(onPressed: (){}, child: Text("View"))
+                                
+                              ],
+                            ),
+                       ),
+                     ),
+        ),
+         SizedBox(
+                    height: 40,
+                     child: Center(
+                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("Arbiter Address: "),
+                              Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                              const SizedBox(width: 2,),
+                              TextButton(
+                                onPressed: (){},
+                                child: const Icon(Icons.copy)),
+                            ],
+                          ),
+                     ),
+                   ),
+                   SizedBox(
+                    height: 40,
+                     child: Center(
+                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("Terms of Engagement: "),
+                              Text("https://ipfs/QmNrgEMcUygbKzZe...", style: TextStyle(fontSize: 11),),
+                              const SizedBox(width: 2,),
+                              TextButton(
+                                onPressed: (){},
+                                child: const Icon(Icons.copy)),
+                            ],
+                          ),
+                     ),
+                   ),
+
+
+
+        Container(
+          padding: EdgeInsets.all(30),
+          child: Column(
+            children: [
+                 which=="project"? Container(
+              decoration: BoxDecoration(
+                color: Color(0x31000000),
+                border: Border.all(width: 1, color:  Color(0x2111111))
+              ),
+              padding: EdgeInsets.all(50),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 360,
+                    child: const  Text("Release funds to DAO (client only)",
+                     style: TextStyle(fontSize: 19), 
+                      ),
+                  ),
+                  SizedBox(height: 30),
+                SizedBox(
+                      height: 40,
+                      width: 170,
+                      child: TextButton(
+                        style: ButtonStyle(
+                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          elevation: MaterialStateProperty.all(1.0),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(7.0),
+                            ),
+                          ),
+                        ),
+                        onPressed: (){
+                          Navigator.of(context).pop();
+                        },
+                         child: const Center(
+                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
+                      )),
+                    ),
+                ],
+              ),
+            ):
+            SizedBox(width: 50,height: 4,),
+            Container(
+              decoration: BoxDecoration(
+                color: Color(0x31000000),
+                border: Border.all(width: 1, color:  Color(0x2111111))
+              ),
+              padding: EdgeInsets.all(50),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 360,
+                    child: const  Text("Throw the project into arbitration",
+                     style: TextStyle(fontSize: 19), 
+                      ),
+                  ),
+                  SizedBox(height: 30),
+                  SizedBox(
+                      height: 40,
+                      width: 170,
+                      child: TextButton(
+                        style: ButtonStyle(
+                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          elevation: MaterialStateProperty.all(1.0),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(7.0),
+                            ),
+                          ),
+                        ),
+                        onPressed: (){
+                          Navigator.of(context).pop();
+                        },
+                         child: const Center(
+                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
+                      )),
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(width: 50,height: 40,),
+               which=="project"?  Container(
+              decoration: BoxDecoration(
+                color: Color(0x31000000),
+                border: Border.all(width: 1, color:  Color(0x2111111))
+              ),
+              padding: EdgeInsets.all(50),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 360,
+                    child: Center(
+                      child: const  Text("Send funds into escrow",
+                       style: TextStyle(fontSize: 19), 
+                        ),
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                  SizedBox(
+                      height: 40,
+                      width: 170,
+                      child: TextButton(
+                        style: ButtonStyle(
+                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          elevation: MaterialStateProperty.all(1.0),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(7.0),
+                            ),
+                          ),
+                        ),
+                        onPressed: (){
+                          Navigator.of(context).pop();
+                        },
+                         child: const Center(
+                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
+                      )),
+                    ),
+                ],
+              ),
+            ):SizedBox(),
+          Container(
+              decoration: BoxDecoration(
+                color: Color(0x31000000),
+                border: Border.all(width: 1, color:  Color(0x2111111))
+              ),
+              padding: EdgeInsets.only(top:50,bottom:50,left:40,right:40),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 380,
+                    child: const  Text("Return all funds to the sender(s)",
+                     style: TextStyle(fontSize: 19), 
+                      ),
+                  ),
+                  SizedBox(height: 30),
+                  SizedBox(
+                      height: 40,
+                      width: 170,
+                      child: TextButton(
+                        style: ButtonStyle(
+                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                          elevation: MaterialStateProperty.all(1.0),
+                          shape: MaterialStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(7.0),
+                            ),
+                          ),
+                        ),
+                        onPressed: (){
+                          Navigator.of(context).pop();
+                        },
+                         child: const Center(
+                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
+                      )),
+                    ),
+                ],
+              ),
+            ),
+   
+        
+          
+            ]
+          )
+          ),
+      ],
+    );
+  }
+}

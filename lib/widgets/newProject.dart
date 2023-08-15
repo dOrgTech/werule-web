@@ -148,9 +148,6 @@ class _NewProjectState extends State<NewProject> {
                 ],
               ),
           ))
-          
-        
-      
     );
 
   }

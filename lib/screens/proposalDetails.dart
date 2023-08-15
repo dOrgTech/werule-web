@@ -92,13 +92,11 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                   padding: const EdgeInsets.all(18.0),
                   child: const Text(
                     "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all the details needed for executing the task and making a judgement on the state of the project.",
-                    
                     textAlign: TextAlign.center,
                     ),
                 ),
               ],
-            ),
-             
+            ),             
             Padding(
               padding: const EdgeInsets.only(top:35.0),
               child: Column(
@@ -167,19 +165,17 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                                 onPressed: (){},
                                 child: const Icon(Icons.copy)),
                             ],
-                          ),
+                        ),
                      ),
                    ),
-               
               ],),
             )
-          ],
+            ],
             ),
           ),
           SizedBox(height: 20),
            Row(
             children: [
-          
             Container(
               height: 280,
                 constraints: const BoxConstraints(
@@ -352,7 +348,9 @@ class _ProposalDetailsState extends State<ProposalDetails> {
            padding: EdgeInsets.all(11),
            decoration: BoxDecoration(color: Color(0xff121416)),child:Align(
           alignment: Alignment.topLeft,
-          child: Image.network("https://i.ibb.co/fDJhKkt/image.png")))
+          child: Transform(
+  transform: scaleXYZTransform(scaleX: 1.3, scaleY: 1.3),
+  child: Image.network("https://i.ibb.co/fDJhKkt/image.png"))))
           ]));
   }
 }
@@ -362,4 +360,13 @@ Color randomColor() {
   var b = math.Random.secure().nextInt(255);
   var r = math.Random.secure().nextInt(255);
   return Color.fromARGB(255, r, g, b);
+}
+
+
+Matrix4 scaleXYZTransform({
+  double scaleX = 1.00,
+  double scaleY = 1.00,
+  double scaleZ = 1.00,
+}) {
+  return Matrix4.diagonal3Values(scaleX, scaleY, scaleZ);
 }

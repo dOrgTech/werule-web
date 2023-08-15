@@ -27,13 +27,13 @@ class _DAOState extends State<DAO> {
           child: DefaultTabController(
             initialIndex: widget.InitialTabIndex,
             length: 6,
-            child: ListView( // Start of ListView
-              shrinkWrap: true, // Set this property to true
-              children: [
-                  Column( // Start of Column
-                    crossAxisAlignment: CrossAxisAlignment.center, // Set this property to center the items horizontally
-                    mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically
-                    children: [
+              child: ListView( // Start of ListView
+                shrinkWrap: true, // Set this property to true
+                children: [
+                    Column( // Start of Column
+                      crossAxisAlignment: CrossAxisAlignment.center, // Set this property to center the items horizontally
+                      mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically
+                      children: [
                       // LinearProgressIndicator(
                       //   color: Theme.of(context).indicatorColor.withOpacity(0.3),
                       //   minHeight: 7,
