@@ -4,6 +4,7 @@ import 'package:homebase/screens/dao.dart';
 import 'package:homebase/screens/explorer.dart';
 import 'package:homebase/utils/theme.dart';
 import 'package:homebase/widgets/daocard.dart';
+import 'package:homebase/widgets/executeLambda.dart';
 import 'package:homebase/widgets/menu.dart';
 import 'package:homebase/widgets/newProject.dart';
 
@@ -64,8 +65,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
  
     return Scaffold(
-      body: DAO()
-      // body: Explorer()
+      // body: ExecuteLambda()
+      body: Explorer()
       // body: NewProject()
     );
   }

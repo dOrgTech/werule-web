@@ -8,6 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:homebase/widgets/executeLambda.dart';
 import 'package:homebase/widgets/newProject.dart';
 
 var proposalTypes={
@@ -30,7 +31,7 @@ var newProposalWidgets={
   "Edit Registry": NotImplemented(),
   "Add Lambda":NotImplemented(),
   "Remove Lambda": NotImplemented(),
-  "Execute Lambda":NotImplemented(),
+  "Execute Lambda":ExecuteLambda(),
   "DAO Configuration": NotImplemented(),
   "Change Guardian": NotImplemented(),
   "Change DAO Delegate":NotImplemented(),
