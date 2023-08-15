@@ -306,7 +306,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                        lastPointColor: Colors.redAccent,
                        data: const [43.0,13.0],
                      )
-                                    ),
+                    ),
                    ),
                  SizedBox(height: 13),
                 Padding(
@@ -345,8 +345,6 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                 padding: const EdgeInsets.only(left:18.0),
                 child: Text("Implementation:"),
               )),
-          
-            
            SizedBox(height: 12),
            Container(
              height:352,
@@ -355,7 +353,6 @@ class _ProposalDetailsState extends State<ProposalDetails> {
            decoration: BoxDecoration(color: Color(0xff121416)),child:Align(
           alignment: Alignment.topLeft,
           child: Image.network("https://i.ibb.co/fDJhKkt/image.png")))
-                  
           ]));
   }
 }

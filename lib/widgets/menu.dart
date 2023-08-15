@@ -93,7 +93,7 @@ class _TopMenuState extends State<TopMenu> {
                           height: 38,
                               width: 38,
                           child: TextButton(
-                            onPressed: () {launch("https://discord.gg/DtdHV2wWqt");},
+                            onPressed: () {launch("https://discord.gg/XufcBNu277");},
                             child: Image.network(
                               "https://i.ibb.co/Nr7Psjm/discord.png",
                               color: Color.fromARGB(255, 196, 196, 196),
