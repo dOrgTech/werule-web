@@ -24,7 +24,7 @@ class ProposalCard extends StatelessWidget {
                 builder: (context) => DAO(InitialTabIndex: 1
                 
                 )));
-              print("more instructions");
+             
             },
           child: SizedBox(
             height: 44,

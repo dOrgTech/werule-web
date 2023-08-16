@@ -7,7 +7,7 @@ final List<String> items = ['Transfer',
    'Change Config','Change Guardian','Change Delegate', "Engagement with another DAO" ];
 
   // The current selected value of the dropdown
-String? selectedValue = 'Engagement with another DAO';
+String? selectedValue = 'Transfer';
 
 Widget getComponent(context){
   Map<String,Widget> components={
@@ -243,45 +243,7 @@ class Engagement extends StatelessWidget {
           padding: EdgeInsets.all(30),
           child: Column(
             children: [
-                 which=="project"? Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.all(50),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: const  Text("Release funds to DAO (client only)",
-                     style: TextStyle(fontSize: 19), 
-                      ),
-                  ),
-                  SizedBox(height: 30),
-                SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-                ],
-              ),
-            ):
+              
             SizedBox(width: 50,height: 4,),
             Container(
               decoration: BoxDecoration(
@@ -294,6 +256,7 @@ class Engagement extends StatelessWidget {
                   SizedBox(
                     width: 360,
                     child: const  Text("Throw the project into arbitration",
+                    textAlign: TextAlign.center,
                      style: TextStyle(fontSize: 19), 
                       ),
                   ),
@@ -323,47 +286,7 @@ class Engagement extends StatelessWidget {
               ),
             ),
             SizedBox(width: 50,height: 40,),
-               which=="project"?  Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.all(50),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: Center(
-                      child: const  Text("Send funds into escrow",
-                       style: TextStyle(fontSize: 19), 
-                        ),
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-                ],
-              ),
-            ):SizedBox(),
+              
           Container(
               decoration: BoxDecoration(
                 color: Color(0x31000000),

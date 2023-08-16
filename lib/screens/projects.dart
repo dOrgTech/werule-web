@@ -30,13 +30,10 @@ List<Project> projects=[
    status:"Dispute"
   ),
 ];
-
 List<Widget> projectCards=[];
-
-
 String? selectedStatus = 'All';
   final List<String> statuses = ['All', 'Ongoing', 
-  'Active dispute', 'Ended in dispute','Closed without dispute'];
+  'Active dispute', 'Closed after dispute','Closed without dispute'];
 class Projects extends StatefulWidget {
   const Projects({super.key});
 

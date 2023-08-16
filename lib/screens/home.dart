@@ -181,10 +181,10 @@ class _HomeState extends State<Home> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                              padding: const EdgeInsets.only(top:19,left:28.0),
-                              child: Text("CRRDAO Locked", style: TextStyle(fontSize: 17, 
-                              color: Theme.of(context).indicatorColor,
-                              fontWeight: FontWeight.normal),),
+                            padding: const EdgeInsets.only(top:19,left:28.0),
+                            child: Text("CRRDAO Locked", style: TextStyle(fontSize: 17, 
+                            color: Theme.of(context).indicatorColor,
+                            fontWeight: FontWeight.normal),),
                             ),
                           
                           const SizedBox(height: 15,),

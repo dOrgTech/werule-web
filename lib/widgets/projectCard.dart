@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:homebase/screens/projectDetails.dart';
 
 import '../entities/project.dart';
 import '../screens/dao.dart';
@@ -15,8 +16,8 @@ class ProjectCard extends StatelessWidget {
         onPressed: () {
        Navigator.push(
     context,
-    MaterialPageRoute(builder: (context) =>DAO(InitialTabIndex: 0))
-    ) ;
+    MaterialPageRoute(builder: (context) =>ProjectDetails(project: project!))
+    );
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical:14.0),
@@ -30,7 +31,6 @@ class ProjectCard extends StatelessWidget {
                 child:Row(
                   children: [
                     Text("DAO: "),
-                    
                     Text("Cotoflender ", style: TextStyle(fontWeight: FontWeight.bold),),
                     Text("(tz1QEBc....d14hyu)")
                   ],
@@ -44,13 +44,11 @@ class ProjectCard extends StatelessWidget {
                       padding: const EdgeInsets.only(left:8.0, top:10),
                       child: Column(
                           children: [
-                           
                             Container(
                               width: 100,
                               height: 20,
                               decoration: BoxDecoration(
-                                color:project!.status =="Ongoing"?Color.fromARGB(255, 80, 109, 96):Color.fromARGB(255, 109, 80, 80)
-                                ,
+                                color:project!.status =="Ongoing"?Color.fromARGB(255, 80, 109, 96):Color.fromARGB(255, 109, 80, 80),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Center(child: Text(project!.status! , 
@@ -62,9 +60,19 @@ class ProjectCard extends StatelessWidget {
                               
                             ),
                               SizedBox(height: 16),
-                            Text(project!.amountInEscrow!.toString(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            
-                            Text("USDT" , textAlign: TextAlign.center, style: TextStyle( fontWeight: FontWeight.w100, fontSize: 16 ) ,),
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(color:Theme.of(context).canvasColor,
+                                        border: Border.all(width: 0.5, color: Colors.white24)                      
+                                      ),
+                              child: Column(
+                                children: [
+                                  Text("In escrow" , textAlign: TextAlign.center, style: TextStyle( fontWeight: FontWeight.w100, fontSize: 14 ) ,),
+                                  Text(project!.amountInEscrow!.toString(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
+                                  Text("USDT" , textAlign: TextAlign.center, style: TextStyle( fontWeight: FontWeight.w100, fontSize: 16 ) ,),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                     ),

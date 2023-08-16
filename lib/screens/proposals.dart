@@ -192,7 +192,7 @@ class ProposalList extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text(item), Text(proposalTypes[item]!)
+                    Text(item, textAlign:TextAlign.center  ,style: TextStyle(fontSize: 19),), Text(proposalTypes[item]!)
                   ],
                 ),
               ),

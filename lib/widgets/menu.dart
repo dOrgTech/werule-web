@@ -9,7 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../screens/projects.dart';
 
-int status=1;
+int status=0;
 class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
   const TopMenu({super.key});
 

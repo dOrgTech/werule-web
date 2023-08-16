@@ -69,14 +69,15 @@ class _MyHomePageState extends State<MyHomePage> {
  
     return Scaffold(
       // body: ExecuteLambda()
-      // body: Explorer()
-      body: ProjectDetails(project:   Project(
-   name: "Engagement with another DAO" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
-   description: "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all...",
-   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Ongoing"
-  ),)
+      body: Explorer()
+      // body:Projects()
+  //     body: ProjectDetails(project:   Project(
+  //  name: "Engagement with another DAO" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
+  //  description: "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all...",
+  //  client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
+  //  link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+  //  status:"Ongoing"
+  // ),)
     );
   }
 }
