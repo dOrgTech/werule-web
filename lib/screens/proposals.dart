@@ -17,6 +17,7 @@ class Proposals extends StatefulWidget {
 }
 
 class _ProposalsState extends State<Proposals> {
+  
   String? selectedType = 'All';
   final List<String> types = ['All', 'Off-Chain', 
   'Transfer', 'Add Lambda', 'Remove Lambda', 'Execute Lambda',
@@ -25,6 +26,12 @@ class _ProposalsState extends State<Proposals> {
   final List<String> statuses = ['All', 'Active', 
   'Dropped', 'Passed','Executable', 'Executed', 'Expired',
    'No Quorum','Pending','Rejected'];
+   @override
+  void initState() {
+    // TODO: implement i
+    super.initState();
+    widget.which="all";
+  }
   @override
   Widget build(BuildContext context) {
     return widget.which=="all"?
@@ -32,6 +39,7 @@ class _ProposalsState extends State<Proposals> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+         
           SizedBox(height: 30),
           SizedBox(
             child: Row(

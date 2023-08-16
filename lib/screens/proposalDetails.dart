@@ -6,6 +6,7 @@ import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import 'dart:math';
 import 'dart:math' as math;
 import '../widgets/menu.dart';
+import 'dao.dart';
 
 class ProposalDetails extends StatefulWidget {
   const ProposalDetails({super.key});
@@ -21,9 +22,25 @@ class _ProposalDetailsState extends State<ProposalDetails> {
           alignment: Alignment.topCenter,
           child: Column( // Start of Column
             crossAxisAlignment: CrossAxisAlignment.center, // Set this property to center the items horizontally
-            mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically
+            mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its chilWSdren's size vertically
             children: [
-               const SizedBox(height: 20,),
+              SizedBox(height: 10),
+  //              Align(
+                
+  //               alignment: Alignment.topLeft,
+  //               child: TextButton(onPressed: (){
+  //                   Navigator.push(
+  // context,
+  // MaterialPageRoute(builder: (context) =>DAO(InitialTabIndex: 1))
+  // ) ;
+  //               }, child: Row(
+  //                 mainAxisAlignment: MainAxisAlignment.start,
+  //                 children: [
+  //                   Icon(Icons.arrow_back, color: Theme.of(context).indicatorColor,),
+  //                   Text("All proposals", style: TextStyle(color:Theme.of(context).indicatorColor,),),
+  //                 ],
+  //               ))),
+               const SizedBox(height: 10,),
           Container(
             height: 240,
              color:Theme.of(context).cardColor,

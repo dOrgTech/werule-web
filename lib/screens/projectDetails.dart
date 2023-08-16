@@ -84,7 +84,7 @@ body:Container(
                         ),
                     ),
                   ],
-                ),             
+                ),
                 Padding(
                   padding: const EdgeInsets.only(top:35.0),
                   child: Column(
@@ -98,7 +98,7 @@ body:Container(
                            child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text("Posted By: "),
+                                  Text("DAO Address: "),
                                   Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
                                   const SizedBox(width: 2,),
                                   TextButton(
@@ -385,6 +385,7 @@ body:Container(
                ),
                   
              
+               SizedBox(height: 40),
              Text("Implementation:"),
                SizedBox(height: 10),
                Container(
