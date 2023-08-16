@@ -50,8 +50,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                    SizedBox(height: 4),
-
+                  const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
