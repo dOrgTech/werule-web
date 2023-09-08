@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:homebase/widgets/cutie.dart';
+import 'package:homebase/widgets/hovermenu.dart';
 import 'package:homebase/widgets/projectCard.dart';
 
 import '../entities/project.dart';
@@ -32,8 +34,10 @@ List<Project> projects=[
 ];
 List<Widget> projectCards=[];
 String? selectedStatus = 'All';
+String? selectedNewProject="Open to proposals";
   final List<String> statuses = ['All', 'Ongoing', 
   'Active dispute', 'Closed after dispute','Closed without dispute'];
+  final List<String> projectTypes = ['Open to proposals', 'Set parties','Import project'];
 class Projects extends StatefulWidget {
   const Projects({super.key});
 
@@ -66,81 +70,102 @@ class _ProjectsState extends State<Projects> {
                 crossAxisAlignment: CrossAxisAlignment.center, // Set this property to center the items horizontally
                 mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically
                 children: [
+             const     SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                       height: 80, 
+                       height: 46, 
                        width: double.infinity,
                         constraints: BoxConstraints(maxWidth: 1200),
-                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left:5.0),
-                          child: SizedBox(
-                            width: 
-                            MediaQuery.of(context).size.width>1200?
-                            550:
-                            MediaQuery.of(context).size.width * 0.5,
-                            child: TextField(
-                              decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                     borderSide: BorderSide(width: 0.1),
-                                  ),
-                                prefixIcon: Icon(Icons.search),
-                                hintText: 'Search by Project Name, client or DAO address.',
-                                // other properties
-                              ),
-                              // other properties
-                            ),
-                          ),
-                        ),
-
-                        Row(
-                          children: [
-                            const Text("Status:"),
-               const SizedBox(width: 10),
-                DropdownButton<String>(
-                      value: selectedStatus,
-                      focusColor: Colors.transparent,
-                      items: statuses.map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-              setState(() {
-                selectedStatus = newValue;
-              });
-                  },
-                    ),
-                    SizedBox(width: 20),
+                       child:  MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaleFactor: 0.8),child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                             Padding(
-                              padding: const EdgeInsets.only(right:8.0),
-                              child: Row(
-                                children:  const [
-                                 Text("3 Projects"),
-                                  SizedBox(width: 30,),
-                                  // SizedBox(
-                                  //   height: 40,
-                                  //   child: ElevatedButton(onPressed: (){}, 
-                                  //   style: ElevatedButton.styleFrom(
-                                  //     backgroundColor: Theme.of(context).indicatorColor),
-                                  //   child: Text("Create Project", 
-                                  //   style: TextStyle(
-                                  //     color: Colors.black,
-                                  //     fontFamily: 'CascadiaCode', fontSize: 18, fontWeight: FontWeight.w100),)),
-                                  // )
-                                ],
+                              padding: const EdgeInsets.only(left:5.0),
+                              child: SizedBox(
+                                width: 
+                                MediaQuery.of(context).size.width>1200?
+                                500:
+                                MediaQuery.of(context).size.width * 0.5,
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                         borderSide: BorderSide(width: 0.1),
+                                      ),
+                                    prefixIcon: Icon(Icons.search),
+                                    hintText: 'Search project',
+                                    // other properties
+                                  ),
+                                  // other properties
+                                ),
                               ),
                             ),
-                          ],
-                        )
-                        ],
-                       ),
+                         
+                            Row(
+                              children: [
+                                const Text("Status:"),
+                                        const SizedBox(width: 10),
+                                         DropdownButton<String>(
+                                               value: selectedStatus,
+                                               focusColor: Colors.transparent,
+                                               items: statuses.map((String value) {
+                                       return DropdownMenuItem<String>(
+                                         value: value,
+                                         child: Text(value),
+                                       );
+                                               }).toList(),
+                                               onChanged: (String? newValue) {
+                                       setState(() {
+                                         selectedStatus = newValue;
+                                       });
+                                           },
+                                             ),
+                                             SizedBox(width: 20),
+                                Padding(
+                                  padding:  EdgeInsets.only(right:8.0),
+                                  child: Row(
+                                    children:   [
+                                     Text("3 Projects"),
+                                      SizedBox(width: 60),
+HoverExpandWidget(),
+
+
+                          //             Cutie(
+                          // title: "Add project",
+                          // treburi: [
+                          //   [
+                          //     "Open to proposals",
+                          //     "Post a definition of your wanted deliverable.",
+                          //     0.0,
+                          //     "/projects/atn"
+                          //   ],
+                          //   [
+                          //     "Set parties",
+                          //     "Formalize an existing agreement",
+                          //     0.0,
+                          //     "/projects/pstaking"
+                          //   ],
+                          //   [
+                          //     "Import project",
+                          //     "from legacy justice providers.",
+                          //     0.0,
+                          //     "/projects/deem"
+                          //   ],
+                          // ],
+                          // desc: "What we do with the oracle earnings."),
+                      SizedBox(
+                        width: 50,
                       ),
-                    SizedBox(height: 10,),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )
+                            ],
+                           ),
+                      )),
+                    SizedBox(height: 24,),
                    Container(
                     alignment: Alignment.topCenter,
                     width: double.infinity,

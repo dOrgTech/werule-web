@@ -25,6 +25,9 @@ class _ProposalDetailsState extends State<ProposalDetails> {
             mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its chilWSdren's size vertically
             children: [
               SizedBox(height: 10),
+              Align(
+                alignment: Alignment.topLeft,
+                child: TextButton(onPressed: (){}, child: Text("< Back to all proposals"))),
   //              Align(
                 
   //               alignment: Alignment.topLeft,
@@ -58,7 +61,6 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                       padding: EdgeInsets.all(8.0),
                       child: Text("Engagement with another DAO", 
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
-                      
                     ),
                     const SizedBox(width: 10),
                     Padding(
