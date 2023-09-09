@@ -128,7 +128,7 @@ class _ProjectsState extends State<Projects> {
                                     children:   [
                                      Text("3 Projects"),
                                       SizedBox(width: 60),
-HoverExpandWidget(),
+                        HoverExpandWidget(),
 
 
                           //             Cutie(

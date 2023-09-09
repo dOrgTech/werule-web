@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homebase/widgets/newGenericProject.dart';
 
 class HoverExpandWidget extends StatefulWidget {
   @override
@@ -20,7 +21,7 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: Duration(milliseconds: 230),
+      duration: Duration(milliseconds: 90),
       vsync: this,
     );
 
@@ -29,20 +30,21 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+    _fadeAnimation = Tween<double>(begin: 0.97, end: 0.0).animate(
       CurvedAnimation(
         parent: _fadeOutController,
         curve: Curves.easeInOut,
       ),
     );
 
-    _sizeAnimation = Tween<double>(begin: 100.0, end: 300.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+   _sizeAnimation = Tween<double>(begin: 40.0, end: 340.0).animate(
+  CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+);
 
-    _widthAnimation = Tween<double>(begin: 120.0, end: 300.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+_widthAnimation = Tween<double>(begin: 140.0, end: 300.0).animate(
+  CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+);
+
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.dismissed) {
@@ -59,14 +61,14 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
     final Offset position = box.localToGlobal(Offset.zero);
 
     final options = [
-      ["Open to proposals", "Post a definition of your wanted deliverable."],
+      ["Generic", "Post a definition of your wanted deliverable."],
       ["Set parties", "Formalize an existing agreement"],
       ["Import project", "from legacy justice providers."],
     ];
 
     return Positioned(
       top: position.dy,
-      right: MediaQuery.of(context).size.width - position.dx - 120.0, 
+      right: MediaQuery.of(context).size.width - position.dx - 140.0, 
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Material(
@@ -80,12 +82,12 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
               animation: _controller,
               builder: (context, child) {
                 return AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
+                  duration: Duration(milliseconds: 150),
                   decoration: BoxDecoration(
                     
                     border: Border.all(
                       
-                      color: Theme.of(context).cardColor, width: 0.5),
+                      color: Theme.of(context).indicatorColor, width: 0.2),
                    color: Color.lerp(
           Color.fromARGB(255, 49, 172, 168).withOpacity(1.0), 
           Theme.of(context).canvasColor.withOpacity(0.95), 
@@ -94,10 +96,10 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
                     borderRadius: BorderRadius.circular(5.0),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black38,
-                        blurRadius: 8.0,
-                        spreadRadius: 2.0,
-                        offset: Offset(0.0, 4.0),
+                        color:Theme.of(context).indicatorColor,
+                        blurRadius: 9.0,
+                        spreadRadius: 0.6,
+                        offset: Offset(0.3, 0.5),
                       ),
                     ],
                   ),
@@ -115,7 +117,7 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
                             children: [
                               SizedBox(height: 8.0),
                               Text(
-                                "New Project",
+                                "Add Project",
                                 style: TextStyle(
                                   color: Theme.of(context).indicatorColor,
                                   fontSize: 19,
@@ -130,10 +132,29 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
                                   itemCount: options.length,
                                   itemBuilder: (context, index) {
                                     return TextButton(
+                                      
+                                      style: ButtonStyle(
+                                        minimumSize: MaterialStateProperty.all(Size(double.infinity, 100)),
+                                        elevation: MaterialStatePropertyAll(0.17),
+                                        
+                                        shadowColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor),
+                                       backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                                    (Set<MaterialState> states) {
+                                      if (states.contains(MaterialState.hovered))
+                                      return Theme.of(context).indicatorColor.withOpacity(0.01); // Replace with your default color
+                                        return Theme.of(context).canvasColor; // Replace with your hover color
+                                    },
+                                      )),
                                       onPressed: () async {
                                         print('${options[index][0]} clicked');
+                                        _controller.reverse();  
+                                       showDialog(context: context, builder: (context)=>AlertDialog(
+                                        content: Container(
+                                        width: 900,
+                                        height: 500,
+                                          child: NewGenericProject())));
+                                        
                                         await _fadeOutController.forward();
-                                        _controller.reverse();
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.all(8.0),
@@ -190,10 +211,10 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
           borderRadius: BorderRadius.circular(5.0),
         ),
         height: 40.0,
-        width: 120.0,
+        width: 140.0,
         child: Center(
           child: Text(
-            'New Project',
+            'Add Project',
             style: const TextStyle(color: Colors.black, fontSize: 19),
             textAlign: TextAlign.center,
           ),
