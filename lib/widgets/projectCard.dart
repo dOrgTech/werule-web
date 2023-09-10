@@ -20,19 +20,38 @@ class ProjectCard extends StatelessWidget {
     );
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical:14.0),
+          padding: const EdgeInsets.all(0.0),
           child: SizedBox(
             width: 490,
-            height: 200,
+            height: 240,
             child: Column(
               children: [
+                Row(children: [
+                 
+                ],),
                 SizedBox(height: 9),
-                Padding(padding: EdgeInsets.only(left:36),
+                Padding(padding: EdgeInsets.only(left:22),
                 child:Row(
                   children: [
-                    Text("DAO: "),
+                    Text("Author: "),
                     Text("Cotoflender ", style: TextStyle(fontWeight: FontWeight.bold),),
-                    Text("(tz1QEBc....d14hyu)")
+                    Text("(tz1QEBc....d14hyu)"),
+                     Spacer(),
+                  Container(
+                    decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color:Colors.white54,
+                        blurRadius: 2.0,
+                        spreadRadius: 0.12,
+                        offset: Offset(0.1, 0.3),
+                      ),
+                    ],
+                    ),
+                    width: 90,
+                    height: 29,
+                  )
+
                   ],
                 )
                 ),

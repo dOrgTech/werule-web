@@ -37,14 +37,13 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
       ),
     );
 
-   _sizeAnimation = Tween<double>(begin: 40.0, end: 340.0).animate(
-  CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-);
+    _sizeAnimation = Tween<double>(begin: 40.0, end: 340.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
 
-_widthAnimation = Tween<double>(begin: 140.0, end: 300.0).animate(
-  CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-);
-
+    _widthAnimation = Tween<double>(begin: 140.0, end: 300.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.dismissed) {
@@ -56,23 +55,28 @@ _widthAnimation = Tween<double>(begin: 140.0, end: 300.0).animate(
     _overlayEntry = OverlayEntry(builder: _overlayBuilder);
   }
 
-  Widget _overlayBuilder(BuildContext context) {
-    final RenderBox box = _key.currentContext!.findRenderObject() as RenderBox;
-    final Offset position = box.localToGlobal(Offset.zero);
+Widget _overlayBuilder(BuildContext context) {
+  final RenderBox box = _key.currentContext!.findRenderObject() as RenderBox;
+  final Offset position = box.localToGlobal(Offset.zero);
 
-    final options = [
-      ["Generic", "Post a definition of your wanted deliverable."],
-      ["Set parties", "Formalize an existing agreement"],
-      ["Import project", "from legacy justice providers."],
-    ];
+  final options = [
+    ["Generic", "Post a definition of your wanted deliverable."],
+    ["Set parties", "Formalize an existing agreement"],
+    ["Import project", "from legacy justice providers."],
+  ];
 
-    return Positioned(
-      top: position.dy,
-      right: MediaQuery.of(context).size.width - position.dx - 140.0, 
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Material(
-          color: Colors.transparent,
+  return Positioned(
+    top: position.dy,
+    right: MediaQuery.of(context).size.width - position.dx - 140.0, 
+    child: FadeTransition(
+      opacity: _fadeAnimation,
+      child: Material(
+        color: Colors.transparent,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            _controller.reverse();
+          },
           child: MouseRegion(
             onExit: (_) {
               _fadeOutController.reset();
@@ -189,7 +193,7 @@ _widthAnimation = Tween<double>(begin: 140.0, end: 300.0).animate(
                         )
                       : Container(),
                 );
-              },
+              }),
             ),
           ),
         ),
@@ -197,26 +201,34 @@ _widthAnimation = Tween<double>(begin: 140.0, end: 300.0).animate(
     );
   }
 
+ void _handleTap() {
+    Overlay.of(context).insert(_overlayEntry);
+    _controller.forward();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) {
-        Overlay.of(context).insert(_overlayEntry);
-        _controller.forward();
-      },
-      child: Container(
-        key: _key,
-        decoration: BoxDecoration(
-          color: Theme.of(context).indicatorColor,
-          borderRadius: BorderRadius.circular(5.0),
-        ),
-        height: 40.0,
-        width: 140.0,
-        child: Center(
-          child: Text(
-            'Add Project',
-            style: const TextStyle(color: Colors.black, fontSize: 19),
-            textAlign: TextAlign.center,
+    return GestureDetector(
+      onTap: _handleTap,
+      child: MouseRegion(
+        onEnter: (_) {
+          Overlay.of(context).insert(_overlayEntry);
+          _controller.forward();
+        },
+        child: Container(
+          key: _key,
+          decoration: BoxDecoration(
+            color: Theme.of(context).indicatorColor,
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+          height: 40.0,
+          width: 140.0,
+          child: Center(
+            child: Text(
+              'Add Project',
+              style: const TextStyle(color: Colors.black, fontSize: 19),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),
