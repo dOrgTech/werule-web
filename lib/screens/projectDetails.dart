@@ -207,7 +207,7 @@ body:Container(
                                  fontWeight: FontWeight.normal),),
                                ),
                              const SizedBox(height: 8,),
-                               Padding(
+                               Padding( 
                                padding: const EdgeInsets.only(left:28.0),
                                child: Text(widget.project.amountInEscrow!.toString()+".000000 USDT", style: TextStyle(fontSize: 25, fontWeight: FontWeight.normal),),
                              ),

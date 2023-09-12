@@ -72,16 +72,16 @@ class _MyHomePageState extends State<MyHomePage> {
  
     return Scaffold(
       // body: ExecuteLambda()
-      // body: Explorer()
+      body: Explorer()
       // body: SetParty()
       // body:NewGenericProject()
-      body: ProjectDetails(project:   Project( 
-   name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
-   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
-   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Pending"
-  ),)
+  //     body: ProjectDetails(project:  Project( 
+  //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
+  //  description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
+  //  client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
+  //  terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+  //  status:"Pending"
+  // ),)
     );
   }
 }
