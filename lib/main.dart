@@ -11,6 +11,7 @@ import 'package:homebase/widgets/executeLambda.dart';
 import 'package:homebase/widgets/menu.dart';
 import 'package:homebase/widgets/newGenericProject.dart';
 import 'package:homebase/widgets/newProject.dart';
+import 'package:homebase/widgets/setParty.dart';
 
 import 'screens/proposalDetails.dart';
 
@@ -72,14 +73,14 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       // body: ExecuteLambda()
       // body: Explorer()
-      // body: Projects()
+      // body: SetParty()
       // body:NewGenericProject()
-      body: ProjectDetails(project:   Project(
-   name: "Engagement with another DAO" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
-   description: "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all...",
+      body: ProjectDetails(project:   Project( 
+   name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
+   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
    client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Ongoing"
+   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+   status:"Pending"
   ),)
     );
   }

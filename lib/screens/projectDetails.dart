@@ -38,6 +38,12 @@ class _ProjectDetailsState extends State<ProjectDetails> {
   List<Widget> closedProjectFunctions=[
     functionItem("Withdraw/Reinburse", "Anyone", "withdraw"),
   ];
+  
+  List<Widget> pendingProjectFunctions=[
+    functionItem("Withdraw/Reinburse", "Author", "withdraw"),
+    functionItem("Sign Contract", "Contractor", "withdraw"),
+  ];
+  
 
 
 return  
@@ -45,15 +51,15 @@ Scaffold(
 appBar: const TopMenu(),
 body:Container(
           alignment: Alignment.topCenter,
-                     
           child: ListView(
             shrinkWrap: true, // Set this property to true
             children: [
               Column( // Start of Column
                 crossAxisAlignment: CrossAxisAlignment.center, // Set this property to center the items horizontally
+                mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically
                 children: [
-                   const SizedBox(height: 20,),
+                  
               Container(
                  constraints: const BoxConstraints(maxWidth: 1200),
                 height: 240,
@@ -63,26 +69,15 @@ body:Container(
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                        SizedBox(height: 40),
-              
+                  // SizedBox(height: 40),
                     Padding(
                      padding: EdgeInsets.all(8.0),
                      child: Text(widget.project!.name!.toString(), 
                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
-                     
                         ),
-                      Row(
-                        children: [
-                          Text(
-       "Created on: ${DateFormat.yMMMd().format(widget.project.creationDate!)}",
-       style: TextStyle(fontSize: 16, color: Colors.grey),
-     ),
-       const SizedBox(width: 10),
-                  StatusBox(project: widget.project)
-                  ],
-                  ),
-                    Container(
+                 Container(
                   constraints: const BoxConstraints(
                     maxWidth: 450,
                   ),
@@ -94,77 +89,90 @@ body:Container(
                 ),
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top:35.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                        height: 40,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                       SizedBox(height: 40,
+                       width: 500,
                          child: Center(
                            child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text("Author Address: "),
-                                  Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
-                                  const SizedBox(width: 2,),
-                                  TextButton(
-                                    onPressed: (){},
-                                    child: const Icon(Icons.copy)),
-                                ],
-                              ),
-                         ),
-                       ),
-                      SizedBox(
-                        height: 40,
-                         child: Center(
-                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text("Other Party Address: "),
-                                  Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
-                                  const SizedBox(width: 2,),
-                                  TextButton(
-                                    onPressed: (){},
-                                    child: const Icon(Icons.copy)),
-                                ],
-                              ),
-                         ),
-                       ),
-                        SizedBox(
-                        height: 40,
-                         child: Center(
-                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text("Arbiter Address: "),
-                                  Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
-                                  const SizedBox(width: 2,),
-                                  TextButton(
-                                    onPressed: (){},
-                                    child: const Icon(Icons.copy)),
-                                ],
-                              ),
-                         ),
-                       ),
-                       SizedBox(
-                        height: 40,
-                         child: Center(
-                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text("Terms of Engagement: "),
-                                  Text("https://ipfs/QmNrgEMcUygbKzZe...", style: TextStyle(fontSize: 11),),
-                                  const SizedBox(width: 2,),
-                                  TextButton(
-                                    onPressed: (){},
-                                    child: const Icon(Icons.copy)),
-                                ],
+                         mainAxisAlignment:   widget.project.status=="Dispute"?
+                               MainAxisAlignment.spaceBetween:
+                               MainAxisAlignment.end, 
+                              children: [
+                                Text("Created: ${DateFormat.yMMMd().format(widget.project.creationDate!)}    ",style: const TextStyle(fontSize: 13),),
+                                widget.project.status=="Dispute"? Text("Expires: ${DateFormat.yMMMd().format(widget.project.expiresAt!)}",style: TextStyle(fontSize: 13)):Text(""),
+                                StatusBox(project: widget.project)
+                              ],
                             ),
                          ),
                        ),
-                  ],),
-                )
+                    SizedBox(
+                      height: 40,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Author Address: "),
+                                Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                                const SizedBox(width: 2,),
+                                TextButton(
+                                  onPressed: (){},
+                                  child: const Icon(Icons.copy)),
+                              ],
+                            ),
+                       ),
+                     ),
+                    SizedBox(
+                      height: 40,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Other Party Address: "),
+                                Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                                const SizedBox(width: 2,),
+                                TextButton(
+                                  onPressed: (){},
+                                  child: const Icon(Icons.copy)),
+                              ],
+                            ),
+                       ),
+                     ),
+                      SizedBox(
+                      height: 40,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Arbiter Address: "),
+                                Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                                const SizedBox(width: 2,),
+                                TextButton(
+                                  onPressed: (){},
+                                  child: const Icon(Icons.copy)),
+                              ],
+                            ),
+                       ),
+                     ),
+                     SizedBox(
+                      height: 40,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Terms of Engagement: "),
+                                Text("https://ipfs/QmNrgEMcUygbKzZe...", style: TextStyle(fontSize: 11),),
+                                const SizedBox(width: 2,),
+                                TextButton(
+                                  onPressed: (){},
+                                  child: const Icon(Icons.copy)),
+                              ],
+                          ),
+                       ),
+                     ),
+                ],)
                 ],
                 ),
               ),
@@ -192,7 +200,9 @@ body:Container(
                                children: [
                                  Padding(
                                  padding: const EdgeInsets.only(left:28.0),
-                                 child: Text("Funds in Escrow", style: TextStyle(fontSize: 17, 
+                                 child: Text(
+                                  widget.project.status=="Pending"||widget.project.status=="Pending"?
+                                  "Funds in Contract":"Funds in Escrow", style: TextStyle(fontSize: 17, 
                                  color: Theme.of(context).indicatorColor,
                                  fontWeight: FontWeight.normal),),
                                ),
@@ -258,21 +268,20 @@ body:Container(
                            openProjectFunctions:
                            widget.project!.status=="Closed"?
                            closedProjectFunctions:
+                           widget.project!.status=="Pending"?
+                           pendingProjectFunctions:
                            disputedProjectFunctions  
                          ),
-                         SizedBox(height: 40),
+                    SizedBox(height: 40),
                    ],
                  ),
                 ),
                ),
-                  
-             
                SizedBox(height: 40),
              Text("Implementation:"),
                SizedBox(height: 10),
                Container(
                 alignment: Alignment.topCenter,
-                
                 constraints: const BoxConstraints(maxWidth: 1200),
                padding: EdgeInsets.all(11),
                decoration: BoxDecoration(color: Color(0xff121416)),child:Align(

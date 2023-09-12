@@ -106,7 +106,7 @@ class _NewProjectState extends State<NewProject> {
                   width:430,
                   child: TextField(
                     onChanged: (value) {
-                      widget.project.link=value;
+                      widget.project.terms=value;
                     },
                     style: const TextStyle(fontSize: 13),
                     decoration:  InputDecoration(

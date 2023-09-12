@@ -17,20 +17,20 @@ const String escape = '\uE00C';
 
 
 
-class NewGenericProject extends StatefulWidget {
+class SetParty extends StatefulWidget {
 bool loading=false;
 bool done=false;
 bool error=false;
 Project project=Project();
 
 // ignore: use_key_in_widget_constructors
-NewGenericProject() ;
+SetParty() ;
 
   @override
-  _NewGenericProjectState createState() => _NewGenericProjectState();
+  _SetPartytate createState() => _SetPartytate();
 }
 int pmttoken=0;
-class _NewGenericProjectState extends State<NewGenericProject> {
+class _SetPartytate extends State<SetParty> {
   
   @override
   Widget build(BuildContext context) {

@@ -4,39 +4,44 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:homebase/widgets/cutie.dart';
 import 'package:homebase/widgets/hovermenu.dart';
 import 'package:homebase/widgets/projectCard.dart';
-
 import '../entities/project.dart';
 import '../widgets/menu.dart';
-
-
 List<Project> projects=[
   Project(
    name: "Sample project" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
    description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
    client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+   terms: "",
+   requirements:"",
    status:"Open"
   ),
   Project(
    name: "Engagement with another DAO" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
    description: "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all...",
    client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
    status:"Ongoing"
   ),
   Project(
    name: "Sample project" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
    description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
    client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
    status:"Dispute"
   ),
    Project( 
    name: "Research decentralized inference" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
    description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
    client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
    status:"Closed"
+  ),
+   Project( 
+   name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
+   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
+   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
+   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+   status:"Pending"
   ),
 ];
 List<Widget> projectCards=[];
@@ -46,7 +51,6 @@ String? selectedNewProject="Open to proposals";
   final List<String> projectTypes = ['Open to proposals', 'Set parties','Import project'];
 class Projects extends StatefulWidget {
   const Projects({super.key});
-
   @override
   State<Projects> createState() {
     return  _ProjectsState();
@@ -78,7 +82,7 @@ class _ProjectsState extends State<Projects> {
                 children: [
              const     SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 9),
                        height: 46, 
                        width: double.infinity,
                         constraints: BoxConstraints(maxWidth: 1200),
@@ -136,31 +140,9 @@ class _ProjectsState extends State<Projects> {
                         HoverExpandWidget(),
 
 
-                          //             Cutie(
-                          // title: "Add project",
-                          // treburi: [
-                          //   [
-                          //     "Open to proposals",
-                          //     "Post a definition of your wanted deliverable.",
-                          //     0.0,
-                          //     "/projects/atn"
-                          //   ],
-                          //   [
-                          //     "Set parties",
-                          //     "Formalize an existing agreement",
-                          //     0.0,
-                          //     "/projects/pstaking"
-                          //   ],
-                          //   [
-                          //     "Import project",
-                          //     "from legacy justice providers.",
-                          //     0.0,
-                          //     "/projects/deem"
-                          //   ],
-                          // ],
-                          // desc: "What we do with the oracle earnings."),
+                      
                       SizedBox(
-                        width: 50,
+                        width: 10,
                       ),
                                     ],
                                   ),
@@ -176,8 +158,8 @@ class _ProjectsState extends State<Projects> {
                     width: double.infinity,
                         constraints: BoxConstraints(maxWidth: 1200),
                      child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 14,
+                      runSpacing: 14,
                       alignment: WrapAlignment.start,
                       children: projectCards as List<Widget>,
                      ),
