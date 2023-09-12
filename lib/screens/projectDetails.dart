@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_circle_chart/flutter_circle_chart.dart';
 import 'package:homebase/screens/proposalDetails.dart';
+import 'package:homebase/widgets/projectCard.dart';
+import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 import '../entities/project.dart';
@@ -17,7 +19,27 @@ class ProjectDetails extends StatefulWidget {
 class _ProjectDetailsState extends State<ProjectDetails> {
   @override
   Widget build(BuildContext context) {
-    
+
+ List<Widget> openProjectFunctions=[
+    functionItem("Send Funds to Project", "Anyone", "sendFunds"),
+    functionItem("Set other party", "Author", "setParty"),
+    functionItem("Withdraw/Reinburse", "Author", "withdraw"),
+  ];
+  List<Widget> ongoingProjectFunctions=[
+    functionItem("Send Funds to Project", "Anyone", "sendFunds"),
+    functionItem("Dispute Project", "Parties", "dispute"),
+    functionItem("Release funds to contractor", "Author", "re;ease"),
+  ];
+  List<Widget> disputedProjectFunctions=[
+    functionItem("Award all funds to Contractor", "Arbiter", "awardContractor"),
+    functionItem("Reinburse all Project backers", "Arbiter", "award"),
+    functionItem("Split funds between Parties", "Arbiter", "sendFunds"),
+  ];
+  List<Widget> closedProjectFunctions=[
+    functionItem("Withdraw/Reinburse", "Anyone", "withdraw"),
+  ];
+
+
 return  
 Scaffold(
 appBar: const TopMenu(),
@@ -44,60 +66,46 @@ body:Container(
                   children: [
                         SizedBox(height: 40),
               
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                         Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(widget.project!.name!.toString(), 
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
-                          
+                    Padding(
+                     padding: EdgeInsets.all(8.0),
+                     child: Text(widget.project!.name!.toString(), 
+                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
+                     
                         ),
-                        const SizedBox(width: 10),
-                       Opacity(
-                              opacity: 0.7,
-                               child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                                  color:Theme.of(context).indicatorColor,
-                                ),
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.all(3),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal:2.0),
-                                  child: Text("ONGOING", style: TextStyle(color:Colors.black),),
-                                )
-                               ),
-                             ),
-                      ],
+                      Row(
+                        children: [
+                          Text(
+       "Created on: ${DateFormat.yMMMd().format(widget.project.creationDate!)}",
+       style: TextStyle(fontSize: 16, color: Colors.grey),
+     ),
+       const SizedBox(width: 10),
+                  StatusBox(project: widget.project)
+                  ],
+                  ),
+                    Container(
+                  constraints: const BoxConstraints(
+                    maxWidth: 450,
+                  ),
+                  padding: const EdgeInsets.all(18.0),
+                  child: const Text(
+                    "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all the details needed for executing the task and making a judgement on the state of the project.",
+                    textAlign: TextAlign.center,
                     ),
-                    
-                       Container(
-                      constraints: const BoxConstraints(
-                        maxWidth: 450,
-                      ),
-                      padding: const EdgeInsets.all(18.0),
-                      child: const Text(
-                        "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all the details needed for executing the task and making a judgement on the state of the project.",
-                        textAlign: TextAlign.center,
-                        ),
-                    ),
+                ),
                   ],
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top:35.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    
                     children: [
-                      
                       SizedBox(
                         height: 40,
                          child: Center(
                            child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text("DAO Address: "),
+                                  Text("Author Address: "),
                                   Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
                                   const SizedBox(width: 2,),
                                   TextButton(
@@ -113,7 +121,7 @@ body:Container(
                            child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text("Client Address: "),
+                                  Text("Other Party Address: "),
                                   Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
                                   const SizedBox(width: 2,),
                                   TextButton(
@@ -239,143 +247,18 @@ body:Container(
                                height: 18,)),
                          ),
                          const SizedBox(height: 37,),
-                         widget.project!.status=="Ongoing"?   Wrap(
-                           runAlignment: WrapAlignment.center,
-                           spacing: 40,
-                           runSpacing: 40,
-                           children: [
-                             TextButton(
-                               onPressed: (){},
-                               child: Container(
-                                 width: 410,
-                                 height:146,
-                               decoration: BoxDecoration(
-                                 color: Color(0x31000000),
-                                 border: Border.all(width: 1, color:  Color(0x2111111))
-                               ),
-                               padding: EdgeInsets.all(50),
-                               child: Column(
-                                 children: [
-                                   SizedBox(
-                                     width: 390,
-                                     child: const  Text("Release funds to DAO (client only)",
-                                     style: TextStyle(fontSize: 19), 
-                                       ),
-                                   ),
-                                  
-                                
-                                 ],
-                               ),
-                                                         ),
-                             ),
-                          TextButton(
-                               onPressed: (){},
-                             child: Container(
-                               width: 410, height:146,
-                               decoration: BoxDecoration(
-                                 color: Color(0x31000000),
-                                 border: Border.all(width: 1, color:  Color(0x2111111))
-                               ),
-                               padding: EdgeInsets.all(50),
-                               child: Column(
-                                 children: [
-                                   SizedBox(
-                                     width: 360,
-                                     child: Center(
-                                       child: const  Text("Send funds into escrow",
-                                       style: TextStyle(fontSize: 19), 
-                                         ),
-                                     ),
-                                   ),
-                                  
-                                  
-                                 ],
-                               ),
-                             ),
-                           ),
-                              TextButton(
-                               onPressed: (){},
-                             child: Container(
-                               width: 410, height:146,
-                               decoration: BoxDecoration(
-                                 color: Color(0x31000000),
-                                 border: Border.all(width: 1, color:  Color(0x2111111))
-                               ),
-                               padding: EdgeInsets.all(50),
-                               child: Column(
-                                 children: [
-                                   SizedBox(
-                                     width: 360,
-                                     child: Center(
-                                       child: const  Text("Throw project into arbitration (client only)",
-                                       style: TextStyle(fontSize: 19), 
-                                         ),
-                                     ),
-                                   ),
-                                 ],
-                               ),
-                             ),
-                           ),
-                           
-                           ],
-                         ):
                           Wrap(
                            runAlignment: WrapAlignment.center,
                            spacing: 40,
                            runSpacing: 40,
-                           children: [
-                             TextButton(
-                               onPressed: (){},
-                               child: Container(
-                                 width: 410,
-                                 height:146,
-                               decoration: BoxDecoration(
-                                 color: Color(0x31000000),
-                                 border: Border.all(width: 1, color:  Color(0x2111111))
-                               ),
-                               padding: EdgeInsets.all(50),
-                               child: Column(
-                                 children: [
-                                   SizedBox(
-                                     width: 390,
-                                     child: const  Text("Release funds to DAO (arbiter only)",
-                                     style: TextStyle(fontSize: 19), 
-                                       ),
-                                   ),
-                                  
-                                
-                                 ],
-                               ),
-                                                         ),
-                             ),
-                          TextButton(
-                               onPressed: (){},
-                             child: Container(
-                               width: 410, height:146,
-                               decoration: BoxDecoration(
-                                 color: Color(0x31000000),
-                                 border: Border.all(width: 1, color:  Color(0x2111111))
-                               ),
-                               padding: EdgeInsets.all(50),
-                               child: Column(
-                                 children: [
-                                   SizedBox(
-                                     width: 360,
-                                     child: Center(
-                                       child: const  Text("Return funds to senders (arbiter only)",
-                                       style: TextStyle(fontSize: 19), 
-                                         ),
-                                     ),
-                                   ),
-                                  
-                                  
-                                 ],
-                               ),
-                             ),
-                           ),
-                           
-                           
-                           ],
+                           children:
+                           widget.project!.status=="Ongoing"?
+                           ongoingProjectFunctions:
+                           widget.project!.status=="Open"?
+                           openProjectFunctions:
+                           widget.project!.status=="Closed"?
+                           closedProjectFunctions:
+                           disputedProjectFunctions  
                          ),
                          SizedBox(height: 40),
                    ],
@@ -401,4 +284,55 @@ body:Container(
             ],
           )));
   }
+
+  Widget functionItem(String title, String access, target )
+          {
+            return InkWell(
+              onTap: () {
+                print("TAP on card "+target!.toString());
+              },
+              child: Container(
+                    width: 410, height:146,
+                    decoration: BoxDecoration(
+                      color: Color(0x31000000),
+                      border: Border.all(width: 1, color:  Color(0x2111111))
+                    ),
+                    padding: EdgeInsets.all(10),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 40),
+                        SizedBox(
+                          width: 360,
+                          child: Center(
+                            child: Text(title,
+                            style: TextStyle(fontSize: 20), 
+                            textAlign: TextAlign.center,
+                              ),
+                          )
+                        ),                   
+                        SizedBox(height: 30),
+                          Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("Can be called by: ",style: 
+                              TextStyle(
+                                fontSize: 13,)),
+                              Text(access, style: 
+                              TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context).indicatorColor)
+                              ,),
+                            ],
+                          )
+                      ],
+                    ),
+                  ),
+    );
+    
+  }
+
+ 
+
 }
+
+

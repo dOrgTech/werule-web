@@ -156,7 +156,7 @@ class _NewGenericProjectState extends State<NewGenericProject> {
             maxLength: 200,
             maxLines: 4,
             decoration: const InputDecoration(
-              hintText: 'A few words about the project',
+              hintText: 'Brief description of the project. Include specific technologies that will be used so they may show up if someone searches for them.',
             ),
             onChanged: (value) {
               widget.project.description = value;

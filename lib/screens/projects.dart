@@ -15,7 +15,7 @@ List<Project> projects=[
    description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
    client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
    link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Ongoing"
+   status:"Open"
   ),
   Project(
    name: "Engagement with another DAO" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
@@ -31,12 +31,18 @@ List<Project> projects=[
    link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
    status:"Dispute"
   ),
+   Project( 
+   name: "Research decentralized inference" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
+   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
+   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
+   link: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+   status:"Closed"
+  ),
 ];
 List<Widget> projectCards=[];
 String? selectedStatus = 'All';
 String? selectedNewProject="Open to proposals";
-  final List<String> statuses = ['All', 'Ongoing', 
-  'Active dispute', 'Closed after dispute','Closed without dispute'];
+  final List<String> statuses = ['All', 'Open', 'Ongoing','Dispute',"Closed"];
   final List<String> projectTypes = ['Open to proposals', 'Set parties','Import project'];
 class Projects extends StatefulWidget {
   const Projects({super.key});
@@ -53,7 +59,7 @@ class _ProjectsState extends State<Projects> {
     projectCards=[];
     super.initState();
      for (Project p in projects){
-      projectCards.add(ProjectCard(project:p));
+      projectCards.add(ProjectCard(project:p));   
     }
   }
   @override
@@ -101,7 +107,6 @@ class _ProjectsState extends State<Projects> {
                                 ),
                               ),
                             ),
-                         
                             Row(
                               children: [
                                 const Text("Status:"),
@@ -126,7 +131,7 @@ class _ProjectsState extends State<Projects> {
                                   padding:  EdgeInsets.only(right:8.0),
                                   child: Row(
                                     children:   [
-                                     Text("3 Projects"),
+                                     Text(projects.length.toString()+" Projects"),
                                       SizedBox(width: 60),
                         HoverExpandWidget(),
 

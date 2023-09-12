@@ -38,6 +38,7 @@ dependencies:
   hooks_riverpod:
   flutter_circle_chart: ^1.0.0
   beamer: 
+  intl:
   riverpod:
   toggle_switch: ^2.1.0
   url_launcher:

@@ -6,6 +6,8 @@ class HoverExpandWidget extends StatefulWidget {
   _HoverExpandWidgetState createState() => _HoverExpandWidgetState();
 }
 int? _hoveredIndex;
+int?_hover ;
+final ValueNotifier<int?> _hoverNotifier = ValueNotifier<int?>(null);
 
 class _HoverExpandWidgetState extends State<HoverExpandWidget>
     with TickerProviderStateMixin {
@@ -58,11 +60,10 @@ class _HoverExpandWidgetState extends State<HoverExpandWidget>
 Widget _overlayBuilder(BuildContext context) {
   final RenderBox box = _key.currentContext!.findRenderObject() as RenderBox;
   final Offset position = box.localToGlobal(Offset.zero);
-
   final options = [
-    ["Generic", "Post a definition of your wanted deliverable."],
-    ["Set parties", "Formalize an existing agreement"],
-    ["Import project", "from legacy justice providers."],
+    ["Open", "Post a definition of your desired deliverable and receive proposals"],
+    ["Set parties", "Formalize an existing agreement between two parties"],
+    ["Import project", "Port over legal contracts from legacy governance providers"],
   ];
 
   return Positioned(
@@ -96,27 +97,27 @@ Widget _overlayBuilder(BuildContext context) {
           Color.fromARGB(255, 49, 172, 168).withOpacity(1.0), 
           Theme.of(context).canvasColor.withOpacity(0.95), 
           _controller.value,
-        ),
+          ),
                     borderRadius: BorderRadius.circular(5.0),
                     boxShadow: [
                       BoxShadow(
-                        color:Theme.of(context).indicatorColor,
-                        blurRadius: 9.0,
-                        spreadRadius: 0.6,
-                        offset: Offset(0.3, 0.5),
+                        color:Color(0xff2fa892),
+                        blurRadius: 5.0,
+                        spreadRadius: 0.3,
+                        offset: Offset(0.2, 0.3),
                       ),
                     ],
                   ),
                   width: _widthAnimation.value,
                   height: _sizeAnimation.value,
                   child: _controller.status == AnimationStatus.completed
-                      ? FadeTransition(
-                          opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                            CurvedAnimation(
-                              parent: _controller,
-                              curve: Interval(0.7, 1.0, curve: Curves.easeIn),
+                        ? FadeTransition(
+                            opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                              CurvedAnimation(
+                                parent: _controller,
+                                curve: Interval(0.7, 1.0, curve: Curves.easeIn),
+                              ),
                             ),
-                          ),
                           child: Column(
                             children: [
                               SizedBox(height: 8.0),
@@ -131,62 +132,83 @@ Widget _overlayBuilder(BuildContext context) {
                               ),
                               Divider(color: Theme.of(context).indicatorColor, thickness: 1),
                               Expanded(
-                                child: ListView.builder(
-                                  padding: EdgeInsets.all(8.0),
-                                  itemCount: options.length,
-                                  itemBuilder: (context, index) {
-                                    return TextButton(
-                                      
-                                      style: ButtonStyle(
-                                        minimumSize: MaterialStateProperty.all(Size(double.infinity, 100)),
-                                        elevation: MaterialStatePropertyAll(0.17),
-                                        
-                                        shadowColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor),
-                                       backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                                    (Set<MaterialState> states) {
-                                      if (states.contains(MaterialState.hovered))
-                                      return Theme.of(context).indicatorColor.withOpacity(0.01); // Replace with your default color
-                                        return Theme.of(context).canvasColor; // Replace with your hover color
-                                    },
-                                      )),
-                                      onPressed: () async {
-                                        print('${options[index][0]} clicked');
-                                        _controller.reverse();  
-                                       showDialog(context: context, builder: (context)=>AlertDialog(
-                                        content: Container(
-                                        width: 900,
-                                        height: 500,
-                                          child: NewGenericProject())));
-                                        
-                                        await _fadeOutController.forward();
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              options[index][0],
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w100,
-                                              ),
-                                            ),
-                                            SizedBox(height: 4.0),
-                                            Text(
-                                              options[index][1],
-                                              style: TextStyle(
-                                                color: Theme.of(context).indicatorColor,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                                child:ListView.builder(
+  padding: EdgeInsets.all(8.0),
+  itemCount: options.length,
+  itemBuilder: (context, index) {
+    return InkWell(
+      onHover: (isHovered) {
+        setState(() {
+          _hover = isHovered ? index : null;
+        });
+        _hoverNotifier.value = _hover;
+      },
+      child: ValueListenableBuilder<int?>(
+        valueListenable: _hoverNotifier,
+        builder: (context, value, child) {
+          return TextButton(
+            style: ButtonStyle(
+              minimumSize: MaterialStateProperty.all(Size(double.infinity, 100)),
+              elevation: MaterialStatePropertyAll(0.17),
+              shadowColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor),
+              backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.hovered))
+                    return Color(0x000d2b26);
+                  return Theme.of(context).canvasColor;
+                },
+              ),
+            ),
+            onPressed: () async {
+              print('${options[index][0]} clicked');
+              _controller.reverse();  
+              showDialog(
+                context: context, 
+                builder: (context) => AlertDialog(
+                  content: Container(
+                    width: 900,
+                    height: 500,
+                    child: NewGenericProject()
+                  )
+                )
+              );
+              await _fadeOutController.forward();
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    options[index][0],
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w100,
+                    ),
+                  ),
+                  SizedBox(height: 4.0),
+                 ValueListenableBuilder<int?>(
+  valueListenable: _hoverNotifier,
+  builder: (context, hoveredIndex, child) {
+    return Text(
+                      options[index][1],
+                      style: TextStyle(
+                        color:Theme.of(context).indicatorColor,
+                        fontSize: 14
+    ));
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  },
+),
+
                               ),
                             ],
                           ),
