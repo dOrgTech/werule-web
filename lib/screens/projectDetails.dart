@@ -124,6 +124,8 @@ body:Container(
                             ),
                        ),
                      ),
+                widget.project.status=="Ongoing" || widget.project.status=="Dispute" || widget.project.status=="Closed"  || widget.project.status=="Pending" 
+                     ?
                     SizedBox(
                       height: 40,
                        child: Center(
@@ -139,7 +141,9 @@ body:Container(
                               ],
                             ),
                        ),
-                     ),
+                     ):SizedBox(),
+                      widget.project.status=="Ongoing" || widget.project.status=="Dispute" || widget.project.status=="Closed"  || widget.project.status=="Pending" 
+                     ?
                       SizedBox(
                       height: 40,
                        child: Center(
@@ -155,14 +159,17 @@ body:Container(
                               ],
                             ),
                        ),
-                     ),
+                     ):SizedBox(),
                      SizedBox(
                       height: 40,
                        child: Center(
                          child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text("Terms of Engagement: "),
+                                Text(
+                                widget.project.status=="Ongoing" || widget.project.status=="Dispute" || widget.project.status=="Closed"  || widget.project.status=="Pending" 
+                     ?   
+                                  "Terms of Engagement: ":"Requirements: "),
                                 Text("https://ipfs/QmNrgEMcUygbKzZe...", style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(

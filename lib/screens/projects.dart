@@ -47,7 +47,7 @@ List<Project> projects=[
 List<Widget> projectCards=[];
 String? selectedStatus = 'All';
 String? selectedNewProject="Open to proposals";
-  final List<String> statuses = ['All', 'Open', 'Ongoing','Dispute',"Closed"];
+  final List<String> statuses = ['All', 'Open', 'Ongoing','Dispute',"Pending","Closed"];
   final List<String> projectTypes = ['Open to proposals', 'Set parties','Import project'];
 class Projects extends StatefulWidget {
   const Projects({super.key});
