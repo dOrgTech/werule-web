@@ -8,6 +8,7 @@ import 'package:toggle_switch/toggle_switch.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../screens/projects.dart';
+import '../screens/users.dart';
 
 int status=0;
 class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
@@ -77,18 +78,18 @@ class _TopMenuState extends State<TopMenu> {
               
               child: ToggleSwitch(
                 initialLabelIndex: status,
-                totalSwitches: 2,
+                totalSwitches: 3,
                 minWidth: 120,
                 borderWidth: 1.5,
                 activeBgColor: [Theme.of(context).cardColor],
                 inactiveBgColor: Theme.of(context).canvasColor,
                 borderColor: [Theme.of(context).cardColor],
-                labels: ['DAOs', 'Projects'],
+                labels: ['DAOs','Projects','Users'],
                 onToggle: (index) {
                   print('switched to: $index');
                   Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (BuildContext context) => index==0?Explorer():Projects(),
+                builder: (BuildContext context) => index==0?Explorer():index==1?Projects():Users()
               ),
             );
             setState(() {
@@ -122,11 +123,8 @@ class _TopMenuState extends State<TopMenu> {
                   ],
                 ),
               ),
-      
              ],
-           ),     
-          
-          
+           ), 
           actions: <Widget>[
             Padding(
               padding: const EdgeInsets.only(top:1.0),

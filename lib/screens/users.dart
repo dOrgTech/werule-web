@@ -6,63 +6,26 @@ import 'package:homebase/widgets/hovermenu.dart';
 import 'package:homebase/widgets/projectCard.dart';
 import '../entities/project.dart';
 import '../widgets/menu.dart';
-List<Project> projects=[
-  Project(
-   name: "Sample project" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
-   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
-   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   terms: "",
-   requirements:"",
-   status:"Open"
-  ),
-  Project(
-   name: "Engagement with another DAO" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
-   description: "This is the description of the Project. Doesn't need to be super long cause we also link the Terms (on the right) and that should contain all...",
-   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Ongoing"
-  ),
-  Project(
-   name: "Sample project" ,arbiter: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c",
-   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
-   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Dispute"
-  ),
-   Project( 
-   name: "Research decentralized inference" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
-   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
-   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Closed"
-  ),
-   Project( 
-   name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
-   description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
-   client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-   terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-   status:"Pending"
-  ),
-];
+List users=[];
 List<Widget> projectCards=[];
 String? selectedStatus = 'All';
 String? selectedNewProject="Open to proposals";
   final List<String> statuses = ['All', 'Open', 'Ongoing','Dispute',"Pending","Closed"];
   final List<String> projectTypes = ['Open to proposals', 'Set parties','Import project'];
-class Projects extends StatefulWidget {
-  const Projects({super.key});
+class Users extends StatefulWidget {
+  const Users({super.key});
   @override
-  State<Projects> createState() {
-    return  _ProjectsState();
+  State<Users> createState() {
+    return  _UsersState();
   }
 }
 
-class _ProjectsState extends State<Projects> {
+class _UsersState extends State<Users> {
   @override
   void initState() {
     projectCards=[];
     super.initState();
-     for (Project p in projects){
+     for (Project p in users){
       projectCards.add(ProjectCard(project:p));   
     }
   }
@@ -135,7 +98,7 @@ class _ProjectsState extends State<Projects> {
                                   padding:  EdgeInsets.only(right:8.0),
                                   child: Row(
                                     children:   [
-                                     Text(projects.length.toString()+" Projects"),
+                                     Text(users.length.toString()+" Users"),
                                       SizedBox(width: 60),
                         HoverExpandWidget(),
 

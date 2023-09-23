@@ -4,37 +4,42 @@ import 'dart:isolate';
 import 'dart:html' as html;
 import 'package:beamer/beamer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homebase/entities/token.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';  // Import this for TextInputFormatter
 
 import '../entities/project.dart';
 const String escape = '\uE00C';
 
-
-
-
-class SetParty extends StatefulWidget {
+class Withdraw extends StatefulWidget {
 bool loading=false;
 bool done=false;
 bool error=false;
 Project project=Project();
 
 // ignore: use_key_in_widget_constructors
-SetParty() ;
+Withdraw() ;
 
   @override
-  SetPartytate createState() => SetPartytate();
+  WithdrawState createState() => WithdrawState();
 }
 int pmttoken=0;
-class SetPartytate extends State<SetParty> {
-  
+class WithdrawState extends State<Withdraw> {
+  String? selectedToken;
+  String? selectedAddress;
+  TextEditingController amountController = TextEditingController();
+  String amount="";
   @override
   Widget build(BuildContext context) {
     
-    List<DropdownMenuItem<int>> paymentTokens=[];
+    List<String> paymentTokens=[];
+    for (Token t in widget.project.acceptedTokens!){
+      paymentTokens.add(t.symbol +" ("+t.name+")");}
     return
     Container(
+      width: 650,
           padding: const EdgeInsets.symmetric(horizontal: 60),
           decoration: BoxDecoration(
             border: Border.all(
@@ -43,32 +48,20 @@ class SetPartytate extends State<SetParty> {
             ),
           ),
           // width: MediaQuery.of(context).size.width*0.7,
-          height:450,
+          height:650,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-             
-            const  SizedBox(
-                width: 360,
-                child: Text("Set Other Party",
-                textAlign: TextAlign.center,
-                 style: TextStyle(fontSize: 19), 
-                  ),
+          const  Text("Withdraw funds from project",
+            textAlign: TextAlign.center,
+             style: TextStyle(fontSize: 19), 
               ),
-             
-            SizedBox(
-              width:450,
-              child: TextField(
-                onChanged: (value) {
-                  widget.project.terms=value;
-                },
-                style: const TextStyle(fontSize: 13),
-                decoration:  const InputDecoration(
-                  labelText: "Other party address",
-                  hintText: 'Cannot be changed after submitting.'),),
+            SizedBox(width: 380,
+            child:Text("This action will drain the contract and send all funds back to the project backers."
+            ,style: TextStyle(color: Theme.of(context).indicatorColor),
+            )
             ),
-          //  const SizedBox(height: 90),
             Padding(
               padding: const EdgeInsets.only(top:58),
               child: SizedBox(
@@ -86,16 +79,7 @@ class SetPartytate extends State<SetParty> {
                     ),
                   ),
                   onPressed: ()async{
-            
-                    // setState(() {widget.loading=true;});
-                    // String projectAddress=await createClientProject(
-                    //   widget.project,
-                    //   this,
-                     
-                    //   );
-                    //   receivePort.listen((message) {
-                    //   projectAddress=message;
-                    // //  });               
+                        
                     Navigator.of(context).pop();
                   },
                    child: const Center(
@@ -109,9 +93,6 @@ class SetPartytate extends State<SetParty> {
     );
 
   }
-
-  bool pressedName = false;
-  bool pressedDesc = false;
 
  
 }

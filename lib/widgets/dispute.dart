@@ -4,37 +4,40 @@ import 'dart:isolate';
 import 'dart:html' as html;
 import 'package:beamer/beamer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homebase/entities/token.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';  // Import this for TextInputFormatter
 
 import '../entities/project.dart';
 const String escape = '\uE00C';
 
-
-
-
-class SetParty extends StatefulWidget {
+class Dispute extends StatefulWidget {
 bool loading=false;
 bool done=false;
 bool error=false;
 Project project=Project();
 
 // ignore: use_key_in_widget_constructors
-SetParty() ;
-
+Dispute() ;
   @override
-  SetPartytate createState() => SetPartytate();
+  DisputeState createState() => DisputeState();
 }
 int pmttoken=0;
-class SetPartytate extends State<SetParty> {
-  
+class DisputeState extends State<Dispute> {
+  String? selectedToken;
+  String? selectedAddress;
+  TextEditingController amountController = TextEditingController();
+  String amount="";
   @override
   Widget build(BuildContext context) {
-    
-    List<DropdownMenuItem<int>> paymentTokens=[];
+    List<String> paymentTokens=[];
+    for (Token t in widget.project.acceptedTokens!){
+      paymentTokens.add(t.symbol +" ("+t.name+")");}
     return
     Container(
+      width: 650,
           padding: const EdgeInsets.symmetric(horizontal: 60),
           decoration: BoxDecoration(
             border: Border.all(
@@ -43,32 +46,20 @@ class SetPartytate extends State<SetParty> {
             ),
           ),
           // width: MediaQuery.of(context).size.width*0.7,
-          height:450,
+          height:650,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-             
-            const  SizedBox(
-                width: 360,
-                child: Text("Set Other Party",
-                textAlign: TextAlign.center,
-                 style: TextStyle(fontSize: 19), 
-                  ),
+          const  Text("Initiate dispute",
+            textAlign: TextAlign.center,
+             style: TextStyle(fontSize: 19), 
               ),
-             
-            SizedBox(
-              width:450,
-              child: TextField(
-                onChanged: (value) {
-                  widget.project.terms=value;
-                },
-                style: const TextStyle(fontSize: 13),
-                decoration:  const InputDecoration(
-                  labelText: "Other party address",
-                  hintText: 'Cannot be changed after submitting.'),),
+            SizedBox(width: 380,
+            child:Text("This action will enable the Arbiter to distribute the funds in escrow to one or both parties at their discretion. If the Arbiter does not rule within 60 days, the funds will be accessible to the backers through the withdraw/reinburse function."
+            ,style: TextStyle(color: Theme.of(context).indicatorColor),
+            )
             ),
-          //  const SizedBox(height: 90),
             Padding(
               padding: const EdgeInsets.only(top:58),
               child: SizedBox(
@@ -86,16 +77,6 @@ class SetPartytate extends State<SetParty> {
                     ),
                   ),
                   onPressed: ()async{
-            
-                    // setState(() {widget.loading=true;});
-                    // String projectAddress=await createClientProject(
-                    //   widget.project,
-                    //   this,
-                     
-                    //   );
-                    //   receivePort.listen((message) {
-                    //   projectAddress=message;
-                    // //  });               
                     Navigator.of(context).pop();
                   },
                    child: const Center(
@@ -103,15 +84,11 @@ class SetPartytate extends State<SetParty> {
                 )),
               ),
             ),
-            
             ],
           )
     );
 
   }
-
-  bool pressedName = false;
-  bool pressedDesc = false;
 
  
 }

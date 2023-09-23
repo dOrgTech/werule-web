@@ -6,11 +6,13 @@ import 'package:homebase/screens/explorer.dart';
 import 'package:homebase/screens/projectDetails.dart';
 import 'package:homebase/screens/projects.dart';
 import 'package:homebase/utils/theme.dart';
+import 'package:homebase/widgets/arbitrate.dart';
 import 'package:homebase/widgets/daocard.dart';
 import 'package:homebase/widgets/executeLambda.dart';
 import 'package:homebase/widgets/menu.dart';
 import 'package:homebase/widgets/newGenericProject.dart';
 import 'package:homebase/widgets/newProject.dart';
+import 'package:homebase/widgets/sendfunds.dart';
 import 'package:homebase/widgets/setParty.dart';
 
 import 'screens/proposalDetails.dart';
@@ -73,15 +75,23 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       // body: ExecuteLambda()
       body: Explorer()
-      // body: SetParty()
-      // body:NewGenericProject()
-  //     body: ProjectDetails(project:  Project( 
+  //     body: Arbitrate(
+  //       project:  Project( 
   //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
   //  description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
   //  client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
   //  terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-  //  status:"Pending"
-  // ),)
+  //  status:"Disputed"
+  //       ))
+  //     // body: Center(child: SendFunds())
+  //     // body:NewGenericProject()
+  // //     body: ProjectDetails(project:  Project( 
+  // //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
+  // //  description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
+  // //  client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
+  // //  terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
+  // //  status:"Ongoing"
+  // // ),)
     );
   }
 }
