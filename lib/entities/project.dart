@@ -11,7 +11,7 @@ class Project{
   String ?arbiter;
   String? terms;
   String? requirements;
-  int? amountInEscrow;
+  double? amountInEscrow;
   String? status;
   List<Token>? acceptedTokens;
 

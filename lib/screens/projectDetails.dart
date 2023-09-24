@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_circle_chart/flutter_circle_chart.dart';
 import 'package:homebase/screens/proposalDetails.dart';
+import 'package:homebase/widgets/arbitrate.dart';
 import 'package:homebase/widgets/dispute.dart';
 import 'package:homebase/widgets/projectCard.dart';
 import 'package:homebase/widgets/release.dart';
@@ -36,9 +37,9 @@ class _ProjectDetailsState extends State<ProjectDetails> {
     functionItem("Release funds to contractor", "Author", Release()),
   ];
   List<Widget> disputedProjectFunctions=[
-    functionItem("Award all funds to Contractor", "Arbiter", "awardContractor"),
-    functionItem("Reinburse all Project backers", "Arbiter", "award"),
-    functionItem("Split funds between Parties", "Arbiter", SendFunds()),
+    // functionItem("Award all funds to Contractor", "Arbiter", Arbitrate(project:widget.project)),
+    // functionItem("Reinburse all Project backers", "Arbiter", Arbitrate(project:widget.project)),
+    functionItem("Arbitrate", "Arbiter", Arbitrate(project:widget.project)),
   ];
   List<Widget> closedProjectFunctions=[
     functionItem("Withdraw/Reinburse", "Anyone", Withdraw()),

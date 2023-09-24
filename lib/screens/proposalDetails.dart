@@ -27,7 +27,9 @@ class _ProposalDetailsState extends State<ProposalDetails> {
               SizedBox(height: 10),
               Align(
                 alignment: Alignment.topLeft,
-                child: TextButton(onPressed: (){}, child: Text("< Back to all proposals"))),
+                child: TextButton(onPressed: (){
+                  Navigator.pop(context);
+                }, child: Text("< Back to all proposals"))),
   //              Align(
                 
   //               alignment: Alignment.topLeft,

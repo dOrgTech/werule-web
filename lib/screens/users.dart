@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:homebase/main.dart';
 import 'package:homebase/widgets/cutie.dart';
 import 'package:homebase/widgets/hovermenu.dart';
 import 'package:homebase/widgets/projectCard.dart';
+import '../entities/human.dart';
 import '../entities/project.dart';
+import '../widgets/membersList.dart';
 import '../widgets/menu.dart';
-List users=[];
-List<Widget> projectCards=[];
-String? selectedStatus = 'All';
-String? selectedNewProject="Open to proposals";
-  final List<String> statuses = ['All', 'Open', 'Ongoing','Dispute',"Pending","Closed"];
-  final List<String> projectTypes = ['Open to proposals', 'Set parties','Import project'];
+import '../widgets/usercard.dart';
+
+List<Widget> userCards=[];
+var selectedStatus="";
+List<String> statuses=["Recently Active","Most Memberships","Most Reputation"];
 class Users extends StatefulWidget {
   const Users({super.key});
   @override
@@ -23,15 +25,15 @@ class Users extends StatefulWidget {
 class _UsersState extends State<Users> {
   @override
   void initState() {
-    projectCards=[];
+    userCards=[];
     super.initState();
-     for (Project p in users){
-      projectCards.add(ProjectCard(project:p));   
+     for (Human h in humans){
+      userCards.add(UserCard(human:h));   
     }
   }
+    int _selectedCardIndex = -1;
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       appBar: const TopMenu(),
       body: Container(
@@ -50,7 +52,7 @@ class _UsersState extends State<Users> {
                        width: double.infinity,
                         constraints: BoxConstraints(maxWidth: 1200),
                        child:  MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaleFactor: 0.8),child: Row(
+                 data: MediaQuery.of(context).copyWith(textScaleFactor: 0.8),child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                             Padding(
@@ -67,66 +69,76 @@ class _UsersState extends State<Users> {
                                          borderSide: BorderSide(width: 0.1),
                                       ),
                                     prefixIcon: Icon(Icons.search),
-                                    hintText: 'Search project',
+                                    hintText: 'Search user by address or alias',
                                     // other properties
                                   ),
                                   // other properties
                                 ),
                               ),
                             ),
-                            Row(
-                              children: [
-                                const Text("Status:"),
-                                        const SizedBox(width: 10),
-                                         DropdownButton<String>(
-                                               value: selectedStatus,
-                                               focusColor: Colors.transparent,
-                                               items: statuses.map((String value) {
-                                       return DropdownMenuItem<String>(
-                                         value: value,
-                                         child: Text(value),
-                                       );
-                                               }).toList(),
-                                               onChanged: (String? newValue) {
-                                       setState(() {
-                                         selectedStatus = newValue;
-                                       });
-                                           },
-                                             ),
-                                             SizedBox(width: 20),
-                                Padding(
-                                  padding:  EdgeInsets.only(right:8.0),
-                                  child: Row(
-                                    children:   [
-                                     Text(users.length.toString()+" Users"),
-                                      SizedBox(width: 60),
-                        HoverExpandWidget(),
-
-
-                      
-                      SizedBox(
-                        width: 10,
-                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            )
+                           
                             ],
                            ),
                       )),
-                    SizedBox(height: 24,),
-                   Container(
-                    alignment: Alignment.topCenter,
+                      SizedBox(height: 23),
+                  Container(
+                    padding: const EdgeInsets.all(12),
                     width: double.infinity,
-                        constraints: BoxConstraints(maxWidth: 1200),
-                     child: Wrap(
-                      spacing: 14,
-                      runSpacing: 14,
-                      alignment: WrapAlignment.start,
-                      children: projectCards as List<Widget>,
-                     ),
-                   )
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                                child: Container(
+                                 child:  Column(
+                                   children: [
+                                     Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: const [
+                                        Text("Addressss"),
+                                        Text("            Memberships"),
+                                        Text("   Last Active"),
+                                      ],
+                                ),SizedBox(height: 10),
+   ...userCards.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final userCard = entry.value;
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedCardIndex = index;
+                            });
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: _selectedCardIndex == index
+                                  ? Border.all(color: Color.fromARGB(255, 156, 156, 156))
+                                  : null,
+                            ),
+                            
+                            child: userCard,
+                          ),
+                        );
+                      }).toList(),
+                                   ],
+                                 ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  padding: EdgeInsets.all(14),
+                                  child:
+                                  _selectedCardIndex==-1?
+                                  selectAnItem():
+                                  userDetails(humans[_selectedCardIndex])
+                                ),
+                              ),
+                      ],
+                    ),
+                  )
+                  
                 ],
               ), // End of Column
             ],
@@ -134,4 +146,74 @@ class _UsersState extends State<Users> {
         ),
     );
   }
+
+  Widget selectAnItem(){
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: const [
+        SizedBox(height: 90),
+        Icon(Icons.turn_left,size: 145,color: Color.fromARGB(96, 171, 171, 171),),
+        SizedBox(height: 24),
+        Text("Select an item", style: TextStyle(
+          color: Color.fromARGB(96, 171, 171, 171),fontSize: 41
+        ),)
+      ],
+    );
+  }
+
+  Widget userDetails(Human human){
+    return Padding(
+      padding: const EdgeInsets.only(left:28,top:30),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+              padding: EdgeInsets.only(top:18.0,left:45),
+              child: Row(
+                children: [
+                  Image.network(add1),
+                  SizedBox(width: 10),
+                  Text(human.address!, style: TextStyle(fontSize: 16),),
+                  SizedBox(width: 10),
+                  TextButton(onPressed: (){}, child: Icon(Icons.copy))
+                ],
+              ),
+            ),
+         const SizedBox(height: 39),
+         const Padding(
+            padding:  EdgeInsets.only(left:38.0),
+            child: Text("Memberships:",style: TextStyle(fontSize: 19),),
+          ),
+          SizedBox(height: 19),
+          Padding(
+            padding:  EdgeInsets.only(left:38.0),
+            child: Row(
+              children: [
+                Text("DAO Name"),
+                SizedBox(width: 300),
+                Text("Voting weight")
+              ],
+            ),
+          ),
+          Divider(),
+          ...human.balances!.entries.map((entry) => 
+          Padding(
+            padding: const EdgeInsets.only(left:38.0,bottom:9),
+            child: Row(
+              children: [
+                Text(entry.key.address.toString()),
+                SizedBox(width: 100),
+                Text(entry.value.toString()),
+                SizedBox(width: 12),
+                Text(entry.key.symbol)
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
 }

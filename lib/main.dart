@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homebase/entities/project.dart';
+import 'package:homebase/entities/token.dart';
 import 'package:homebase/screens/dao.dart';
 import 'package:homebase/screens/explorer.dart';
 import 'package:homebase/screens/projectDetails.dart';
 import 'package:homebase/screens/projects.dart';
+import 'package:homebase/screens/users.dart';
 import 'package:homebase/utils/theme.dart';
 import 'package:homebase/widgets/arbitrate.dart';
 import 'package:homebase/widgets/daocard.dart';
@@ -15,7 +17,25 @@ import 'package:homebase/widgets/newProject.dart';
 import 'package:homebase/widgets/sendfunds.dart';
 import 'package:homebase/widgets/setParty.dart';
 
+import 'entities/human.dart';
 import 'screens/proposalDetails.dart';
+
+List<Human>humans=[
+  Human(
+    address: "tz1UVpbXS6pAtwPSQdQjPyPoGmVkCsNwn1K5",
+    balances: {Token(address: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c", name: "Thursday Bug Hunt", symbol: "BGT", decimals: 4):32,
+    Token(address: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c", name: "Thursday Bug Hunt", symbol: "TFT", decimals: 4):342
+    },
+    lastActive: DateTime.now().subtract(Duration(hours: 34))
+  ),
+   Human(
+    address: "tzf534VpbX41212423dQjPoGmVkCs52sdfb",
+    balances: {Token(address: "tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c", name: "Thursday Bug Hunt", symbol: "BGT", decimals: 4):33123},
+    lastActive: DateTime.now().subtract(Duration(hours: 134))
+  )
+];
+
+
 
 void main() {
   runApp(const ProviderScope(child: const MyApp()));
@@ -74,6 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
  
     return Scaffold(
       // body: ExecuteLambda()
+      // body: Users()
       body: Explorer()
   //     body: Arbitrate(
   //       project:  Project( 

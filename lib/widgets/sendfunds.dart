@@ -110,13 +110,7 @@ class SendFundsState extends State<SendFunds> {
     content: Center(child: Text('Address copied',style: TextStyle(fontSize: 15),)),
     // The duration of the SnackBar.
     duration: Duration(seconds: 2),
-    // The action to perform when the user taps on the SnackBar.
-    action: SnackBarAction(
-      label: 'OK',
-      onPressed: () {
-        // Some code to execute.
-      },
-    ),
+    
   ),
 );
               
