@@ -204,9 +204,9 @@ class _MyHomePageState extends State<MyHomePage> {
  
     return Scaffold(
       // body: ExecuteLambda()
-      body: Users()
+      // body: Users()
       // body: SendFunds()
-      // body: Explorer()
+      body: Explorer()
   //     body: Arbitrate(
   //       project:  Project( 
   //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
