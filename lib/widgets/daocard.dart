@@ -3,9 +3,11 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:homebase/screens/dao.dart';
 
-class DAOCard extends StatelessWidget {
-  const DAOCard({super.key});
+import '../entities/org.dart';
 
+class DAOCard extends StatelessWidget {
+  DAOCard({super.key, required this.org});
+  Org org;
   @override
   Widget build(BuildContext context) {
     
@@ -14,7 +16,7 @@ class DAOCard extends StatelessWidget {
         onPressed: () {
        Navigator.push(
   context,
-  MaterialPageRoute(builder: (context) =>DAO(InitialTabIndex: 0))
+  MaterialPageRoute(builder: (context) =>DAO(InitialTabIndex: 0, org:org))
   ) ;
         },
         child: Padding(
@@ -31,7 +33,7 @@ class DAOCard extends StatelessWidget {
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(bottom:16.0),
-                          child: Text("SYM", style: TextStyle(
+                          child: Text(org.token.symbol, style: TextStyle(
                             color:Theme.of(context).indicatorColor,
                             fontWeight: FontWeight.bold, fontSize: 20)),
                         ),
@@ -45,7 +47,7 @@ class DAOCard extends StatelessWidget {
                           child: Center(child: Text("V.3" , style: TextStyle(color: Color.fromARGB(255, 185, 253, 206), fontWeight: FontWeight.bold, fontSize: 15))),
                         ),
   SizedBox(height: 16),
-                        Text("24", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                        Text(org.holders.toString(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                       
                         Text("Voting\nAddresses" , textAlign: TextAlign.center, style: TextStyle( fontWeight: FontWeight.w100, fontSize: 13 ) ,),
                       ],
@@ -57,13 +59,13 @@ class DAOCard extends StatelessWidget {
                      child: Column(
                        children: [
                         
-                            Text('DAO NAME', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                            Text(org.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                            
                      Padding(
                       padding: const EdgeInsets.only(top:18.0, left: 12),
                       child: SizedBox(
                         width: 240,
-                        child: Center(child: Text('The DAO was an organization that used smart contracts to automate governance and investment decisions.'))),
+                        child: Center(child: Text(org.description!))),
                                      ),
                        ],
                      ),

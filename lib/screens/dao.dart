@@ -8,12 +8,13 @@ import 'package:homebase/screens/registry.dart';
 import 'package:homebase/screens/treasury.dart';
 import 'package:homebase/widgets/membersList.dart';
 import 'package:homebase/widgets/menu.dart';
+import '../entities/org.dart';
 import 'home.dart';
 import 'members.dart';
 class DAO extends StatefulWidget {
-  DAO({super.key, this.InitialTabIndex=1});
+  DAO({super.key, this.InitialTabIndex=1, required this.org});
   int InitialTabIndex;
-  
+  Org org;
   @override
   State<DAO> createState() => _DAOState();
 }
@@ -55,16 +56,15 @@ class _DAOState extends State<DAO> {
                 ],
               ), 
             ),
-                     
-                      Container(
-                        height: 1000,
-                         width: double.infinity,
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                         // Expanded start
-                child: TabBarView( // TabBarView start
+            Container(
+              height: 1000,
+                width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 1200),
+                // Expanded start
+               child: TabBarView( // TabBarView start
                   children: [
-                    Home(),
-                    widget.InitialTabIndex==0?Center(child: Proposals(which: "all",))
+                    Home(org:widget.org),
+                    widget.InitialTabIndex==0?Center(child: Proposals(which: "all", org: widget.org ))
                     :Center(child: ProposalDetails(),)
                     ,
                     Center(child: Treasury()),

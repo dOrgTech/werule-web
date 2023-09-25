@@ -9,9 +9,12 @@ import 'package:homebase/screens/proposalDetails.dart';
 import 'package:homebase/utils/theme.dart';
 import 'package:homebase/widgets/proposalCard.dart';
 
+import '../entities/org.dart';
+
 class Proposals extends StatefulWidget {
-  Proposals({super.key, required this.which});
+  Proposals({super.key, required this.which,required this.org });
   String? which="all";
+  Org org;
   @override
   State<Proposals> createState() => _ProposalsState();
 }
@@ -48,7 +51,6 @@ class _ProposalsState extends State<Proposals> {
                const SizedBox(width: 40),
                const Text("Type:"),
                const SizedBox(width: 10),
-
                 DropdownButton<String>(
                       value: selectedType,
                       focusColor: Colors.transparent,
@@ -149,16 +151,16 @@ class _ProposalsState extends State<Proposals> {
           ),
       ),
     ), 
-        ProposalCard(proposal:new Proposal(type: "New Project", name: "Engagement with another DAO")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "New Project", name: "Engagement with another DAO")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
        
         ],
       ),
@@ -184,15 +186,15 @@ class ProposalList extends StatelessWidget {
             onPressed: (){
               Navigator.of(context).pop();
               showDialog( context:context,  builder: (BuildContext context) {
-                                return  AlertDialog(
-                                  title: Padding(
-                                    padding: const EdgeInsets.only(left:18.0),
-                                    child: Text(item.toString()),
-                                  ),
-                                  content: newProposalWidgets[item],
-                                );
-                              },
-                            );
+                      return  AlertDialog(
+                        title: Padding(
+                          padding: const EdgeInsets.only(left:18.0),
+                          child: Text(item.toString()),
+                        ),
+                        content: newProposalWidgets[item],
+                      );
+                    },
+                  );
             },
             child: Center(
               child: Padding(
@@ -229,12 +231,12 @@ class ProposalList extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Text("Learn about the different types of Homebase proposals from ", style: TextStyle(fontSize: 12),),
+                    Text("Learn about the different types of Homebase proposals ", style: TextStyle(fontSize: 12),),
                     Text("here.", style:TextStyle(color: Theme.of(context).indicatorColor,fontSize: 12)),
                   ],
                 ),
               ),
-              SizedBox(height: 52,),
+            const  SizedBox(height: 52,),
               Center(
                 child: Wrap(
                   spacing: 20,

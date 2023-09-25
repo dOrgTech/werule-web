@@ -4,12 +4,14 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:homebase/screens/dao.dart';
 import 'package:homebase/screens/explorer.dart';
+import 'package:homebase/utils/functions.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../screens/projects.dart';
 import '../screens/users.dart';
-
+bool isConnected = false;
+String us3rAddress= generateWalletAddress();
 int status=0;
 class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
   const TopMenu({super.key});
@@ -147,7 +149,7 @@ class _TopMenuState extends State<TopMenu> {
             const SizedBox(width: 20 ),
             Padding(
                  padding: const EdgeInsets.only(top:1.0, right:15),
-              child: TextButton(onPressed:(){}, child: Text("Connect wallet")),
+              child: TextButton(onPressed:(){}, child: WalletButton()),
             )
              
           ],
@@ -156,3 +158,89 @@ class _TopMenuState extends State<TopMenu> {
     );
   }
 }
+
+class WalletButton extends StatefulWidget {
+  const WalletButton({Key? key}) : super(key: key);
+
+  @override
+  _WalletButtonState createState() => _WalletButtonState();
+}
+
+class _WalletButtonState extends State<WalletButton> {
+  bool _isConnecting = false;
+   // Assuming this state is managed
+    // Assuming this is a placeholder
+
+  void _connectWallet() {
+    setState(() {
+      _isConnecting = true;
+    });
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _isConnecting = false;
+        isConnected = true;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isConnecting) {
+  return SizedBox(
+    width: 180,
+    child: LinearProgressIndicator(),
+  );
+}
+
+    if (!isConnected) {
+      return SizedBox(
+        width: 180,
+        child: TextButton(
+          onPressed: _connectWallet,
+          child: Text("Connect Wallet"),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: 180,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          focusColor: Colors.transparent,
+          isExpanded: true,
+          value: 'Connected',
+          icon: Icon(Icons.arrow_drop_down),
+          hint: Text(shortenString(us3rAddress)),
+          onChanged: (value) {
+            // Implement actions based on dropdown selection
+          },
+          items: [
+            DropdownMenuItem(
+              value: 'Connected',
+              child: Text(shortenString(us3rAddress)),
+            ),
+            DropdownMenuItem(
+              value: 'Profile',
+              child: Text('Profile'),
+            ),
+            DropdownMenuItem(
+              value: 'Switch Address',
+              child: Text('Switch Address'),
+            ),
+            DropdownMenuItem(
+              value: 'Disconnect',
+              child: Text('Disconnect'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+
+

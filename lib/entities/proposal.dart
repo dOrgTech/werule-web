@@ -8,8 +8,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:homebase/main.dart';
 import 'package:homebase/widgets/executeLambda.dart';
 import 'package:homebase/widgets/newProject.dart';
+
+import '../widgets/fundProject.dart';
 
 var proposalTypes={
   "Offchain Poll":"Create in inconsequential poll for your community",
@@ -21,7 +24,8 @@ var proposalTypes={
   "DAO Configuration": "Change the proposal fee and/or the returned amount",
   "Change Guardian": "Set a priviledge address that can drop spam proposals",
   "Change DAO Delegate":"for the main consensus layer on Tezos.",
-  "New Project (arbitrated)":"Create a new engagement with escrow and dispute resolution."
+  "New Project (arbitrated)":"Create a new engagement with escrow and dispute resolution.",
+  "Fund Project":"Send funds to a Homebase Project",
 };
 var state;
 var newProposalWidgets={
@@ -35,6 +39,7 @@ var newProposalWidgets={
   "DAO Configuration": NotImplemented(),
   "Change Guardian": NotImplemented(),
   "Change DAO Delegate":NotImplemented(),
+   "Fund Project": FundProject(org:orgs[0]),
 };
 
 class NotImplemented extends StatelessWidget {

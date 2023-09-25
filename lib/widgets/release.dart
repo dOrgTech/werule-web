@@ -53,7 +53,7 @@ class ReleaseState extends State<Release> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-          const  Text("Withdraw funds from project",
+          const  Text("Release Funds to Contractor",
             textAlign: TextAlign.center,
              style: TextStyle(fontSize: 19), 
               ),

@@ -1,8 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:homebase/main.dart';
+import 'package:homebase/utils/functions.dart';
 import 'package:homebase/widgets/cutie.dart';
+import 'package:homebase/widgets/footer.dart';
 import 'package:homebase/widgets/hovermenu.dart';
 import 'package:homebase/widgets/projectCard.dart';
 import '../entities/human.dart';
@@ -10,6 +13,7 @@ import '../entities/project.dart';
 import '../widgets/membersList.dart';
 import '../widgets/menu.dart';
 import '../widgets/usercard.dart';
+import 'package:intl/intl.dart';
 
 List<Widget> userCards=[];
 var selectedStatus="";
@@ -27,9 +31,9 @@ class _UsersState extends State<Users> {
   void initState() {
     userCards=[];
     super.initState();
-     for (Human h in humans){
-      userCards.add(UserCard(human:h));   
-    }
+  for (int i = 0; i < 12 && i < humans.length; i++) {
+  userCards.add(UserCard(human: humans[i]));
+}
   }
     int _selectedCardIndex = -1;
   @override
@@ -90,19 +94,19 @@ class _UsersState extends State<Users> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Expanded(
-                                child: Container(
-                                 child:  Column(
-                                   children: [
-                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: const [
-                                        Text("Addressss"),
-                                        Text("            Memberships"),
-                                        Text("   Last Active"),
-                                      ],
+                            child: Container(
+                              child:  Column(
+                                children: [
+                                  Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text("Addressss"),
+                                    Text("            Memberships"),
+                                    Text("   Last Active"),
+                                  ],
                                 ),SizedBox(height: 10),
-   ...userCards.asMap().entries.map((entry) {
+                    ...userCards.asMap().entries.map((entry) {
                         final index = entry.key;
                         final userCard = entry.value;
                         return InkWell(
@@ -117,7 +121,6 @@ class _UsersState extends State<Users> {
                                   ? Border.all(color: Color.fromARGB(255, 156, 156, 156))
                                   : null,
                             ),
-                            
                             child: userCard,
                           ),
                         );
@@ -135,18 +138,16 @@ class _UsersState extends State<Users> {
                                   userDetails(humans[_selectedCardIndex])
                                 ),
                               ),
-                      ],
-                    ),
-                  )
-                  
-                ],
-              ), // End of Column
-            ],
-          ), // End of ListView
-        ),
-    );
-  }
-
+                        ],
+                      ),
+                    )
+                  ],
+                ), 
+              ],
+            ), // End of ListView
+          ),
+      );
+    }
   Widget selectAnItem(){
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -173,10 +174,30 @@ class _UsersState extends State<Users> {
               padding: EdgeInsets.only(top:18.0,left:45),
               child: Row(
                 children: [
-                  Image.network(add1),
-                  SizedBox(width: 10),
+                  FutureBuilder<Uint8List>(
+                      future: generateAvatarAsync(hashString(human.address!)),  // Make your generateAvatar function return Future<Uint8List>
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Container(
+                            width: 40.0,
+                            height: 40.0,
+                            color: Colors.grey,
+                          );
+                        } else if (snapshot.hasData) {
+                          print("generating on the right");
+                          return Image.memory(snapshot.data!);
+                        } else {
+                          return Container(
+                            width: 40.0,
+                            height: 40.0,
+                            color: Colors.red,  // Error color
+                          );
+                        }
+                      },
+                    ),
+                 const SizedBox(width: 10),
                   Text(human.address!, style: TextStyle(fontSize: 16),),
-                  SizedBox(width: 10),
+                 const SizedBox(width: 10),
                   TextButton(onPressed: (){}, child: Icon(Icons.copy))
                 ],
               ),
@@ -192,7 +213,7 @@ class _UsersState extends State<Users> {
             child: Row(
               children: [
                 Text("DAO Name"),
-                SizedBox(width: 300),
+                SizedBox(width: 170),
                 Text("Voting weight")
               ],
             ),
@@ -203,11 +224,47 @@ class _UsersState extends State<Users> {
             padding: const EdgeInsets.only(left:38.0,bottom:9),
             child: Row(
               children: [
-                Text(entry.key.address.toString()),
-                SizedBox(width: 100),
+                InkWell(
+                  onTap: (){},
+                  child: SizedBox(
+                    width: 240,
+                    child: Text(entry.key.name.toString()))),
+                SizedBox(width: 10),
                 Text(entry.value.toString()),
-                SizedBox(width: 12),
+               const SizedBox(width: 12),
                 Text(entry.key.symbol)
+              ],
+            ),
+          )),
+         const SizedBox(height: 39),
+         const Padding(
+            padding:  EdgeInsets.only(left:38.0),
+            child: Text("Activity:",style: TextStyle(fontSize: 19),),
+          ),
+         const SizedBox(height: 19),
+          Padding(
+            padding: const EdgeInsets.only(left:38.0),
+            child: Row(
+              children: const [
+                Text("Time"),
+                SizedBox(width: 130),
+                Text("Action"),
+               
+              ],
+            ),
+          ),
+          Divider(),
+          ...human.actions!.reversed.map((entry) => 
+          Padding(
+            padding: const EdgeInsets.only(left:18.0,bottom:9),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+               const SizedBox(width: 20),
+                SizedBox(width:120,child: Text(DateFormat('MMM d, yyyy').format(entry.time))),
+                const SizedBox(width: 50),
+                Text(entry.type),
+  
               ],
             ),
           )),

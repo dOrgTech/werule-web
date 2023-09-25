@@ -3,13 +3,14 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:homebase/screens/proposalDetails.dart';
 
+import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../screens/dao.dart';
 
 class ProposalCard extends StatelessWidget {
-  ProposalCard({super.key,required this.proposal});
+  ProposalCard({super.key,required this.proposal, required this.org});
   Proposal proposal;
-
+  Org org;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -21,7 +22,7 @@ class ProposalCard extends StatelessWidget {
               print("tapped on proposalCard");
               Navigator.push(context,
               MaterialPageRoute(
-                builder: (context) => DAO(InitialTabIndex: 1
+                builder: (context) => DAO(InitialTabIndex: 1,org:org
                 
                 )));
              

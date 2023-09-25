@@ -1,12 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
 import 'package:homebase/widgets/membersList.dart';
+import 'dart:math';
+import '../entities/org.dart';
 
 class Home extends StatefulWidget {
-  const Home({super.key});
-
+  Home({super.key, required this.org});
+  Org org;
   @override
   State<Home> createState() => _HomeState();
 }
@@ -34,9 +38,9 @@ class _HomeState extends State<Home> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Padding(
+                         Padding(
                           padding: EdgeInsets.all(18.0),
-                          child: Text("Crunchy.Network", 
+                          child: Text(widget.org.name, 
                           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
                           
                         ),
@@ -58,7 +62,7 @@ class _HomeState extends State<Home> {
                           mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text("Contract Address: "),
-                                Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                                Text(widget.org.address!, style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
                                   onPressed: (){},
@@ -74,7 +78,7 @@ class _HomeState extends State<Home> {
                           mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text("Governance Token Address: "),
-                                Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
+                                Text(widget.org.token.address, style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
                                   onPressed: (){},
@@ -91,8 +95,9 @@ class _HomeState extends State<Home> {
                         maxWidth: 450,
                       ),
                       padding: const EdgeInsets.all(11.0),
-                      child: const Text(
-                        "This is the rescription of the DAO. It can be long or short, but in case it's long, we need to make sure it fits. We can have a character limit of course, but as of right now I'm not sure what that should be. Probably something like 250.",
+                      child: Text(
+                          widget.org.description!
+                        ,
                         
                         textAlign: TextAlign.center,
                         ),
@@ -182,16 +187,20 @@ class _HomeState extends State<Home> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.only(top:19,left:28.0),
-                            child: Text("CRRDAO Locked", style: TextStyle(fontSize: 17, 
+                            child: Text(widget.org.token.symbol+ " Locked", style: TextStyle(fontSize: 17, 
                             color: Theme.of(context).indicatorColor,
                             fontWeight: FontWeight.normal),),
                             ),
                           
                           const SizedBox(height: 15,),
-                        const  Padding(
-                            padding: const EdgeInsets.only(left:28.0),
-                            child: Text("10513.46218086", style: TextStyle(fontSize: 25, fontWeight: FontWeight.normal),),
-                          ),
+                        Padding(
+                              padding: const EdgeInsets.only(left:28.0),
+                              child: Text(
+                                '${(300 + Random().nextDouble() * (300000 - 300)).toStringAsFixed(4)}',
+                                style: TextStyle(fontSize: 25, fontWeight: FontWeight.normal),
+                              ),
+                            ),
+                          
                           const SizedBox(height: 21,),
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal:28.0),
@@ -212,7 +221,7 @@ class _HomeState extends State<Home> {
                                 children: [
                                   Text("Voting Addresses" , style: TextStyle(color: Theme.of(context).indicatorColor ),),
                                     const SizedBox(height: 10,),
-                                  const Text("32", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
+                                  Text(widget.org.holders.toString(), style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                                 ],
                               ),
                               const SizedBox(width: 70,),

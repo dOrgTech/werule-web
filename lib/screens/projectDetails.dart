@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 
 import '../entities/project.dart';
+import '../main.dart';
 import '../widgets/menu.dart';
 import '../widgets/withdraw.dart';
 
@@ -99,7 +100,7 @@ body:Container(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                       SizedBox(height: 40,
+                       SizedBox(height: 35,
                        width: 500,
                          child: Center(
                            child: Row(
@@ -114,8 +115,27 @@ body:Container(
                             ),
                          ),
                        ),
+                         SizedBox(
+                      height: 35,
+                       child: Center(
+                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text("Contract Address: "),
+                                Text(orgs[0].address!, style: TextStyle(fontSize: 11),),
+                                const SizedBox(width: 2,),
+                                TextButton(
+                                  onPressed: (){
+                                     copied(context, "whatever");
+                                  
+                                  },
+                                  child: const Icon(Icons.copy)),
+                              ],
+                            ),
+                       ),
+                     ),
                     SizedBox(
-                      height: 40,
+                      height: 35,
                        child: Center(
                          child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -124,7 +144,10 @@ body:Container(
                                 const Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
-                                  onPressed: (){},
+                                  onPressed: (){
+                                     copied(context, "whatever");
+                                  
+                                  },
                                   child: const Icon(Icons.copy)),
                               ],
                             ),
@@ -133,7 +156,7 @@ body:Container(
                 widget.project.status=="Ongoing" || widget.project.status=="Dispute" || widget.project.status=="Closed"  || widget.project.status=="Pending" 
                      ?
                     SizedBox(
-                      height: 40,
+                      height: 35,
                        child: Center(
                          child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -142,7 +165,9 @@ body:Container(
                                 const Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
-                                  onPressed: (){},
+                                  onPressed: (){
+                                    copied(context, "whatever");
+                                  },
                                   child: const Icon(Icons.copy)),
                               ],
                             ),
@@ -151,7 +176,7 @@ body:Container(
                       widget.project.status=="Ongoing" || widget.project.status=="Dispute" || widget.project.status=="Closed"  || widget.project.status=="Pending" 
                      ?
                       SizedBox(
-                      height: 40,
+                      height: 35,
                        child: Center(
                          child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -160,26 +185,30 @@ body:Container(
                                 const Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
-                                  onPressed: (){},
+                                  onPressed: (){
+                                    copied(context, "whatever");
+                                  },
                                   child: const Icon(Icons.copy)),
                               ],
                             ),
                        ),
                      ):const SizedBox(),
                      SizedBox(
-                      height: 40,
+                      height: 35,
                        child: Center(
                          child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                 widget.project.status=="Ongoing" || widget.project.status=="Dispute" || widget.project.status=="Closed"  || widget.project.status=="Pending" 
-                     ?   
+                                        ?   
                                   "Terms of Engagement: ":"Requirements: "),
                                 const Text("https://ipfs/QmNrgEMcUygbKzZe...", style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
-                                  onPressed: (){},
+                                  onPressed: (){
+                                    copied(context, "whatever");
+                                  },
                                   child: const Icon(Icons.copy)),
                               ],
                           ),
@@ -306,6 +335,24 @@ body:Container(
             ],
           )));
   }
+
+
+  copied(context,text){
+        ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      // The content of the SnackBar.
+                                      content: Center(
+                                          child: Text(
+                                        'Address copied',
+                                        style: TextStyle(fontSize: 15),
+                                      )),
+                                      // The duration of the SnackBar.
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+  }
+
+
 
   Widget functionItem(String title, String access, target )
           {

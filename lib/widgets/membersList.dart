@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 String add1="https://i.ibb.co/2WbL5nC/add1.png";
 String add2="https://i.ibb.co/6rmksXk/add2.png";
-
+List<String> userPics=[add1, add2];
 
 class MembersList extends StatelessWidget {
   const MembersList({super.key});

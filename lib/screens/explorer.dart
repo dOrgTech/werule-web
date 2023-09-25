@@ -1,9 +1,12 @@
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
+import 'package:homebase/main.dart';
 import 'package:homebase/widgets/menu.dart';
 
+import '../entities/org.dart';
 import '../widgets/daocard.dart';
+import '../widgets/footer.dart';
 class Explorer extends StatefulWidget {
   const Explorer({super.key});
 
@@ -15,8 +18,8 @@ class _ExplorerState extends State<Explorer> {
   @override
   Widget build(BuildContext context) {
        List<Widget> daos=[];
-    for (var i = 0; i < 41; i++) {
-      daos.add(DAOCard());
+    for (Org org in orgs) {
+      daos.add(DAOCard(org:org));
     }
     return Scaffold(
       appBar: const TopMenu(),
@@ -63,7 +66,7 @@ class _ExplorerState extends State<Explorer> {
                           padding: const EdgeInsets.only(right:8.0),
                           child: Row(
                             children: [
-                              Text("21 DAOs"),
+                              Text( orgs.length.toString()+ " DAOs"),
                               SizedBox(width: 30,),
                               SizedBox(
                                 height: 40,
@@ -90,11 +93,21 @@ class _ExplorerState extends State<Explorer> {
                       spacing: 8,
                       runSpacing: 8,
                       alignment: WrapAlignment.start,
-                      children: daos as List<Widget>,
+                      children: 
+                      daos as List<Widget>,
                      ),
                    )
                 ],
               ), // End of Column
+            SizedBox(height: 23),
+          
+    // other widgets
+    Container(
+      
+      color: Color.fromARGB(255, 25, 25, 25),
+      child: Footer(),
+    ),
+ 
             ],
           ), // End of ListView
         ),
