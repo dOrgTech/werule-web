@@ -5,6 +5,7 @@ import 'package:homebase/widgets/cutie.dart';
 import 'package:homebase/widgets/hovermenu.dart';
 import 'package:homebase/widgets/projectCard.dart';
 import '../entities/project.dart';
+import '../widgets/footer.dart';
 import '../widgets/menu.dart';
 List<Project> projects=[
   Project(
@@ -163,7 +164,9 @@ class _ProjectsState extends State<Projects> {
                       alignment: WrapAlignment.start,
                       children: projectCards as List<Widget>,
                      ),
-                   )
+                   ), 
+                  const SizedBox(height: 64),
+                   Footer()
                 ],
               ), // End of Column
             ],
