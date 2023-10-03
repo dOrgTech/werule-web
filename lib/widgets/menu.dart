@@ -75,6 +75,7 @@ class _TopMenuState extends State<TopMenu> {
                ),
          ),
                ),
+               Spacer(),
                 SizedBox(
               height: 32,
               
@@ -101,7 +102,7 @@ class _TopMenuState extends State<TopMenu> {
             ),
             ),
               Padding(
-                padding: const EdgeInsets.only(right:24),
+                padding: const EdgeInsets.only(left:50,right:24),
                 child: Row(
                   children: [
                     SizedBox(
@@ -125,10 +126,8 @@ class _TopMenuState extends State<TopMenu> {
                   ],
                 ),
               ),
-             ],
-           ), 
-          actions: <Widget>[
-            Padding(
+              Spacer(),
+               Padding(
               padding: const EdgeInsets.only(top:1.0),
               child: DropdownButton<String>(
                       value: selectedValue,
@@ -151,8 +150,12 @@ class _TopMenuState extends State<TopMenu> {
                  padding: const EdgeInsets.only(top:1.0, right:15),
               child: TextButton(onPressed:(){}, child: WalletButton()),
             )
+             ],
+           ), 
+          // actions: <Widget>[
+           
              
-          ],
+          // ],
         ),
       ),
     );
