@@ -29,17 +29,15 @@ class _ProjectDetailsState extends State<ProjectDetails> {
 
  List<Widget> openProjectFunctions=[
     functionItem("Send Funds to Project", "Anyone",SendFunds()),
-    functionItem("Set other party", "Author", SetParty()),
-    functionItem("Withdraw/Reinburse", "Author", Withdraw()),
+    functionItem("Set Other Party", "Author", SetParty()),
+    functionItem("Withdraw/Reimburse", "Author", Withdraw()),
   ];
   List<Widget> ongoingProjectFunctions=[
     functionItem("Send Funds to Project", "Anyone", SendFunds()),
-    functionItem("Dispute Project", "Parties", Dispute()),
+    functionItem("Initiate Dispute", "Parties", Dispute()),
     functionItem("Release funds to contractor", "Author", Release()),
   ];
   List<Widget> disputedProjectFunctions=[
-    // functionItem("Award all funds to Contractor", "Arbiter", Arbitrate(project:widget.project)),
-    // functionItem("Reinburse all Project backers", "Arbiter", Arbitrate(project:widget.project)),
     functionItem("Arbitrate", "Arbiter", Arbitrate(project:widget.project)),
   ];
   List<Widget> closedProjectFunctions=[
@@ -47,7 +45,7 @@ class _ProjectDetailsState extends State<ProjectDetails> {
   ];
   
   List<Widget> pendingProjectFunctions=[
-    functionItem("Withdraw/Reinburse", "Author", Withdraw()),
+    functionItem("Withdraw/Reimburse", "Author", Withdraw()),
     functionItem("Sign Contract", "Contractor", Withdraw()),
   ];
   
