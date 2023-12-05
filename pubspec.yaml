@@ -44,6 +44,19 @@ dependencies:
   qr_flutter:
   toggle_switch: ^2.1.0
   url_launcher:
+  graphite: ^0.3.0
+  emojis: ^0.9.9
+  animated_text_kit: ^4.1.1
+  http:
+  flutter_vector_icons: ^1.0.0
+  google_fonts: 
+  scrollable_positioned_list: ^0.2.2
+  universal_html: ^2.0.8
+  gojs: ^2.0.0
+  dio:
+  webviewx: ^0.2.1
+  ext_video_player: 
+  youtube_player_iframe: 
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -72,6 +85,7 @@ flutter:
     - assets/logos/
     - assets/markdown/
     - assets/vectors/
+    - assets/
 
   fonts:
     - family: CascadiaCode

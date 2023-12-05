@@ -9,7 +9,6 @@ import 'package:homebase/widgets/sendfunds.dart';
 import 'package:homebase/widgets/setParty.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/sparkcharts.dart';
-
 import '../entities/project.dart';
 import '../main.dart';
 import '../widgets/menu.dart';
@@ -48,9 +47,6 @@ class _ProjectDetailsState extends State<ProjectDetails> {
     functionItem("Withdraw/Reimburse", "Author", Withdraw()),
     functionItem("Sign Contract", "Contractor", Withdraw()),
   ];
-  
-
-
 return  
 Scaffold(
 appBar: const TopMenu(),
@@ -64,7 +60,6 @@ body:Container(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically
                 children: [
-                  
               Container(
                  constraints: const BoxConstraints(maxWidth: 1200),
                 height: 240,
