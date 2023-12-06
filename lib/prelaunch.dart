@@ -12,6 +12,7 @@ import 'package:universal_html/html.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webviewx/webviewx.dart';
 
+int caree = 1;
 String col = "#7b8c94 9%, #9cb1b8 46%, #7f9191 66%, #63767d 96%";
 List<Color> colors = [const Color(0xff7b8c94), const Color(0xff9cb1b8)];
 List<double> stops = [0.0, 0.8];
@@ -87,78 +88,89 @@ class _PrelaunchState extends State<Prelaunch> {
                     child: FittedBox(
                         fit: BoxFit.fitHeight,
                         child: Opacity(opacity: 1, child: AnimatedImages())))),
-            Align(
-                alignment: Alignment.center,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  height:
-                      widget.sevede0 ? MediaQuery.of(context).size.height : 0,
-                  width: widget.requesting ? 600 : 480,
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: colors1,
-                    stops: stops1,
-                  )),
-                  // color:Color.fromARGB(255, 27, 27, 27),
-                  child: Align(
-                      alignment: Alignment.topCenter,
-                      child: widget.requesting ? form() : splash()),
-                )),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                      height: 34,
-                      width: 34,
-                      child: TextButton(
-                        onPressed: () {
-                          launch("https://github.com/dorgtech");
-                        },
-                        child: Image.network(
-                          "https://i.ibb.co/qWf3xck/github.png",
-                          color: Color.fromARGB(255, 196, 196, 196),
-                        ),
+            Padding(
+              padding: EdgeInsets.only(
+                right: MediaQuery.of(context).size.width / 4,
+              ),
+              child: Align(
+                  alignment: Alignment.topRight,
+                  child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      height: widget.sevede0
+                          ? MediaQuery.of(context).size.height
+                          : 0,
+                      width: widget.requesting ? 600 : 480,
+                      decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: colors1,
+                        stops: stops1,
                       )),
-                  SizedBox(
-                      height: 34,
-                      width: 34,
-                      child: TextButton(
-                        onPressed: () {
-                          launch("https://discord.gg/DtdHV2wWqt");
-                        },
-                        child: Image.network(
-                          "https://i.ibb.co/Nr7Psjm/discord.png",
-                          color: Color.fromARGB(255, 196, 196, 196),
+                      // color:Color.fromARGB(255, 27, 27, 27),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: widget.requesting ? form() : splash(),
+                      ))),
+            ),
+            Padding(
+              padding:
+                  EdgeInsets.only(right: MediaQuery.of(context).size.width / 4),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SizedBox(
+                        height: 34,
+                        width: 34,
+                        child: TextButton(
+                          onPressed: () {
+                            launch("https://github.com/dorgtech");
+                          },
+                          child: Image.network(
+                            "https://i.ibb.co/qWf3xck/github.png",
+                            color: Color.fromARGB(255, 196, 196, 196),
+                          ),
+                        )),
+                    SizedBox(
+                        height: 34,
+                        width: 34,
+                        child: TextButton(
+                          onPressed: () {
+                            launch("https://discord.gg/DtdHV2wWqt");
+                          },
+                          child: Image.network(
+                            "https://i.ibb.co/Nr7Psjm/discord.png",
+                            color: Color.fromARGB(255, 196, 196, 196),
+                          ),
+                        )),
+                    SizedBox(
+                        height: 34,
+                        width: 34,
+                        child: TextButton(
+                          onPressed: () {
+                            launch("https://twitter.com/dorg_tech");
+                          },
+                          child: Image.network(
+                            "https://i.ibb.co/sR4CWcJ/twitter-solid.png",
+                            color: Color.fromARGB(255, 196, 196, 196),
+                          ),
+                        )),
+                    const SizedBox(width: 20),
+                    SizedBox(
+                      height: 32,
+                      child: Center(
+                        child: Text(
+                          "dOrg © ${DateTime.now().year}",
+                          style: const TextStyle(
+                              fontSize: 9, color: Colors.white60),
                         ),
-                      )),
-                  SizedBox(
-                      height: 34,
-                      width: 34,
-                      child: TextButton(
-                        onPressed: () {
-                          launch("https://twitter.com/dorg_tech");
-                        },
-                        child: Image.network(
-                          "https://i.ibb.co/sR4CWcJ/twitter-solid.png",
-                          color: Color.fromARGB(255, 196, 196, 196),
-                        ),
-                      )),
-                  const SizedBox(width: 20),
-                  SizedBox(
-                    height: 32,
-                    child: Center(
-                      child: Text(
-                        "dOrg © ${DateTime.now().year}",
-                        style:
-                            const TextStyle(fontSize: 9, color: Colors.white60),
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(width: 150),
+                  ],
+                ),
               ),
             ),
           ],
@@ -636,7 +648,7 @@ class _AnimatedImagesState extends State<AnimatedImages>
     )..repeat(reverse: true);
 
     flickerController = AnimationController(
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     )
       ..addStatusListener((status) {
@@ -668,22 +680,37 @@ class _AnimatedImagesState extends State<AnimatedImages>
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          buildAnimatedImage(controller2, 'assets/fara.png'),
-          buildAnimatedImage(controller1, 'assets/doar.png'),
-          buildAnimatedImage(controller3, 'assets/mix.png'),
+          // buildAnimatedBlur(blurController),
+          alternate(),
           Opacity(
-            opacity: 0.85,
-            child: Container(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
-                color: Colors.black),
-          ),
+              opacity: 0.6,
+              child: Container(
+                color: Colors.black,
+              )),
           Opacity(
-              opacity: 0.2,
+              opacity: 0.1,
               child:
-                  buildFlickeringImage(flickerController, 'assets/doar.png')),
-          buildAnimatedBlur(blurController),
+                  buildFlickeringImage(flickerController, 'assets/loop1.gif')),
         ],
+      ),
+    );
+  }
+
+  Widget smaller(Widget bigger) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        width: 900,
+        height: 900,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            widget,
+            SizedBox(
+              width: 400,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -696,10 +723,41 @@ class _AnimatedImagesState extends State<AnimatedImages>
           opacity: controller.value,
           child: FittedBox(
             fit: BoxFit.cover,
-            child: Image.asset(asset),
+            child: Padding(
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height / 2,
+                bottom: MediaQuery.of(context).size.height / 2,
+                right: MediaQuery.of(context).size.width / 4,
+                left: MediaQuery.of(context).size.width / 6,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(80.0),
+                child: Image.asset(
+                  asset,
+                  height: 340,
+                ),
+              ),
+            ),
           ),
         );
       },
+    );
+  }
+
+  Widget alternate() {
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: Padding(
+          padding: EdgeInsets.all(200),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset("assets/loop2.gif"),
+              SizedBox(
+                width: 500,
+              )
+            ],
+          )),
     );
   }
 
@@ -712,19 +770,19 @@ class _AnimatedImagesState extends State<AnimatedImages>
           child: ClipRRect(
             borderRadius: BorderRadius.circular(30),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 1.4, sigmaY: 2),
+              filter: ImageFilter.blur(sigmaX: 4.4, sigmaY: 2),
               child: Container(
                 width: MediaQuery.of(context).size.width * 0.7,
                 child: Container(
                   decoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
+                    shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
                         Colors.transparent,
                         Colors.transparent,
                         Colors.white.withOpacity(0.0)
                       ],
-                      stops: [0.0, 0.2, 1.0],
+                      stops: [0.0, 0.1, 0.9],
                     ),
                   ),
                 ),
@@ -756,7 +814,17 @@ class _AnimatedImagesState extends State<AnimatedImages>
                   BlendMode.softLight), // Increase brightness
               child: FittedBox(
                 fit: BoxFit.cover,
-                child: Image.asset(asset),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).size.height / 2,
+                    right: MediaQuery.of(context).size.width / 4,
+                    bottom: MediaQuery.of(context).size.height / 2,
+                  ),
+                  child: Image.asset(
+                    asset,
+                    height: 400,
+                  ),
+                ),
               ),
             ),
           ),
