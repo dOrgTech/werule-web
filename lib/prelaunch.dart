@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'dart:math';
 import 'dart:async';
 import 'package:homebase/entities/human.dart';
+import 'package:homebase/screens/explorer.dart';
 import 'package:http/http.dart' as http;
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:universal_html/html.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webviewx/webviewx.dart';
+
+import 'main.dart';
 
 int caree = 1;
 String col = "#7b8c94 9%, #9cb1b8 46%, #7f9191 66%, #63767d 96%";
@@ -26,7 +29,7 @@ List<Color> colors1 = [
 List<double> stops1 = [0.0, 0.3, 0.6, 0.8, 0.9];
 
 class Prelaunch extends StatefulWidget {
-  Prelaunch({Key? key}) : super(key: key);
+  Prelaunch({Key? key, }) : super(key: key);
   bool loading = false;
   bool sevede0 = false;
   bool sevede1 = false;
@@ -34,6 +37,7 @@ class Prelaunch extends StatefulWidget {
   bool requesting = false;
   bool requested = false;
   bool captcha = false;
+  
   String email = "";
   String ethaddress = "";
   String message = "";
@@ -449,7 +453,9 @@ class _PrelaunchState extends State<Prelaunch> {
                           const Color.fromARGB(204, 0, 0, 0)),
                     ),
                     onPressed: () async {
-                      sainin(om);
+                     Navigator.of(context).push(
+                      MaterialPageRoute(builder: ((context) => Scaffold(body:Explorer()))
+                     ));
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

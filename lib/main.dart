@@ -265,21 +265,21 @@ class MyApp extends StatelessWidget {
         // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
         primarySwatch: createMaterialColor(Color.fromARGB(255, 255, 255, 255)),
       ),
-      home: const MyHomePage(title: 'Tezos homebase'),
+      home: MyHomePage(title: 'Tezos homebase'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
+  MyHomePage({super.key, required this.title});
+  bool izzo=true;
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
   void _incrementCounter() {
@@ -290,11 +290,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
         // body: ExecuteLambda()
         // body: Users()
+        // body: Prelaunch()
         body: Prelaunch()
-        // body: Explorer()
         //     body: Arbitrate(
         //       project:  Project(
         //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
