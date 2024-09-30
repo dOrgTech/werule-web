@@ -25,6 +25,7 @@ import 'package:homebase/widgets/sendfunds.dart';
 import 'package:homebase/widgets/setParty.dart';
 import 'entities/human.dart';
 import 'screens/proposalDetails.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 Us3r us3r = Us3r(human: humans[0]);
 
@@ -204,7 +205,10 @@ List<Human> humans = [
   )
 ];
 
-void main() {
+void main() async {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp();
+  int asfdf = 32;
   for (var i = 5; i < token_names.length; i++) {
     tokens.add(Token(
         address: generateContractAddress(),
@@ -272,7 +276,7 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({super.key, required this.title});
-  bool izzo=true;
+  bool izzo = true;
   final String title;
 
   @override
@@ -290,12 +294,11 @@ class MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
         // body: ExecuteLambda()
         // body: Users()
         // body: Prelaunch()
-        body: Prelaunch()
+        body: Explorer()
         //     body: Arbitrate(
         //       project:  Project(
         //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",

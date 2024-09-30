@@ -31,9 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_svg: ^2.0.5
-  firebase_core: ^2.13.1
   cupertino_icons: ^1.0.2
   syncfusion_flutter_charts: ^22.2.9
+  firebase_core_platform_interface: ^5.0.0
   flutter_riverpod:
   hooks_riverpod:
   flutter_circle_chart: ^1.0.0
@@ -50,6 +50,9 @@ dependencies:
   http:
   flutter_vector_icons: ^1.0.0
   google_fonts: 
+  firebase_core_web: 
+  firebase_core: 
+  # firebase_firestore:
   scrollable_positioned_list: ^0.2.2
   universal_html: ^2.0.8
   gojs: ^2.0.0
