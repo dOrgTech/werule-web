@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:homebase/entities/project.dart';
-import 'package:homebase/entities/token.dart';
+import '../entities/project.dart';
+
+import '../entities/token.dart';
 
 const String escape = '\uE00C';
 

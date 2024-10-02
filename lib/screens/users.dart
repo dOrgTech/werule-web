@@ -2,12 +2,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:homebase/main.dart';
-import 'package:homebase/utils/functions.dart';
-import 'package:homebase/widgets/cutie.dart';
-import 'package:homebase/widgets/footer.dart';
-import 'package:homebase/widgets/hovermenu.dart';
-import 'package:homebase/widgets/projectCard.dart';
+import '../main.dart';
+import '../utils/functions.dart';
+import '../utils/reusable.dart';
+import '../widgets/cutie.dart';
+import '../widgets/footer.dart';
+import '../widgets/hovermenu.dart';
+import '../widgets/projectCard.dart';
 import '../entities/human.dart';
 import '../entities/project.dart';
 import '../widgets/membersList.dart';
@@ -31,8 +32,8 @@ class _UsersState extends State<Users> {
   void initState() {
     userCards=[];
     super.initState();
-  for (int i = 0; i < 12 && i < humans.length; i++) {
-  userCards.add(UserCard(human: humans[i]));
+  for (int i = 0; i < 12 && i < users!.length; i++) {
+  // userCards.add(UserCard(human: users![i].));
 }
   }
     int _selectedCardIndex = -1;
@@ -135,7 +136,8 @@ class _UsersState extends State<Users> {
                                   child:
                                   _selectedCardIndex==-1?
                                   selectAnItem():
-                                  userDetails(humans[_selectedCardIndex])
+                                  // userDetails(humans[_selectedCardIndex])
+                                  Text("You have selected something!")
                                 ),
                               ),
                         ],

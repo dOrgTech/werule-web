@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:homebase/screens/proposalDetails.dart';
+import '../screens/proposalDetails.dart';
 
 import '../entities/org.dart';
 import '../entities/proposal.dart';

@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
-import 'package:homebase/entities/proposal.dart';
-import 'package:homebase/screens/proposalDetails.dart';
-import 'package:homebase/utils/theme.dart';
-import 'package:homebase/widgets/proposalCard.dart';
+import '../entities/proposal.dart';
+import '../entities/proposal.dart';
+import '../screens/proposalDetails.dart';
+import '../utils/theme.dart';
+import '../widgets/proposalCard.dart';
 
 import '../entities/org.dart';
 

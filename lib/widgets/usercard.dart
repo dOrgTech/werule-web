@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:homebase/utils/functions.dart';
+import '../utils/functions.dart';
 import 'package:intl/intl.dart';
 import '../entities/human.dart';
 import 'membersList.dart';
@@ -64,7 +64,8 @@ class UserCard extends StatelessWidget {
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
                 child: Center(child: Text(
-                  DateFormat('MMM d, yyyy').format(human.lastActive!)
+               "Replace this"
+                  // DateFormat('MMM d, yyyy').format(human.lastActive!)
                   ))),
             
             ],

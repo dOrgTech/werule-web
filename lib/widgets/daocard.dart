@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:homebase/screens/dao.dart';
+import '../screens/dao.dart';
 
 import '../entities/org.dart';
 

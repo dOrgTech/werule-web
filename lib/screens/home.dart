@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
-import 'package:homebase/widgets/membersList.dart';
+import '../widgets/membersList.dart';
 import 'dart:math';
 import '../entities/org.dart';
 

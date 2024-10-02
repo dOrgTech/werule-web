@@ -1,8 +1,8 @@
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
-import 'package:homebase/main.dart';
-import 'package:homebase/widgets/menu.dart';
+import '../main.dart';
+import '../widgets/menu.dart';
 
 import '../entities/org.dart';
 import '../widgets/daocard.dart';
@@ -18,8 +18,8 @@ class _ExplorerState extends State<Explorer> {
   @override
   Widget build(BuildContext context) {
        List<Widget> daos=[];
-    for (Org org in orgs) {
-      daos.add(DAOCard(org:org));
+    for (var org in orgs) {
+      daos.add(DAOCard(org:org as Org));
     }
     return Scaffold(
       appBar: const TopMenu(),

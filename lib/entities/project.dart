@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:homebase/entities/token.dart';
+import '../entities/token.dart';
 
 class Project{
   String? name;

@@ -31,12 +31,6 @@ Widget generateAvatar(String hash, {int size = 100, int pixelSize = 10}) {
 
 
 
-String hashString(String input) {
-  final bytes = utf8.encode(input);
-  final digest = sha256.convert(bytes);
-  return digest.toString();
-}
-
 
 
 String shortenString(String input) {
@@ -71,23 +65,6 @@ String generateContractAddress(){
 
 
 
-Future<Uint8List> generateAvatarAsync(String hash, {int size = 40, int pixelSize = 5}) async {
-  final random = Random(hash.hashCode);
-  final image = img.Image(size, size);
-  
-  final colorPalette = List.generate(5, (_) => img.getColor(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
-  
-  for (var x = 0; x < size ~/ 2; x += pixelSize) {
-    for (var y = 0; y < size; y += pixelSize) {
-      final color = colorPalette[random.nextInt(colorPalette.length)];
-      img.fillRect(image, x, y, x + pixelSize, y + pixelSize, color);
-      img.fillRect(image, size - x - pixelSize, y, size - x, y + pixelSize, color);
-    }
-  }
-  
-    final pngBytes = img.encodePng(image);
-  return Future.value(pngBytes as FutureOr<Uint8List>?);
-}
 
 
 

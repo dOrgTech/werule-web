@@ -1,10 +1,11 @@
+import 'package:Homebase/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:homebase/screens/dao.dart';
-import 'package:homebase/screens/explorer.dart';
-import 'package:homebase/utils/functions.dart';
+import '../screens/dao.dart';
+import '../screens/explorer.dart';
+import '../utils/functions.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -148,7 +149,7 @@ class _TopMenuState extends State<TopMenu> {
             const SizedBox(width: 20 ),
             Padding(
                  padding: const EdgeInsets.only(top:1.0, right:15),
-              child: TextButton(onPressed:(){}, child: WalletButton()),
+              child: TextButton(onPressed:(){}, child: WalletBTN()),
             )
              ],
            ), 

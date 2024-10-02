@@ -1,39 +1,21 @@
-name: homebase
-description: A new Flutter project.
+name: Homebase
+description: Professional DAO tooling.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' 
 
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Both the version and the builder number may be overridden in flutter
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
 environment:
   sdk: '>=2.19.0 <3.0.0'
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
+
 dependencies:
   flutter:
     sdk: flutter
   flutter_svg: ^2.0.5
   cupertino_icons: ^1.0.2
   syncfusion_flutter_charts: ^22.2.9
-  firebase_core_platform_interface: ^5.0.0
   flutter_riverpod:
   hooks_riverpod:
   flutter_circle_chart: ^1.0.0
@@ -45,12 +27,19 @@ dependencies:
   toggle_switch: ^2.1.0
   url_launcher:
   graphite: ^0.3.0
+  # metamask: ^0.0.2
+  lottie:
+  # walletconnect_dart:
+  flutter_web3: ^2.1.6
+  flutter_web3_provider: ^1.0.6
+  web3dart: ^2.0.0
+  cloud_firestore: ^4.13.6
+  provider:
   emojis: ^0.9.9
   animated_text_kit: ^4.1.1
   http:
   flutter_vector_icons: ^1.0.0
   google_fonts: 
-  firebase_core_web: 
   firebase_core: 
   # firebase_firestore:
   scrollable_positioned_list: ^0.2.2

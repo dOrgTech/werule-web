@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'dart:html' as html;
 import 'package:beamer/beamer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homebase/entities/token.dart';
+import '../entities/token.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -87,7 +87,6 @@ class WithdrawState extends State<Withdraw> {
                 )),
               ),
             ),
-            
             ],
           )
     );

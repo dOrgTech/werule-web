@@ -2,8 +2,8 @@ import 'dart:isolate';
 import 'dart:html' as html;
 import 'package:beamer/beamer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homebase/entities/token.dart';
-import 'package:homebase/main.dart';
+import '../entities/token.dart';
+import '../main.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -210,10 +210,10 @@ class SendFundsState extends State<SendFunds> {
 String selectedCapacity = 'Individual';
 Widget capacity() {
 List<String> capacities = ['Individual'];
-for (Token token in humans[1].balances!.keys) {
-  capacities.add(token.name);
-  print("added token " + token.name);
-}
+// for (Token token in humans[1].balances!.keys) {
+//   capacities.add(token.name);
+//   print("added token " + token.name);
+// }
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [

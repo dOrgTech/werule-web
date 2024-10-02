@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:homebase/screens/projectDetails.dart';
-import 'package:homebase/widgets/menu.dart';
+import '../screens/projectDetails.dart';
+import '../widgets/menu.dart';
 import 'package:intl/intl.dart';
 
 import '../entities/project.dart';

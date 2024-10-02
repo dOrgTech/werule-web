@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:homebase/widgets/membersList.dart';
+import '../widgets/membersList.dart';
 
 
 class Members extends StatefulWidget {

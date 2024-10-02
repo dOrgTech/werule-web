@@ -16,9 +16,9 @@ class _FundProjectState extends State<FundProject> {
   @override
   Widget build(BuildContext context) {
        List<String> paymentTokens = [];
-         for (Token t in tokens) {
-      paymentTokens.add(t.symbol + " (" + t.name + ")");
-    }
+    //      for (Token t in tokens) {
+    //   paymentTokens.add(t.symbol + " (" + t.name + ")");
+    // }
     return Container(
       width: 650,
           padding: const EdgeInsets.symmetric(horizontal: 60),
@@ -75,11 +75,11 @@ class _FundProjectState extends State<FundProject> {
                               selectedToken = newValue;
                              
                               amount = "";
-                              selectedAddress = tokens
-                                  .firstWhere((token) =>
-                                      token.symbol + " (" + token.name + ")" ==
-                                      newValue)
-                                  .address;
+                              // selectedAddress = tokens
+                              //     .firstWhere((token) =>
+                              //         token.symbol + " (" + token.name + ")" ==
+                              //         newValue)
+                              //     .address;
                             });
                           },
                         ),

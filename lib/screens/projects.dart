@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:homebase/widgets/cutie.dart';
-import 'package:homebase/widgets/hovermenu.dart';
-import 'package:homebase/widgets/projectCard.dart';
+import '../widgets/cutie.dart';
+import '../widgets/hovermenu.dart';
+import '../widgets/projectCard.dart';
 import '../entities/project.dart';
 import '../widgets/footer.dart';
 import '../widgets/menu.dart';

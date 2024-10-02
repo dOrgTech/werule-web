@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:homebase/widgets/newGenericProject.dart';
+import '../widgets/newGenericProject.dart';
 
 class HoverExpandWidget extends StatefulWidget {
   @override

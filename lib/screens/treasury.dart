@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:homebase/widgets/tokenCard.dart';
+import '../widgets/tokenCard.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 
 class Treasury extends StatefulWidget {

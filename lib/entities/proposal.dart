@@ -8,9 +8,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:homebase/main.dart';
-import 'package:homebase/widgets/executeLambda.dart';
-import 'package:homebase/widgets/newProject.dart';
+import '../main.dart';
+import '../widgets/executeLambda.dart';
+import '../widgets/newProject.dart';
 
 import '../widgets/fundProject.dart';
 
@@ -39,7 +39,7 @@ var newProposalWidgets={
   "DAO Configuration": NotImplemented(),
   "Change Guardian": NotImplemented(),
   "Change DAO Delegate":NotImplemented(),
-   "Fund Project": FundProject(org:orgs[0]),
+  //  "Fund Project": FundProject(org:daos![0]),
 };
 
 class NotImplemented extends StatelessWidget {

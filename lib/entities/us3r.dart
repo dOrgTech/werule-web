@@ -1,11 +1,10 @@
 
-import 'package:homebase/main.dart';
+import '../main.dart';
 
 import 'human.dart';
 
 class Us3r{
-  Us3r({required this.human}){
-    
-  }
-  Human human;
+  String address;
+  List<Vote> votes=[];  
+  Us3r({required this.address});
 }
