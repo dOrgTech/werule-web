@@ -78,7 +78,7 @@ class _HomeState extends State<Home> {
                           mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text("Governance Token Address: "),
-                                Text(widget.org.token.address, style: TextStyle(fontSize: 11),),
+                                Text(widget.org.token.address!, style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
                                   onPressed: (){},

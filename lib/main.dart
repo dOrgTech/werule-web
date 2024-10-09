@@ -1,10 +1,12 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'entities/contractFunctions.dart';
 import 'entities/org.dart';
 import 'entities/project.dart';
 import 'entities/token.dart';
@@ -45,24 +47,21 @@ persist(){
 }
 
 
-
-
-
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
 void main() async {
- await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
-  var systemSnapshot= await systemCollection.get();
+ 
 
+ await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+  var systemSnapshot= await systemCollection.get(); 
   for (var doc in systemSnapshot.docs){
     print(doc.data());
   }
 
-
   runApp(
   ChangeNotifierProvider<Human>(
         create: (context) => Human(),
-        child: MyApp(),
+        child: const MyApp(),
       ));
 }
 
@@ -95,7 +94,10 @@ class MyApp extends StatelessWidget {
         // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
         primarySwatch: createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
       ),
-      home: MyHomePage(title: 'Tezos homebase'),
+      home: 
+      Scaffold(body:
+      //  DaoSetupWizard())
+      MyHomePage(title: 'Tezos homebase')),
     );
   }
 }

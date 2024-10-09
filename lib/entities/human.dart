@@ -9,12 +9,19 @@ import 'dart:math';
 import '../main.dart';
 import '../utils/functions.dart';
 import 'org.dart';
-String prevChain="0xa729";
+String prevChain="0x1f47b";
 var chains={
- "0xaa36a7": Chain(arbitrationFee: "1000000000000000000", id:11155111, name: "Sepolia", nativeSymbol: "sETH", decimals:18, rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede", blockExplorer:"https://sepolia.etherscan.io"),
-//  "0x1f47b": Chain(id:128123, name: "Etherlink-Testnet",arbitrationFee: "1000000000000000000", nativeSymbol: "XTZ", decimals:18, rpcNode: "https://rpc.etherlink-testnet.tz.soap.coffee", blockExplorer:"https://testnet-explorer.etherlink.com"),
- "0x1f47b": Chain(id:128123, name: "Etherlink-Testnet",arbitrationFee: "1000000000000000000", nativeSymbol: "XTZ", decimals:18, rpcNode: "https://node.ghostnet.etherlink.com", blockExplorer:"https://testnet-explorer.etherlink.com"),
- "0xa729": Chain(id:42793, name: "Etherlink",arbitrationFee: "1000000000000000000", nativeSymbol: "XTZ", decimals:18, rpcNode: "https://node.mainnet.etherlink.com", blockExplorer:"https://explorer.etherlink.com"),
+ "0xaa36a7": Chain(
+  wrapperContract:"",
+   id:11155111, name: "Sepolia", nativeSymbol: "sETH", decimals:18, rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede", blockExplorer:"https://sepolia.etherscan.io"),
+
+ "0x1f47b": Chain(
+  wrapperContract:"0x80df3CD253d388938F09e4fB836675Fa447d9351",
+  id:128123, name: "Etherlink-Testnet", nativeSymbol: "XTZ", decimals:18, rpcNode: "https://node.ghostnet.etherlink.com", blockExplorer:"https://testnet-explorer.etherlink.com"),
+ 
+ "0xa729": Chain(
+  wrapperContract:"",
+  id:42793, name: "Etherlink", nativeSymbol: "XTZ", decimals:18, rpcNode: "https://node.mainnet.etherlink.com", blockExplorer:"https://explorer.etherlink.com"),
 };
 class Human extends ChangeNotifier{
    final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
@@ -81,7 +88,7 @@ class Human extends ChangeNotifier{
         if (!chains.keys.contains(chainId)){
           print("schimbam la nimic");
           wrongChain=true;
-          chain=Chain(arbitrationFee: "", id: 0, name: 'N/A', nativeSymbol: '', decimals: 0, rpcNode: '', blockExplorer: "");
+          chain=Chain(wrapperContract:"", id: 0, name: 'N/A', nativeSymbol: '', decimals: 0, rpcNode: '', blockExplorer: "");
           notifyListeners();
           return "nogo";
         }else{
@@ -105,7 +112,8 @@ class Human extends ChangeNotifier{
     return User();
   }
 
-  signIn()async{    
+  signIn()async{  
+    print("signing into the thing") ;
    try {
       var accounts = await promiseToFuture(
         ethereum!.request(
@@ -113,22 +121,33 @@ class Human extends ChangeNotifier{
         ),
       );
       address = ethereum?.selectedAddress.toString();
+      print("before waiting");
+      await Future.delayed(Duration(milliseconds: 1500));
+      print("before web3user is instantiated");
+     
+      print("before chainid");
       var chainaidi = ethereum?.chainId;
+      print("chainid is "+chainaidi.toString());
+       web3user = Web3Provider(ethereum!);
+      print("web3user "+web3user.toString());
       if (!chains.keys.contains(chainaidi)){
-          print("schimbam la nimic");
+          print("switching to nothing");
           wrongChain=true;
-          chain=Chain(arbitrationFee: "",
+          chain=Chain(wrapperContract:"",
             id: 0, name: 'N/A', nativeSymbol: '', decimals: 0, rpcNode: '', blockExplorer: "");
           notifyListeners();
           return "nogo";
         }else{
+          print("we are in this here else");
           wrongChain=false;
           chain=chains[chainaidi]!;
           if (! (chain==chains[prevChain])){
+            // web3user = Web3Provider(ethereum!);
             await persist();
             refreshPage();}
           }
-      web3user = Web3Provider(ethereum!);
+      
+      print("after getting the web3user it is of type "+web3user.runtimeType.toString());
       // address="0xa9f8f9c0bf3188ceddb9684ae28655187552bae9";
       getUser();
       notifyListeners(); // Notify listeners that signIn was successful
@@ -165,11 +184,11 @@ class Chain{
   Chain({required this.id, required this.name,
    required this.nativeSymbol, required this.decimals, 
    required this.rpcNode, required this.blockExplorer,
-   required this.arbitrationFee
+   required this.wrapperContract
    });
   int id;
   String name;
-  String arbitrationFee;
+  String wrapperContract;
   int decimals;
   String nativeSymbol;
   String blockExplorer;

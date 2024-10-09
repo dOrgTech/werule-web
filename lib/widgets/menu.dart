@@ -26,10 +26,10 @@ class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
 }
 
 class _TopMenuState extends State<TopMenu> {
-  final List<String> items = ['  Mainnet', '  Ghostnet'];
+  final List<String> items = ['  Etherlink-Testnet', '  Etherlink-Mainnet'];
 
   // The current selected value of the dropdown
-  String? selectedValue = '  Mainnet';
+  String? selectedValue = '  Etherlink-Testnet';
   @override
   Widget build(BuildContext context) {
     return Align(

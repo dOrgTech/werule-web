@@ -1,12 +1,14 @@
+import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
+import '../entities/token.dart';
 import '../main.dart';
 import '../widgets/menu.dart';
-
 import '../entities/org.dart';
 import '../widgets/daocard.dart';
 import '../widgets/footer.dart';
+import 'creator.dart';
 class Explorer extends StatefulWidget {
   const Explorer({super.key});
 
@@ -17,10 +19,10 @@ class Explorer extends StatefulWidget {
 class _ExplorerState extends State<Explorer> {
   @override
   Widget build(BuildContext context) {
-       List<Widget> daos=[];
-    for (var org in orgs) {
-      daos.add(DAOCard(org:org as Org));
-    }
+    
+    List<Widget> daos=[];
+    for (var org in orgs) {daos.add(DAOCard(org:org as Org));}
+    
     return Scaffold(
       appBar: const TopMenu(),
       body: Container(
@@ -70,7 +72,24 @@ class _ExplorerState extends State<Explorer> {
                               SizedBox(width: 30,),
                               SizedBox(
                                 height: 40,
-                                child: ElevatedButton(onPressed: (){}, 
+                                child: ElevatedButton(onPressed: (){
+                                  Token tkn=Token(
+                                    name:"TeZBugHunt",
+                                    decimals: 18,
+                                    symbol: "BGT"
+                                  );
+                                  Org org=Org(
+                                    name: "TezBugHunt",
+                                    token: tkn,
+                                    description: "We hunting bugs",
+                                  );
+                                  Navigator.push(context, 
+                                  MaterialPageRoute(builder: (context)=>
+                                   Scaffold(body:
+                                  DaoSetupWizard())
+                                  ));
+                                  
+                                }, 
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Theme.of(context).indicatorColor),
                                 child: Text("Create DAO", 

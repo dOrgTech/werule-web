@@ -1,0 +1,52 @@
+make a flutter widget which is a wizard to help users set up a DAO. It will consist of a few several screens:
+
+
+Screen 1
+Title: "Select DAO type"
+two side by side 300x300 clickable areas, each with:
+    - a placeholder for an image
+    - a Title
+    - a short description
+    Option 1 Title: "On-chain"
+    Option 2 Title: "Off-chain"
+    use some "lorem ipsum" text for the description for now, but keep it under 150 characters.
+
+
+Screen 2.
+here we have the following fields:
+    - "DAO Name" (text input, max. characters 80)
+    - "DAO Description" (text input, 4 lines tall, max characters 400)
+    - "Token Symbol" (text input, max characters 5)
+    - "Number of decimals" (text input, only numbers, between 0 and 18)
+    - "Non-transferrable" (checkbox)
+
+Screen 3. 
+more fields, but these will each have a short description attached:
+    - Quorum Threshold (Slider, goes between 0 and 99)
+        desc: "Minimum participation required for a proposal to pass"
+    - Voting Duration (custom element for selecting duration with componenets in the same horizontal row:
+        - text input, only numbers, maximum characters 2
+        - text: "days"
+        - text input, only numbers, maximum characters 2
+        - text: "hours"
+        - text input, only numbers, maximum characters 2
+        - text: "minutes"
+        )
+        desc: How long a proposal will be open for voting
+    - Voting Delay (same custom element described above for voting duration)
+
+Screen 4.
+this will have some logic that dynamically changes the state. It is where the initial members of the DAO are added.
+We have the following items:
+    - "Total Tokens: 0" (it starts with zero but will be dynamically updated)
+then a section where we add the members using two fields for each new member:
+    - "Member Address" (text input, 42 characters)
+    - "Amount" (text input, only positive non-fractional numbers)
+    Below there is a button to add a new member, and if clicked it introduces a new set of fields below to add a new member
+    The `Total Tokens` value is updated based on all the amounts of the members added.
+
+
+On the left side of each screen there is a widget that shows an overview of the entire wizard, indicating the current step. The names of the screens used here are: 1 "DAO Type", 2 "Basic Setup", 3 "Durations", 4 "Members". This allows the user to click on any of the sections in the wizard and go back to that section (only if they are on a section further)
+There are also "Next" and "Back" buttons on all the screens.
+
+Make sure to use configuration objects to store the values provided by the user. You can pick the most efficient or your preferred way to implement this, but I would suggest using separate widgets for each of the screens.
