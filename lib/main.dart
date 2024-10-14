@@ -41,23 +41,44 @@ List<User>? users;
 List<Org> orgs=[];
 List<Proposal>?proposals;
 List<Vote> ?votes;
+var daosCollection;
+var pollsCollection;
+var votesCollection;
 // Us3r us3r = Us3r(human: humans[0]);
-persist(){
-  users=[];proposals=[];votes=[];orgs=[];
+var systemCollection = FirebaseFirestore.instance.collection('some');
+
+persist() async {
+  users=[];proposals=[];votes=[];
+  daosCollection=FirebaseFirestore.instance.collection("daos${Human().chain.name}");
+  pollsCollection=FirebaseFirestore.instance.collection("polls${Human().chain.name}");
+  votesCollection=FirebaseFirestore.instance.collection("votes${Human().chain.name}");
+  var daosSnapshot =await  daosCollection.get();
+  for (var doc in daosSnapshot.docs){
+    print("we are doing this ");
+    Org org=
+      Org(name: doc.data()['name'],
+      description: doc.data()['description'],
+      govTokenAddress: doc.data()['govTokenAddress']
+    );
+    org.address=doc.data()['address'];
+    org.creationDate=(doc.data()['creationDate'] as Timestamp).toDate();
+    org.govToken=Token(symbol: "XTZ", decimals: 3,name: "TOKEN");
+    org.govTokenAddress = doc.data()['token'];
+    orgs.add(org);
+  }
+  print("orgs length: "+orgs.length.toString());
 }
 
 
-var systemCollection = FirebaseFirestore.instance.collection('some');
-
 void main() async {
- 
-
+  
  await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+ await persist();
   var systemSnapshot= await systemCollection.get(); 
   for (var doc in systemSnapshot.docs){
     print(doc.data());
   }
-
+  
   runApp(
   ChangeNotifierProvider<Human>(
         create: (context) => Human(),
@@ -161,10 +182,7 @@ class _WalletBTNState extends State<WalletBTN> {
   void initState() {
     super.initState();
     // Load existing address
-   
   }
-
-
 
   @override
   Widget build(BuildContext context) {

@@ -71,7 +71,7 @@ getNumberOfDAOs() async {
         final transaction =
           await promiseToFuture(callMethod(sourceContract, "deployDAOwithToken", [
           org.name, // string
-          org.token.symbol, // string
+          org.govToken!.symbol, // string
           [Human().address], // array of strings (addresses)
           ["500000000000000000"], // array of strings representing uint256
           "1", // string representing uint48

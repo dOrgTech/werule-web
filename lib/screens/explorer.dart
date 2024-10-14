@@ -19,9 +19,13 @@ class Explorer extends StatefulWidget {
 class _ExplorerState extends State<Explorer> {
   @override
   Widget build(BuildContext context) {
-    
+    print("building explorer" + orgs.length.toString());
+
     List<Widget> daos=[];
-    for (var org in orgs) {daos.add(DAOCard(org:org as Org));}
+
+    for (var org in orgs) {
+      print("adding a dao");
+      daos.add(DAOCard(org:org as Org));}
     
     return Scaffold(
       appBar: const TopMenu(),
@@ -80,7 +84,7 @@ class _ExplorerState extends State<Explorer> {
                                   );
                                   Org org=Org(
                                     name: "TezBugHunt",
-                                    token: tkn,
+                                    govToken: tkn,
                                     description: "We hunting bugs",
                                   );
                                   Navigator.push(context, 

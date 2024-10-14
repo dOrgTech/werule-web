@@ -1,7 +1,9 @@
+import 'package:Homebase/main.dart';
 import 'package:flutter/material.dart';
 import '../entities/contractFunctions.dart';
 import '../entities/org.dart';
 import '../entities/token.dart';
+import 'explorer.dart';
 
 // Configuration classes to store user-provided values
 class DaoConfig {
@@ -17,14 +19,12 @@ class DaoConfig {
   Duration? votingDelay;
   Duration? executionAvailability; // Added execution availability duration
   List<Member> members = [];
-
   DaoConfig();
 }
 
 class Member {
   String address;
   int amount;
-
   Member({required this.address, required this.amount});
 }
 
@@ -66,7 +66,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
     }
   }
 
-  void finishWizard() {
+  void finishWizard()async {
     // Create Token and Org instances using collected data
     Token token = Token(
       name: daoConfig.daoName ?? '',
@@ -76,10 +76,21 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
 
     Org org = Org(
       name: daoConfig.daoName ?? '',
-      token: token,
+      govToken: token,
       description: daoConfig.daoDescription,
     );
-    createDAO(org, this);
+    try {
+      createDAO(org, this);
+        await daosCollection.doc(org.address)
+                            .set(org.toJson());
+    } catch (e) {
+      
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MyHomePage(title: "Homebase"),
+      ),
+    );
     // You can now use 'org' and 'token' as needed
     print('Org created: ${org.name}, Token: ${token.symbol}');
 
@@ -89,7 +100,6 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
   @override
   Widget build(BuildContext context) {
     Widget content;
-
     switch (currentStep) {
       case 0:
         content = Padding(
@@ -130,7 +140,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
             onBack: previousStep,
           ),
         );
-        break;
+      break;
       case 4:
         content = Padding(
           padding: const EdgeInsets.all(38.0),
@@ -145,71 +155,90 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         content = Container();
     }
 
-    return Row(
-      children: [
-        // Left side: Wizard steps overview
-        Container(
-          padding: EdgeInsets.only(left: 38.0),
-          width: 270,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      child: Column(
+        children: [
+        
+          Row(
             children: [
-              // Wrap ListView in Material to provide Material context
-              Material(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    ListTile(
-                      title: Text('1. DAO Type'),
-                      onTap: () => goToStep(0),
-                      selected: currentStep == 0,
-                      enabled: true,
-                      selectedColor: Colors.black,
-                      selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                    ),
-                    ListTile(
-                      title: Text('2. Basic Setup'),
-                      onTap: maxStepReached >= 1 ? () => goToStep(1) : null,
-                      selected: currentStep == 1,
-                      enabled: maxStepReached >= 1,
-                      selectedColor: Colors.black,
-                      selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                    ),
-                    ListTile(
-                      title: Text('3. Quorums'),
-                      onTap: maxStepReached >= 2 ? () => goToStep(2) : null,
-                      selected: currentStep == 2,
-                      enabled: maxStepReached >= 2,
-                      selectedColor: Colors.black,
-                      selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                    ),
-                    ListTile(
-                      title: Text('4. Durations'),
-                      onTap: maxStepReached >= 3 ? () => goToStep(3) : null,
-                      selected: currentStep == 3,
-                      enabled: maxStepReached >= 3,
-                      selectedColor: Colors.black,
-                      selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                    ),
-                    ListTile(
-                      title: Text('5. Members'),
-                      onTap: maxStepReached >= 4 ? () => goToStep(4) : null,
-                      selected: currentStep == 4,
-                      enabled: maxStepReached >= 4,
-                      selectedColor: Colors.black,
-                      selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                    ),
-                  ],
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.only(top:28.0, right:50),
+                child: TextButton(
+                  child: Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
             ],
           ),
-        ),
-        // Right side: Current screen
-        Expanded(
-          child: content,
-        ),
-      ],
+          Row(
+            children: [
+              // Left side: Wizard steps overview
+              Container(
+                padding: EdgeInsets.only(left: 38.0),
+                width: 270,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Wrap ListView in Material to provide Material context
+                    Material(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          ListTile(
+                            title: Text('1. DAO Type'),
+                            onTap: () => goToStep(0),
+                            selected: currentStep == 0,
+                            enabled: true,
+                            selectedColor: Colors.black,
+                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                          ),
+                          ListTile(
+                            title: Text('2. Basic Setup'),
+                            onTap: maxStepReached >= 1 ? () => goToStep(1) : null,
+                            selected: currentStep == 1,
+                            enabled: maxStepReached >= 1,
+                            selectedColor: Colors.black,
+                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                          ),
+                          ListTile(
+                            title: Text('3. Quorums'),
+                            onTap: maxStepReached >= 2 ? () => goToStep(2) : null,
+                            selected: currentStep == 2,
+                            enabled: maxStepReached >= 2,
+                            selectedColor: Colors.black,
+                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                          ),
+                          ListTile(
+                            title: Text('4. Durations'),
+                            onTap: maxStepReached >= 3 ? () => goToStep(3) : null,
+                            selected: currentStep == 3,
+                            enabled: maxStepReached >= 3,
+                            selectedColor: Colors.black,
+                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                          ),
+                          ListTile(
+                            title: Text('5. Members'),
+                            onTap: maxStepReached >= 4 ? () => goToStep(4) : null,
+                            selected: currentStep == 4,
+                            enabled: maxStepReached >= 4,
+                            selectedColor: Colors.black,
+                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),  
+              ),
+              // Right side: Current screen
+              Expanded(
+                child: content,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

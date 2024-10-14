@@ -62,7 +62,11 @@ class _HomeState extends State<Home> {
                           mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text("Contract Address: "),
-                                Text(widget.org.address!, style: TextStyle(fontSize: 11),),
+                                Text(
+                                  
+                                  widget.org.address!
+                                  // "asiduhwqiudh128hd92w8h19q8dh9w8dh398dhd2938"
+                                  , style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
                                   onPressed: (){},
@@ -78,7 +82,12 @@ class _HomeState extends State<Home> {
                           mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text("Governance Token Address: "),
-                                Text(widget.org.token.address!, style: TextStyle(fontSize: 11),),
+                                Text(
+                                  
+                                  // "d2038jd028wjfoisfpjq3p9f8jpe398hfpsqhiw"
+                                  widget.org.govTokenAddress!
+                                  
+                                  , style: TextStyle(fontSize: 11),),
                                 const SizedBox(width: 2,),
                                 TextButton(
                                   onPressed: (){},
@@ -187,7 +196,7 @@ class _HomeState extends State<Home> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.only(top:19,left:28.0),
-                            child: Text(widget.org.token.symbol+ " Locked", style: TextStyle(fontSize: 17, 
+                            child: Text(widget.org.govToken!.symbol+ " Locked", style: TextStyle(fontSize: 17, 
                             color: Theme.of(context).indicatorColor,
                             fontWeight: FontWeight.normal),),
                             ),
