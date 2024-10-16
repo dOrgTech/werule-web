@@ -1,6 +1,7 @@
 import 'package:Homebase/main.dart';
 import 'package:flutter/material.dart';
 import '../entities/contractFunctions.dart';
+import '../entities/human.dart';
 import '../entities/org.dart';
 import '../entities/token.dart';
 import 'explorer.dart';
@@ -48,7 +49,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
   }
 
   void nextStep() {
-    if (currentStep < 4) { // Updated to 4 to account for the new steps
+    if (currentStep < 6) { // Updated to 6 to account for all steps
       setState(() {
         currentStep++;
         if (currentStep > maxStepReached) {
@@ -66,35 +67,48 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
     }
   }
 
-  void finishWizard()async {
-    // Create Token and Org instances using collected data
-    Token token = Token(
-      name: daoConfig.daoName ?? '',
-      symbol: daoConfig.tokenSymbol ?? '',
-      decimals: daoConfig.numberOfDecimals ?? 0,
-    );
+  void finishWizard() {
+    setState(() {
+      currentStep = 6; // Move to the Deploying screen
+    });
 
-    Org org = Org(
-      name: daoConfig.daoName ?? '',
-      govToken: token,
-      description: daoConfig.daoDescription,
-    );
-    try {
-      createDAO(org, this);
-        await daosCollection.doc(org.address)
-                            .set(org.toJson());
-    } catch (e) {
-      
-    }
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => MyHomePage(title: "Homebase"),
-      ),
-    );
-    // You can now use 'org' and 'token' as needed
-    print('Org created: ${org.name}, Token: ${token.symbol}');
+    // Start the deployment asynchronously
+    Future.delayed(Duration.zero, () async {
+      // Create Token and Org instances using collected data
+      Token token = Token(
+        name: daoConfig.daoName ?? '',
+        symbol: daoConfig.tokenSymbol ?? '',
+        decimals: daoConfig.numberOfDecimals ?? 0,
+      );
 
-    // Optionally, navigate away or show a confirmation
+      Org org = Org(
+        name: daoConfig.daoName ?? '',
+        govToken: token,
+        description: daoConfig.daoDescription,
+      );
+      org.quorum = daoConfig.quorumThreshold ?? 0;
+      org.supermajority = daoConfig.supermajority.toInt();
+      org.votingDuration = daoConfig.votingDuration?.inMinutes ?? 0;
+      org.votingDelay = daoConfig.votingDelay?.inMinutes ?? 0;
+      org.executionAvailability = daoConfig.executionAvailability?.inMinutes ?? 0;
+      org.holders = daoConfig.members.length;
+
+      try {
+        List<String> results = await createDAO(org, this);
+        org.address = results[0];
+        org.govTokenAddress = results[1];
+        org.treasuryAddress = results[2];
+        await daosCollection.doc(org.address).set(org.toJson());
+        orgs.add(org);
+
+        setState(() {
+          currentStep = 7; // Move to the Deployment Complete screen
+        });
+      } catch (e) {
+        print("Error creating DAO: $e");
+        // Optionally handle the error (e.g., show an error message)
+      }
+    });
   }
 
   @override
@@ -106,8 +120,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           padding: const EdgeInsets.all(38.0),
           child: Screen1DaoType(
             daoConfig: daoConfig,
-            onNext:nextStep
-            // onNext: nextStep,
+            onNext: nextStep,
           ),
         );
         break;
@@ -140,14 +153,47 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
             onBack: previousStep,
           ),
         );
-      break;
+        break;
       case 4:
         content = Padding(
           padding: const EdgeInsets.all(38.0),
           child: Screen5Members(
             daoConfig: daoConfig,
+            onNext: nextStep, // Changed from onFinish to onNext
+            onBack: previousStep,
+          ),
+        );
+        break;
+      case 5:
+        content = Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen6Review(
+            daoConfig: daoConfig,
             onBack: previousStep,
             onFinish: finishWizard,
+          ),
+        );
+        break;
+      case 6:
+        content = Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen7Deploying(
+            daoName: daoConfig.daoName ?? 'DAO',
+          ),
+        );
+        break;
+      case 7:
+        content = Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen8DeploymentComplete(
+            daoName: daoConfig.daoName ?? 'DAO',
+            onGoToDAO: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => MyHomePage(title: "Homebase"),
+                ),
+              );
+            },
           ),
         );
         break;
@@ -158,12 +204,11 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
     return Container(
       child: Column(
         children: [
-        
           Row(
             children: [
               const Spacer(),
               Padding(
-                padding: const EdgeInsets.only(top:28.0, right:50),
+                padding: const EdgeInsets.only(top: 28.0, right: 50),
                 child: TextButton(
                   child: Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
@@ -171,71 +216,81 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
               ),
             ],
           ),
-          Row(
-            children: [
-              // Left side: Wizard steps overview
-              Container(
-                padding: EdgeInsets.only(left: 38.0),
-                width: 270,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Wrap ListView in Material to provide Material context
-                    Material(
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: [
-                          ListTile(
-                            title: Text('1. DAO Type'),
-                            onTap: () => goToStep(0),
-                            selected: currentStep == 0,
-                            enabled: true,
-                            selectedColor: Colors.black,
-                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                          ),
-                          ListTile(
-                            title: Text('2. Basic Setup'),
-                            onTap: maxStepReached >= 1 ? () => goToStep(1) : null,
-                            selected: currentStep == 1,
-                            enabled: maxStepReached >= 1,
-                            selectedColor: Colors.black,
-                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                          ),
-                          ListTile(
-                            title: Text('3. Quorums'),
-                            onTap: maxStepReached >= 2 ? () => goToStep(2) : null,
-                            selected: currentStep == 2,
-                            enabled: maxStepReached >= 2,
-                            selectedColor: Colors.black,
-                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                          ),
-                          ListTile(
-                            title: Text('4. Durations'),
-                            onTap: maxStepReached >= 3 ? () => goToStep(3) : null,
-                            selected: currentStep == 3,
-                            enabled: maxStepReached >= 3,
-                            selectedColor: Colors.black,
-                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                          ),
-                          ListTile(
-                            title: Text('5. Members'),
-                            onTap: maxStepReached >= 4 ? () => goToStep(4) : null,
-                            selected: currentStep == 4,
-                            enabled: maxStepReached >= 4,
-                            selectedColor: Colors.black,
-                            selectedTileColor: Color.fromARGB(255, 121, 133, 128),
-                          ),
-                        ],
+          Expanded(
+            child: Row(
+              children: [
+                // Left side: Wizard steps overview
+                Container(
+                  padding: EdgeInsets.only(left: 38.0),
+                  width: 270,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Wrap ListView in Material to provide Material context
+                      Material(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: [
+                            ListTile(
+                              title: Text('1. DAO Type'),
+                              onTap: () => goToStep(0),
+                              selected: currentStep == 0,
+                              enabled: true,
+                              selectedColor: Colors.black,
+                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                            ),
+                            ListTile(
+                              title: Text('2. Basic Setup'),
+                              onTap: maxStepReached >= 1 ? () => goToStep(1) : null,
+                              selected: currentStep == 1,
+                              enabled: maxStepReached >= 1,
+                              selectedColor: Colors.black,
+                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                            ),
+                            ListTile(
+                              title: Text('3. Quorums'),
+                              onTap: maxStepReached >= 2 ? () => goToStep(2) : null,
+                              selected: currentStep == 2,
+                              enabled: maxStepReached >= 2,
+                              selectedColor: Colors.black,
+                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                            ),
+                            ListTile(
+                              title: Text('4. Durations'),
+                              onTap: maxStepReached >= 3 ? () => goToStep(3) : null,
+                              selected: currentStep == 3,
+                              enabled: maxStepReached >= 3,
+                              selectedColor: Colors.black,
+                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                            ),
+                            ListTile(
+                              title: Text('5. Members'),
+                              onTap: maxStepReached >= 4 ? () => goToStep(4) : null,
+                              selected: currentStep == 4,
+                              enabled: maxStepReached >= 4,
+                              selectedColor: Colors.black,
+                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                            ),
+                            ListTile(
+                              title: Text('6. Review & Deploy'),
+                              onTap: maxStepReached >= 5 ? () => goToStep(5) : null,
+                              selected: currentStep == 5,
+                              enabled: maxStepReached >= 5,
+                              selectedColor: Colors.black,
+                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),  
-              ),
-              // Right side: Current screen
-              Expanded(
-                child: content,
-              ),
-            ],
+                    ],
+                  ),
+                ),
+                // Right side: Current screen
+                Expanded(
+                  child: content,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -447,8 +502,8 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 300,
+                      Expanded(
+                        flex: 7,
                         child: TextFormField(
                           controller: _tokenSymbolController,
                           decoration: InputDecoration(labelText: 'Token Symbol'),
@@ -461,15 +516,15 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                         ),
                       ),
                       SizedBox(width: 20),
-                      SizedBox(
-                        width: 180,
+                      Expanded(
+                        flex: 3,
                         child: TextFormField(
                           controller: _numberOfDecimalsController,
                           keyboardType: TextInputType.number,
-                          decoration: InputDecoration(labelText: 'Number of decimals'),
+                          decoration: InputDecoration(labelText: 'Decimals'),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter the Number of decimals';
+                              return 'Please enter the number of decimals';
                             }
                             int? decimals = int.tryParse(value);
                             if (decimals == null || decimals < 0 || decimals > 18) {
@@ -595,7 +650,7 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                       });
                     },
                   ),
-                  Text('Minimum participation required for changing the DAO configuration'),
+                  Text('Minimum percentage required to change the DAO configuration'),
                 ],
               ),
             ),
@@ -846,12 +901,12 @@ class DurationInput extends StatelessWidget {
 class Screen5Members extends StatefulWidget {
   final DaoConfig daoConfig;
   final VoidCallback onBack;
-  final VoidCallback onFinish;
+  final VoidCallback onNext; // Changed from onFinish to onNext
 
   Screen5Members({
     required this.daoConfig,
     required this.onBack,
-    required this.onFinish,
+    required this.onNext, // Updated parameter
   });
 
   @override
@@ -905,7 +960,7 @@ class _Screen5MembersState extends State<Screen5Members> {
     });
   }
 
-  void _saveAndFinish() {
+  void _saveAndNext() {
     widget.daoConfig.members = _memberEntries
         .map((entry) => Member(
               address: entry.addressController.text,
@@ -913,7 +968,7 @@ class _Screen5MembersState extends State<Screen5Members> {
             ))
         .toList();
 
-    widget.onFinish();
+    widget.onNext(); // Changed from widget.onFinish() to widget.onNext()
   }
 
   @override
@@ -964,8 +1019,8 @@ class _Screen5MembersState extends State<Screen5Members> {
                     child: Text('Back'),
                   ),
                   ElevatedButton(
-                    onPressed: _saveAndFinish,
-                    child: Text('Finish'),
+                    onPressed: _saveAndNext,
+                    child: Text('Next'), // Changed label from 'Finish' to 'Next'
                   ),
                 ],
               ),
@@ -997,7 +1052,7 @@ class MemberEntryWidget extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          width:700,
+          width: 700,
           child: Row(
             children: [
               // Member Address
@@ -1016,7 +1071,7 @@ class MemberEntryWidget extends StatelessWidget {
               SizedBox(width: 16),
               // Amount
               Expanded(
-                flex:3,
+                flex: 3,
                 child: TextField(
                   controller: entry.amountController,
                   keyboardType: TextInputType.number,
@@ -1034,6 +1089,147 @@ class MemberEntryWidget extends StatelessWidget {
         ),
         SizedBox(height: 8),
       ],
+    );
+  }
+}
+
+// Screen 6: Review & Deploy
+class Screen6Review extends StatelessWidget {
+  final DaoConfig daoConfig;
+  final VoidCallback onBack;
+  final VoidCallback onFinish;
+
+  Screen6Review({
+    required this.daoConfig,
+    required this.onBack,
+    required this.onFinish,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Helper function to format durations
+    String formatDuration(Duration? duration) {
+      if (duration == null) return 'Not set';
+      int days = duration.inDays;
+      int hours = duration.inHours % 24;
+      int minutes = duration.inMinutes % 60;
+      return '$days days, $hours hours, $minutes minutes';
+    }
+
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Review & Deploy', style: Theme.of(context).textTheme.headline5),
+              SizedBox(height: 30),
+              Text('DAO Type: ${daoConfig.daoType}'),
+              SizedBox(height: 10),
+              Text('DAO Name: ${daoConfig.daoName}'),
+              SizedBox(height: 10),
+              Text('DAO Description: ${daoConfig.daoDescription}'),
+              SizedBox(height: 10),
+              Text('Token Symbol: ${daoConfig.tokenSymbol}'),
+              SizedBox(height: 10),
+              Text('Number of Decimals: ${daoConfig.numberOfDecimals}'),
+              SizedBox(height: 10),
+              Text('Non-Transferrable: ${daoConfig.nonTransferrable ? 'Yes' : 'No'}'),
+              SizedBox(height: 20),
+              Text('Quorum Threshold: ${daoConfig.quorumThreshold}%'),
+              SizedBox(height: 10),
+              Text('Supermajority: ${daoConfig.supermajority}%'),
+              SizedBox(height: 20),
+              Text('Voting Duration: ${formatDuration(daoConfig.votingDuration)}'),
+              SizedBox(height: 10),
+              Text('Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
+              SizedBox(height: 10),
+              Text('Execution Availability: ${formatDuration(daoConfig.executionAvailability)}'),
+              SizedBox(height: 20),
+              Text('Members:', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+              DataTable(
+                columns: [
+                  DataColumn(label: Text('Address')),
+                  DataColumn(label: Text('Amount')),
+                ],
+                rows: daoConfig.members.map((member) {
+                  return DataRow(cells: [
+                    DataCell(Text(member.address)),
+                    DataCell(Text(member.amount.toString())),
+                  ]);
+                }).toList(),
+              ),
+              SizedBox(height: 30),
+              SizedBox(
+                width: 700,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton(
+                      onPressed: onBack,
+                      child: Text('Back'),
+                    ),
+                    ElevatedButton(
+                      onPressed: onFinish,
+                      child: Text('Deploy'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Screen 7: Deploying
+class Screen7Deploying extends StatelessWidget {
+  final String daoName;
+
+  Screen7Deploying({required this.daoName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        // Center the content vertically and horizontally
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(height: 100, width: 100, child: CircularProgressIndicator()),
+          SizedBox(height: 50),
+          Text('Deploying $daoName to the ${Human().chain.name} blockchain...'),
+        ],
+      ),
+    );
+  }
+}
+
+// Screen 8: Deployment Complete
+class Screen8DeploymentComplete extends StatelessWidget {
+  final String daoName;
+  final VoidCallback onGoToDAO;
+
+  Screen8DeploymentComplete({required this.daoName, required this.onGoToDAO});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        // Center the content vertically and horizontally
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Deployment Complete!', style: Theme.of(context).textTheme.headline5),
+          SizedBox(height: 60),
+          ElevatedButton(
+            onPressed: onGoToDAO,
+            child: Text('Go to DAO'),
+          ),
+        ],
+      ),
     );
   }
 }

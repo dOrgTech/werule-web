@@ -198,10 +198,5 @@ class Chain{
 }
 
 
-class Vote{
-  String? proposalId;
-  String? daoAddress;
-  int? option;
-}
 
 

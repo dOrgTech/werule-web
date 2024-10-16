@@ -58,6 +58,36 @@ getNumberOfDAOs() async {
     print(rezultat.toString()+" "+rezultat.runtimeType.toString());
     return rezultat;
 }
+  getTokenAddress(position)async{
+    print("getting dao address at position ${position}" );
+  var httpClient = Client(); 
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractSursa =
+        DeployedContract(ContractAbi.fromJson(wrapperAbiGlobal,'deployedTokens'), EthereumAddress.fromHex(Human().chain.wrapperContract));
+  var getRepToken = contractSursa.function('deployedTokens');
+  print("intainte de marea functie");
+  var counter = await ethClient
+          .call(contract: contractSursa, function: getRepToken, params: [BigInt.from(position)]);
+    String rezultat= counter[0].toString();
+    print("rezultat"+rezultat);
+    print(rezultat.toString()+" "+rezultat.runtimeType.toString());
+    return rezultat;
+}
+  getTreasuryAddress(position)async{
+    print("getting dao address at position ${position}" );
+  var httpClient = Client(); 
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractSursa =
+        DeployedContract(ContractAbi.fromJson(wrapperAbiGlobal,'deployedTimelocks'), EthereumAddress.fromHex(Human().chain.wrapperContract));
+  var getRepToken = contractSursa.function('deployedTimelocks');
+  print("intainte de marea functie");
+  var counter = await ethClient
+          .call(contract: contractSursa, function: getRepToken, params: [BigInt.from(position)]);
+    String rezultat= counter[0].toString();
+    print("rezultat"+rezultat);
+    print(rezultat.toString()+" "+rezultat.runtimeType.toString());
+    return rezultat;
+}
 
 
   createDAO(Org org, state)async{
@@ -79,7 +109,7 @@ getNumberOfDAOs() async {
         ]));
             print("facuram tranzactia");
       final hash = json.decode(stringify(transaction))["hash"];
-      print("hash " + hash.toString());
+      
       final result = await promiseToFuture(
           callMethod(Human().web3user!, 'waitForTransaction', [hash]));
       if (json.decode(stringify(result))["status"] == 0) {
@@ -87,12 +117,11 @@ getNumberOfDAOs() async {
         return "not ok";
       } else {
         var rezultat=(json.decode(stringify(result)));
-        print("a venit si "+rezultat.toString());
-        print("e de tipul "+rezultat.runtimeType.toString());
         var cate= await getNumberOfDAOs();
         print('tip cate '+cate.runtimeType.toString());
         print("got the counter and it's " + cate.toString());
-        String daoAddress=await getDAOAddress(int.parse(rezultat.toString()) -1 );
+        var daoAddress=await getDAOAddress(cate - 1 );
+        daoAddress=daoAddress.toString();
         if (daoAddress.length>20){
                 org.address=daoAddress;
                 org.creationDate=DateTime.now();
@@ -100,7 +129,12 @@ getNumberOfDAOs() async {
                 print("suntem inainte de pop");
         print ("projectAddress "+ daoAddress.toString());
             }
-        return daoAddress;
+        var tokenAddress = await getTokenAddress(cate -1);
+        tokenAddress = tokenAddress.toString();
+        var treasuryAddress = await getTreasuryAddress(cate-1);
+        treasuryAddress = treasuryAddress.toString();
+        List<String> results = [daoAddress, tokenAddress, treasuryAddress];
+        return results;
         }
       } catch (e) {    
           print("nu s-a putut" +e.toString());

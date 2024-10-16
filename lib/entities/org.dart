@@ -1,44 +1,89 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'human.dart';
 import 'proposal.dart';
 import 'token.dart';
 import 'dart:math';
+
 class Org {
-  Org({ required this.name, this.govToken, this.description, this.govTokenAddress});
+  var pollsCollection;
+  var votesCollection;
+  Org
+  ({ required this.name,
+    this.govToken,
+    this.description,
+    this.govTokenAddress
+    });
   DateTime? creationDate;
   List<User>? members;
   Token? govToken;
+  String? symbol;
+  int? decimals;
   String? govTokenAddress;
-  List<Proposal>? proposals;
-  List<String>? proposalIDs;
+  String? treasuryAddress;
+  List<Proposal> proposals=[];
+  List<String>? proposalIDs=[];
   late String name;
   String? description;
-  Map<Token,double>? treasury;
+  Map<Token,double> treasury={};
   String? address;
-  int holders=1; 
+  int holders=1;
+  int quorum=0;
+  int supermajority=0;
+  int votingDuration=0;
+  int votingDelay=0;
+  int executionAvailability=0;
 
-  fromJson(Map<String, dynamic> json) {
-    name = json['name'];
-    govTokenAddress = json['token'];
-    description = json['description'];
-    address = json['address'];
-    creationDate = DateTime.fromMillisecondsSinceEpoch(json['creationDate']);
-    // members = json['members'].map<User>((member) => User.fromJson(member)).toList();
+  getProposals(String hash)async{
+    pollsCollection=FirebaseFirestore
+      .instance.collection("daos${Human().chain.name}")
+      .doc(address).collection("proposals").doc(hash);
+    var proposalsSnapshot= await pollsCollection.get();
+    for (var doc in proposalsSnapshot.docs){
+      Proposal p =Proposal(
+        type: doc.data()['type'],
+        name:doc.data()['name']
+        ) ;
+      p.against=doc.data()['against'];
+      p.inFavor=doc.data()['inFavor'];
+      p.callData=doc.data()['calldata'];
+      p.createdAt=(doc.data()['createdAt'] as Timestamp).toDate();
+      p.status=doc.data()['status'];
+      p.turnoutPercent=doc.data()['turnoutPercent'];
+      p.author=doc.data()['author'];
+      p.votesFor=doc.data()['votesFor'];
+      p.votesAgainst=doc.data()['votesAgainst'];
+      p.externalResource=doc.data()['externalResource'];
+      p.description=doc.data()['description'];
+    }
+
+
   }
-
    toJson(){
     return {
       'name':name,
-      'created':creationDate,
+      'creationDate':creationDate,
       'description':description,
       'token':govTokenAddress,
+      'treasuryAddress':treasuryAddress,
       'address':address,
       'holders':holders,
+      'symbol':symbol,
+      'decimals':decimals,
       'proposals':proposalIDs,
-      'treasury':treasury
+      'treasury':treasury,
+      'votingDelay':votingDelay,
+      'votingDuration':votingDuration,
+      'executionAvailability':executionAvailability,
+      'quorum':quorum,
+      'supermajority':supermajority
     };
   }
 }
+
+
+
 
 
 

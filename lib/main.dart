@@ -10,7 +10,6 @@ import 'entities/contractFunctions.dart';
 import 'entities/org.dart';
 import 'entities/project.dart';
 import 'entities/token.dart';
-import 'entities/us3r.dart';
 import 'firebase_options.dart';
 import 'prelaunch.dart';
 import 'screens/dao.dart';
@@ -31,8 +30,8 @@ import 'widgets/sendfunds.dart';
 import 'widgets/setParty.dart';
 import 'entities/human.dart';
 import 'utils/reusable.dart';
-import 'entities/us3r.dart';
 import 'screens/proposalDetails.dart';
+import 'entities/proposal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +39,7 @@ String metamask="https://i.ibb.co/HpmDHg0/metamask.png";
 List<User>? users;
 List<Org> orgs=[];
 List<Proposal>?proposals;
-List<Vote> ?votes;
+
 var daosCollection;
 var pollsCollection;
 var votesCollection;
@@ -48,10 +47,8 @@ var votesCollection;
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
 persist() async {
-  users=[];proposals=[];votes=[];
+  users=[];proposals=[];
   daosCollection=FirebaseFirestore.instance.collection("daos${Human().chain.name}");
-  pollsCollection=FirebaseFirestore.instance.collection("polls${Human().chain.name}");
-  votesCollection=FirebaseFirestore.instance.collection("votes${Human().chain.name}");
   var daosSnapshot =await  daosCollection.get();
   for (var doc in daosSnapshot.docs){
     print("we are doing this ");
@@ -64,6 +61,12 @@ persist() async {
     org.creationDate=(doc.data()['creationDate'] as Timestamp).toDate();
     org.govToken=Token(symbol: "XTZ", decimals: 3,name: "TOKEN");
     org.govTokenAddress = doc.data()['token'];
+    org.votingDelay=doc.data()['votingDelay'];
+    org.votingDuration=doc.data()['votingDuration'];
+    org.executionAvailability=doc.data()['executionAvailability'];
+    org.quorum=doc.data()['quorum'];
+    org.supermajority=doc.data()['supermajority'];
+    org.holders=doc.data()['holders'];
     orgs.add(org);
   }
   print("orgs length: "+orgs.length.toString());
@@ -74,6 +77,7 @@ void main() async {
   
  await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
  await persist();
+ 
   var systemSnapshot= await systemCollection.get(); 
   for (var doc in systemSnapshot.docs){
     print(doc.data());
@@ -84,11 +88,10 @@ void main() async {
         create: (context) => Human(),
         child: const MyApp(),
       ));
-}
+  }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -127,14 +130,12 @@ class MyHomePage extends StatefulWidget {
   MyHomePage({super.key, required this.title});
   bool izzo = true;
   final String title;
-
   @override
   State<MyHomePage> createState() => MyHomePageState();
 }
 
 class MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-
   void _incrementCounter() {
     setState(() {
       _counter++;
@@ -143,11 +144,12 @@ class MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return  Scaffold(
         // body: ExecuteLambda()
         // body: Users()
         // body: Prelaunch()
-        body: Explorer()
+        body:
+         Explorer()
         //     body: Arbitrate(
         //       project:  Project(
         //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
