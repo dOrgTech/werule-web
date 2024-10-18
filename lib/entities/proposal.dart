@@ -43,7 +43,6 @@ class NotImplemented extends StatelessWidget {
   }
 }
 
-
 class Proposal{
   String hash="";
   String? type;

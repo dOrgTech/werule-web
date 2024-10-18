@@ -10,7 +10,6 @@ class DAOCard extends StatelessWidget {
   Org org;
   @override
   Widget build(BuildContext context) {
-    
     return Card(
       child: TextButton(
         onPressed: () {

@@ -36,8 +36,18 @@ class _ProposalsState extends State<Proposals> {
     super.initState();
     widget.which="all";
   }
+
+  List<Widget> proposalCards=[];
+    void populateProposals(){
+      for (Proposal p in widget.org.proposals){
+        proposalCards.add(ProposalCard(org:widget.org,proposal:p));
+      }
+    }
+
   @override
   Widget build(BuildContext context) {
+    proposalCards=[];
+    populateProposals();
     return widget.which=="all"?
     Container(
       child: Column(
@@ -152,16 +162,17 @@ class _ProposalsState extends State<Proposals> {
           ),
       ),
     ), 
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "New Project", name: "Engagement with another DAO")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+    ...proposalCards
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "New Project", name: "Engagement with another DAO")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
+        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
        
         ],
       ),

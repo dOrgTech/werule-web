@@ -1,10 +1,11 @@
 
+// ignore_for_file: prefer_typing_uninitialized_variables
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'human.dart';
 import 'proposal.dart';
 import 'token.dart';
-import 'dart:math';
 
 class Org {
   var pollsCollection;
@@ -35,15 +36,15 @@ class Org {
   int votingDelay=0;
   int executionAvailability=0;
 
-  getProposals(String hash)async{
+  getProposals()async{
     pollsCollection=FirebaseFirestore
       .instance.collection("daos${Human().chain.name}")
-      .doc(address).collection("proposals").doc(hash);
+      .doc(address).collection("proposals");
     var proposalsSnapshot= await pollsCollection.get();
     for (var doc in proposalsSnapshot.docs){
       Proposal p =Proposal(
         type: doc.data()['type'],
-        name:doc.data()['name']
+        name:doc.data()['title']
         ) ;
       p.against=doc.data()['against'];
       p.inFavor=doc.data()['inFavor'];
@@ -56,8 +57,9 @@ class Org {
       p.votesAgainst=doc.data()['votesAgainst'];
       p.externalResource=doc.data()['externalResource'];
       p.description=doc.data()['description'];
+      proposals.add(p);
+      proposalIDs!.add(doc.id);
     }
-
 
   }
    toJson(){

@@ -121,7 +121,8 @@ class MyApp extends StatelessWidget {
       home: 
       Scaffold(body:
       //  DaoSetupWizard())
-      MyHomePage(title: 'Tezos homebase')),
+      DAO(InitialTabIndex: 0, org:orgs[0]))
+      // MyHomePage(title: 'Tezos homebase')),
     );
   }
 }

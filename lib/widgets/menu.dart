@@ -77,31 +77,7 @@ class _TopMenuState extends State<TopMenu> {
          ),
                ),
                Spacer(),
-                SizedBox(
-              height: 32,
-              
-              child: ToggleSwitch(
-                initialLabelIndex: status,
-                totalSwitches: 3,
-                minWidth: 120,
-                borderWidth: 1.5,
-                activeBgColor: [Theme.of(context).cardColor],
-                inactiveBgColor: Theme.of(context).canvasColor,
-                borderColor: [Theme.of(context).cardColor],
-                labels: ['DAOs','Projects','Users'],
-                onToggle: (index) {
-                  print('switched to: $index');
-                  Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (BuildContext context) => index==0?Explorer():index==1?Projects():Users()
-              ),
-            );
-            setState(() {
-              status=index!;
-            });
-              },
-            ),
-            ),
+           
               Padding(
                 padding: const EdgeInsets.only(left:50,right:24),
                 child: Row(
