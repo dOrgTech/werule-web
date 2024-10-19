@@ -32,7 +32,7 @@ class DAOCard extends StatelessWidget {
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(bottom:16.0),
-                          child: Text(org.govToken!.symbol, style: TextStyle(
+                          child: Text(org.symbol!, style: TextStyle(
                             color:Theme.of(context).indicatorColor,
                             fontWeight: FontWeight.bold, fontSize: 20)),
                         ),

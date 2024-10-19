@@ -1,34 +1,32 @@
+import 'package:Homebase/entities/token.dart';
 import 'package:flutter/material.dart';
 import '../widgets/executeLambda.dart';
 import '../widgets/newProject.dart';
+import '../widgets/transfer.dart';
+import 'org.dart';
 
 
 var proposalTypes={
   "Offchain Poll":"Create in inconsequential poll for your community",
   "Transfer Assets": "from the DAO Treasury to another account",
   "Edit Registry": "Change an entry or add a new one",
-  "Add Lambda":"Write custom Michelson code for your DAO",
-  "Remove Lambda": "Delete an existing functionality",
-  "Execute Lambda":"Call any of the custom or standard functions",
+  "Contract Interaction":"Call any function on any contract",
   "DAO Configuration": "Change the proposal fee and/or the returned amount",
-  "Change Guardian": "Set a priviledge address that can drop spam proposals",
-  "Change DAO Delegate":"for the main consensus layer on Tezos.",
-  "New Project (arbitrated)":"Create a new engagement with escrow and dispute resolution.",
-  "Fund Project":"Send funds to a Homebase Project",
+
 };
 var state;
 var newProposalWidgets={
-  "New Project (arbitrated)": NewProject(),
-  "Offchain Poll":NotImplemented(),
-  "Transfer Assets": NotImplemented(),
-  "Edit Registry": NotImplemented(),
-  "Add Lambda":NotImplemented(),
-  "Remove Lambda": NotImplemented(),
-  "Execute Lambda":ExecuteLambda(),
-  "DAO Configuration": NotImplemented(),
-  "Change Guardian": NotImplemented(),
-  "Change DAO Delegate":NotImplemented(),
-  //  "Fund Project": FundProject(org:daos![0]),
+"New Project (arbitrated)": (Org org) => NewProject(org: org),
+  "Offchain Poll": (Org org) => NotImplemented(),
+  "Transfer Assets": (Org org) => TransferWidget(org: org),
+  "Edit Registry": (Org org) => NotImplemented(),
+  "Add Lambda": (Org org) => NotImplemented(),
+  "Remove Lambda": (Org org) => NotImplemented(),
+  "Contract Interaction": (Org org) => ExecuteLambda(org: org),
+  "DAO Configuration": (Org org) => NotImplemented(),
+  "Change Guardian": (Org org) => NotImplemented(),
+  "Change DAO Delegate": (Org org) => NotImplemented(),
+  // You can add more widgets as needed
 };
 
 class NotImplemented extends StatelessWidget {
@@ -43,12 +41,29 @@ class NotImplemented extends StatelessWidget {
   }
 }
 
+class Txaction{
+  Txaction({
+    required this.sender,
+    required this.recipient,
+    required this.value,
+    required this.callData
+  });
+
+  String? hash;
+  String? sender;
+  String? recipient;
+  String value="0";
+  String callData="0x";
+}
+
 class Proposal{
+  int? id;
   String hash="";
   String? type;
   String? name="Title of the proposal (max 80 characters)";
   String? description;
   String? author;
+  double value=0;
   String? callData;
   DateTime? createdAt;
   String? status;
@@ -58,6 +73,7 @@ class Proposal{
   int votesFor=0;
   int votesAgainst=0;
   String? externalResource;
+  List<Txaction> transactions=[];
   List<Vote> votes=[];
   Proposal({required this.type, this.name});
 

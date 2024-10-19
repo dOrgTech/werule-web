@@ -31,7 +31,7 @@ bool error=false;
 Project project=Project();
 
 // ignore: use_key_in_widget_constructors
-NewProject() ;
+NewProject({required org}) ;
 
   @override
   _NewProjectState createState() => _NewProjectState();

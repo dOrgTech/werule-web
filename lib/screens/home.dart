@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../entities/org.dart';
 import '../widgets/tokenAssets.dart';
 import '../widgets/viewConfig.dart';
@@ -61,13 +62,19 @@ class _HomeState extends State<Home> {
                             children: [
                               const Text(" Treasury: "),
                               Text(
-                                
                                 widget.org.address!
                                 // "asiduhwqiudh128hd92w8h19q8dh9w8dh398dhd2938"
                                 , style: const TextStyle(fontSize: 11),),
                               const SizedBox(width: 2,),
                               TextButton(
-                                onPressed: (){},
+                                onPressed: (){
+                                  //copy the address to clipboard
+                                   Clipboard.setData(ClipboardData(text: widget.org.address!));
+                                   ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(child: Text('Address copied to clipboard'))));
+                                },
                                 child: const Icon(Icons.copy)),
                             ],
                           ),

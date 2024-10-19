@@ -92,6 +92,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
       org.votingDelay = daoConfig.votingDelay?.inMinutes ?? 0;
       org.executionAvailability = daoConfig.executionAvailability?.inMinutes ?? 0;
       org.holders = daoConfig.members.length;
+      org.symbol=daoConfig.tokenSymbol;
 
       try {
         List<String> results = await createDAO(org, this);

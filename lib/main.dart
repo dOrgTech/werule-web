@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/utils/reusable.dart';
+import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -38,18 +39,30 @@ import 'package:provider/provider.dart';
 String metamask="https://i.ibb.co/HpmDHg0/metamask.png";
 List<User>? users;
 List<Org> orgs=[];
+List<Token> tokens=[];
 List<Proposal>?proposals;
 
 var daosCollection;
 var pollsCollection;
 var votesCollection;
+var tokensCollection;
 // Us3r us3r = Us3r(human: humans[0]);
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
 persist() async {
   users=[];proposals=[];
   daosCollection=FirebaseFirestore.instance.collection("daos${Human().chain.name}");
+  tokensCollection=FirebaseFirestore.instance.collection("tokens${Human().chain.name}");
+  
+  
   var daosSnapshot =await  daosCollection.get();
+  var tokensSnapshot =await  tokensCollection.get();
+
+  for (var doc in tokensSnapshot.docs){
+    Token t = Token(name: doc.data()['name'], symbol: doc.data()['symbol'], decimals: doc.data()['decimals']);
+    t.address = doc.data()['address'];
+    tokens.add(t);
+  }
   for (var doc in daosSnapshot.docs){
     print("we are doing this ");
     Org org=
@@ -58,6 +71,7 @@ persist() async {
       govTokenAddress: doc.data()['govTokenAddress']
     );
     org.address=doc.data()['address'];
+    org.symbol=doc.data()['symbol'];
     org.creationDate=(doc.data()['creationDate'] as Timestamp).toDate();
     org.govToken=Token(symbol: "XTZ", decimals: 3,name: "TOKEN");
     org.govTokenAddress = doc.data()['token'];
@@ -67,6 +81,7 @@ persist() async {
     org.quorum=doc.data()['quorum'];
     org.supermajority=doc.data()['supermajority'];
     org.holders=doc.data()['holders'];
+    org.treasuryMap=Map<String, String>.from(doc.data()['treasury']);
     orgs.add(org);
   }
   print("orgs length: "+orgs.length.toString());
@@ -121,6 +136,7 @@ class MyApp extends StatelessWidget {
       home: 
       Scaffold(body:
       //  DaoSetupWizard())
+      // Center(child: TransferWidget(org: orgs[0],)))
       DAO(InitialTabIndex: 0, org:orgs[0]))
       // MyHomePage(title: 'Tezos homebase')),
     );
@@ -151,23 +167,7 @@ class MyHomePageState extends State<MyHomePage> {
         // body: Prelaunch()
         body:
          Explorer()
-        //     body: Arbitrate(
-        //       project:  Project(
-        //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
-        //  description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
-        //  client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-        //  terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-        //  status:"Disputed"
-        //       ))
-        //     // body: Center(child: SendFunds())
-        //     // body:NewGenericProject()
-        // //     body: ProjectDetails(project:  Project(
-        // //  name: "P2P IRC Protocol" ,arbiter: "tz49jro65F9oZw2z1YV4osfcrX7eD5KtAl2e",
-        // //  description: "If you miss an appointment to voluntarily turn yourself in, they don't usually ask twice so it would be wise to arrive in a timely fashion on this one.",
-        // //  client: "tz1QE8c3H5BG7HGHk2CPs41tffkhLGd14hyu",
-        // //  terms: "https://ipfs.io/sdj1wqsa0se0a9fjq2f3fsa1w99jsq",
-        // //  status:"Ongoing"
-        // // ),)
+    
         );
   }
 }

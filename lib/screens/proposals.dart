@@ -116,12 +116,12 @@ class _ProposalsState extends State<Proposals> {
                       showDialog(
                               context: context,
                               builder: (BuildContext context) {
-                                return const AlertDialog(
+                                return   AlertDialog(
                                   title: Padding(
                                     padding: const EdgeInsets.only(left:18.0),
                                     child: Text("Select a proposal type"),
                                   ),
-                                  content: ProposalList(),
+                                  content: ProposalList(org:widget.org),
                                   
                                 );
                               },
@@ -184,7 +184,8 @@ class _ProposalsState extends State<Proposals> {
 
 
 class ProposalList extends StatelessWidget {
-  const ProposalList({super.key});
+  final Org org;
+  ProposalList({super.key, required this.org});
   @override
   Widget build(BuildContext context) {
     List<Widget>propuneri=[];
@@ -203,7 +204,7 @@ class ProposalList extends StatelessWidget {
                           padding: const EdgeInsets.only(left:18.0),
                           child: Text(item.toString()),
                         ),
-                        content: newProposalWidgets[item],
+                        content: newProposalWidgets[item]!(org) ,
                       );
                     },
                   );

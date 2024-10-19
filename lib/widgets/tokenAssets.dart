@@ -2,6 +2,7 @@ import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import '../entities/org.dart';
+import '../entities/token.dart';
 String add1="https://i.ibb.co/2WbL5nC/add1.png";
 String add2="https://i.ibb.co/6rmksXk/add2.png";
 List<String> userPics=[add1, add2];
@@ -16,8 +17,18 @@ class TokenAssets extends StatefulWidget {
 }
 
 class _TokenAssetsState extends State<TokenAssets> {
+  List<TableRow> assets=[];
+  buildAssets(){
+    for (Token t in widget.org.treasury.keys){
+      assets.add(asset(t, widget.org.treasury[t]!));
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
+    assets=[];
+    buildAssets();
     return Card(
       child: Padding(
         padding: const EdgeInsets.only(bottom:28.0, left:9,right: 9),
@@ -48,9 +59,7 @@ class _TokenAssetsState extends State<TokenAssets> {
                Container(
                       padding: EdgeInsets.only(right: 50),
                       height: 40,
-                      child: 
-                      
-                     ToggleSwitch(
+                      child: ToggleSwitch(
                 initialLabelIndex: widget.status,
                 totalSwitches: 2,
                 minWidth: 120,
@@ -63,14 +72,12 @@ class _TokenAssetsState extends State<TokenAssets> {
                 labels: ['Tokens','NFTs'],
                 onToggle: (index) {
                   print('switched to: $index');
-                 
             setState(() {
               widget.status=index!;
             });
               },
-            )
-                      
-                    ),
+            ) 
+            ),
             ],
           )
         ),
@@ -80,7 +87,7 @@ class _TokenAssetsState extends State<TokenAssets> {
     color: Colors.transparent,
   ),
   columnWidths: const <int, TableColumnWidth>{
-     0: FlexColumnWidth(1.8),  // Left-most item stays as is
+    0: FlexColumnWidth(1.8),  // Left-most item stays as is
     1: FlexColumnWidth(0.3),  // Slightly reduce column width for SYMBOL
     2: FlexColumnWidth(1.2),  // Slightly reduce column width for AMOUNT
     3: FlexColumnWidth(1.4),  // Slightly reduce column width for ADDRESS
@@ -140,36 +147,43 @@ Table(
     color: Colors.transparent,
   ),
   columnWidths: const <int, TableColumnWidth>{
-   0: FlexColumnWidth(1.8),  // Left-most item stays as is
+    0: FlexColumnWidth(1.8),  // Left-most item stays as is
     1: FlexColumnWidth(0.3),  // Slightly reduce column width for SYMBOL
     2: FlexColumnWidth(1.2),  // Slightly reduce column width for AMOUNT
     3: FlexColumnWidth(1.4),  // Slightly reduce column width for ADDRESS
     4: FixedColumnWidth(150), // Extra space for the button with more padding
   },
   defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-  children: <TableRow>[
-    TableRow(
+  children: assets
+)
+
+ ]),
+     ) );
+  }
+
+  TableRow asset(Token token, String value){
+    return  TableRow(
       children: <Widget>[
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Align(
+          child:  Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: EdgeInsets.only(left:60.0),
-              child: Text("Name of the Token"),
+              padding: const EdgeInsets.only(left:60.0),
+              child: Text(token.name),
             ),
           ),
         ),
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Center(child: Text("SYM")),
+          child:  Center(child: Text(token.symbol)),
         ),
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Center(child: Text("5001230")),
+          child:  Center(child: Text(value)),
         ),
         Container(
           height: 42,
@@ -188,8 +202,8 @@ Table(
                 )),
                 const SizedBox(width: 10),
                 Text(
-                  getShortAddress("tz1UVpbXS6pAtwPSQdQjPyPoGmVkCsNwn1K5"),
-                  style: TextStyle(fontSize: 13),
+                  getShortAddress(token.address!),
+                  style: const TextStyle(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(width: 10),
@@ -216,11 +230,11 @@ Table(
           ),
         ),
       ],
-    ),
-  ],
-)
-
- ]     ),
-     ) );
+    );
   }
+
+
+
+
 }
+

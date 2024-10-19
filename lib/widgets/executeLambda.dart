@@ -1,3 +1,4 @@
+import 'package:Homebase/entities/org.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -23,7 +24,7 @@ return components[selectedValue] as Widget;
 
 
 class ExecuteLambda extends StatefulWidget {
-  ExecuteLambda({super.key});
+  ExecuteLambda({super.key, required Org org});
 
   @override
   State<ExecuteLambda> createState() => _ExecuteLambdaState();
@@ -97,79 +98,119 @@ Widget notImpl(){
 }
 
 
-Widget transfer(context){
-    return Container(
-      child: Column(
-        children: [
-               const SizedBox(height: 60,),
-               SizedBox(
-                  width:430,
-                  child: TextField(
-                    onChanged: (value) {
-                     
-                    },
-                    maxLength: 42,
-                    style: TextStyle(fontSize: 16),
-                    decoration: InputDecoration(
-                      labelText: "Recipient Address",
-                      ),),
+Widget transfer(context) {
+  String selectedAsset = 'XTZ';
+  double availableXTZ = 4500;
+  double availableUSDC = 4000;
+
+  return Container(
+    child: Column(
+      children: [
+        const SizedBox(height: 60),
+        SizedBox(
+          width: 430,
+          child: DropdownButtonFormField<String>(
+            value: selectedAsset,
+            onChanged: (value) {
+              selectedAsset = value!;
+            },
+            items: ['XTZ', 'USDC'].map((String asset) {
+              return DropdownMenuItem<String>(
+                value: asset,
+                child: Text(asset),
+              );
+            }).toList(),
+            decoration: const InputDecoration(
+              labelText: "Asset Type",
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: 430,
+          child: Text(
+            selectedAsset == 'XTZ'
+                ? 'Available: $availableXTZ XTZ'
+                : 'Available: $availableUSDC USDC',
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: 430,
+          child: TextField(
+            onChanged: (value) {},
+            maxLength: 42,
+            style: const TextStyle(fontSize: 16),
+            decoration: const InputDecoration(
+              labelText: "Recipient Address",
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: 430,
+          child: TextField(
+            maxLength: 42,
+            style: const TextStyle(fontSize: 16),
+            decoration: const InputDecoration(
+              labelText: "Amount",
+            ),
+          ),
+        ),
+        const SizedBox(height: 30),
+        SizedBox(
+          width: 430,
+          height: 40,
+          child: TextButton(
+            style: ButtonStyle(
+              elevation: const MaterialStatePropertyAll(0.1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.add),
+                SizedBox(width: 20),
+                Text("Add recipient"),
+              ],
+            ),
+            onPressed: () {},
+          ),
+        ),
+        const SizedBox(height: 77),
+        SizedBox(
+          height: 40,
+          width: 170,
+          child: TextButton(
+            style: ButtonStyle(
+              overlayColor: MaterialStateProperty.all<Color>(
+                  Theme.of(context).indicatorColor),
+              backgroundColor: MaterialStateProperty.all<Color>(
+                  Theme.of(context).indicatorColor),
+              elevation: MaterialStateProperty.all(1.0),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(7.0),
                 ),
-                 // ignore: prefer_const_constructors
-                 SizedBox(
-                  width:430,
-                  // ignore: prefer_const_constructors
-                  child: TextField(
-                    
-                    maxLength: 42,
-                    style: const TextStyle(fontSize: 16),
-                    decoration: const InputDecoration(
-                      labelText: "Amount",
-                      ),),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width:430,
-                  height: 40,
-                  child: TextButton(
-                    style: ButtonStyle(
-                      elevation: MaterialStatePropertyAll(0.1),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add),
-                      SizedBox(width: 20),
-                      Text("Add recipient"),
-                    ],
-                  ), onPressed: (){},)
-                ),
-               const SizedBox(height: 77,),
-                SizedBox(
-                  height: 40,
-                  width: 170,
-                  child: TextButton(
-                    style: ButtonStyle(
-                      overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                      backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                      elevation: MaterialStateProperty.all(1.0),
-                      
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(7.0),
-                        ),
-                      ),
-                    ),
-                    onPressed: null,
-                    
-                     child: const Center(
-                    child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                  )),
-                )
- 
-        ],
-      ),
-    );
-  }
+              ),
+            ),
+            onPressed: null,
+            child: const Center(
+              child: Text(
+                "SUBMIT",
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+              ),
+            ),
+          ),
+        )
+      ],
+    ),
+  );
+}
+
 
 
 

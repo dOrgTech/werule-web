@@ -3,6 +3,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../main.dart';
 import 'human.dart';
 import 'proposal.dart';
 import 'token.dart';
@@ -27,7 +28,8 @@ class Org {
   List<String>? proposalIDs=[];
   late String name;
   String? description;
-  Map<Token,double> treasury={};
+  Map<String, String> treasuryMap={};
+  Map<Token,String> treasury={};
   String? address;
   int holders=1;
   int quorum=0;
@@ -36,7 +38,20 @@ class Org {
   int votingDelay=0;
   int executionAvailability=0;
 
+void populateTreasury() {
+  treasuryMap.forEach((address, value) {
+    Token? matchingToken = tokens.cast<Token?>().firstWhere(
+      (token) => token?.address == address,
+      orElse: () => null,
+    );
+    if (matchingToken != null) {
+      treasury[matchingToken] = value;
+    }
+  });
+}
+
   getProposals()async{
+    populateTreasury();
     pollsCollection=FirebaseFirestore
       .instance.collection("daos${Human().chain.name}")
       .doc(address).collection("proposals");
@@ -59,6 +74,7 @@ class Org {
       p.description=doc.data()['description'];
       proposals.add(p);
       proposalIDs!.add(doc.id);
+      
     }
 
   }
