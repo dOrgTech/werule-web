@@ -12,8 +12,9 @@ import '../entities/org.dart';
 import 'home.dart';
 import 'members.dart';
 class DAO extends StatefulWidget {
-  DAO({super.key, this.InitialTabIndex=1, required this.org});
+  DAO({super.key, this.InitialTabIndex=0, required this.org,  this.proposalId});
   int InitialTabIndex;
+  int? proposalId;
   Org org;
   @override
   State<DAO> createState() => _DAOState();
@@ -78,9 +79,17 @@ class _DAOState extends State<DAO> {
                    child: TabBarView( // TabBarView start
                       children: [
                         Home(org:widget.org),
-                        widget.InitialTabIndex==0?
-                        Center(child: Proposals(which: "all", org: widget.org ))
-                        :Center(child: ProposalDetails(),)
+                        widget.proposalId==null?
+                        Center(child: Proposals(which: "all", org: widget.org )):
+                        Center(child:
+                        ProposalDetails(id: widget.proposalId!,
+                        p:  widget.org.proposals.firstWhere(
+    (proposal) => proposal.id ==widget.proposalId!,
+   
+  )),
+                        
+                        )
+                        
                         ,
                         // Center(child: Treasury()),
                         Center(child: Registry()),
@@ -88,8 +97,7 @@ class _DAOState extends State<DAO> {
                         Center(child: Account()),
                       ],
                     ), // TabBarView end
-                  ), 
-                  
+                   ), 
                    ],
                       
                     ), // End of Column

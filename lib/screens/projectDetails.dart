@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_circle_chart/flutter_circle_chart.dart';
 import '../screens/proposalDetails.dart';
+import '../utils/reusable.dart';
 import '../widgets/arbitrate.dart';
 import '../widgets/dispute.dart';
 import '../widgets/projectCard.dart';

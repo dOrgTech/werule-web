@@ -22,10 +22,10 @@ class ProposalCard extends StatelessWidget {
               print("tapped on proposalCard");
               Navigator.push(context,
               MaterialPageRoute(
-                builder: (context) => DAO(InitialTabIndex: 1,org:org
-                
+                builder: (context) => 
+                DAO(InitialTabIndex: 1,org:org,
+                proposalId:proposal.id,
                 )));
-             
             },
           child: SizedBox(
             height: 44,
@@ -36,7 +36,7 @@ class ProposalCard extends StatelessWidget {
                   padding: const EdgeInsets.only(left:25.0),
                   child: Container(
                     width: 90,
-                    child: const Text("431")),
+                    child:  Text(proposal.id.toString())),
                 ),
                 Expanded(
                   child: Padding(

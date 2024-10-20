@@ -75,6 +75,14 @@ void populateTreasury() {
       p.description=doc.data()['description'];
       proposals.add(p);
       proposalIDs!.add(doc.id);
+      p.transactions=(doc.data()['transactions'] as List<dynamic>).map((tx) {
+  return Txaction(
+    recipient: tx['recipient'],
+    value: tx['value'],
+    callData: tx['callData'],
+  )..hash = tx['hash'];
+}).toList();
+      
       
     }
 

@@ -13,8 +13,9 @@ import '../widgets/proposalCard.dart';
 import '../entities/org.dart';
 
 class Proposals extends StatefulWidget {
-  Proposals({super.key, required this.which,required this.org });
+  Proposals({super.key, required this.which,required this.org, this.proposalID });
   String? which="all";
+  int? proposalID;
   Org org;
   @override
   State<Proposals> createState() => _ProposalsState();
@@ -56,12 +57,11 @@ class _ProposalsState extends State<Proposals> {
   Widget build(BuildContext context) {
     proposalCards=[];
     populateProposals();
-    return widget.which=="all"?
+    return widget.proposalID==null?
     Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         
           SizedBox(height: 30),
           SizedBox(
             child: Row(
@@ -184,9 +184,14 @@ class _ProposalsState extends State<Proposals> {
        
         ],
       ),
-    ):     ProposalDetails();
+    ):     ProposalDetails(id:widget.proposalID! ,p:
+      widget.org.proposals.firstWhere(
+    (proposal) => proposal.id == widget.proposalID,
+    // Returns null if no matching proposal is found
+  ));
     
-    ;
+    
+    
   }
 }
 

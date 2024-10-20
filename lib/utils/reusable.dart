@@ -10,7 +10,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -166,3 +166,18 @@ String getRandomString(int length) => String.fromCharCodes(Iterable.generate(
     length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
 String getShortAddress(String address) =>
     '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
+
+
+Color randomColor() {
+  var g = math.Random.secure().nextInt(255);
+  var b = math.Random.secure().nextInt(255);
+  var r = math.Random.secure().nextInt(255);
+  return Color.fromARGB(255, r, g, b);
+}
+Matrix4 scaleXYZTransform({
+  double scaleX = 1.00,
+  double scaleY = 1.00,
+  double scaleZ = 1.00,
+}) {
+  return Matrix4.diagonal3Values(scaleX, scaleY, scaleZ);
+}

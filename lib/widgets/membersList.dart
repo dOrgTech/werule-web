@@ -1,3 +1,4 @@
+import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 String add1="https://i.ibb.co/2WbL5nC/add1.png";
 String add2="https://i.ibb.co/6rmksXk/add2.png";
@@ -167,5 +168,36 @@ Opacity(
         ),
       ],
     );
+  }
+}
+
+class MemberButton extends StatelessWidget {
+  MemberButton({super.key, required this.address});
+  String address;
+  
+
+ 
+
+  @override
+  Widget build(BuildContext context)  {
+
+    
+
+    return  Container(
+                height: 42,
+                color: const Color.fromARGB(0, 76, 175, 79),
+                child: Padding(
+                  padding: EdgeInsets.only(top:8.0,left:35),
+                  child: Row(
+                    children: [
+                      
+                      SizedBox(width: 10),
+                      Text("tz1T5kk65F9oZw2z1YV4osfcrX7eD5KtLj3c", style: TextStyle(fontSize: 13),),
+                      SizedBox(width: 10),
+                      TextButton(onPressed: (){}, child: Icon(Icons.copy))
+                    ],
+                  ),
+                ),  
+              );
   }
 }
