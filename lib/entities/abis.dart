@@ -31,7 +31,7 @@ List<String> daoAbiString=[
   'function proposalSnapshot (uint256)',
   'function proposalThreshold ()',
   'function proposalVotes (uint256)',
-  'function propose (address[], uint256[], bytes[], string)',
+  'function propose (address[], uint256[], bytes[], string) returns (uint)',
   'function queue (address[], uint256[], bytes[], bytes32)',
   'function quorum (uint256)',
   'function quorumDenominator ()',

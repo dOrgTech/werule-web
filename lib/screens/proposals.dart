@@ -23,13 +23,21 @@ class Proposals extends StatefulWidget {
 class _ProposalsState extends State<Proposals> {
   
   String? selectedType = 'All';
-  final List<String> types = ['All', 'Off-Chain', 
-  'Transfer', 'Add Lambda', 'Remove Lambda', 'Execute Lambda',
-   'Change Config','Change Guardian','Change Delegate'];
+  final List<String> typesDropdown = ['All', 'Off-Chain', 
+  'Transfer','Contract Call',
+   'Change Config'];
   String? selectedStatus = 'All';
-  final List<String> statuses = ['All', 'Active', 
-  'Dropped', 'Passed','Executable', 'Executed', 'Expired',
-   'No Quorum','Pending','Rejected'];
+  final List<String> statusDropdown=[
+    'All',
+    "active",
+    "passed",
+    "executable",
+    "executed",
+    "expired",
+    "no quorum",
+    "pending",
+    "rejected"
+  ];
    @override
   void initState() {
     // TODO: implement i
@@ -65,7 +73,7 @@ class _ProposalsState extends State<Proposals> {
                 DropdownButton<String>(
                       value: selectedType,
                       focusColor: Colors.transparent,
-                      items: types.map((String value) {
+                      items: typesDropdown.map((String value) {
               return DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -83,7 +91,7 @@ class _ProposalsState extends State<Proposals> {
                 DropdownButton<String>(
                       value: selectedStatus,
                       focusColor: Colors.transparent,
-                      items: statuses.map((String value) {
+                      items: statusDropdown.map((String value) {
               return DropdownMenuItem<String>(
                 value: value,
                 child: Text(value),
@@ -183,9 +191,15 @@ class _ProposalsState extends State<Proposals> {
 }
 
 
-class ProposalList extends StatelessWidget {
+class ProposalList extends StatefulWidget {
   final Org org;
   ProposalList({super.key, required this.org});
+
+  @override
+  State<ProposalList> createState() => ProposalListState();
+}
+
+class ProposalListState extends State<ProposalList> {
   @override
   Widget build(BuildContext context) {
     List<Widget>propuneri=[];
@@ -204,7 +218,7 @@ class ProposalList extends StatelessWidget {
                           padding: const EdgeInsets.only(left:18.0),
                           child: Text(item.toString()),
                         ),
-                        content: newProposalWidgets[item]!(org) ,
+                        content: newProposalWidgets[item]!(widget.org, this ) ,
                       );
                     },
                   );

@@ -3,14 +3,18 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import '../entities/org.dart';
 import '../entities/token.dart';
+import '../screens/dao.dart';
 
 class TransferWidget extends StatefulWidget {
   int stage=0;
   Map<Token, String> treasury= {};
-  final Org org;
-  Proposal p=Proposal(type: "transfer");
-  TransferWidget({required this.org}) {
+  Org org;
+  State proposalsState;
+  late Proposal p;
+  TransferWidget({required this.org, required this.proposalsState}) {
     this.treasury=this.org.treasury;
+    p=Proposal(org: org, type: "transfer");
+    p.author="no author yet";
   }
 
   @override
@@ -49,7 +53,7 @@ class _TransferWidgetState extends State<TransferWidget> {
     if (tokenValue == tokenValue.floorToDouble()) {
       return tokenValue.toStringAsFixed(0); // Display whole number if no decimals are needed
     }
-    return tokenValue.toStringAsFixed(3); // Otherwise, show up to 3 decimal places
+    return tokenValue.toStringAsFixed(2); // Otherwise, show up to 3 decimal places
   }
 
   // Function to validate all transactions and enable/disable the submit button
@@ -104,7 +108,12 @@ class _TransferWidgetState extends State<TransferWidget> {
           'recipient': tx['recipient'],
           'amount': tx['amount'],
         });
+        widget.p.transactions.add(
+          Txaction(recipient: tx['recipient'], value: tx['amount'], callData: "0x")
+        );
       }
+      widget.p.createdAt=DateTime.now();
+      widget.p.status="pending";
     }
 
     // Print the list of transactions
@@ -112,8 +121,20 @@ class _TransferWidgetState extends State<TransferWidget> {
     setState(() {
       widget.stage=-1;
     });
-    await Future.delayed(const Duration(seconds: 2));
-    Navigator.of(context).pop();
+    await widget.org.pollsCollection.doc(widget.p.id.toString()).set(widget.p.toJson());
+    
+     
+      widget.org.proposals.add(widget.p);
+      widget.org.proposals=widget.org.proposals.reversed.toList();
+
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>  Scaffold(body:
+      //  DaoSetupWizard())
+      // Center(child: TransferWidget(org: orgs[0],)))
+      DAO(InitialTabIndex: 1, org:widget.org)))
+    );
       ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(
       duration: Duration(seconds: 1),
@@ -144,7 +165,6 @@ class _TransferWidgetState extends State<TransferWidget> {
         )):widget.stage==0?
         setInfo():
         buildTransactionSet()
-      
       ),
     );
   }
@@ -197,7 +217,6 @@ class _TransferWidgetState extends State<TransferWidget> {
                 style: const TextStyle(fontSize: 16),
                 decoration: const InputDecoration(
                   labelText: "Discussion URL",
-                  
                 ),
               ),
             ),

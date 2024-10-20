@@ -58,6 +58,7 @@ void populateTreasury() {
     var proposalsSnapshot= await pollsCollection.get();
     for (var doc in proposalsSnapshot.docs){
       Proposal p =Proposal(
+        org: this,
         type: doc.data()['type'],
         name:doc.data()['title']
         ) ;

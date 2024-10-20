@@ -18,7 +18,7 @@ var state;
 var newProposalWidgets={
 "New Project (arbitrated)": (Org org) => NewProject(org: org),
   "Offchain Poll": (Org org) => NotImplemented(),
-  "Transfer Assets": (Org org) => TransferWidget(org: org),
+  "Transfer Assets": (Org org, State state) => TransferWidget(org: org, proposalsState: state),
   "Edit Registry": (Org org) => NotImplemented(),
   "Add Lambda": (Org org) => NotImplemented(),
   "Remove Lambda": (Org org) => NotImplemented(),
@@ -43,22 +43,42 @@ class NotImplemented extends StatelessWidget {
 
 class Txaction{
   Txaction({
-    required this.sender,
     required this.recipient,
     required this.value,
-    required this.callData
+    this.callData="0x"
   });
 
-  String? hash;
-  String? sender;
-  String? recipient;
+  String hash="none";
+  String recipient;
   String value="0";
   String callData="0x";
+
+  toJson(){
+    return {
+      'hash':hash,
+      'recipient':recipient,
+      'value':value,
+      'callData':callData
+    };
+  }
 }
 
+
+
+final List<String> statuses=[
+    "pending",
+    "active",
+    "passed",
+    "executable",
+    "executed",
+    "expired",
+    "no quorum",
+    "rejected"
+  ];
 class Proposal{
-  int? id;
+  late int id;
   String hash="";
+  Org org;
   String? type;
   String? name="Title of the proposal (max 80 characters)";
   String? description;
@@ -75,13 +95,17 @@ class Proposal{
   String? externalResource;
   List<Txaction> transactions=[];
   List<Vote> votes=[];
-  Proposal({required this.type, this.name});
+  Proposal({required this.org,required this.type, this.name}) {
+    this.id=this.org.proposals.length+1;
+    this.createdAt=DateTime.now();
+    this.status="pending";
+  }
 
   toJson(){
     return {
       'hash':hash,
       'type':type,
-      'name':name,
+      'title':name,
       'description':description,
       'author':author,
       'calldata':callData,
@@ -92,7 +116,8 @@ class Proposal{
       'against':against,
       'votesFor':votesFor,
       'votesAgainst':votesAgainst,
-      'externalResource':externalResource
+      'externalResource':externalResource,
+      'transactions': transactions.map((tx) => tx.toJson()).toList(),
     };
   }
 }

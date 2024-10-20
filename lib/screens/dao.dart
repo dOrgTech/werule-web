@@ -78,7 +78,8 @@ class _DAOState extends State<DAO> {
                    child: TabBarView( // TabBarView start
                       children: [
                         Home(org:widget.org),
-                        widget.InitialTabIndex==0?Center(child: Proposals(which: "all", org: widget.org ))
+                        widget.InitialTabIndex==0?
+                        Center(child: Proposals(which: "all", org: widget.org ))
                         :Center(child: ProposalDetails(),)
                         ,
                         // Center(child: Treasury()),

@@ -137,7 +137,7 @@ class MyApp extends StatelessWidget {
       Scaffold(body:
       //  DaoSetupWizard())
       // Center(child: TransferWidget(org: orgs[0],)))
-      DAO(InitialTabIndex: 0, org:orgs[0]))
+      DAO(InitialTabIndex: 1, org:orgs[0]))
       // MyHomePage(title: 'Tezos homebase')),
     );
   }
