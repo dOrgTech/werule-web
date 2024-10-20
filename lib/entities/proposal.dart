@@ -131,14 +131,13 @@ class Vote{
   DateTime? castAt;
   Vote({
     required this.votingPower,
-    required this.voter, required this.proposalID, required this.option});
+    required this.voter, required this.proposalID, required this.option, required castAt});
   
   toJson(){
       return {
-        'votingPower':votingPower,
-        'castAt':castAt,
+        'weight':votingPower,
+        'cast':castAt,
         'voter':voter,
-        'proposalID':proposalID,
         'option':option
       };
     }

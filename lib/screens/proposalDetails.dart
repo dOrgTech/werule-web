@@ -1,5 +1,8 @@
+import 'package:Homebase/main.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart'; // For formatting the date
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_circle_chart/flutter_circle_chart.dart';
@@ -7,6 +10,7 @@ import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'dart:math' as math;
+import '../entities/human.dart';
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
 import '../widgets/menu.dart';
@@ -328,7 +332,11 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                                 ),
                                 const SizedBox(width: 32),
                                 ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      showDialog(context: context, builder: (context)=>
+                                        AlertDialog(content: VotesModal(p: widget.p,),)
+                                      );
+                                    },
                                     child: const Text("View"))
                               ],
                             ),
@@ -586,4 +594,99 @@ class _ParticipationBarState extends State<ParticipationBar> {
     );
   }
 }
+
+
+
+
+class VotesModal extends StatefulWidget {
+  final Proposal p;
+  VotesModal({required this.p, super.key});
+
+  @override
+  State<VotesModal> createState() => _VotesModalState();
+}
+
+class _VotesModalState extends State<VotesModal> {
+  late Future<void> _votesFuture;
+
+  Future<void> getVotes() async {
+    var votesCollection = FirebaseFirestore
+        .instance
+        .collection("daos${Human().chain.name}")
+        .doc(widget.p.org.address)
+        .collection("proposals")
+        .doc(widget.p.id.toString())
+        .collection("votes");
+
+    var votesSnapshot = await votesCollection.get();
+    widget.p.votes.clear();
+    for (var doc in votesSnapshot.docs) {
+      widget.p.votes.add(Vote(
+        votingPower: doc.data()['weight'],
+        voter: doc.id,
+        proposalID: widget.p.id.toString(),
+        option: doc.data()['option'],
+        castAt: (doc.data()['cast'] != null) ? (doc.data()['cast'] as Timestamp).toDate() : null,
+      ));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _votesFuture = getVotes(); // Initialize the Future in initState
+  }
+
+  String formatDateTime(DateTime? dateTime) {
+    if (dateTime == null) return "Unknown";
+    return DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      width: 650,
+      child: FutureBuilder<void>(
+        future: _votesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Show loading spinner while fetching data
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            // Handle any errors
+            return Center(child: Text("Error loading votes: ${snapshot.error}"));
+          } else {
+            // Data is ready, display the votes in a table
+            return SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Voter')),
+                    DataColumn(label: Text('Option')),
+                    DataColumn(label: Text('Weight')),
+                    DataColumn(label: Text('Cast At')),
+                    DataColumn(label: Text('Details')),
+                  ],
+                  rows: widget.p.votes.map((vote) {
+                    return DataRow(cells: [
+                      DataCell(Text(vote.voter!)),
+                      DataCell(Text(vote.option.toString())),
+                      DataCell(Text(vote.votingPower.toString())),
+                      DataCell(Text(formatDateTime(vote.castAt))),
+                      DataCell(Icon(Icons.open_in_new)), // You can add onTap functionality here later
+                    ]);
+                  }).toList(),
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
+
 
