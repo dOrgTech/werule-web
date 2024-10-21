@@ -55,7 +55,15 @@ class ProposalCard extends StatelessWidget {
                   )),
                 SizedBox(width:150,child: Center(child: Text("6/8/2022 11:43"))),
                 SizedBox(width: 150, child: Center(child: Text(proposal.type!))),
-                SizedBox(width:100, child: Center(child: Text("ACTIVE"))),
+                Container(
+                  padding: EdgeInsets.only(right:10),
+                  height: 20,
+                  // width: 100,
+                  child: Center(child: proposal.statusPill(
+                    proposal.statusHistory.entries
+                      .reduce((a, b) => a.value.isAfter(b.value) ? a : b)
+                      .key,
+                    context))),
               ],
             ),
           ),

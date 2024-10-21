@@ -40,7 +40,7 @@ class _TopMenuState extends State<TopMenu> {
         child: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: Theme.of(context).canvasColor,
-          elevation: 0,
+          elevation: 1,
           title: 
            Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

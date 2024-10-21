@@ -43,84 +43,84 @@ class TokenTransferListWidget extends StatelessWidget {
         "fashsaodisahodi",
         false
       ));
-
-    
     };
     return ListView.builder(
       itemCount: tokenTransfers.length,
       itemBuilder: (context, index) {
         final transfer = tokenTransfers[index];
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Amount and Token Symbol
-              Text(
-                '${transfer.amount} ${transfer.token}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              SizedBox(width: 8),
-
-              // Arrow indicating "to"
-              Icon(Icons.arrow_forward, size: 20),
-
-              SizedBox(width: 8),
-
-              // Avatar image generated from address hash
-              FutureBuilder<Uint8List>(
-                future: generateAvatarAsync(transfer.hash),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: CircularProgressIndicator(),
-                    ); // Placeholder while loading
-                  } else if (snapshot.hasData) {
-                    return Image.memory(
-                      snapshot.data!,
-                      width: 40,
-                      height: 40,
-                    ); // Render the generated avatar
-                  } else {
-                    return SizedBox(
-                      width: 40,
-                      height: 40,
-                    ); // Placeholder if there's an error
-                  }
-                },
-              ),
-              SizedBox(width: 16),
-
-              // Address
-              Expanded(
-                child: Text(
-                  transfer.address,
-                  style: TextStyle(fontSize: 14),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-
-              // View on Block Explorer link
-              GestureDetector(
-                onTap: () {
-                  // Handle opening the block explorer link
-                  // You can use url_launcher package to open URLs
-                },
-                child: Text(
-                  'View on Block Explorer',
+        return SizedBox(
+          height: 60,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Amount and Token Symbol
+                Text(
+                  '${transfer.amount} ${transfer.token}',
                   style: TextStyle(
-                    color: Colors.green,
-                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-              ),
-            ],
+                SizedBox(width: 8),
+        
+                // Arrow indicating "to"
+                Icon(Icons.arrow_forward, size: 20),
+        
+                const SizedBox(width: 8),
+        
+                // Avatar image generated from address hash
+                FutureBuilder<Uint8List>(
+                  future: generateAvatarAsync(transfer.hash),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(),
+                      ); // Placeholder while loading
+                    } else if (snapshot.hasData) {
+                      return Image.memory(
+                        snapshot.data!,
+                        width: 40,
+                        height: 40,
+                      ); // Render the generated avatar
+                    } else {
+                      return SizedBox(
+                        width: 40,
+                        height: 40,
+                      ); // Placeholder if there's an error
+                    }
+                  },
+                ),
+                SizedBox(width: 16),
+        
+                // Address
+                Expanded(
+                  child: Text(
+                    transfer.address,
+                    style: TextStyle(fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+        
+                // View on Block Explorer link
+                // GestureDetector(
+                //   onTap: () {
+                //     // Handle opening the block explorer link
+                //     // You can use url_launcher package to open URLs
+                //   },
+                //   child: Text(
+                //     'View on Block Explorer',
+                //     style: TextStyle(
+                //       color: Colors.green,
+                //       fontSize: 14,
+                //     ),
+                //   ),
+                // ),
+              ],
+            ),
           ),
         );
       },

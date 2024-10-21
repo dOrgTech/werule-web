@@ -21,6 +21,7 @@ class Org {
   Token? govToken;
   String? symbol;
   int? decimals;
+  String? totalSupply;
   String? govTokenAddress;
   String? treasuryAddress;
   List<Proposal> proposals=[];
@@ -65,7 +66,6 @@ void populateTreasury() {
       p.inFavor=doc.data()['inFavor'];
       p.callData=doc.data()['calldata'];
       p.createdAt=(doc.data()['createdAt'] as Timestamp).toDate();
-      p.status=doc.data()['status'];
       p.turnoutPercent=doc.data()['turnoutPercent'];
       p.author=doc.data()['author'];
       p.votesFor=doc.data()['votesFor'];
@@ -74,13 +74,18 @@ void populateTreasury() {
       p.description=doc.data()['description'];
       proposals.add(p);
       proposalIDs!.add(doc.id);
+      var statusHistoryMap = doc['statusHistory'] as Map<String, dynamic>;
+      p.statusHistory = statusHistoryMap.map((key, value) {
+        return MapEntry(key, (value as Timestamp).toDate());
+      });
+     
       p.transactions=(doc.data()['transactions'] as List<dynamic>).map((tx) {
-  return Txaction(
-    recipient: tx['recipient'],
-    value: tx['value'],
-    callData: tx['callData'],
-  )..hash = tx['hash'];
-}).toList();
+        return Txaction(
+          recipient: tx['recipient'],
+          value: tx['value'],
+          callData: tx['callData'],
+        )..hash = tx['hash'];
+      }).toList();
 
   }
 
@@ -99,6 +104,7 @@ void populateTreasury() {
       'proposals':proposalIDs,
       'treasury':treasury,
       'votingDelay':votingDelay,
+      'totalSupply':totalSupply,
       'votingDuration':votingDuration,
       'executionAvailability':executionAvailability,
       'quorum':quorum,

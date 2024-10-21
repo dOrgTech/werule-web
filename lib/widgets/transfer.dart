@@ -113,7 +113,7 @@ class _TransferWidgetState extends State<TransferWidget> {
         );
       }
       widget.p.createdAt=DateTime.now();
-      widget.p.status="pending";
+      widget.p.statusHistory.addAll({"pending":DateTime.now()});
     }
 
     // Print the list of transactions

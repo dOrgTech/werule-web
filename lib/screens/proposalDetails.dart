@@ -2,6 +2,7 @@ import 'package:Homebase/main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_web3/ethers.dart';
 import 'package:intl/intl.dart'; // For formatting the date
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -13,22 +14,35 @@ import 'dart:math' as math;
 import '../entities/human.dart';
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
+import '../widgets/countdown.dart';
+import '../widgets/footer.dart';
 import '../widgets/menu.dart';
 import '../widgets/propDetailsWidgets.dart';
 import 'dao.dart';
+const Color supportColor=  Color.fromARGB(255, 20, 78, 49);
+const  Color rejectColor = Color.fromARGB(255, 88, 20, 20);
 class ProposalDetails extends StatefulWidget {
   int id;
   ProposalDetails({super.key, required this.id, required this.p});
   Proposal p;
+  bool enabled=false;
+  String? status;
   @override
-  State<ProposalDetails> createState() => _ProposalDetailsState();
+  State<ProposalDetails> createState() => ProposalDetailsState();
 }
 
-class _ProposalDetailsState extends State<ProposalDetails> {
+class ProposalDetailsState extends State<ProposalDetails> {
+  
   @override
   Widget build(BuildContext context) {
-
-
+    widget.status= widget.p.statusHistory.entries
+                      .reduce((a, b) => a.value.isAfter(b.value) ? a : b)
+                      .key;
+    widget.status=="active"?widget.enabled=true:widget.enabled=false;
+    BigInt totalVotes = BigInt.parse(widget.p.inFavor) + BigInt.parse(widget.p.against );
+    double inFavorPercentage = BigInt.parse(widget.p.inFavor) / totalVotes;
+    double againstPercentage = BigInt.parse(widget.p.against ) / totalVotes;
+    double turnout = totalVotes / BigInt.parse(widget.p.org.totalSupply!);
 
     return Container(
       alignment: Alignment.topCenter,
@@ -69,6 +83,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                             ),
                           ),
                           const SizedBox(width: 10),
+                          widget.p.statusHistory.keys.last=="passed"?
                           Padding(
                             padding: const EdgeInsets.all(18.0),
                             child: ElevatedButton(
@@ -77,12 +92,17 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                                       width: 0.2,
                                       color: Theme.of(context).hintColor),
                                 ),
-                                onPressed: () {},
-                                child: const Text("Drop Proposal",
+                                onPressed: () {
+                                  setState(() {
+                                    widget.enabled=!widget.enabled;
+                                  });
+                                },
+                                child: const Text("Queue for execution",
                                     style: TextStyle(fontSize: 12))),
-                          )
+                          ):Text("")
                         ],
                       ),
+                      SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
@@ -91,24 +111,15 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                         child: Row(
                           children: [
                             const SizedBox(width: 10),
-                             Text(widget.p.type!+" proposal"),
+                             Text("${widget.p.type!} proposal"),
                             const SizedBox(width: 20),
                             Opacity(
                               opacity: 0.7,
-                              child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                    color: Theme.of(context).indicatorColor,
-                                  ),
-                                  alignment: Alignment.center,
-                                  padding: const EdgeInsets.all(3),
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
-                                    child: Text(
-                                      "ACTIVE",
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                  )),
+                              child: 
+                              widget.p.
+                              statusPill(
+                    widget.status!,
+                    context)
                             ),
                             const SizedBox(width: 10),
                           ],
@@ -117,7 +128,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                       const SizedBox(width: 129),
                    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                     Padding(
-                    padding: const EdgeInsets.only(top: 12.0),
+                    padding: const EdgeInsets.only(top: 14.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -129,8 +140,8 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                               children: [
                                 const Text("Posted By: "),
                                  Text(
-                                  widget.p.author!,
-                                  style: TextStyle(fontSize: 11),
+                                  getShortAddress(widget.p.author!),
+                                  style: const TextStyle(fontSize: 11),
                                 ),
                                 const SizedBox(width: 2),
                                 TextButton(
@@ -147,6 +158,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 10),
                         SizedBox(
                           height: 30,
                           child: Center(
@@ -156,9 +168,15 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                                 const Text("Created At: "),
                                  Text(
                                     widget.p.createdAt!.toLocal().toString(),
-                                  style: TextStyle(fontSize: 11),
+                                  style: const TextStyle(fontSize: 11),
                                 ),
-                              SizedBox(width: 50,)
+                              const SizedBox(width: 14,),
+                               TextButton(
+                                    onPressed: () {
+                                      launchUrl(widget.p.externalResource! as Uri);
+                                    },
+                                    child: const Icon(Icons.open_in_new)),
+                              
                               ],
                             ),
                           ),
@@ -171,7 +189,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                      Column(
                        crossAxisAlignment: CrossAxisAlignment.center,
                        children: [
-                        SizedBox(height: 45),
+                        const SizedBox(height: 45),
                          Container(
                             constraints: const BoxConstraints(
                               maxWidth: 450,
@@ -190,16 +208,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Text("Discussion: "),
-                                 Text(
-                                 widget.p.externalResource!,
-                                  style: TextStyle(fontSize: 11),
-                                ),
-                                const SizedBox(width: 2),
-                                TextButton(
-                                    onPressed: () {
-                                      launchUrl(widget.p.externalResource! as Uri);
-                                    },
-                                    child: const Icon(Icons.open_in_new)),
+                               OldSchoolLink(text: widget.p.externalResource!, url:widget.p.externalResource!)
                               ],
                             ),
                           ),
@@ -224,39 +233,11 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 24),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 48.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                const Icon(
-                                  Icons.hourglass_bottom,
-                                  size: 50,
-                                ),
-                                Column(
-                                  children: [
-                                    Text(
-                                      "Time left to vote",
-                                      style: TextStyle(
-                                          color: Theme.of(context).indicatorColor,
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.normal),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    const Padding(
-                                      padding: EdgeInsets.only(left: 28.0),
-                                      child: Text(
-                                        "0d 11h 19m (2137 blocks)",
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.normal),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
+                         CountdownTimerWidget(
+                          duration:Duration(seconds:15),
+                          status:"active",
+                          stare: this,
+                         ),
                           const SizedBox(height: 70),
                           Padding(
                             padding: const EdgeInsets.only(left: 48.0),
@@ -266,32 +247,85 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   ElevatedButton(
-                                      style: const ButtonStyle(
-                                          elevation:
-                                              MaterialStatePropertyAll(0.0),
-                                          backgroundColor:
-                                              MaterialStatePropertyAll(
-                                                  Colors.teal)),
-                                      onPressed: () {},
-                                      child: const SizedBox(
+                                      style:  ButtonStyle(
+                                        elevation:
+                                            MaterialStatePropertyAll(0.0),
+                                        backgroundColor:
+                                          MaterialStatePropertyAll(
+                                            widget.enabled?
+                                              Color.fromARGB(255, 141, 255, 244):Color.fromARGB(255, 77, 77, 77))),
+                                      onPressed: widget.enabled? ()async {
+                                        Vote v=Vote(castAt: DateTime.now(), option:1 , votingPower:"20000", voter:generateWalletAddress(), proposalID: widget.p.id );
+                                     try {
+                                        await   widget.p.castVote(v);
+                                         widget.p.votes.add(v);
+                                         
+                                         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
+                                         => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
+                                         );
+                                        print("vote added");
+                                      } on Exception catch (e) {
+                                         print("error adding vote" +e.toString());
+                                      }
+                                     
+                                      }:null,
+                                      child:  SizedBox(
                                           width: 120,
                                           height: 40,
                                           child: Center(
-                                              child: Text("Support")))),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children:  [
+                                                  Icon(Icons.thumb_up, color:widget.enabled?supportColor:Color.fromARGB(255, 160, 160, 160).withOpacity(0.7)),
+                                                  SizedBox(width: 8),
+                                                  Text("Support",
+                                                    style:widget.enabled?
+                                                    TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: supportColor ):TextStyle(),
+                                                  ),
+                                                ],
+                                              )))),
                                   const Spacer(),
                                   ElevatedButton(
-                                      onPressed: () {},
-                                      style: const ButtonStyle(
+                                      onPressed:  widget.enabled? () async{
+                                              Vote v=Vote(castAt: DateTime.now(), option:0 , votingPower:"10000", voter:generateWalletAddress(), proposalID: widget.p.id );
+                                     try {
+                                        await   widget.p.castVote(v);
+                                        
+                                          widget.p.votes.add(v);
+                                         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
+                                         => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
+                                         );
+                                        print("vote added");
+                                      } on Exception catch (e) {
+                                         print("error adding vote" +e.toString());
+                                      }
+                                      }:null,
+                                      style:  ButtonStyle(
                                           elevation:
                                               MaterialStatePropertyAll(0.0),
                                           backgroundColor:
                                               MaterialStatePropertyAll(
-                                                  Colors.redAccent)),
-                                      child: const SizedBox(
+                                                  widget.enabled?
+                                                  Color.fromARGB(255, 255, 135, 135):Color.fromARGB(255, 77, 77, 77))),
+                                      child:  SizedBox(
                                           width: 120,
                                           height: 40,
                                           child: Center(
-                                              child: Text("Oppose"))))
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children:  [
+                                                  Icon(Icons.thumb_down, color:widget.enabled?rejectColor:Color.fromARGB(255, 160, 160, 160).withOpacity(0.7)),
+                                                  SizedBox(width: 8),
+                                                  Text("Reject", 
+                                                   style:widget.enabled?
+                                                    TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: rejectColor ):TextStyle(),
+                                                  ),
+                                                ],
+                                              ))))
                                 ],
                               ),
                             ),
@@ -322,7 +356,7 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                                   padding:
                                       const EdgeInsets.only(left: 8.0),
                                   child: Text(
-                                    "12 Votes",
+                                    "${widget.p.votesAgainst + widget.p.votesFor} Votes",
                                     style: TextStyle(
                                         fontSize: 17,
                                         color:
@@ -346,71 +380,84 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                             padding: const EdgeInsets.symmetric(horizontal: 8.0),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                SizedBox(width: 34),
-                                Icon(Icons.circle, color: Colors.teal),
-                                SizedBox(width: 10),
-                                SizedBox(
-                                    child: Text("Support",
+                              children:  [
+                                const SizedBox(width: 34),
+                                const Icon(Icons.circle, color: Colors.teal),
+                                const SizedBox(width: 10),
+                                 const SizedBox(
+                                    child: Text("Support" ,
                                         )),
-                                SizedBox(width: 13),
-                                Text("14305000 (49.41%)", style: TextStyle(
+                                const SizedBox(width: 13),
+                                Text((BigInt.parse(widget.p.inFavor) /
+                                BigInt.parse( pow(10,  widget.p.org.decimals!).toString()))
+                                .toStringAsFixed(2), style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
-                                Spacer(),
-                                Icon(Icons.circle, color: Colors.redAccent),
-                                SizedBox(width: 10),
-                                SizedBox(
+                                Text(" (${(inFavorPercentage * 100).toStringAsFixed(2)}%)"),
+                                const Spacer(),
+                                const Icon(Icons.circle, color: Colors.redAccent),
+                                const SizedBox(width: 10),
+                                const SizedBox(
                                     child: Text("Oppose",
                                        )),
-                                SizedBox(width: 13),
-                                Text("14781100 (51.59%)", style: TextStyle(
+                                const SizedBox(width: 13),
+                                Text((BigInt.parse(widget.p.against) /
+                                BigInt.parse( pow(10,  widget.p.org.decimals!).toString()))
+                                .toStringAsFixed(2), style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
-                                SizedBox(width: 73)
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 13),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 28.0),
-                            child: SizedBox(
-                                height: 10,
-                                width: double.infinity,
-                               child: ElectionResultBar(inFavor: 900, against: 300))
-                          ),
-                          const SizedBox(height: 43),
-                            Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                SizedBox(width: 34),
-                               
-                                SizedBox(
-                                    child: Text("Turnout:",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.normal))),
-                                SizedBox(width: 13),
-                                Text("14305000 (49.41%)",style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                Spacer(),
-                               
-                                SizedBox(
-                                    child: Text("Quorum met",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w900))),
-                                SizedBox(width: 73)
+                                Text(" (${(againstPercentage * 100).toStringAsFixed(2)}%)"),
+                                const SizedBox(width: 73)
                               ],
                             ),
                           ),
                           const SizedBox(height: 13),
                            Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 28.0),
+                                EdgeInsets.symmetric(horizontal: 28.0),
                             child: SizedBox(
                                 height: 10,
                                 width: double.infinity,
-                             child:  ParticipationBar(totalVoters: 10000, turnout: 4310, quorum: 20))
+                               child: ElectionResultBar(inFavor: BigInt.parse(widget.p.inFavor), against: BigInt.parse(widget.p.against)))
+                          ),
+                          const SizedBox(height: 43),
+                            Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children:  [
+                                const SizedBox(width: 34),
+                                const SizedBox(
+                                    child: Text("Turnout:",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.normal))),
+                                const SizedBox(width: 13),
+                                Text("${
+                                   (BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor)) / BigInt.from(pow(10,widget.p.org.decimals!))
+                                  } (${
+                                    (turnout * 100).toString()
+                                  }%)",style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                const Spacer(),
+                                 SizedBox(
+                                    child: Text(
+                                      (turnout * 100)>=widget.p.org.quorum?
+                                          "Quorum met":
+                                          "Quorum not met",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w900))),
+                                const SizedBox(width: 73)
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 13),
+                            Padding(
+                            padding:
+                                EdgeInsets.symmetric(horizontal: 28.0),
+                            child: SizedBox(
+                                height: 10,
+                                width: double.infinity,
+                             child:  ParticipationBar(
+                        totalVoters: BigInt.parse(widget.p.org.totalSupply!)
+                              , turnout:  BigInt.parse(widget.p.against) +  BigInt.parse(widget.p.inFavor), quorum: widget.p.org.quorum))
                           ),
                         ],
                       ),
@@ -419,27 +466,54 @@ class _ProposalDetailsState extends State<ProposalDetails> {
                 )
               ],
             ),
-            const SizedBox(height: 60),
-            Align(
-                alignment: Alignment.topLeft,
-                child: const Padding(
-                  padding: EdgeInsets.only(left: 18.0),
-                  child: Text("Execution details:"),
-                )),
-            const SizedBox(height: 12),
-            Container(
-                height: 352,
-                width: double.infinity,
-                padding: const EdgeInsets.all(11),
-                decoration: const BoxDecoration(color: Color(0xff121416)),
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: 
-                    TokenTransferListWidget(
-                      p: widget.p,
-                    )
-                  )
-                  )
+            const SizedBox(height: 20),
+            // const Align(
+            //     alignment: Alignment.topLeft,
+            //     child: Padding(
+            //       padding: EdgeInsets.only(left: 18.0),
+            //       child: Text("Execution details:"),
+            //     )),
+
+            
+         Row(
+  crossAxisAlignment: CrossAxisAlignment.start, // Align children at the top
+  children: [
+     Expanded(
+      // Ensure the ProposalLifeCycleWidget can expand to fill available space
+      child: Container(
+         decoration: BoxDecoration(color:Theme.of(context).cardColor),
+        child: ProposalLifeCycleWidget(
+          
+          statusHistory: widget.p.statusHistory
+        ),
+      ),
+    ),
+    const SizedBox(width: 20),
+    Container(
+       constraints: const BoxConstraints(
+                    maxWidth: 680,
+                  ),
+      height: widget.p.transactions.length * 70, // Fixed height based on transactions
+      // Set a fixed width for the first container
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        border: Border.all(
+          width: 0.5,
+          color: Color.fromARGB(255, 71, 71, 71))),
+      child: Align(
+        alignment: Alignment.center,
+        child: Center(
+          child: TokenTransferListWidget(
+            p: widget.p,
+          ),
+        ),
+      ),
+    ),
+    
+   
+  ],
+),
+       const SizedBox(height: 80)
           ],
         ),
       ),
@@ -449,9 +523,11 @@ class _ProposalDetailsState extends State<ProposalDetails> {
 
 
 
+
 class ElectionResultBar extends StatefulWidget {
-  final int inFavor;
-  final int against;
+  final BigInt inFavor;
+  final BigInt against;
+
   const ElectionResultBar({
     Key? key,
     required this.inFavor,
@@ -469,6 +545,7 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
   @override
   void initState() {
     super.initState();
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateBar();
     });
@@ -476,15 +553,31 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
 
   void _animateBar() {
     setState(() {
-      int totalVotes = widget.inFavor + widget.against;
-      _inFavorWidth = widget.inFavor / totalVotes;
-      _againstWidth = widget.against / totalVotes;
+      BigInt totalVotes = widget.inFavor + widget.against;
+      if (totalVotes > BigInt.zero) {
+        _inFavorWidth = widget.inFavor / totalVotes;
+        _againstWidth = widget.against / totalVotes;
+      } else {
+        // No votes case: both widths should be zero
+        _inFavorWidth = 0;
+        _againstWidth = 0;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    int totalVotes = widget.inFavor + widget.against;
+    BigInt totalVotes = widget.inFavor + widget.against;
+
+    // Handle case with no votes
+    if (totalVotes == BigInt.zero) {
+      return Container(
+        height: 20,
+        width: double.infinity, // Use full width available
+        color:  Colors.grey[700], // Grey color to represent no votes
+      );
+    }
+
     double inFavorPercentage = widget.inFavor / totalVotes;
     double againstPercentage = widget.against / totalVotes;
 
@@ -521,13 +614,10 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
 }
 
 
-
-// import 'package:flutter/material.dart';
-
 class ParticipationBar extends StatefulWidget {
-  final int totalVoters;
-  final int turnout;
-  final double quorum; // Provided as a percentage, e.g., 50.0 for 50%
+  final BigInt totalVoters;
+  final BigInt turnout;
+  final int quorum; // Provided as a percentage, e.g., 50.0 for 50%
 
   const ParticipationBar({
     Key? key,
@@ -546,6 +636,8 @@ class _ParticipationBarState extends State<ParticipationBar> {
   @override
   void initState() {
     super.initState();
+    print("turnout from widget: "+widget.turnout.toString());
+    print("total votes: "+widget.totalVoters.toString());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateTurnout();
     });
@@ -561,11 +653,9 @@ class _ParticipationBarState extends State<ParticipationBar> {
   Widget build(BuildContext context) {
     double turnoutPercentage = (widget.turnout / widget.totalVoters) * 100;
     double quorumPosition = widget.quorum / 100; // Quorum as a fraction (0 to 1)
-
     return LayoutBuilder(
       builder: (context, constraints) {
         double barWidth = constraints.maxWidth; // Get the actual width of the widget
-
         return Stack(
           children: [
             Container(
@@ -577,14 +667,14 @@ class _ParticipationBarState extends State<ParticipationBar> {
               width: barWidth * _turnoutWidth, // Use the actual widget width for turnout
               height: 20,
               color: Colors.grey[400], // Light grey for turnout
-              duration: Duration(milliseconds: 800),
+              duration: const Duration(milliseconds: 800),
               curve: Curves.easeInOut,
             ),
             Positioned(
               left: quorumPosition * barWidth, // Calculate quorum position relative to bar width
               child: Container(
                 height: 15, // Height of the quorum marker
-                width: 2, // Small vertical line for quorum
+                width: 6, // Small vertical line for quorum
                 color: Colors.black, // Marker color
               ),
             ),
@@ -594,9 +684,6 @@ class _ParticipationBarState extends State<ParticipationBar> {
     );
   }
 }
-
-
-
 
 class VotesModal extends StatefulWidget {
   final Proposal p;
@@ -624,7 +711,7 @@ class _VotesModalState extends State<VotesModal> {
       widget.p.votes.add(Vote(
         votingPower: doc.data()['weight'],
         voter: doc.id,
-        proposalID: widget.p.id.toString(),
+        proposalID: widget.p.id,
         option: doc.data()['option'],
         castAt: (doc.data()['cast'] != null) ? (doc.data()['cast'] as Timestamp).toDate() : null,
       ));
@@ -652,7 +739,7 @@ class _VotesModalState extends State<VotesModal> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             // Show loading spinner while fetching data
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             // Handle any errors
             return Center(child: Text("Error loading votes: ${snapshot.error}"));
@@ -676,7 +763,7 @@ class _VotesModalState extends State<VotesModal> {
                       DataCell(Text(vote.option.toString())),
                       DataCell(Text(vote.votingPower.toString())),
                       DataCell(Text(formatDateTime(vote.castAt))),
-                      DataCell(Icon(Icons.open_in_new)), // You can add onTap functionality here later
+                      const DataCell(Icon(Icons.open_in_new)), // You can add onTap functionality here later
                     ]);
                   }).toList(),
                 ),
@@ -684,6 +771,54 @@ class _VotesModalState extends State<VotesModal> {
             );
           }
         },
+      ),
+    );
+  }
+}
+
+
+class ProposalLifeCycleWidget extends StatelessWidget {
+  final Map<String, DateTime> statusHistory;
+  Proposal p=Proposal(org: orgs[0], type: "transfer");
+  ProposalLifeCycleWidget({required this.statusHistory});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: (100+ 40 * statusHistory.keys.length).toDouble(), // Adjust the height as needed
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          
+          
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.all(50),
+              itemCount: statusHistory.length,
+              itemBuilder: (context, index) {
+                final sortedKeys = statusHistory.keys.toList()
+                  ..sort((a, b) => statusHistory[a]!.compareTo(statusHistory[b]!));
+                final status = sortedKeys[index];
+                final date = statusHistory[status]!;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 9.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                    
+                        p.statusPill(status, context),
+                       
+                      Text(DateFormat.yMMMd().add_jm().format(date)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

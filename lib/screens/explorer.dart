@@ -125,11 +125,7 @@ class _ExplorerState extends State<Explorer> {
             SizedBox(height: 23),
           
     // other widgets
-    Container(
-      
-      color: Color.fromARGB(255, 25, 25, 25),
-      child: Footer(),
-    ),
+    
  
             ],
           ), // End of ListView

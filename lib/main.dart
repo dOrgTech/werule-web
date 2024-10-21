@@ -79,9 +79,12 @@ persist() async {
     org.votingDuration=doc.data()['votingDuration'];
     org.executionAvailability=doc.data()['executionAvailability'];
     org.quorum=doc.data()['quorum'];
+    // org.quorum=20;
+    org.decimals=doc.data()['decimals'];
     org.supermajority=doc.data()['supermajority'];
     org.holders=doc.data()['holders'];
     org.treasuryMap=Map<String, String>.from(doc.data()['treasury']);
+    org.totalSupply=doc.data()['totalSupply'];
     orgs.add(org);
   }
   print("orgs length: "+orgs.length.toString());

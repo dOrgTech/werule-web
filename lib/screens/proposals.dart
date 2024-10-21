@@ -51,6 +51,12 @@ class _ProposalsState extends State<Proposals> {
       for (Proposal p in widget.org.proposals){
         proposalCards.add(ProposalCard(org:widget.org,proposal:p));
       }
+      if (proposalCards.isEmpty){
+        proposalCards.add(SizedBox(height: 200));
+        proposalCards.add(SizedBox(
+          height: 400,
+          child: Center(child: noProposals())));
+      }
     }
 
   @override
@@ -193,7 +199,18 @@ class _ProposalsState extends State<Proposals> {
     
     
   }
+
+  Widget noProposals(){
+    return Center(
+      child: SizedBox(
+        height: 400,
+        child: Text("No proposals created yet", style: TextStyle(fontSize: 20, color:Colors.grey))),)
+    ;
+  }
+
 }
+
+
 
 
 class ProposalList extends StatefulWidget {

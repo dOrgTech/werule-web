@@ -1,8 +1,10 @@
 import 'package:Homebase/entities/token.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../widgets/executeLambda.dart';
 import '../widgets/newProject.dart';
 import '../widgets/transfer.dart';
+import 'human.dart';
 import 'org.dart';
 
 
@@ -86,7 +88,11 @@ class Proposal{
   double value=0;
   String? callData;
   DateTime? createdAt;
-  String? status;
+  DateTime? votingStarts;
+  DateTime? votingEnds;
+  DateTime? executionStarts;
+  DateTime? executionEnds;
+  Map<String, DateTime> statusHistory={"pending":DateTime.now()};
   int turnoutPercent=0;
   String inFavor="0";
   String against="0";
@@ -96,9 +102,34 @@ class Proposal{
   List<Txaction> transactions=[];
   List<Vote> votes=[];
   Proposal({required this.org,required this.type, this.name}) {
-    this.id=this.org.proposals.length+1;
+    id = (org.proposals.isNotEmpty)
+        ? org.proposals.map((p) => p.id).reduce((a, b) => a > b ? a : b) + 1
+        : 1; 
     this.createdAt=DateTime.now();
-    this.status="pending";
+  }
+
+  castVote(Vote v)async{
+    var votesCollection = FirebaseFirestore
+        .instance
+        .collection("daos${Human().chain.name}")
+        .doc(org.address)
+        .collection("proposals")
+        .doc(id.toString())
+        .collection("votes");
+    votesCollection.add(v.toJson());
+    
+    if (v.option==1){
+      votesFor++;
+      inFavor = (BigInt.parse(inFavor) + BigInt.parse(v.votingPower)).toString();
+    }else{
+      votesAgainst++;
+      against = (BigInt.parse(against) + BigInt.parse(v.votingPower)).toString();
+    }
+     var pollsCollection=FirebaseFirestore
+      .instance.collection("daos${Human().chain.name}")
+      .doc(org.address).collection("proposals");
+      pollsCollection.doc(id.toString()).set(this.toJson());
+      votes.add(v);
   }
 
   toJson(){
@@ -110,7 +141,9 @@ class Proposal{
       'author':author,
       'calldata':callData,
       'createdAt':createdAt,
-      'status':status,
+      'statusHistory':statusHistory.map((key, value) {
+    return MapEntry(key, Timestamp.fromDate(value));
+  }),
       'turnoutPercent':turnoutPercent,
       'inFavor':inFavor,
       'against':against,
@@ -120,12 +153,132 @@ class Proposal{
       'transactions': transactions.map((tx) => tx.toJson()).toList(),
     };
   }
+
+Widget statusPill(String status, context){
+  final Map<String, Widget> statuses={
+    "active":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Theme.of(context).indicatorColor,
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "ACTIVE",
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                  )), 
+    "pending":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Colors.yellow,
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "PENDING",
+                                      style: TextStyle(color: Color.fromARGB(255, 47, 44, 19)),
+                                    ),
+                                  )),
+    "passed":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Color.fromARGB(255, 21, 50, 65),
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "ACTIVE",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  )),
+    "executable":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Colors.white,
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "ACTIVE",
+                                      style: TextStyle(color:Colors.teal),
+                                    ),
+                                  )),
+    "executed":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Colors.green.withOpacity(0.5),
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "ACTIVE",
+                                      style: TextStyle(color:Color.fromARGB(255, 17, 39, 18)),
+                                    ),
+                                  )),
+    "expired":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Colors.grey,
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "ACTIVE",
+                                      style: TextStyle(color: Color.fromARGB(255, 54, 54, 54)),
+                                    ),
+                                  )),
+    "no quorum":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Color.fromARGB(255, 104, 104, 104),
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "ACTIVE",
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                  )),
+    "rejected":Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: Color.fromARGB(255, 87, 65, 64),
+                                  ),
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Text(
+                                      "ACTIVE",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  )),
+  };
+  return statuses[status]!;
+}
 }
 
 
 class Vote{
   String? voter;
-  String? proposalID;
+  String? hash;
+  String? proposalHash;
+  int proposalID;
   int option;
   String votingPower;
   DateTime? castAt;
@@ -139,6 +292,7 @@ class Vote{
         'cast':castAt,
         'voter':voter,
         'option':option
+
       };
     }
   }

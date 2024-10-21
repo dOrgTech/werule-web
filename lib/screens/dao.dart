@@ -1,3 +1,4 @@
+import 'package:Homebase/widgets/footer.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import '../screens/proposalDetails.dart';
 import '../screens/proposals.dart';
 import '../screens/registry.dart';
 import '../screens/treasury.dart';
+import '../widgets/footer.dart';
 import '../widgets/membersList.dart';
 import '../widgets/menu.dart';
 import '../entities/org.dart';
@@ -26,7 +28,7 @@ class _DAOState extends State<DAO> {
     return Scaffold(
       appBar: const TopMenu(),
       body: FutureBuilder(
-        future: widget.org.getProposals(),
+        future:  widget.org.getProposals(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -84,12 +86,10 @@ class _DAOState extends State<DAO> {
                         Center(child:
                         ProposalDetails(id: widget.proposalId!,
                         p:  widget.org.proposals.firstWhere(
-    (proposal) => proposal.id ==widget.proposalId!,
+                    (proposal) => proposal.id ==widget.proposalId!,
    
-  )),
-                        
+    )),
                         )
-                        
                         ,
                         // Center(child: Treasury()),
                         Center(child: Registry()),
@@ -98,9 +98,12 @@ class _DAOState extends State<DAO> {
                       ],
                     ), // TabBarView end
                    ), 
+                  
                    ],
                       
                     ), // End of Column
+                  
+                   Footer()
                   ],
                 ),
               ), // End of ListView
