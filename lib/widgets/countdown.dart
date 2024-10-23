@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../screens/proposalDetails.dart';
 
 class CountdownTimerWidget extends StatefulWidget {
-  final Duration duration;
+  Duration? duration;
   final String status;
   ProposalDetailsState stare; // Parent state to update
 
@@ -25,8 +25,8 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
   @override
   void initState() {
     super.initState();
-    remainingTime = widget.duration;
-    if (widget.status == 'active' || widget.status == 'pending' || widget.status == 'executable') {
+    if (widget.status == 'active' || widget.status == 'pending' || widget.status == 'executable'|| widget.status == 'passed') {
+    remainingTime = widget.duration!;
       _startTimer();
     }
   }
@@ -38,9 +38,11 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
           remainingTime -= Duration(seconds: 1);
         } else {
           _timer?.cancel();
+          setState((){});
           widget.stare.setState(() {
-            widget.stare.widget.p.statusHistory.addAll({"active": DateTime.now()});
+            widget.stare.widget.p.getStatus();
           }); // Trigger parent state update
+          
         }
       });
     });
@@ -69,6 +71,9 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
       case 'executable':
         return "Time left to execute";
       case 'passed':
+        return "Time left to execute";
+      case 'executed':
+        return "Proposal executed";
       default:
         return "Voting concluded";
     }
@@ -81,22 +86,29 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const Icon(
+          widget.status=="pending" ||
+          widget.status=="active" ||
+          widget.status=="passed" ||
+          widget.status=="executable"
+          
+          ? Icon(
             Icons.hourglass_bottom,
             size: 50,
-          ),
+          ):Text(""),
           Column(
             children: [
               Text(
                 _getStatusLabel(),
-                style: TextStyle(
-                  color: Theme.of(context).indicatorColor,
+                style:  TextStyle(
+                  color:_getStatusLabel()=="Voting concluded"? Colors.grey:
+                  Theme.of(context).indicatorColor,
+                  
                   fontSize: 17,
                   fontWeight: FontWeight.normal,
                 ),
               ),
               const SizedBox(height: 10),
-              if (widget.status == 'active' || widget.status == 'pending' || widget.status == 'executable')
+              if (widget.status == 'active' || widget.status == 'pending' || widget.status == 'executable'||  widget.status == 'passed')
                 Padding(
                   padding: const EdgeInsets.only(left: 28.0),
                   child: Text(

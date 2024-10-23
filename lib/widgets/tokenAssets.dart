@@ -1,4 +1,5 @@
 import 'package:Homebase/utils/reusable.dart';
+import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import '../entities/org.dart';
@@ -18,7 +19,11 @@ class TokenAssets extends StatefulWidget {
 
 class _TokenAssetsState extends State<TokenAssets> {
   List<TableRow> assets=[];
+  
   buildAssets(){
+    assets=[];
+    
+//  assets.add(asset(tokenXTZ,widget.org.nativeBalance));
     for (Token t in widget.org.treasury.keys){
       assets.add(asset(t, widget.org.treasury[t]!));
     }
@@ -134,28 +139,28 @@ class _TokenAssetsState extends State<TokenAssets> {
   ],
 ),
 
-const Opacity(
-  opacity: 0.5,
-  child: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 29.0),
-    child: Divider(),
+  const Opacity(
+    opacity: 0.5,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 29.0),
+      child: Divider(),
+    ),
   ),
-),
 
-Table(
-  border: TableBorder.all(
-    color: Colors.transparent,
-  ),
-  columnWidths: const <int, TableColumnWidth>{
-    0: FlexColumnWidth(1.8),  // Left-most item stays as is
-    1: FlexColumnWidth(0.3),  // Slightly reduce column width for SYMBOL
-    2: FlexColumnWidth(1.2),  // Slightly reduce column width for AMOUNT
-    3: FlexColumnWidth(1.4),  // Slightly reduce column width for ADDRESS
-    4: FixedColumnWidth(150), // Extra space for the button with more padding
-  },
-  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-  children: assets
-)
+  Table(
+    border: TableBorder.all(
+      color: Colors.transparent,
+    ),
+    columnWidths: const <int, TableColumnWidth>{
+      0: FlexColumnWidth(1.8),  // Left-most item stays as is
+      1: FlexColumnWidth(0.3),  // Slightly reduce column width for SYMBOL
+      2: FlexColumnWidth(1.2),  // Slightly reduce column width for AMOUNT
+      3: FlexColumnWidth(1.4),  // Slightly reduce column width for ADDRESS
+      4: FixedColumnWidth(150), // Extra space for the button with more padding
+    },
+    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+    children: assets
+  )
 
  ]),
      ) );
@@ -183,7 +188,7 @@ Table(
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child:  Center(child: Text(value)),
+          child:  Center(child: Text(displayTokenValue(value, token.decimals!))),
         ),
         Container(
           height: 42,
@@ -193,15 +198,17 @@ Table(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ClipRRect(
-                        borderRadius: BorderRadius.circular(50),
-                        child: 
-                Image.network(
-                  add1,
-                  height: 24, 
-                )),
-                const SizedBox(width: 10),
+                // ClipRRect(
+                //         borderRadius: BorderRadius.circular(50),
+                //         child: 
+                // Image.network(
+                //   genera,
+                //   height: 24, 
+                // )),
+                // const SizedBox(width: 10),
                 Text(
+                  token.address! == 'native'?
+                  "native token":
                   getShortAddress(token.address!),
                   style: const TextStyle(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
@@ -232,9 +239,6 @@ Table(
       ],
     );
   }
-
-
-
 
 }
 

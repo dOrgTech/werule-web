@@ -53,8 +53,6 @@ persist() async {
   users=[];proposals=[];
   daosCollection=FirebaseFirestore.instance.collection("daos${Human().chain.name}");
   tokensCollection=FirebaseFirestore.instance.collection("tokens${Human().chain.name}");
-  
-  
   var daosSnapshot =await  daosCollection.get();
   var tokensSnapshot =await  tokensCollection.get();
 
@@ -73,7 +71,7 @@ persist() async {
     org.address=doc.data()['address'];
     org.symbol=doc.data()['symbol'];
     org.creationDate=(doc.data()['creationDate'] as Timestamp).toDate();
-    org.govToken=Token(symbol: "XTZ", decimals: 3,name: "TOKEN");
+    org.govToken=Token(symbol: org.symbol!, decimals: org.decimals,name: org.name);
     org.govTokenAddress = doc.data()['token'];
     org.votingDelay=doc.data()['votingDelay'];
     org.votingDuration=doc.data()['votingDuration'];
@@ -84,6 +82,8 @@ persist() async {
     org.supermajority=doc.data()['supermajority'];
     org.holders=doc.data()['holders'];
     org.treasuryMap=Map<String, String>.from(doc.data()['treasury']);
+    
+    
     org.totalSupply=doc.data()['totalSupply'];
     orgs.add(org);
   }
@@ -140,8 +140,8 @@ class MyApp extends StatelessWidget {
       Scaffold(body:
       //  DaoSetupWizard())
       // Center(child: TransferWidget(org: orgs[0],)))
-      DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
-      // MyHomePage(title: 'Tezos homebase')),
+      // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
+      MyHomePage(title: 'Tezos homebase')),
     );
   }
 }

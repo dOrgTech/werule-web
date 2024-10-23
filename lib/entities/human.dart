@@ -10,7 +10,7 @@ import '../main.dart';
 import '../utils/functions.dart';
 import 'org.dart';
 String prevChain="0x1f47b";
-
+String simpleDAOAddress="0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF";
 var chains={
  "0xaa36a7": Chain(
   wrapperContract:"",

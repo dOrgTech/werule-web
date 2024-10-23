@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import '../screens/proposalDetails.dart';
-
+import 'package:intl/intl.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../screens/dao.dart';
@@ -53,13 +53,15 @@ class ProposalCard extends StatelessWidget {
                       TextButton(onPressed: (){}, child: Icon(Icons.copy))
                     ],
                   )),
-                SizedBox(width:150,child: Center(child: Text("6/8/2022 11:43"))),
+                SizedBox(width:150,child: Center(
+                  child: Text(DateFormat('M/d/yyyy HH:mm').format(proposal.createdAt!)))),
                 SizedBox(width: 150, child: Center(child: Text(proposal.type!))),
                 Container(
                   padding: EdgeInsets.only(right:10),
                   height: 20,
-                  // width: 100,
-                  child: Center(child: proposal.statusPill(
+                  width: 110,
+                  child: 
+                  Center(child: proposal.statusPill(
                     proposal.statusHistory.entries
                       .reduce((a, b) => a.value.isAfter(b.value) ? a : b)
                       .key,

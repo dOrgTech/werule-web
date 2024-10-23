@@ -11,6 +11,7 @@ import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'dart:math' as math;
+import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
@@ -27,17 +28,186 @@ class ProposalDetails extends StatefulWidget {
   Proposal p;
   bool enabled=false;
   String? status;
+  bool busy=false;
   @override
   State<ProposalDetails> createState() => ProposalDetailsState();
 }
 
 class ProposalDetailsState extends State<ProposalDetails> {
-  
+  Widget actions(){
+    if (widget.p.status=="passed"){
+      return   Center(
+                 child: Padding(
+                      padding: const EdgeInsets.all(18.0),
+                      child: ElevatedButton(
+                          style: TextButton.styleFrom(
+                            side: BorderSide(
+                                width: 0.2,
+                                color: Theme.of(context).hintColor),
+                          ),
+                          onPressed: () async{
+                             setState(() {
+                              widget.busy=true;
+                            });
+                            await queueProposal();
+                              print("queue");
+                              widget.p.statusHistory.addAll({"executable":DateTime.now()});
+                              widget.p.status="executable";
+                             await widget.p.store();
+                            setState(() {
+                              widget.busy=false;
+                            });
+                             Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
+                                => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
+                                );
+                          },
+                          child: const Text("Queue for execution",
+                              style: TextStyle(fontSize: 12))),
+                    ),
+         );
+                }
+      else if(widget.p.status=="executable"){
+        return Center(
+                 child: Padding(
+                      padding: const EdgeInsets.all(18.0),
+                      child: ElevatedButton(
+                          style: TextButton.styleFrom(
+                            side: BorderSide(
+                                width: 0.2,
+                                color: Theme.of(context).hintColor),
+                          ),
+                          onPressed: () async{
+                          setState(() {
+                            widget.busy=true;
+                          });
+                           await execute(widget.p.transactions[0].recipient, widget.p.transactions[0].value.toString());
+                              print("execute");
+                              widget.p.statusHistory.addAll({"executed":DateTime.now()});
+                              widget.p.status="executed";
+                              await widget.p.store();
+                            setState(() {
+                              widget.busy=false;
+                            });
+                          },
+                          child: const Text("EXECUTE",
+                              style: TextStyle(fontSize: 12))),
+                    ),
+      );
+      }
+      else if (widget.p.status=="executed"){
+        return Center(
+                 child: Padding(
+                      padding: const EdgeInsets.all(18.0),
+                      child: 
+                       GestureDetector(
+                  onTap: () {},
+                  child: const Text(
+                    'View on Block Explorer',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                    ),
+      );
+      }
+      return  Padding(
+                  padding: const EdgeInsets.only(left: 48.0),
+                  child: SizedBox(
+                    width: 360,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                            style:  ButtonStyle(
+                              elevation:
+                                  MaterialStatePropertyAll(0.0),
+                              backgroundColor:
+                                MaterialStatePropertyAll(
+                                  widget.enabled?
+                                    Color.fromARGB(255, 141, 255, 244):Color.fromARGB(255, 77, 77, 77))),
+                            onPressed: widget.enabled? ()async {
+                              Vote v=Vote(castAt: DateTime.now(), option:1 , votingPower:"2000000000", voter:generateWalletAddress(), proposalID: widget.p.id );
+                            setState(() {
+                                widget.busy=true;
+                                  widget.p.votes.add(v);
+                              });
+                            
+                            
+                                  await widget.p.castVote(v);
+                                  // await vote();
+
+                            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
+                                    => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
+                                    );
+                                  print("vote added");
+                            }:null,
+                            child:  SizedBox(
+                                width: 120,
+                                height: 40,
+                                child: Center(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children:  [
+                                        Icon(Icons.thumb_up, color:widget.enabled?supportColor:Color.fromARGB(255, 160, 160, 160).withOpacity(0.7)),
+                                        SizedBox(width: 8),
+                                        Text("Support",
+                                          style:widget.enabled?
+                                          TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: supportColor ):TextStyle(),
+                                        ),
+                                      ],
+                                              )))),
+                                    const Spacer(),
+                                    ElevatedButton(
+                                      onPressed:  widget.enabled? () async{
+                                         Vote v=Vote(castAt: DateTime.now(), option:0 , votingPower:"142000000", voter:generateWalletAddress(), proposalID: widget.p.id );
+                                     try {
+                                        await  widget.p.castVote(v);
+                                          widget.p.votes.add(v);
+                                         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
+                                         => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
+                                         );
+                                        print("vote added");
+                                      } on Exception catch (e) {
+                                         print("error adding vote" +e.toString());
+                                      }
+                                      }:null,
+                                      style:  ButtonStyle(
+                                          elevation:
+                                              MaterialStatePropertyAll(0.0),
+                                          backgroundColor:
+                                              MaterialStatePropertyAll(
+                                                  widget.enabled?
+                                                  Color.fromARGB(255, 255, 135, 135):Color.fromARGB(255, 77, 77, 77))),
+                                      child:  SizedBox(
+                                          width: 120,
+                                          height: 40,
+                                          child: Center(
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children:  [
+                                                  Icon(Icons.thumb_down, color:widget.enabled?rejectColor:Color.fromARGB(255, 160, 160, 160).withOpacity(0.7)),
+                                                  SizedBox(width: 8),
+                                                  Text("Reject", 
+                                                   style:widget.enabled?
+                                                    TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: rejectColor ):TextStyle(),
+                                                  ),
+                                                ],
+                                              ))))
+                                ],
+                              ),
+                            ),
+                          );
+  }
   @override
   Widget build(BuildContext context) {
-    widget.status= widget.p.statusHistory.entries
-                      .reduce((a, b) => a.value.isAfter(b.value) ? a : b)
-                      .key;
+    widget.status= widget.p.getStatus();
+    
     widget.status=="active"?widget.enabled=true:widget.enabled=false;
     BigInt totalVotes = BigInt.parse(widget.p.inFavor) + BigInt.parse(widget.p.against );
     double inFavorPercentage = BigInt.parse(widget.p.inFavor) / totalVotes;
@@ -82,24 +252,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                   fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          widget.p.statusHistory.keys.last=="passed"?
-                          Padding(
-                            padding: const EdgeInsets.all(18.0),
-                            child: ElevatedButton(
-                                style: TextButton.styleFrom(
-                                  side: BorderSide(
-                                      width: 0.2,
-                                      color: Theme.of(context).hintColor),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    widget.enabled=!widget.enabled;
-                                  });
-                                },
-                                child: const Text("Queue for execution",
-                                    style: TextStyle(fontSize: 12))),
-                          ):Text("")
+                         
                         ],
                       ),
                       SizedBox(height: 10),
@@ -229,107 +382,23 @@ class ProposalDetailsState extends State<ProposalDetails> {
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.all(18.0),
-                      child: Column(
+                      child: 
+                      widget.busy?
+                      const Center(child: SizedBox(
+                        height: 100,width: 100,
+                        child: CircularProgressIndicator())):
+                      
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 24),
                          CountdownTimerWidget(
-                          duration:Duration(seconds:15),
-                          status:"active",
+                          duration:widget.p.getRemainingTime(),
+                          status:widget.status!,
                           stare: this,
                          ),
                           const SizedBox(height: 70),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 48.0),
-                            child: SizedBox(
-                              width: 360,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  ElevatedButton(
-                                      style:  ButtonStyle(
-                                        elevation:
-                                            MaterialStatePropertyAll(0.0),
-                                        backgroundColor:
-                                          MaterialStatePropertyAll(
-                                            widget.enabled?
-                                              Color.fromARGB(255, 141, 255, 244):Color.fromARGB(255, 77, 77, 77))),
-                                      onPressed: widget.enabled? ()async {
-                                        Vote v=Vote(castAt: DateTime.now(), option:1 , votingPower:"20000", voter:generateWalletAddress(), proposalID: widget.p.id );
-                                     try {
-                                        await   widget.p.castVote(v);
-                                         widget.p.votes.add(v);
-                                         
-                                         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
-                                         => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
-                                         );
-                                        print("vote added");
-                                      } on Exception catch (e) {
-                                         print("error adding vote" +e.toString());
-                                      }
-                                     
-                                      }:null,
-                                      child:  SizedBox(
-                                          width: 120,
-                                          height: 40,
-                                          child: Center(
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children:  [
-                                                  Icon(Icons.thumb_up, color:widget.enabled?supportColor:Color.fromARGB(255, 160, 160, 160).withOpacity(0.7)),
-                                                  SizedBox(width: 8),
-                                                  Text("Support",
-                                                    style:widget.enabled?
-                                                    TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      color: supportColor ):TextStyle(),
-                                                  ),
-                                                ],
-                                              )))),
-                                  const Spacer(),
-                                  ElevatedButton(
-                                      onPressed:  widget.enabled? () async{
-                                              Vote v=Vote(castAt: DateTime.now(), option:0 , votingPower:"10000", voter:generateWalletAddress(), proposalID: widget.p.id );
-                                     try {
-                                        await   widget.p.castVote(v);
-                                        
-                                          widget.p.votes.add(v);
-                                         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
-                                         => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
-                                         );
-                                        print("vote added");
-                                      } on Exception catch (e) {
-                                         print("error adding vote" +e.toString());
-                                      }
-                                      }:null,
-                                      style:  ButtonStyle(
-                                          elevation:
-                                              MaterialStatePropertyAll(0.0),
-                                          backgroundColor:
-                                              MaterialStatePropertyAll(
-                                                  widget.enabled?
-                                                  Color.fromARGB(255, 255, 135, 135):Color.fromARGB(255, 77, 77, 77))),
-                                      child:  SizedBox(
-                                          width: 120,
-                                          height: 40,
-                                          child: Center(
-                                              child: Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children:  [
-                                                  Icon(Icons.thumb_down, color:widget.enabled?rejectColor:Color.fromARGB(255, 160, 160, 160).withOpacity(0.7)),
-                                                  SizedBox(width: 8),
-                                                  Text("Reject", 
-                                                   style:widget.enabled?
-                                                    TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      color: rejectColor ):TextStyle(),
-                                                  ),
-                                                ],
-                                              ))))
-                                ],
-                              ),
-                            ),
-                          )
+                         actions()
                         ],
                       ),
                     ),
@@ -367,6 +436,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 const SizedBox(width: 32),
                                 ElevatedButton(
                                     onPressed: () {
+                                      print( widget.p.statusHistory);
                                       showDialog(context: context, builder: (context)=>
                                         AlertDialog(content: VotesModal(p: widget.p,),)
                                       );
@@ -509,8 +579,6 @@ class ProposalDetailsState extends State<ProposalDetails> {
         ),
       ),
     ),
-    
-   
   ],
 ),
        const SizedBox(height: 80)
@@ -521,13 +589,9 @@ class ProposalDetailsState extends State<ProposalDetails> {
   }
 }
 
-
-
-
 class ElectionResultBar extends StatefulWidget {
   final BigInt inFavor;
   final BigInt against;
-
   const ElectionResultBar({
     Key? key,
     required this.inFavor,

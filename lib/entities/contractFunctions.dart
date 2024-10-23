@@ -103,10 +103,17 @@ createDAO(Org org, state)async{
         await promiseToFuture(callMethod(sourceContract, "deployDAOwithToken", [
         org.name, // string
         org.govToken!.symbol, // string
-        [Human().address], // array of strings (addresses)
-        ["500000000000000000"], // array of strings representing uint256
+        ["0xc5C77EC5A79340f0240D6eE8224099F664A08EEb",
+        "0xA6A40E0b6DB5a6f808703DBe91DbE50B7FC1fa3E",
+        "0x6EF597F8155BC561421800de48852c46e73d9D19"
+        
+        ], // array of strings (addresses)
+        ["470000000000000000000",
+        "18000000000000000000",
+        "36000000000000000000"
+        ], // array of strings representing uint256
         "1", // string representing uint48
-        "7", // string representing uint32
+        "2", // string representing uint32
       ]));
           print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
@@ -140,9 +147,9 @@ createDAO(Org org, state)async{
     } catch (e) {    
         print("nu s-a putut" +e.toString());
         // state.setState(() {
-        //                     state.widget.done=true;
-        //                     state.widget.error=true;
-        //                   });
+          //   state.widget.done=true;
+          //   state.widget.error=true;
+          // });
       return "still not ok" ;
       }
   }
@@ -162,7 +169,6 @@ createDAO(Org org, state)async{
       ]));
           print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
-    
     final result = await promiseToFuture(
         callMethod(Human().web3user!, 'waitForTransaction', [hash]));
     if (json.decode(stringify(result))["status"] == 0) {
@@ -170,7 +176,7 @@ createDAO(Org org, state)async{
       return "not ok";
     } else {
       var rezultat=(json.decode(stringify(result)));
-      
+      p.hash=rezultat.toString();
       return rezultat.toString();
       }
     } catch (e) {    
@@ -181,4 +187,136 @@ createDAO(Org org, state)async{
         //                   });
       return "still not ok" ;
       }
+  }
+   // Helper function to convert Uint8List to hex string
+  String bytesToHex(Uint8List bytes) {
+    return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  makeProposal()async{
+        var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
+  print("facuram contractu");
+    try {
+      sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+      print("signed ok");
+      final transaction =
+        await promiseToFuture(callMethod(sourceContract, "createProposal", [
+        "0xe06f1901be9db6ad06cb7388e622c47c75e9532ef0ec0022e022ddb25ba324d3"
+      ]));
+          print("facuram tranzactia");
+    final hash = json.decode(stringify(transaction))["hash"];
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+    if (json.decode(stringify(result))["status"] == 0) {
+    print("nu merge eroare de greseala");
+      return "not ok";
+    } else {
+      var rezultat=(json.decode(stringify(result)));
+      return rezultat.toString();
+      }
+    } catch (e) {    
+        print("nu s-a putut" +e.toString());
+        // state.setState(() {
+      //   state.widget.done=true;
+      //   state.widget.error=true;
+      // });
+      return "still not ok" ;
+      }
+  }
+
+    queueProposal()async{
+        var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
+  print("facuram contractu");
+    try {
+      sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+      print("signed ok");
+      final transaction =
+        await promiseToFuture(callMethod(sourceContract, "queueProposal", [
+        "0xe06f1901be9db6ad06cb7388e622c47c75e9532ef0ec0022e022ddb25ba324d3"
+      ]));
+          print("facuram tranzactia");
+    final hash = json.decode(stringify(transaction))["hash"];
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+    if (json.decode(stringify(result))["status"] == 0) {
+    print("nu merge eroare de greseala");
+      return "not ok";
+    } else {
+      var rezultat=(json.decode(stringify(result)));
+      return rezultat.toString();
+      }
+    } catch (e) {    
+        print("nu s-a putut" +e.toString());
+      // state.setState(() {
+      //   state.widget.done=true;
+      //   state.widget.error=true;
+      // });
+      return "still not ok" ;
+      }
+  }
+
+  vote()async{
+          var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
+  print("facuram contractu");
+    try {
+      sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+      print("signed ok");
+      final transaction =
+        await promiseToFuture(callMethod(sourceContract, "vote", []));
+        print("facuram tranzactia");
+    final hash = json.decode(stringify(transaction))["hash"];
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+    if (json.decode(stringify(result))["status"] == 0) {
+    print("nu merge eroare de greseala");
+      return "not ok";
+    } else {
+      var rezultat=(json.decode(stringify(result)));
+      return rezultat.toString();
+      }
+    } catch (e) {    
+        print("nu s-a putut" +e.toString());
+      
+      return "still not ok" ;
+      }
+  }
+
+  execute(String address, String howMuch)async{
+          var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
+  print("facuram contractu");
+    try {
+      howMuch=howMuch+"000000000000000000";
+      sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+      print("signed ok");
+      final transaction =
+        await promiseToFuture(callMethod(sourceContract, "execute", [
+          address, howMuch
+        ]));
+        print("facuram tranzactia");
+    final hash = json.decode(stringify(transaction))["hash"];
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+    if (json.decode(stringify(result))["status"] == 0) {
+    print("nu merge eroare de greseala");
+      return "not ok";
+    } else {
+      var rezultat=(json.decode(stringify(result)));
+      return rezultat.toString();
+      }
+    } catch (e) {    
+        print("nu s-a putut" +e.toString());
+      return "still not ok" ;
+      }
+  }
+
+  getNativeBalance(String address) async {
+    var httpClient = Client(); 
+    var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+    final ethAddress = EthereumAddress.fromHex(simpleDAOAddress);
+    final balance = await ethClient.getBalance(ethAddress);
+    print("balance:"+ balance.getInWei.toString());
+     // Close the HTTP client
+    httpClient.close();
+    return balance.getInWei.toString();
+    // return "1000000000";
   }

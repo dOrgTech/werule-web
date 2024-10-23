@@ -31,21 +31,22 @@ class DAOCard extends StatelessWidget {
                   child: Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(bottom:16.0),
+                          padding: const EdgeInsets.only(top:3,bottom:5.0),
                           child: Text(org.symbol!, style: TextStyle(
                             color:Theme.of(context).indicatorColor,
                             fontWeight: FontWeight.bold, fontSize: 20)),
                         ),
-                        Container(
-                          width: 40,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color:Color.fromARGB(255, 80, 109, 96),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(child: Text("V.3" , style: TextStyle(color: Color.fromARGB(255, 185, 253, 206), fontWeight: FontWeight.bold, fontSize: 15))),
-                        ),
-  SizedBox(height: 16),
+                        
+                        // Container(
+                        //   width: 40,
+                        //   height: 20,
+                        //   decoration: BoxDecoration(
+                        //     color:Color.fromARGB(255, 80, 109, 96),
+                        //     borderRadius: BorderRadius.circular(8),
+                        //   ),
+                        //   child: Center(child: Text("V.3" , style: TextStyle(color: Color.fromARGB(255, 185, 253, 206), fontWeight: FontWeight.bold, fontSize: 15))),
+                        // ),
+  SizedBox(height: 36),
                         Text(org.holders.toString(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                       
                         Text("Voting\nAddresses" , textAlign: TextAlign.center, style: TextStyle( fontWeight: FontWeight.w100, fontSize: 13 ) ,),

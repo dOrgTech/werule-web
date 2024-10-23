@@ -4,6 +4,16 @@ import 'dart:math';
 import '../entities/org.dart';
 import '../entities/token.dart';
 import '../screens/dao.dart';
+import '../entities/contractFunctions.dart';
+
+String displayTokenValue(String tokenValueStr, int decimals) {
+    double tokenValue = double.parse(tokenValueStr) / pow(10, decimals);
+    if (tokenValue == tokenValue.floorToDouble()) {
+      return tokenValue.toStringAsFixed(0); // Display whole number if no decimals are needed
+    }
+    return tokenValue.toStringAsFixed(2); // Otherwise, show up to 3 decimal places
+  }
+
 
 class TransferWidget extends StatefulWidget {
   int stage=0;
@@ -14,8 +24,10 @@ class TransferWidget extends StatefulWidget {
   TransferWidget({required this.org, required this.proposalsState}) {
     this.treasury=this.org.treasury;
     p=Proposal(org: org, type: "transfer");
-    p.author="no author yet";
-  }
+    p.author="0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
+    p.callData="0x";
+    p.status="pending";
+  } 
 
   @override
   _TransferWidgetState createState() => _TransferWidgetState();
@@ -118,12 +130,16 @@ class _TransferWidgetState extends State<TransferWidget> {
 
     // Print the list of transactions
     print(transactionList);
+    try {
+  // await makeProposal();
+} on Exception catch (e) {
+  print("Exception from the main try "+e.toString())
+;}
     setState(() {
       widget.stage=-1;
     });
+    await makeProposal();
     await widget.org.pollsCollection.doc(widget.p.id.toString()).set(widget.p.toJson());
-    
-     
       widget.org.proposals.add(widget.p);
       widget.org.proposals=widget.org.proposals.reversed.toList();
 

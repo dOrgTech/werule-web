@@ -117,6 +117,182 @@ List<String> wrapperAbiStringGlobal=[
   'function getNumberOfDAOs() returns (uint)'
 ];
 
+List<String> simpleDAOabiString = [
+  'function queueProposal(string proposalHash)',
+  'function execute(address, uint256)',
+  'function deposit() payable',
+  'function createProposal(string description)',
+  'function vote()',
+  'function executeProposal(uint256 proposalIndex)',
+  'function withdraw()',
+  'function owner() view returns (address)',
+  'function shares(address) view returns (uint256)',
+  'function totalShares() view returns (uint256)',
+  'function proposalCount() view returns (uint256)',
+  'function proposals(uint256) view returns (string description, uint256 voteCount, bool executed)'
+];
+
+
+
+String simpleDaoAbi='''
+[
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			}
+		],
+		"name": "createProposal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "deposit",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "proposalIndex",
+				"type": "uint256"
+			}
+		],
+		"name": "executeProposal",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "fallback"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "proposalIndex",
+				"type": "uint256"
+			}
+		],
+		"name": "vote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "proposalCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "proposals",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "voteCount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "executed",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "shares",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalShares",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+''';
+
+
 String wrapperAbiGlobal='''
 [
 	{

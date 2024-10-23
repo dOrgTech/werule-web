@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:Homebase/utils/reusable.dart';
 import '../entities/org.dart';
 import '../screens/creator.dart';
 
+import 'package:flutter/services.dart';
 
 class ViewConfig extends StatelessWidget {
   final Org org;
@@ -30,7 +31,25 @@ class ViewConfig extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 10),
-              Text('Contract Address: ${org.address}'),
+              Row(
+                children: [
+                  Text('Contract Address: '+getShortAddress(org.address!)),
+                  TextButton(
+                    
+                onPressed:(){
+                     Clipboard.setData(
+                          ClipboardData(text: org.address!));
+                                   ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(child: Text('Address copied to clipboard'))));
+                    },
+                    child: Icon(Icons.copy),
+
+                  )
+
+                ],
+              ),
               SizedBox(height: 10),
               SizedBox(height: 20),
               Text('Quorum Threshold: ${org.quorum}%'),

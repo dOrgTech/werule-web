@@ -24,7 +24,7 @@ return components[selectedValue] as Widget;
 
 
 class ExecuteLambda extends StatefulWidget {
-  ExecuteLambda({super.key, required Org org});
+  ExecuteLambda({ required Org org});
 
   @override
   State<ExecuteLambda> createState() => _ExecuteLambdaState();

@@ -3,9 +3,11 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart';
+import '../widgets/transfer.dart';
 import 'human.dart';
 import 'proposal.dart';
 import 'token.dart';
+import 'contractFunctions.dart';
 
 class Org {
   var pollsCollection;
@@ -34,11 +36,20 @@ class Org {
   int holders=1;
   int quorum=0;
   int supermajority=0;
-  int votingDuration=0;
   int votingDelay=0;
+  int votingDuration=0;
+  String nativeBalance="0";
   int executionAvailability=0;
 
-void populateTreasury() {
+ populateTreasury() async{
+  treasury={};
+  Token tokenXTZ=Token(
+    name:"Tezos",
+    symbol:"XTZ",
+    decimals:18);
+  nativeBalance=await getNativeBalance(address!);
+  tokenXTZ.address="native";
+  treasury.addAll({tokenXTZ:nativeBalance});
   treasuryMap.forEach((address, value) {
     Token? matchingToken = tokens.cast<Token?>().firstWhere(
       (token) => token?.address == address,
@@ -48,10 +59,14 @@ void populateTreasury() {
       treasury[matchingToken] = value;
     }
   });
+  
 }
 
+
+
   getProposals()async{
-    populateTreasury();
+    
+    await populateTreasury();
     pollsCollection=FirebaseFirestore
       .instance.collection("daos${Human().chain.name}")
       .doc(address).collection("proposals");
@@ -78,7 +93,7 @@ void populateTreasury() {
       p.statusHistory = statusHistoryMap.map((key, value) {
         return MapEntry(key, (value as Timestamp).toDate());
       });
-     
+      p.getStatus();
       p.transactions=(doc.data()['transactions'] as List<dynamic>).map((tx) {
         return Txaction(
           recipient: tx['recipient'],

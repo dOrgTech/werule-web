@@ -11,11 +11,13 @@ import '../utils/theme.dart';
 import '../widgets/proposalCard.dart';
 
 import '../entities/org.dart';
+import '../widgets/transfer.dart';
 
 class Proposals extends StatefulWidget {
   Proposals({super.key, required this.which,required this.org, this.proposalID });
   String? which="all";
   int? proposalID;
+  bool executable=false;
   Org org;
   @override
   State<Proposals> createState() => _ProposalsState();
@@ -24,8 +26,8 @@ class Proposals extends StatefulWidget {
 class _ProposalsState extends State<Proposals> {
   
   String? selectedType = 'All';
-  final List<String> typesDropdown = ['All', 'Off-Chain', 
-  'Transfer','Contract Call',
+   List<String> typesDropdown = ['All', 'Off-Chain', 
+  'Gov Token Operation','Registry','Transfer','Contract Call',
    'Change Config'];
   String? selectedStatus = 'All';
   final List<String> statusDropdown=[
@@ -41,13 +43,23 @@ class _ProposalsState extends State<Proposals> {
   ];
    @override
   void initState() {
+    typesDropdown = ['All', 'Off-Chain', 
+  '${widget.org.symbol} Operation','Registry','Transfer','Contract Call',
+   'Change Config'];
     // TODO: implement i
     super.initState();
     widget.which="all";
   }
 
   List<Widget> proposalCards=[];
-    void populateProposals(){
+    void populateProposals(){proposalTypes.addAll({
+      '${widget.org.symbol} Operation':"Mint, burn, lock or unlock ${widget.org.symbol} tokens"
+    });
+
+    newProposalWidgets.addAll({
+      '${widget.org.symbol} Operation': (Org org) => TransferWidget(org: widget.org, proposalsState: this)
+    });
+    widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
       for (Proposal p in widget.org.proposals){
         proposalCards.add(ProposalCard(org:widget.org,proposal:p));
       }
@@ -61,6 +73,9 @@ class _ProposalsState extends State<Proposals> {
 
   @override
   Widget build(BuildContext context) {
+    for (Proposal p in widget.org.proposals){
+      if (p.status=="executable"){widget.executable=true;}
+    };
     proposalCards=[];
     populateProposals();
     return widget.proposalID==null?
@@ -114,7 +129,11 @@ class _ProposalsState extends State<Proposals> {
                       padding: const EdgeInsets.only(right:18.0),
                       child: SizedBox(
                         height: 40,
-                        child: ElevatedButton(onPressed: (){}, child: const Text("Execute/Drop All"))),
+                        child: ElevatedButton(onPressed:
+                        widget.executable?
+                         (){
+                          //EXECUTE PROPOSAL HERE;
+                         }:null, child: const Text("Execute"))),
                     ),
                 Container(
                   padding: EdgeInsets.only(right: 50),

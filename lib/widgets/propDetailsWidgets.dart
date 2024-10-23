@@ -104,7 +104,6 @@ class TokenTransferListWidget extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-        
                 // View on Block Explorer link
                 // GestureDetector(
                 //   onTap: () {

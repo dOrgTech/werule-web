@@ -1,8 +1,10 @@
 import 'dart:math';
-
+import 'package:Homebase/entities/human.dart';
+import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../entities/org.dart';
+import '../entities/proposal.dart';
 import '../widgets/tokenAssets.dart';
 import '../widgets/viewConfig.dart';
 
@@ -16,6 +18,16 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
+    int activeProposals = 0;
+    int awaitingExecution = 0;
+    for (Proposal p in widget.org.proposals){
+      if (p.status=="active"){
+        activeProposals++;
+      }
+      else if (p.status=="executable"){
+        awaitingExecution++;
+      }
+    }
     return ListView(
       children: [
         const SizedBox(height: 20,),
@@ -62,14 +74,14 @@ class _HomeState extends State<Home> {
                             children: [
                               const Text(" Treasury: "),
                               Text(
-                                widget.org.address!
+                                simpleDAOAddress
                                 // "asiduhwqiudh128hd92w8h19q8dh9w8dh398dhd2938"
                                 , style: const TextStyle(fontSize: 11),),
                               const SizedBox(width: 2,),
                               TextButton(
                                 onPressed: (){
                                   //copy the address to clipboard
-                                   Clipboard.setData(ClipboardData(text: widget.org.address!));
+                                   Clipboard.setData(ClipboardData(text: simpleDAOAddress));
                                    ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       duration: Duration(seconds: 1),
@@ -86,7 +98,7 @@ class _HomeState extends State<Home> {
                        child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Text("${widget.org.govToken!.symbol} Token: "),
+                              Text("${widget.org.symbol} Token: "),
                               Text(
                                 // "d2038jd028wjfoisfpjq3p9f8jpe398hfpsqhiw"
                                 widget.org.govTokenAddress!
@@ -109,8 +121,7 @@ class _HomeState extends State<Home> {
                     padding: const EdgeInsets.all(11.0),
                     child: Text(
                         widget.org.description!
-                      ,
-                      
+                        ,
                       textAlign: TextAlign.center,
                       ),
                   ),
@@ -122,10 +133,10 @@ class _HomeState extends State<Home> {
             spacing: 20,
             runSpacing: 20,
             children: [
-              metricBox(widget.org.proposals.length, "Proposals"),
+              metricBox("1M", "Total\nVoting\nPower"),
               metricBox(widget.org.holders.toString(), "Members"),
-              metricBox(widget.org.holders, "Active\nProposals"),
-              metricBox(widget.org.holders, "Proposals \nAwaiting \nExecution"),
+              metricBox(activeProposals, "Active\nProposals"),
+              metricBox(awaitingExecution, "Proposals \nAwaiting \nExecution"),
             ]),
             const SizedBox(height: 25),
           TokenAssets(org:widget.org)
