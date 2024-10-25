@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/utils/reusable.dart';
+import 'package:Homebase/widgets/configProposal.dart';
+import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
@@ -165,7 +167,7 @@ class MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return  Scaffold(
 
-    // body:  ContractInteractionWidget()
+    // body:  GovernanceTokenOperationsWidget()
 
         // body: ExecuteLambda(org: orgs[0], )
         // body: Users()

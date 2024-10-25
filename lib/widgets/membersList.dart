@@ -1,12 +1,14 @@
 import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
+
+import '../entities/org.dart';
 String add1="https://i.ibb.co/2WbL5nC/add1.png";
 String add2="https://i.ibb.co/6rmksXk/add2.png";
 List<String> userPics=[add1, add2];
 
 class MembersList extends StatelessWidget {
-  const MembersList({super.key});
-
+   MembersList({super.key, required this.org});
+  Org org;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,23 +39,23 @@ class MembersList extends StatelessWidget {
                 ),
               ),
               Container(
-                height: 22,
+                height: 35,
                 color: const Color.fromARGB(0, 76, 175, 79),
-                child: const Center(child: Text("Voting Weight"))
+                child: const Center(child: Text("Voting\nWeight", textAlign: TextAlign.center,))
                 ),
               
                 Container(
-                height: 22,
+                height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
-                child:const Center(child: Text("Available Staked"))),
+                child: Center(child: Text("Personal\n${org.symbol!} Balance", textAlign: TextAlign.center))),
                    Container(
-                height: 22,
+                height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
-                child: const Center(child: Text("Total Staked"))),
+                child:  Center(child: Text("Proposals\nCreated", textAlign: TextAlign.center))),
                    Container(
-                height: 22,
+                height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
-                child: const Center(child: Text("Proposals Voted"))),
+                child: const Center(child: Text("Proposals\nVoted", textAlign: TextAlign.center))),
             ],
           ),
          

@@ -1,4 +1,5 @@
 import 'package:Homebase/entities/token.dart';
+import 'package:Homebase/widgets/configProposal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../widgets/executeLambda.dart';
@@ -24,7 +25,7 @@ var newProposalWidgets={
   "Add Lambda": (Org org) => NotImplemented(),
   "Remove Lambda": (Org org,State state) => NotImplemented(),
   "Contract Call": (Org org,State state) =>ContractInteractionWidget(),
-  "DAO Configuration": (Org org) => NotImplemented(),
+  "DAO Configuration": (Org org, State state) => DaoConfigurationWidget(),
   "Change Guardian": (Org org) => NotImplemented(),
   "Change DAO Delegate": (Org org) => NotImplemented(),
   // You can add more widgets as needed

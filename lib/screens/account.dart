@@ -67,18 +67,18 @@ class _AccountState extends State<Account> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Available Balance" , style: TextStyle(
+                                Text("Voting Weight" , style: TextStyle(
                                   fontSize: 17,
                                   color: Theme.of(context).indicatorColor ),),
                                 const SizedBox(height: 10,),
-                                const Text("32", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
+                                const Text("320000", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                               ],
                             ),
                             Spacer(),
                               Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Pending Balance" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
+                                Text("Personal Balance" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
                                 const SizedBox(height: 10,),
                                 const Text("0", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                               ],
@@ -87,9 +87,18 @@ class _AccountState extends State<Account> {
                               Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Staked Balance" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
+                                Text("Proposals Created" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
                                 const SizedBox(height: 10,),
-                                const Text("0", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
+                                const Text("5", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
+                            ],
+                          ),
+                            Spacer(),
+                              Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Votes Cast" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
+                                const SizedBox(height: 10,),
+                                const Text("35", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                             ],
                           ),
                           const SizedBox(width: 20)
