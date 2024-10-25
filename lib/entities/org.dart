@@ -59,7 +59,6 @@ class Org {
       treasury[matchingToken] = value;
     }
   });
-  
 }
 
 

@@ -22,8 +22,8 @@ var newProposalWidgets={
   "Transfer Assets": (Org org, State state) => TransferWidget(org: org, proposalsState: state),
   "Edit Registry": (Org org) => NotImplemented(),
   "Add Lambda": (Org org) => NotImplemented(),
-  "Remove Lambda": (Org org) => NotImplemented(),
-  "Contract Call": (Org org) => ExecuteLambda(org: org),
+  "Remove Lambda": (Org org,State state) => NotImplemented(),
+  "Contract Call": (Org org,State state) =>ContractInteractionWidget(),
   "DAO Configuration": (Org org) => NotImplemented(),
   "Change Guardian": (Org org) => NotImplemented(),
   "Change DAO Delegate": (Org org) => NotImplemented(),
@@ -162,8 +162,6 @@ class Proposal{
 
   
 String getStatus() {
-  
-
   DateTime start = statusHistory["pending"]!;
   Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
   Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);

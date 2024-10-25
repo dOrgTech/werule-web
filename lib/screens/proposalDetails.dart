@@ -131,12 +131,13 @@ class ProposalDetailsState extends State<ProposalDetails> {
                               Vote v=Vote(castAt: DateTime.now(), option:1 , votingPower:"2000000000", voter:generateWalletAddress(), proposalID: widget.p.id );
                             setState(() {
                                 widget.busy=true;
-                                  widget.p.votes.add(v);
+                                widget.p.votes.add(v);
                               });
-                            
-                            
-                                  await widget.p.castVote(v);
+                              await widget.p.castVote(v);
                                   // await vote();
+                              setState(() async{
+                                
+                              });
 
                             Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
                                     => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
@@ -159,7 +160,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                             color: supportColor ):TextStyle(),
                                         ),
                                       ],
-                                              )))),
+                                          )))),
                                     const Spacer(),
                                     ElevatedButton(
                                       onPressed:  widget.enabled? () async{
@@ -167,13 +168,14 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                      try {
                                         await  widget.p.castVote(v);
                                           widget.p.votes.add(v);
-                                         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
-                                         => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
-                                         );
+                                        
                                         print("vote added");
                                       } on Exception catch (e) {
                                          print("error adding vote" +e.toString());
                                       }
+                                       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)
+                                         => DAO(org: widget.p.org,InitialTabIndex:1, proposalId: widget.p.id ))
+                                         );
                                       }:null,
                                       style:  ButtonStyle(
                                           elevation:

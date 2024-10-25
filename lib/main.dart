@@ -61,6 +61,7 @@ persist() async {
     t.address = doc.data()['address'];
     tokens.add(t);
   }
+  orgs=[];
   for (var doc in daosSnapshot.docs){
     print("we are doing this ");
     Org org=
@@ -82,8 +83,6 @@ persist() async {
     org.supermajority=doc.data()['supermajority'];
     org.holders=doc.data()['holders'];
     org.treasuryMap=Map<String, String>.from(doc.data()['treasury']);
-    
-    
     org.totalSupply=doc.data()['totalSupply'];
     orgs.add(org);
   }
@@ -165,16 +164,18 @@ class MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
-        // body: ExecuteLambda()
+
+    // body:  ContractInteractionWidget()
+
+        // body: ExecuteLambda(org: orgs[0], )
         // body: Users()
         // body: Prelaunch()
-        body:
-         Explorer()
+        body: Explorer()
     
         );
   }
 }
-
+// 0xc5C77EC5A79340f0240D6eE8224099F664A08EEb
 
 class WalletBTN extends StatefulWidget {
   const WalletBTN({super.key});
