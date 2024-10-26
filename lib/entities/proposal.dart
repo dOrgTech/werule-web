@@ -8,7 +8,6 @@ import '../widgets/transfer.dart';
 import 'human.dart';
 import 'org.dart';
 
-
 var proposalTypes={
   "Offchain Poll":"Create in inconsequential poll for your community",
   "Transfer Assets": "from the DAO Treasury to another account",
@@ -33,13 +32,10 @@ var newProposalWidgets={
 
 class NotImplemented extends StatelessWidget {
   const NotImplemented({super.key});
-
   @override
   Widget build(BuildContext context) {
-    
     return Container(width: 300,height: 240,
     child:Center(child: Text("NOT IMPLEMENTED"),)
-    
     );
   }
 }
@@ -446,22 +442,3 @@ class Vote{
     }
   }
 
-  class Member{
-    Member({required this.address, required this.votingPower});
-    String address;
-    String votingPower;
-    DateTime? lastActive;
-    int proposalsCreated=0;
-    int votesCast=0;
-    String personalVotingPower="0";
-
-    toJson(){
-      return {
-        'address':address,
-        'votingPower':votingPower,
-        'lastActive':lastActive,
-        'proposalsCreated':proposalsCreated,
-        'votesCast':votesCast,
-        'personalVotingPower':personalVotingPower};
-    }
-  }

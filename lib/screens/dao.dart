@@ -63,6 +63,7 @@ class _DAOState extends State<DAO> {
                           height: 50,
                           color:Theme.of(context).cardColor,
                           child:TabBar( 
+                            
                     tabs: [
                       menuItem(MenuItem("Home",const Icon(Icons.home))),
                       menuItem(MenuItem("Proposals",const Icon(Icons.front_hand))),

@@ -1,8 +1,10 @@
 import 'package:Homebase/main.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';
+import '../entities/proposal.dart';
 import '../entities/token.dart';
 import 'explorer.dart';
 
@@ -12,8 +14,9 @@ class DaoConfig {
   String? daoName;
   String? daoDescription;
   String? tokenSymbol;
+  String? totalSupply;
   int? numberOfDecimals;
-  bool nonTransferrable = false;
+  bool nonTransferrable = true;
   int? quorumThreshold;
   double supermajority = 75.0; // Added supermajority field
   Duration? votingDuration;
@@ -25,8 +28,28 @@ class DaoConfig {
 
 class Member {
   String address;
-  int amount;
-  Member({required this.address, required this.amount});
+  int? amount;
+  String? votingWeight;
+  String? personalBalance;
+  List<Proposal> proposalsCreated = [];
+  List<Proposal> proposalsVoted = [];
+  DateTime? lastSeen;
+  String delegate="";
+
+  Member({required this.address, this.amount,
+  this.votingWeight, this.personalBalance });
+
+  toJson(){
+    return {
+      'address':address,
+      'votingWeight':votingWeight,
+      'personalBalance':personalBalance,
+      'proposalsCreated':proposalsCreated,
+      'proposalsVoted':proposalsVoted,
+      'lastSeen':lastSeen
+    };
+  }
+
 }
 
 // Main wizard widget
@@ -93,6 +116,10 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
       org.executionAvailability = daoConfig.executionAvailability?.inMinutes ?? 0;
       org.holders = daoConfig.members.length;
       org.symbol=daoConfig.tokenSymbol;
+      org.nonTransferrable = daoConfig.nonTransferrable;
+      org.creationDate=DateTime.now();
+      org.decimals=daoConfig.numberOfDecimals;
+      org.totalSupply=daoConfig.totalSupply.toString();
 
       try {
         List<String> results = await createDAO(org, this);
@@ -101,6 +128,12 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         org.treasuryAddress = results[2];
         await daosCollection.doc(org.address).set(org.toJson());
         orgs.add(org);
+        WriteBatch batch = FirebaseFirestore.instance.batch();
+        var membersCollection = daosCollection.doc(org.address).collection("members");
+        for (Member member in daoConfig.members) {
+          batch.set(membersCollection.doc(member.address), member.toJson());
+        }
+        await batch.commit();
 
         setState(() {
           currentStep = 7; // Move to the Deployment Complete screen
@@ -156,7 +189,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         );
         break;
       case 4:
-        content = Padding(
+        content = Padding(  
           padding: const EdgeInsets.all(38.0),
           child: Screen5Members(
             daoConfig: daoConfig,
@@ -956,19 +989,23 @@ class _Screen5MembersState extends State<Screen5Members> {
       int amount = int.tryParse(entry.amountController.text) ?? 0;
       total += amount;
     }
+      widget.daoConfig.totalSupply=total.toString().padRight(
+      total.toString().length + widget.daoConfig.numberOfDecimals!, '0');
     setState(() {
       _totalTokens = total;
     });
+   
   }
 
   void _saveAndNext() {
     widget.daoConfig.members = _memberEntries
         .map((entry) => Member(
               address: entry.addressController.text,
+              personalBalance: entry.amountController.text.padRight(widget.daoConfig.numberOfDecimals!,"0") ,
               amount: int.tryParse(entry.amountController.text) ?? 0,
+              votingWeight: "0",
             ))
         .toList();
-
     widget.onNext(); // Changed from widget.onFinish() to widget.onNext()
   }
 

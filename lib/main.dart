@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/screens/account.dart';
 import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
@@ -22,6 +23,8 @@ import 'screens/projects.dart';
 import 'screens/users.dart';
 import 'utils/functions.dart';
 import 'utils/theme.dart';
+import 'widgets/voteConcentration.dart';
+import 'widgets/delegation.dart';
 import 'widgets/arbitrate.dart';
 import 'widgets/daocard.dart';
 import 'widgets/executeLambda.dart';
@@ -97,10 +100,7 @@ void main() async {
  await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
  await persist();
  
-  var systemSnapshot= await systemCollection.get(); 
-  for (var doc in systemSnapshot.docs){
-    print(doc.data());
-  }
+ 
   
   runApp(
   ChangeNotifierProvider<Human>(
@@ -167,7 +167,7 @@ class MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return  Scaffold(
 
-    // body:  GovernanceTokenOperationsWidget()
+    // body:  DelegationBoxes()
 
         // body: ExecuteLambda(org: orgs[0], )
         // body: Users()

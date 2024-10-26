@@ -16,7 +16,7 @@ class _MembersState extends State<Members> {
     return Column(
       children: [
        const SizedBox(height: 50),
-        MembersList(org:widget.org),
+        MembersList(org:widget.org), 
       ],
     );
   }

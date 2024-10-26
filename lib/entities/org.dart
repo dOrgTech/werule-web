@@ -8,22 +8,23 @@ import 'human.dart';
 import 'proposal.dart';
 import 'token.dart';
 import 'contractFunctions.dart';
-
+import '../screens/creator.dart';
 class Org {
   var pollsCollection;
   var votesCollection;
   Org
-  ({ required this.name,
+  ({required this.name,
     this.govToken,
     this.description,
     this.govTokenAddress
     });
   DateTime? creationDate;
-  List<User>? members;
+  List<Member> members=[];
   Token? govToken;
   String? symbol;
   int? decimals;
   String? totalSupply;
+  bool nonTransferrable=false;
   String? govTokenAddress;
   String? treasuryAddress;
   List<Proposal> proposals=[];
@@ -61,10 +62,33 @@ class Org {
   });
 }
 
+  getMembers()async{
+    print("getting members");
+     var membersCollection = daosCollection.doc(address).collection("members");
+     var membersSnapshot =await  membersCollection.get();
+     for(var doc in membersSnapshot.docs){
+      print("adding one member");
+      Member m=Member(address: doc.data()['address']);
+      print("after creating the member");
+      m.personalBalance=doc.data()['personalBalance'];
+      
+      m.votingWeight=doc.data()['votingWeight'];
+      List<String> proposalsCreatedHashes=List<String>.from(doc.data()['proposalsCreated'] ?? []);
+      List<String> proposalsVotedHashes=List<String>.from(doc.data()['proposalsVoted'] ?? []);
+      m.proposalsCreated=proposals.where((proposal) => proposalsCreatedHashes.contains(proposal.hash)).toList();
+      m.proposalsVoted=proposals.where((proposal) => proposalsVotedHashes.contains(proposal.hash)).toList();
+      m.lastSeen=  doc.data()['lastSeen'] != null
+    ? (doc.data()['lastSeen'] as Timestamp).toDate()
+    : null;
+      // m.delegate=doc.data()['delegate'];
+      members.add(m);
+     }
+     
+  }
 
 
   getProposals()async{
-    
+    print("getting proposals");
     await populateTreasury();
     pollsCollection=FirebaseFirestore
       .instance.collection("daos${Human().chain.name}")
@@ -100,9 +124,10 @@ class Org {
           callData: tx['callData'],
         )..hash = tx['hash'];
       }).toList();
-
+      
   }
-
+      print("before getting member");
+      await getMembers();
   }
    toJson(){
     return {
@@ -122,6 +147,7 @@ class Org {
       'votingDuration':votingDuration,
       'executionAvailability':executionAvailability,
       'quorum':quorum,
+      'nonTransferrable':nonTransferrable,
       'supermajority':supermajority
     };
   }

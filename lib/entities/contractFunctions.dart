@@ -2,6 +2,7 @@ import 'dart:js_util';
 
 import 'package:Homebase/entities/abis.dart';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/utils/functions.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:flutter_web3_provider/ethers.dart';
 import 'package:web3dart/web3dart.dart';
@@ -90,8 +91,8 @@ getNumberOfDAOs() async {
     return rezultat;
 }
 
-
 createDAO(Org org, state)async{
+  return ["dao${generateWalletAddress()}", "token${generateWalletAddress()}", "treasury${generateWalletAddress()}"];
   print(" wrapper contract address "+Human().chain.wrapperContract.toString());
   print("web3 is of type "+Human().web3user.toString());
   var sourceContract = Contract(Human().chain.wrapperContract, wrapperAbiStringGlobal, Human().web3user);
@@ -194,6 +195,7 @@ createDAO(Org org, state)async{
   }
 
   makeProposal()async{
+    return "proposalHash${generateWalletAddress()}";
         var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
   print("facuram contractu");
     try {
@@ -225,6 +227,7 @@ createDAO(Org org, state)async{
   }
 
     queueProposal()async{
+      return "ok";
         var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
   print("facuram contractu");
     try {
@@ -256,6 +259,7 @@ createDAO(Org org, state)async{
   }
 
   vote()async{
+    return "ok";
           var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
   print("facuram contractu");
     try {
@@ -282,6 +286,7 @@ createDAO(Org org, state)async{
   }
 
   execute(String address, String howMuch)async{
+    return 'done';
           var sourceContract = Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
   print("facuram contractu");
     try {

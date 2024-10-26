@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/dboxes.dart';
 import '../widgets/membersList.dart';
 
 class Account extends StatefulWidget {
@@ -36,25 +37,7 @@ class _AccountState extends State<Account> {
                         SizedBox(width: 10),
                         Text("tz1UVpbXS6pAtwPSQdQjPyPoGmVkCsNwn1K5", style: TextStyle(fontSize: 16),),
                         Spacer(),
-                         Padding(
-                          padding: const EdgeInsets.only(right:18.0),
-                          child: SizedBox(
-                            height: 40,
-                            child: ElevatedButton(onPressed: (){}, child: const Text("Deposit"))),
-                        ),
-                            Padding(
-                          padding: const EdgeInsets.only(right:18.0),
-                          child: SizedBox(
-                            height: 40,
-                            child: ElevatedButton(onPressed: (){}, child: const Text("Withdraw"))),
-                        ),
-                            Padding(
-                          padding: const EdgeInsets.only(right:18.0),
-                          child: SizedBox(
-                            height: 40,
-                            child: ElevatedButton(onPressed: (){}, child: const Text("Unstake Votes"))),
-                        ),
-                        SizedBox(width: 30)
+                        
                   ],
                 )
               ),
@@ -68,8 +51,8 @@ class _AccountState extends State<Account> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text("Voting Weight" , style: TextStyle(
-                                  fontSize: 17,
-                                  color: Theme.of(context).indicatorColor ),),
+                                  fontSize: 16,
+                                  ),),
                                 const SizedBox(height: 10,),
                                 const Text("320000", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                               ],
@@ -78,7 +61,7 @@ class _AccountState extends State<Account> {
                               Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Personal Balance" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
+                                Text("Personal Balance" , style: TextStyle(fontSize: 16 ),),
                                 const SizedBox(height: 10,),
                                 const Text("0", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                               ],
@@ -87,7 +70,7 @@ class _AccountState extends State<Account> {
                               Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Proposals Created" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
+                                Text("Proposals Created" , style: TextStyle(fontSize: 16 ),),
                                 const SizedBox(height: 10,),
                                 const Text("5", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                             ],
@@ -96,7 +79,7 @@ class _AccountState extends State<Account> {
                               Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Votes Cast" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
+                                Text("Votes Cast" , style: TextStyle(fontSize: 16 ),),
                                 const SizedBox(height: 10,),
                                 const Text("35", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
                             ],
@@ -120,62 +103,18 @@ class _AccountState extends State<Account> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  const Text("Delegation (Off-chain)", style: TextStyle(fontSize: 20),),
+                  const Text("Delegation Settings", style: TextStyle(fontSize: 20),),
                   SizedBox(height: 9),
-                  const Text("These settings only affect your participation in off-chain polls"),
+                  const Text("These settings affect your participation in both on-chain and off-chain proposals."),
                     ],
                   ),
                 ),
                   SizedBox(height: 9),
                   Divider(),
-                  SizedBox(height: 29),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width/2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Vote Weight" , style: TextStyle(fontSize: 17,color: Theme.of(context).indicatorColor ),),
-                      const SizedBox(height: 10,),
-                      const Text("103143.00000 PAC", style: TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
-                        ],
-                      ),
-                    ),
+                
                 SizedBox(height: 35),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(width: 0.1, color: Theme.of(context).dividerColor)
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left:38.0,right:38.0, top:15,bottom:15),
-                    child: Row(
-                      children: [
-                        Text(""),
-                        Spacer(),
-                        Text("Not accepting delegations"),
-                        Spacer(),
-                        ElevatedButton(onPressed: (){}, child: Icon(Icons.edit) )
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(width: 0.1, color: Theme.of(context).dividerColor)
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left:38.0,right:38.0, top:15,bottom:15),
-                    child: Row(
-                      children: [
-                        Text(""),
-                        Spacer(),
-                        Text("Not delegating"),
-                        Spacer(),
-                        ElevatedButton(onPressed: (){}, child: Icon(Icons.edit) )
-                      ],
-                    ),
-                  ),
-                )
+           
+                DelegationBoxes()
               ],
             ),
           ),
@@ -184,3 +123,93 @@ class _AccountState extends State<Account> {
     );
   }
 }
+
+
+// class DelegationBoxes extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(
+//       child: Row(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           _buildContainer(
+//             context,
+//             icon: Icons.handshake,
+//             title: "DELEGATE\nYOUR VOTE",
+//             description:
+//                 "If you cannot or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing, provided that they are accepting delegations. You can't delegate your vote and be accepting delegations at the same time.",
+//             label: "Label 1",
+//           ),
+//           SizedBox(width: 40),
+//           _buildContainer(
+//             context,
+//             icon: Icons.how_to_vote,
+//             title: "VOTE\nDIRECTLY",
+//             description:
+//                 "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf. Your vote must not be delegated.",
+//             label: "Label 2",
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildContainer(
+//     BuildContext context, {
+//     required IconData icon,
+//     required String title,
+//     required String description,
+//     required String label,
+//   }) {
+//     return Container(
+//       width: 400,
+//       height: 340,
+//       decoration: BoxDecoration(
+//         color: Color.fromARGB(38, 0, 0, 0),
+//         border: Border.all(
+//           width: 0.3,
+//           color: Color.fromARGB(255, 105, 105, 105))),
+//       padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      
+//       child: Column(
+//         children: [
+//           SizedBox(height: 20),
+//           // Title row with icon
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               Icon(icon, size: 60),
+//               SizedBox(width: 4),
+//               SizedBox(width: 8),
+//               Text(
+//                 title,
+//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//               ),
+//             ],
+//           ),
+//           // Fixed space between title and description
+//           Spacer(),
+//           // Description text
+//           Padding(
+//             padding: const EdgeInsets.all(19.0),
+//             child: Expanded(
+//               child: Text(
+//                 description,
+//                 textAlign: TextAlign.justify,
+//                 style: TextStyle(fontSize: 14),
+//               ),
+//             ),
+//           ),
+//           // Fixed space between description and label
+//           Spacer(),
+//           // Label at the bottom
+//           Text(
+//             label,
+//             style: TextStyle(fontSize: 16, color: Colors.blueAccent),
+//           ),
+//           SizedBox(height: 5),
+//         ],
+//       ),
+//     );
+//   }
+// }

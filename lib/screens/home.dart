@@ -120,8 +120,7 @@ class _HomeState extends State<Home> {
                     ),
                     padding: const EdgeInsets.all(11.0),
                     child: Text(
-                        widget.org.description!
-                        ,
+                      widget.org.description!,
                       textAlign: TextAlign.center,
                       ),
                   ),
@@ -133,7 +132,7 @@ class _HomeState extends State<Home> {
             spacing: 20,
             runSpacing: 20,
             children: [
-              metricBox("1M", "Total\nVoting\nPower"),
+              metricBox(formatTotalSupply(widget.org.totalSupply!, widget.org.decimals!), "Total\nVoting\nPower"),
               metricBox(widget.org.holders.toString(), "Members"),
               metricBox(activeProposals, "Active\nProposals"),
               metricBox(awaitingExecution, "Proposals \nAwaiting \nExecution"),

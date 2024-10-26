@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'dart:convert';
 import 'package:image/image.dart' as img;
-import 'dart:ui';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/gestures.dart';
@@ -13,6 +11,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:math';
+import 'dart:core';
 
 class OldSchoolLink extends StatelessWidget {
   final String text;
@@ -48,6 +48,38 @@ class OldSchoolLink extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+
+String formatTotalSupply(String totalSupply, int decimals) {
+  BigInt supply = BigInt.parse(totalSupply);
+  BigInt nominalValue = supply ~/ BigInt.from(pow(10, decimals));
+
+  double value = nominalValue.toDouble();
+
+  if (value < 1000) {
+    return value.toStringAsFixed(0); // Less than 1,000, no abbreviation
+  } else if (value < 1000000) {
+    double result = value / 1000;
+    return result == result.floor() ? result.toStringAsFixed(0) + 'K' : result.toStringAsFixed(1) + 'K';
+  } else if (value < 1000000000) {
+    double result = value / 1000000;
+    return result == result.floor() ? result.toStringAsFixed(0) + 'M' : result.toStringAsFixed(1) + 'M';
+  } else if (value < 1000000000000) {
+    double result = value / 1000000000;
+    return result == result.floor() ? result.toStringAsFixed(0) + 'B' : result.toStringAsFixed(1) + 'B';
+  } else {
+    double result = value / 1000000000000;
+    return result == result.floor() ? result.toStringAsFixed(0) + 'T' : result.toStringAsFixed(1) + 'T';
+  }
+}
+
+
+
 
 
 Future<Uint8List> generateAvatarAsync(String hash, {int size = 40, int pixelSize = 5}) async {
