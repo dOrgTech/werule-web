@@ -99,7 +99,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
             icon: Icons.handshake,
             title: "DELEGATE\nYOUR VOTE",
             description:
-                "If you cannot or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing, provided that they are accepting delegations. You can't delegate your vote and be accepting delegations at the same time.",
+                "If you can't or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing.",
             bottomWidget: delegateYourVoteBottomWidget,
           ),
           SizedBox(width: 40),
@@ -108,7 +108,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
             icon: Icons.how_to_vote,
             title: "VOTE\nDIRECTLY",
             description:
-                "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf. Your vote must not be delegated.",
+                "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf.",
             bottomWidget: voteDirectlyBottomWidget,
           ),
         ],
@@ -125,7 +125,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
   }) {
     return Container(
       width: 400,
-      height: 340,
+      height: 290,
       decoration: BoxDecoration(
         color: Color.fromARGB(38, 0, 0, 0),
         border: Border.all(
@@ -136,7 +136,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
       child: Column(
         children: [
-          SizedBox(height: 15),
+          SizedBox(height: 9),
           // Title row with icon
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -146,7 +146,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
               Text(
                 title,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
               ),
             ],
           ),
@@ -155,7 +155,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Text(
                   description,
                   textAlign: TextAlign.justify,

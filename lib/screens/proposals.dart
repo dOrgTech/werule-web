@@ -1,5 +1,6 @@
 
 
+import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -57,7 +58,7 @@ class _ProposalsState extends State<Proposals> {
     });
 
     newProposalWidgets.addAll({
-      '${widget.org.symbol} Operation': (Org org) => TransferWidget(org: widget.org, proposalsState: this)
+      '${widget.org.symbol} Operation': (Org org, State state) => GovernanceTokenOperationsWidget()
     });
     widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
       for (Proposal p in widget.org.proposals){
@@ -196,17 +197,7 @@ class _ProposalsState extends State<Proposals> {
       ),
     ), 
     ...proposalCards
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "New Project", name: "Engagement with another DAO")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-        // ProposalCard(org:widget.org,proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)")),
-       
+
         ],
       ),
     ):     ProposalDetails(id:widget.proposalID! ,p:
@@ -223,7 +214,7 @@ class _ProposalsState extends State<Proposals> {
     return Center(
       child: SizedBox(
         height: 400,
-        child: Text("No proposals created yet", style: TextStyle(fontSize: 20, color:Colors.grey))),)
+        child: Text("No proposals here", style: TextStyle(fontSize: 20, color:Colors.grey))),)
     ;
   }
 

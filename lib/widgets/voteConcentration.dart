@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:gojs/gojs.dart';
 
 class VotingPowerWidget extends StatefulWidget {
   @override
@@ -40,25 +41,85 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
     double votingPowerPercentage = (cumulativeVotingPower / totalGovernanceTokenSupply) * 100;
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      // mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        // Slider without additional Text element
-        Slider(
-          value: _sliderValue,
-          min: 1,
-          max: 100,
-          divisions: 99,
-          label: 'Top ${percentageOfMembers.toInt()}% of Members',
-          onChanged: (double value) {
-            setState(() {
-              _sliderValue = value;
-            });
-          },
+        Container(
+          height: 30,
+           constraints: BoxConstraints(minWidth: 520),
+           child: Center(child: Text("VOTE CONCENTRATION (drag slider)", style: TextStyle(fontWeight: FontWeight.w600, color:Colors.black, fontSize: 14),)),
+           color: Colors.grey,
         ),
-        SizedBox(height: 20),
-        // Only two Text elements with percentages in parentheses
-        Text('Number of Members: $membersToInclude (${membersPercentage.toStringAsFixed(2)}%)'),
-        Text('Voting Power: ${cumulativeVotingPower.toStringAsFixed(2)} (${votingPowerPercentage.toStringAsFixed(2)}%)'),
+        Container(
+           constraints: BoxConstraints(minWidth: 520),
+          decoration: BoxDecoration(
+            color:Color.fromARGB(255, 44, 44, 44),
+            border: Border.all(color: Colors.grey, width: 0.6), 
+           
+          ),
+          height: 180,
+          // width: MediaQuery.of(context).size.width*0.4,
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                 Container(
+                   decoration: const BoxDecoration(
+
+                   ),
+                   child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("# of Members" , style: TextStyle(
+                            fontSize: 16,
+                            ),),
+                            const SizedBox(height: 10,),
+                            Text(membersToInclude.toString(), style: const TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
+                            Text("${membersPercentage.toStringAsFixed(2)}%", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.normal),),
+                        ],
+                      ),
+                 ),
+                 SizedBox(width: 120,),
+                    Container(
+                     
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Voting Power" , style: TextStyle(
+                            fontSize: 16,
+                            ),),
+                            const SizedBox(height: 10,),
+                            Text(cumulativeVotingPower.toStringAsFixed(2), style: const TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
+                            Text("${votingPowerPercentage.toStringAsFixed(2)}%", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.normal),),
+                        ],
+                      ),
+                    ),
+              ]),
+             const SizedBox(height:18),
+             
+              SizedBox(
+                width: 430,
+                child: Slider(
+                  value: _sliderValue,
+                  min: 1,
+                  max: 100,
+                  divisions: 99,
+                  label: 'Top ${percentageOfMembers.toInt()}% of Members',
+                  onChanged: (double value) {
+                    setState(() {
+                      _sliderValue = value;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Only two Text elements with percentages in parentheses
+            ],
+          ),
+        ),
       ],
     );
   }

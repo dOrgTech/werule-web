@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:toggle_switch/toggle_switch.dart';
 
+import '../entities/proposal.dart';
+import '../main.dart';
 import '../widgets/dboxes.dart';
 import '../widgets/membersList.dart';
-
+import '../widgets/proposalCard.dart';
+Color listTitleColor=Color.fromARGB(255, 211, 211, 211);
 class Account extends StatefulWidget {
-  const Account({super.key});
-
+  Account({super.key});
+  int status=0;
+  List<Widget>proposals=[];
+  
   @override
   State<Account> createState() => _AccountState();
 }
@@ -13,7 +19,14 @@ class Account extends StatefulWidget {
 class _AccountState extends State<Account> {
   @override
   Widget build(BuildContext context) {
-    return Column(
+        ProposalCard p1= ProposalCard(org:orgs[0],proposal:new Proposal(type: "New Project", name: "Engagement with another DAO", org:orgs[0]));
+        p1.type="votedOn";
+        ProposalCard p2=  ProposalCard(org:orgs[0],proposal:new Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)", org: orgs[0]));
+        p2.type="votedOn";
+        p2.option=1;
+        widget.proposals.addAll([p1,p2]);
+        
+    return ListView(
       children: [
       const  SizedBox(height: 16),
         Card(
@@ -103,9 +116,9 @@ class _AccountState extends State<Account> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  const Text("Delegation Settings", style: TextStyle(fontSize: 20),),
+                  const Text("Delegation settings", style: TextStyle(fontSize: 20),),
                   SizedBox(height: 9),
-                  const Text("These settings affect your participation in both on-chain and off-chain proposals."),
+                  const Text("You can either delegate your vote or accept delegations, but not both at the same time."),
                     ],
                   ),
                 ),
@@ -118,98 +131,92 @@ class _AccountState extends State<Account> {
               ],
             ),
           ),
-        )
+        ),
+          const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(38.0),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                     children: [
+                       Text("Activity history", style: TextStyle(fontSize: 20),),
+                         Container(
+                      padding: EdgeInsets.only(right: 50),
+                      height: 40,
+                      child: ToggleSwitch(
+                initialLabelIndex: widget.status,
+                totalSwitches: 2,
+                minWidth: 186,
+                borderWidth: 1.5,
+                activeFgColor: Theme.of(context).indicatorColor,
+                inactiveFgColor: Color.fromARGB(255, 189, 189, 189),
+                activeBgColor: [Color.fromARGB(255, 77, 77, 77)],
+                inactiveBgColor: Theme.of(context).cardColor,
+                borderColor: [Theme.of(context).cardColor],
+                labels: ['VOTING RECORD','PROPOSALS CREATED'],
+                customTextStyles: [TextStyle( fontSize: 14)],
+                onToggle: (index) {
+                  print('switched to: $index');
+            setState(() {
+              widget.status=index!;
+            });
+              },
+            ) 
+            ),
+                     ],
+                   ),
+                  
+                    ],
+                  ),
+                ),
+                SizedBox(height: 9),
+                Divider(),
+                SizedBox(height: 30),
+                Container(
+      child:  Padding(
+        padding: const EdgeInsets.symmetric(horizontal:1.0),
+        child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left:15.0),
+                child: Container(
+                  padding: EdgeInsets.only(left:15  ),
+                  width: 90,
+                  child: Text("ID #", style: TextStyle(color:listTitleColor),)),
+              ),
+              Expanded(
+                child: Container(
+                  width:230, child: Padding(
+                    padding: const EdgeInsets.only(left:48.0),
+                    child: Text("Title", style: TextStyle(color:listTitleColor),),
+                  )),
+              ),
+              Container(
+                width: 180,
+                child: Center(child: Text("Voted    ", style: TextStyle(color:listTitleColor),))),
+              SizedBox(width:150,child: Center(child: Text("Posted", style: TextStyle(color:listTitleColor),))),
+              SizedBox(width: 150, child: Center(child: Text("Type ", style: TextStyle(color:listTitleColor),))),
+              SizedBox(width:100, child: Center(child: Text("Status ", style: TextStyle(color:listTitleColor),))),
+            ],
+          ),
+      ),
+    ), 
+       ...widget.proposals
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 140),
       ],
     );
   }
 }
 
-
-// class DelegationBoxes extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           _buildContainer(
-//             context,
-//             icon: Icons.handshake,
-//             title: "DELEGATE\nYOUR VOTE",
-//             description:
-//                 "If you cannot or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing, provided that they are accepting delegations. You can't delegate your vote and be accepting delegations at the same time.",
-//             label: "Label 1",
-//           ),
-//           SizedBox(width: 40),
-//           _buildContainer(
-//             context,
-//             icon: Icons.how_to_vote,
-//             title: "VOTE\nDIRECTLY",
-//             description:
-//                 "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf. Your vote must not be delegated.",
-//             label: "Label 2",
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildContainer(
-//     BuildContext context, {
-//     required IconData icon,
-//     required String title,
-//     required String description,
-//     required String label,
-//   }) {
-//     return Container(
-//       width: 400,
-//       height: 340,
-//       decoration: BoxDecoration(
-//         color: Color.fromARGB(38, 0, 0, 0),
-//         border: Border.all(
-//           width: 0.3,
-//           color: Color.fromARGB(255, 105, 105, 105))),
-//       padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-      
-//       child: Column(
-//         children: [
-//           SizedBox(height: 20),
-//           // Title row with icon
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: [
-//               Icon(icon, size: 60),
-//               SizedBox(width: 4),
-//               SizedBox(width: 8),
-//               Text(
-//                 title,
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//               ),
-//             ],
-//           ),
-//           // Fixed space between title and description
-//           Spacer(),
-//           // Description text
-//           Padding(
-//             padding: const EdgeInsets.all(19.0),
-//             child: Expanded(
-//               child: Text(
-//                 description,
-//                 textAlign: TextAlign.justify,
-//                 style: TextStyle(fontSize: 14),
-//               ),
-//             ),
-//           ),
-//           // Fixed space between description and label
-//           Spacer(),
-//           // Label at the bottom
-//           Text(
-//             label,
-//             style: TextStyle(fontSize: 16, color: Colors.blueAccent),
-//           ),
-//           SizedBox(height: 5),
-//         ],
-//       ),
-//     );
-//   }
-// }

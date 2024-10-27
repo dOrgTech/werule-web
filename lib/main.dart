@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/account.dart';
 import 'package:Homebase/screens/creator.dart';
+import 'package:Homebase/screens/members.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
@@ -169,9 +170,10 @@ class MyHomePageState extends State<MyHomePage> {
 
     // body:  DelegationBoxes()
 
-        // body: ExecuteLambda(org: orgs[0], )
-        // body: Users()
+        // body: VotingPowerWidget()
+        // body: Members(org: orgs[2],)
         // body: Prelaunch()
+        // body: Account()
         body: Explorer()
     
         );

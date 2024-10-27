@@ -297,8 +297,6 @@ Duration? getRemainingTime() {
   return null;
 }
 
-
-
 Widget statusPill(String status, context){
   final Map<String, Widget> statuses={
     "active":Container(
@@ -318,7 +316,7 @@ Widget statusPill(String status, context){
     "pending":Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
-          color: Colors.yellow,
+          color: Color.fromARGB(255, 207, 201, 146),
         ),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(3),

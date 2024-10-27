@@ -10,9 +10,87 @@ import '../screens/dao.dart';
 class ProposalCard extends StatelessWidget {
   ProposalCard({super.key,required this.proposal, required this.org});
   Proposal proposal;
+  String type="proposals";
+  int option=0;
   Org org;
   @override
   Widget build(BuildContext context) {
+    return  type=="proposals"?
+    proposals(context):
+    type=="votedOn"?
+    votedOn(context):
+    Container();
+    
+  }
+
+  Widget votedOn(context){
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal:8.0, vertical: 6),
+      child: Container(
+       decoration: BoxDecoration(
+        color: Color.fromARGB(255, 78, 78, 78),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(width: 0.2, color: Color.fromARGB(255, 43, 43, 43))
+       ),
+        child: InkWell( 
+          onTap: (){
+              print("tapped on proposalCard");
+              Navigator.push(context,
+              MaterialPageRoute(
+                builder: (context) => 
+                DAO(InitialTabIndex: 1,org:org,
+                proposalId:proposal.id,
+                )));
+            },
+          child: SizedBox(
+            height: 44,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left:25.0),
+                  child: Container(
+                    width: 90,
+                    child:  Text(proposal.id.toString())),
+                ),
+                Expanded(
+                  child: Padding(
+                     padding: const EdgeInsets.only(left:1.0),
+                     child: Text(proposal.name!, style: TextStyle(fontSize: 14),),
+                   ),
+                ),
+                Container(
+                  width: 180,
+                  child: 
+                   option==0? Icon(Icons.thumb_down, color: Color.fromARGB(255, 238, 129, 121))
+                  : Icon(Icons.thumb_up_sharp  ,color: Color.fromARGB(255, 93, 223, 162))
+                ),
+                SizedBox(width:150,child: Center(
+                  child: Text(
+                    DateFormat('M/1d/yyyy HH:mm').format(proposal.createdAt!)
+                    ,style: TextStyle(fontSize: 14),
+                    ))),
+                SizedBox(width: 150, child: Center(child: Text(proposal.type!,style: TextStyle(fontSize: 14),))),
+                Container(
+                  padding: EdgeInsets.only(right:10),
+                  height: 20,
+                  width: 110,
+                  child: 
+                  Center(child: proposal.statusPill(
+                    proposal.statusHistory.entries
+                      .reduce((a, b) => a.value.isAfter(b.value) ? a : b)
+                      .key,
+                    context))),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  Widget proposals(context){
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal:8.0),
       child: Card(
@@ -73,4 +151,5 @@ class ProposalCard extends StatelessWidget {
       ),
     );
   }
+
 }

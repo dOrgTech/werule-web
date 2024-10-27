@@ -49,12 +49,13 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _buildConfigOptionButton("Quorum", Icons.how_to_vote),
-        SizedBox(height: 30),
-        _buildConfigOptionButton("Voting Delay", Icons.access_time),
-        SizedBox(height: 30),
+        SizedBox(height: 20),
+        _buildConfigOptionButton("Quorum", Icons.group),
+        SizedBox(height: 45),
+        _buildConfigOptionButton("Voting Delay", Icons.hourglass_empty),
+        SizedBox(height: 45),
         _buildConfigOptionButton("Voting Period", Icons.timer),
-        SizedBox(height: 30),
+        SizedBox(height: 45),
         _buildConfigOptionButton("Switch Treasury", Icons.account_balance_wallet),
       ],
     );
@@ -67,7 +68,7 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
       child: ElevatedButton(
         onPressed: () => _selectConfigType(title),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).cardColor,
+          backgroundColor: Color.fromARGB(255, 78, 78, 78),
           foregroundColor: Colors.white,
           padding: EdgeInsets.all(10),
         ),
