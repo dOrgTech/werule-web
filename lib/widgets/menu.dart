@@ -49,8 +49,7 @@ class _TopMenuState extends State<TopMenu> {
              children: [
               SizedBox(width: 12),
                Container(
-                width: 140,
-        padding: const EdgeInsets.only(top:2.0),
+                width: 170,
          child: InkWell(
           hoverColor: Colors.transparent,
           onTap: () => 
@@ -61,7 +60,7 @@ class _TopMenuState extends State<TopMenu> {
                child: Row(
                      children: [
                     
-                    Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 38,
+                    Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 47,
                     // SvgPicture.asset(
                     //        'assets/logos/homebase_logo.svg',
                     //        semanticsLabel: 'Acme Logo'

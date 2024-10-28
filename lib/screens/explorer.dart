@@ -26,7 +26,13 @@ class _ExplorerState extends State<Explorer> {
 
     for (var org in orgs) {
       print("adding a dao");
-      daos.add(DAOCard(org:org as Org));}
+      daos.add(DAOCard(org:org as Org));
+      daos.add(DAOCard(org:org as Org));
+      daos.add(DAOCard(org:org as Org));
+      daos.add(DAOCard(org:org as Org));
+      daos.add(DAOCard(org:org as Org));
+      
+      }
     
     return Scaffold(
       appBar: const TopMenu(),
@@ -131,7 +137,7 @@ class _ExplorerState extends State<Explorer> {
                          )
                       ],
                     ), // End of Column
-                  SizedBox(height: 23),
+                  SizedBox(height: 83),
                 
           // other widgets
           

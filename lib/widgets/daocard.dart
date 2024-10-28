@@ -11,7 +11,10 @@ class DAOCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(7),
       color:Color.fromARGB(255, 73, 73, 73).withOpacity(0.6),
+      ),
       child: TextButton(
         onPressed: () {
        Navigator.push(
