@@ -1,4 +1,6 @@
 import 'package:Homebase/main.dart';
+import 'package:Homebase/utils/theme.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../entities/contractFunctions.dart';
@@ -8,6 +10,65 @@ import '../entities/proposal.dart';
 import '../entities/token.dart';
 import 'explorer.dart';
 
+
+class FlashingIcon extends StatefulWidget {
+  @override
+  _FlashingIconState createState() => _FlashingIconState();
+}
+
+class _FlashingIconState extends State<FlashingIcon> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Color?> _colorAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200), // Total duration of one cycle
+    );
+
+    // Define a Tween sequence to control the timing for each part of the animation
+    _colorAnimation = TweenSequence<Color?>(
+      [
+        TweenSequenceItem(
+          tween: ColorTween(begin: Colors.white, end: Color.fromARGB(255, 255, 180, 110)),
+          weight: 600, // First phase: 300 ms for white to bright gold
+        ),
+        TweenSequenceItem(
+          tween: ColorTween(begin:  Colors.yellow, end: Colors.white),
+          weight: 600, // Second phase: 1000 ms for bright gold back to white
+        ),
+      ],
+    ).animate(_controller);
+
+    // Loop the animation
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _colorAnimation,
+      builder: (context, child) {
+        return Icon(
+          Icons.security_outlined, size: 80,
+          color: _colorAnimation.value,
+          
+        );
+      },
+    );
+  }
+}
+
+
+TextStyle meniu = TextStyle(fontSize: 24,color:Color.fromARGB(255, 178, 178, 178));
 // Configuration classes to store user-provided values
 class DaoConfig {
   String? daoType;
@@ -17,7 +78,7 @@ class DaoConfig {
   String? totalSupply;
   int? numberOfDecimals;
   bool nonTransferrable = true;
-  int? quorumThreshold;
+  int quorumThreshold=4;
   double supermajority = 75.0; // Added supermajority field
   Duration? votingDuration;
   Duration? votingDelay;
@@ -346,7 +407,9 @@ class Screen1DaoType extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('Select DAO Type', style: Theme.of(context).textTheme.headline5),
+            Text('What type of company do you want?', style: Theme.of(context).textTheme.headline5),
+            SizedBox(height: 16),
+            Text('(one option is better than the other)', style: TextStyle(fontSize: 14, color:Color.fromARGB(255, 194, 194, 194))),
             SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -365,22 +428,50 @@ class Screen1DaoType extends StatelessWidget {
                       child: Container(
                         margin: EdgeInsets.all(38.0),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.blue),
+                          border: Border.all(color: Color.fromARGB(255, 56, 56, 56)),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Placeholder(
-                              fallbackHeight: 150,
-                              fallbackWidth: double.infinity,
-                            ),
+                          children:  [
+                          FlashingIcon(),
                             SizedBox(height: 16),
-                            Text('On-chain', style: TextStyle(fontSize: 24)),
+                            SizedBox(
+                        width: 150,
+                        height: 30,
+                        child: Center(child: AnimatedContainer(
+                          duration: Duration(milliseconds:489),
+                          child: 
+                          AnimatedTextKit(
+                            onTap:(){
+                    
+                      },
+                            isRepeatingAnimation:false,
+                            repeatForever: false,
+    animatedTexts: [
+      ColorizeAnimatedText(
+        'On-chain',
+        textStyle: meniu,
+        textDirection: TextDirection.ltr,
+        speed: Duration(milliseconds:700),
+        colors:[Color.fromARGB(255, 219, 219, 219),
+        Color.fromARGB(255, 251, 251, 251),
+        Color.fromARGB(255, 255, 180, 110),
+        Colors.yellow,
+        Color.fromARGB(255, 255, 169, 163),
+        Color.fromARGB(255, 255, 243, 139),Colors.amber,Color(0xff343434)]
+      ),
+      ],)
+        ))),
+                    
+                             SizedBox(height: 10),
                             Padding(
-                              padding: EdgeInsets.all(8.0),
+                              padding: EdgeInsets.symmetric(horizontal:10),
                               child: Text(
-                                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla accumsan.',
+
+                                'All important operations are secured by the will of the members through voting.\nThis includes all capabilities of off-chain companies.',
+                                style: TextStyle(height: 1.3),
                                 textAlign: TextAlign.center,
+                                // textScaleFactor: 1.2,
                               ),
                             ),
                           ],
@@ -403,21 +494,21 @@ class Screen1DaoType extends StatelessWidget {
                       child: Container(
                         margin: EdgeInsets.all(38.0),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.blue),
+                         border: Border.all(color: Color.fromARGB(255, 56, 56, 56)),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Placeholder(
-                              fallbackHeight: 150,
-                              fallbackWidth: double.infinity,
-                            ),
+                           Icon(Icons.forum,size:80),
                             SizedBox(height: 16),
                             Text('Off-chain', style: TextStyle(fontSize: 24)),
+                            SizedBox(height: 10),
+
                             Padding(
-                              padding: EdgeInsets.all(8.0),
+                              padding: EdgeInsets.only(left:13.0, right:13, top:10, bottom:10),
                               child: Text(
-                                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla accumsan.',
+                                "Only use this option if you're too chickenshit to start an on-chain company.",
+                                style: TextStyle(height: 1.3),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -499,17 +590,17 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
             width: 500,
             child: Column(
               children: [
-                Text("Create the identity of your DAO", style: Theme.of(context).textTheme.headline5),
+                Text("Create the identity of your company", style: Theme.of(context).textTheme.headline5),
                 SizedBox(height: 120),
                 SizedBox(
                   width: 500,
                   child: TextFormField(
                     controller: _daoNameController,
                     maxLength: 80,
-                    decoration: InputDecoration(labelText: 'DAO Name'),
+                    decoration: InputDecoration(labelText: 'Company Name'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the DAO Name';
+                        return 'Please enter a name for your company';
                       }
                       return null;
                     },
@@ -521,10 +612,10 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                     controller: _daoDescriptionController,
                     maxLength: 400,
                     maxLines: 4,
-                    decoration: InputDecoration(labelText: 'DAO Description'),
+                    decoration: InputDecoration(labelText: 'Description or Tagline'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the DAO Description';
+                        return 'What is this company about at a high level?';
                       }
                       return null;
                     },
@@ -543,7 +634,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                           decoration: InputDecoration(labelText: 'Token Symbol'),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter the Token Symbol';
+                              return 'The ticker symbol of the governance token';
                             }
                             return null;
                           },
@@ -558,7 +649,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                           decoration: InputDecoration(labelText: 'Decimals'),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter the number of decimals';
+                              return 'How many decimal points do want for your governance token?';
                             }
                             int? decimals = int.tryParse(value);
                             if (decimals == null || decimals < 0 || decimals > 18) {
@@ -590,13 +681,13 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ElevatedButton(
+                      TextButton(
                         onPressed: widget.onBack,
-                        child: Text('Back'),
+                        child: Text('< Back'),
                       ),
                       ElevatedButton(
                         onPressed: _saveAndNext,
-                        child: Text('Next'),
+                        child: Text('Save and Continue >'),
                       ),
                     ],
                   ),
@@ -623,7 +714,7 @@ class Screen3Quorums extends StatefulWidget {
 }
 
 class _Screen3QuorumsState extends State<Screen3Quorums> {
-  late double _quorumThreshold;
+   double _quorumThreshold=6.0;
   late double _supermajority; // Added supermajority variable
 
   @override
@@ -649,14 +740,18 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('Quorums', style: Theme.of(context).textTheme.headline5),
+            Text('Set Quorum', style: Theme.of(context).textTheme.headline5),
             SizedBox(height: 86),
+            Text('${_quorumThreshold.toStringAsFixed(0)} %', style: TextStyle(fontWeight: FontWeight.bold, fontSize:27,
+            color:Theme.of(context).indicatorColor
+            )),
+            SizedBox(height: 86),
+
             SizedBox(
               width: 500,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Quorum Threshold', style: TextStyle(fontWeight: FontWeight.bold)),
                   Slider(
                     min: 0,
                     max: 99,
@@ -671,20 +766,7 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                   ),
                   Text('Minimum participation required for a proposal to pass'),
                   SizedBox(height: 50),
-                  Text('Supermajority', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Slider(
-                    min: 50,
-                    max: 100,
-                    divisions: 50,
-                    value: _supermajority,
-                    label: _supermajority.round().toString() + '%',
-                    onChanged: (value) {
-                      setState(() {
-                        _supermajority = value;
-                      });
-                    },
-                  ),
-                  Text('Minimum percentage required to change the DAO configuration'),
+                 
                 ],
               ),
             ),
@@ -694,14 +776,14 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: widget.onBack,
-                    child: Text('Back'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _saveAndNext,
-                    child: Text('Next'),
-                  ),
+                  TextButton(
+                        onPressed: widget.onBack,
+                        child: Text('< Back'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _saveAndNext,
+                        child: Text('Save and Continue >'),
+                      ),
                 ],
               ),
             ),
@@ -797,20 +879,9 @@ class _Screen4DurationsState extends State<Screen4Durations> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('Durations', style: Theme.of(context).textTheme.headline5),
+            Text('Set the durations of proposal stages', style: Theme.of(context).textTheme.headline5),
             SizedBox(height: 86),
-            // Voting Duration
-            SizedBox(
-              width: 500,
-              child: DurationInput(
-                title: 'Voting Duration',
-                description: 'How long a proposal will be open for voting',
-                daysController: _votingDurationDaysController,
-                hoursController: _votingDurationHoursController,
-                minutesController: _votingDurationMinutesController,
-              ),
-            ),
-            SizedBox(height: 76),
+           
             // Voting Delay
             SizedBox(
               width: 500,
@@ -821,6 +892,18 @@ class _Screen4DurationsState extends State<Screen4Durations> {
                 daysController: _votingDelayDaysController,
                 hoursController: _votingDelayHoursController,
                 minutesController: _votingDelayMinutesController,
+              ),
+            ),
+            SizedBox(height: 76),
+             // Voting Duration
+            SizedBox(
+              width: 500,
+              child: DurationInput(
+                title: 'Voting Duration',
+                description: 'How long a proposal will be open for voting',
+                daysController: _votingDurationDaysController,
+                hoursController: _votingDurationHoursController,
+                minutesController: _votingDurationMinutesController,
               ),
             ),
             SizedBox(height: 76),
@@ -842,14 +925,14 @@ class _Screen4DurationsState extends State<Screen4Durations> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: widget.onBack,
-                    child: Text('Back'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _saveAndNext,
-                    child: Text('Next'),
-                  ),
+                  TextButton(
+                        onPressed: widget.onBack,
+                        child: Text('< Back'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _saveAndNext,
+                        child: Text('Save and Continue >'),
+                      ),
                 ],
               ),
             ),
@@ -1025,9 +1108,18 @@ class _Screen5MembersState extends State<Screen5Members> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('Members', style: Theme.of(context).textTheme.headline5),
+            Text('Initial members', style: Theme.of(context).textTheme.headline5),
             SizedBox(height: 26),
-            Text('Total Tokens: $_totalTokens'),
+            const Text('Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.', style: TextStyle(fontSize: 14, color:Color.fromARGB(255, 194, 194, 194))),
+            
+            SizedBox(height: 53),
+            Row(
+              mainAxisAlignment:MainAxisAlignment.center,
+              children: [
+                Text('Total Tokens: ', style:TextStyle(fontSize:19)),
+                Text('$_totalTokens', style:TextStyle(fontSize:19, color:Theme.of(context).indicatorColor)),
+              ],
+            ),
             SizedBox(height: 75),
             ListView.builder(
               shrinkWrap: true,
@@ -1042,24 +1134,36 @@ class _Screen5MembersState extends State<Screen5Members> {
               },
             ),
             SizedBox(height: 50),
-            ElevatedButton(
-              onPressed: _addMemberEntry,
-              child: Text('Add Member'),
+            Container(
+              width:300,
+              child: Center(
+                child: TextButton(
+                  onPressed: _addMemberEntry,
+                  child: Row(
+                    mainAxisAlignment:MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add),
+                      
+                      Text(' Add Member'),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 126),
             SizedBox(
               width: 700,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: widget.onBack,
-                    child: Text('Back'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _saveAndNext,
-                    child: Text('Next'), // Changed label from 'Finish' to 'Next'
-                  ),
+                TextButton(
+                        onPressed: widget.onBack,
+                        child: Text('< Back'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _saveAndNext,
+                        child: Text('Save and Continue >'),
+                      ),
                 ],
               ),
             ),
@@ -1167,24 +1271,24 @@ class Screen6Review extends StatelessWidget {
               SizedBox(height: 10),
               Text('DAO Name: ${daoConfig.daoName}'),
               SizedBox(height: 10),
-              Text('DAO Description: ${daoConfig.daoDescription}'),
+              Container(
+                constraints: BoxConstraints(maxWidth: 430),
+                child: Text('DAO Description: ${daoConfig.daoDescription}')),
               SizedBox(height: 10),
               Text('Token Symbol: ${daoConfig.tokenSymbol}'),
               SizedBox(height: 10),
               Text('Number of Decimals: ${daoConfig.numberOfDecimals}'),
               SizedBox(height: 10),
               Text('Non-Transferrable: ${daoConfig.nonTransferrable ? 'Yes' : 'No'}'),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               Text('Quorum Threshold: ${daoConfig.quorumThreshold}%'),
-              SizedBox(height: 10),
-              Text('Supermajority: ${daoConfig.supermajority}%'),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               Text('Voting Duration: ${formatDuration(daoConfig.votingDuration)}'),
               SizedBox(height: 10),
               Text('Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
               SizedBox(height: 10),
               Text('Execution Availability: ${formatDuration(daoConfig.executionAvailability)}'),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               Text('Members:', style: TextStyle(fontWeight: FontWeight.bold)),
               SizedBox(height: 10),
               DataTable(
@@ -1205,13 +1309,19 @@ class Screen6Review extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    ElevatedButton(
+                    TextButton(
                       onPressed: onBack,
-                      child: Text('Back'),
+                      child: Text('< Back'),
                     ),
                     ElevatedButton(
+                      style: ButtonStyle(
+                       backgroundColor: MaterialStateProperty.all(createMaterialColor(Theme.of(context).indicatorColor))
+                      ),
                       onPressed: onFinish,
-                      child: Text('Deploy'),
+                      child: SizedBox(
+                        width: 120,
+                        height: 45,
+                        child: Center(child: Text('Deploy', style:TextStyle(fontSize:19)))),
                     ),
                   ],
                 ),

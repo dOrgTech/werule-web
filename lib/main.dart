@@ -129,7 +129,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'CascadiaCode',
         splashColor: const Color(0xff000000),
-        accentColor: Color.fromARGB(255, 161, 215, 219),
+        indicatorColor  : Color.fromARGB(255, 161, 215, 219),
         dividerColor: createMaterialColor(const Color(0xffcfc099)),
         brightness: Brightness.dark,
         hintColor: Colors.white70,
@@ -143,7 +143,7 @@ class MyApp extends StatelessWidget {
       //  DaoSetupWizard())
       // Center(child: TransferWidget(org: orgs[0],)))
       // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
-      MyHomePage(title: 'Tezos homebase')),
+      Explorer()),
     );
   }
 }
@@ -157,12 +157,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  
 
   @override
   Widget build(BuildContext context) {

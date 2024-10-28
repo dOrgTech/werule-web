@@ -23,13 +23,8 @@ class _ExplorerState extends State<Explorer> {
     print("building explorer" + orgs.length.toString());
 
     List<Widget> daos=[];
-
     for (var org in orgs) {
       print("adding a dao");
-      daos.add(DAOCard(org:org as Org));
-      daos.add(DAOCard(org:org as Org));
-      daos.add(DAOCard(org:org as Org));
-      daos.add(DAOCard(org:org as Org));
       daos.add(DAOCard(org:org as Org));
       
       }

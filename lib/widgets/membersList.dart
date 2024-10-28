@@ -98,59 +98,54 @@ class MemberTableRow extends TableRow {
   MemberTableRow(Member member)
       : super(
           children: <Widget>[
-            InkWell(
-              onTap: () {
-                // Define tap action here if needed
-              },
-              child: Container(
-                height: 42,
-                color: const Color.fromARGB(0, 76, 175, 79),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8.0, left: 35),
-                  child: Row(
-                    children: [
-                      FutureBuilder<Uint8List>(
-                            future: generateAvatarAsync(hashString(member.address)),  // Make your generateAvatar function return Future<Uint8List>
-                            builder: (context, snapshot) {
-                              // Future.delayed(Duration(milliseconds: 500));
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(25.0),
-                                      color: Theme.of(context).canvasColor,
-                                  ),
-                                  width: 50.0,
-                                  height:50.0,
-                                );
-                              } else if (snapshot.hasData) {
-                                return Container(width: 50,height: 50,  
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(25.0)
-                                  ),
-                                child: Image.memory(snapshot.data!));
-                              } else {
-                                return Container(
-                                  width: 50.0,
-                                  height: 50.0,
-                                  color: Theme.of(context).canvasColor,  // Error color
-                                );
-                              }
-                            },
-                          ),
-                      const SizedBox(width: 10),
-                      Text(
-                        member.address,
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                      const SizedBox(width: 10),
-                      TextButton(
-                        onPressed: () {
-                          // Copy functionality
-                        },
-                        child: const Icon(Icons.copy),
-                      ),
-                    ],
-                  ),
+            Container(
+              height: 42,
+              color: const Color.fromARGB(0, 76, 175, 79),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 35),
+                child: Row(
+                  children: [
+                    FutureBuilder<Uint8List>(
+                          future: generateAvatarAsync(hashString(member.address)),  // Make your generateAvatar function return Future<Uint8List>
+                          builder: (context, snapshot) {
+                            // Future.delayed(Duration(milliseconds: 500));
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(25.0),
+                                    color: Theme.of(context).canvasColor,
+                                ),
+                                width: 50.0,
+                                height:50.0,
+                              );
+                            } else if (snapshot.hasData) {
+                              return Container(width: 50,height: 50,  
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(25.0)
+                                ),
+                              child: Image.memory(snapshot.data!));
+                            } else {
+                              return Container(
+                                width: 50.0,
+                                height: 50.0,
+                                color: Theme.of(context).canvasColor,  // Error color
+                              );
+                            }
+                          },
+                        ),
+                    const SizedBox(width: 10),
+                    Text(
+                      member.address,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    const SizedBox(width: 10),
+                    TextButton(
+                      onPressed: () {
+                        // Copy functionality
+                      },
+                      child: const Icon(Icons.copy),
+                    ),
+                  ],
                 ),
               ),
             ),

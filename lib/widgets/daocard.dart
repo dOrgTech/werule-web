@@ -62,20 +62,21 @@ class DAOCard extends StatelessWidget {
                      padding: const EdgeInsets.only(top:8.0),
                      child: Column(
                        children: [
-                        
-                            Text(org.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                           
+                          Text(
+                            org.name.length>20?
+                         shorte(org.name):   org.name, style: TextStyle(fontWeight: FontWeight.bold, 
+                         fontSize: org.name.length<18?19:16)), 
                      Padding(
                       padding: const EdgeInsets.only(top:18.0, left: 12),
                       child: SizedBox(
                         width: 240,
-                        child: Center(child: Text(org.description!))),
+                        child: Center(child: Text(
+                          org.description!.length<140?
+                          org.description!:org.description!.substring(0,140)+"...", style:TextStyle(fontSize: 13)))),
                                      ),
                        ],
                      ),
                    ),
-                 
-                
               ],
             ),
 
@@ -84,4 +85,8 @@ class DAOCard extends StatelessWidget {
       ),
     );
   }
+}
+
+shorte(input){
+  return input.substring(0,20)+"...";
 }
