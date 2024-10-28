@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../entities/human.dart';
 import '../screens/dao.dart';
 import '../screens/explorer.dart';
 import '../utils/functions.dart';
@@ -45,6 +47,7 @@ class _TopMenuState extends State<TopMenu> {
            Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
              children: [
+              SizedBox(width: 12),
                Container(
                 width: 140,
         padding: const EdgeInsets.only(top:2.0),
@@ -58,19 +61,20 @@ class _TopMenuState extends State<TopMenu> {
                child: Row(
                      children: [
                     
-                    SvgPicture.asset(
-                           'assets/logos/homebase_logo.svg',
-                           semanticsLabel: 'Acme Logo'
-                           ,height: 25,
-                           color: Theme.of(context).indicatorColor,
-                           // color: Colors.red,
-                     ),
+                    Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 38,
+                    // SvgPicture.asset(
+                    //        'assets/logos/homebase_logo.svg',
+                    //        semanticsLabel: 'Acme Logo'
+                    //        ,height: 25,
+                    //        color: Theme.of(context).indicatorColor,
+                    //        // color: Colors.red,
+                    //  ),
                    
                  
-                 SizedBox(width: 10),
-                 const Text(
-                     'Homebase',
-                     style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
+                //  SizedBox(width: 10),
+                //  const Text(
+                //      'Homebase',
+                //      style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
                  ),
                      ],
                ),
@@ -104,24 +108,27 @@ class _TopMenuState extends State<TopMenu> {
                 ),
               ),
               Spacer(),
-               Padding(
-              padding: const EdgeInsets.only(top:1.0),
-              child: DropdownButton<String>(
-                      value: selectedValue,
-                      focusColor: Colors.transparent,
-                      items: items.map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-              setState(() {
-                selectedValue = newValue;
-              });
-                      },
-                    ),
-            ),
+               Container(
+               height: 49,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                        border: Border.all(width: 0.1 , color: Theme.of(context).indicatorColor ),
+                        color: Theme.of(context).indicatorColor.withOpacity(0.05)
+                      ),
+              child: Row(
+                children: [
+                  Icon(Icons.connect_without_contact_sharp, size: 29,
+                  color: Theme.of(context).indicatorColor.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 12),
+                  Text( Human().chain.name
+                  ,style: GoogleFonts.changa(
+                    color: Theme.of(context).indicatorColor.withOpacity(0.7),
+                    fontSize: 19),
+                  )
+                ],
+              )
+             ),
             const SizedBox(width: 20 ),
             Padding(
                  padding: const EdgeInsets.only(top:1.0, right:15),

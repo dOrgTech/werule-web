@@ -39,7 +39,9 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       voteDirectlyBottomWidget = RichText(
         text: TextSpan(
           text: 'Voting on behalf of ',
-          style: TextStyle(fontSize: 16, color: Colors.white),
+          style: TextStyle(
+            fontFamily: "Cascadia Code",
+            fontSize: 16, color: Colors.white),
           children: [
             TextSpan(
               text: '$numDelegatedAccounts accounts',
@@ -156,10 +158,12 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
+                child: RichText(
+                  text: TextSpan(
+                    text:
                   description,
-                  textAlign: TextAlign.justify,
-                  style: TextStyle(fontSize: 14),
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w100)
+                  )
                 ),
               ),
             ),

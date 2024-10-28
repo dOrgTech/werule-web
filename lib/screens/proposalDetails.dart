@@ -266,16 +266,14 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         child: Row(
                           children: [
                             const SizedBox(width: 10),
-                             Text("${widget.p.type!} proposal"),
-                            const SizedBox(width: 20),
-                            Opacity(
-                              opacity: 0.7,
-                              child: 
-                              widget.p.
+                            widget.p.
                               statusPill(
                     widget.status!,
-                    context)
-                            ),
+                    context),
+                            const SizedBox(width: 20),
+                             Text("${widget.p.type!} proposal"),
+                            
+                           
                             const SizedBox(width: 10),
                           ],
                         ),
@@ -799,7 +797,7 @@ class _VotesModalState extends State<VotesModal> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      width: 650,
+      
       child: FutureBuilder<void>(
         future: _votesFuture,
         builder: (context, snapshot) {
@@ -826,7 +824,14 @@ class _VotesModalState extends State<VotesModal> {
                   rows: widget.p.votes.map((vote) {
                     return DataRow(cells: [
                       DataCell(Text(vote.voter!)),
-                      DataCell(Text(vote.option.toString())),
+                      DataCell(
+                        Container(
+                 
+                  child: 
+                   vote.option==0? Icon(Icons.thumb_down, color: Color.fromARGB(255, 238, 129, 121))
+                  : Icon(Icons.thumb_up_sharp  ,color: Color.fromARGB(255, 93, 223, 162))
+                )
+                      ),
                       DataCell(Text(vote.votingPower.toString())),
                       DataCell(Text(formatDateTime(vote.castAt))),
                       const DataCell(Icon(Icons.open_in_new)), // You can add onTap functionality here later
@@ -861,7 +866,8 @@ class ProposalLifeCycleWidget extends StatelessWidget {
           
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.all(50),
+              
+              padding: EdgeInsets.all(43),
               itemCount: statusHistory.length,
               itemBuilder: (context, index) {
                 final sortedKeys = statusHistory.keys.toList()

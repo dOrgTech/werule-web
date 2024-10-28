@@ -301,8 +301,9 @@ Widget statusPill(String status, context){
   final Map<String, Widget> statuses={
     "active":Container(
         decoration: BoxDecoration(
+          // border: Border.all(width: 0.7, color:Color.fromARGB(255, 167, 147, 255),),
           borderRadius: BorderRadius.circular(15.0),
-          color: Colors.teal,
+          color: Color.fromARGB(255, 80, 61, 165),
         ),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(3),
@@ -310,13 +311,13 @@ Widget statusPill(String status, context){
           padding: EdgeInsets.symmetric(horizontal: 2.0),
           child: Text(
             "ACTIVE",
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
           ),
         )), 
     "pending":Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
-          color: Color.fromARGB(255, 207, 201, 146),
+          color: Color.fromARGB(255, 255, 248, 183),
         ),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(3),
@@ -324,12 +325,13 @@ Widget statusPill(String status, context){
           padding: EdgeInsets.symmetric(horizontal: 2.0),
           child: Text(
             "PENDING",
-            style: TextStyle(color: Color.fromARGB(255, 47, 44, 19)),
+            style: TextStyle(color: Color.fromARGB(255, 0, 0, 0), fontWeight: FontWeight.bold),
           ),
         )),
     "passed":Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
+          border: Border.all(width: 0.5, color: Color.fromARGB(255, 18, 141, 45)),
           color: Color.fromARGB(255, 21, 50, 65),
         ),
         alignment: Alignment.center,
@@ -352,13 +354,13 @@ Widget statusPill(String status, context){
           padding: EdgeInsets.symmetric(horizontal: 2.0),
           child: Text(
             "EXECUTABLE",
-            style: TextStyle(color:Colors.teal),
+            style: TextStyle(color:Color.fromARGB(255, 0, 99, 77),  fontWeight: FontWeight.bold),
           ),
         )),
     "executed":Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
-          color: Color.fromARGB(255, 137, 197, 139).withOpacity(0.5),
+          color: Color.fromARGB(255, 63, 117, 86).withOpacity(0.5),
         ),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(3),
@@ -366,13 +368,13 @@ Widget statusPill(String status, context){
           padding: EdgeInsets.symmetric(horizontal: 2.0),
           child: Text(
             "EXECUTED",
-            style: TextStyle(color:Color.fromARGB(255, 0, 0, 0)),
+            style: TextStyle(color:Color.fromARGB(255, 255, 255, 255)),
           ),
         )),
     "expired":Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
-          color: Colors.grey,
+          color: Color.fromARGB(255, 202, 202, 202),
         ),
         alignment: Alignment.center,
         padding: const EdgeInsets.all(3),
@@ -380,13 +382,14 @@ Widget statusPill(String status, context){
           padding: EdgeInsets.symmetric(horizontal: 2.0),
           child: Text(
             "EXPIRED",
-            style: TextStyle(color: Color.fromARGB(255, 66, 3, 3)),
+            style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
           ),
         )),
+
     "no quorum":Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            color: Color.fromARGB(255, 130, 130, 130),
+            color: Color.fromARGB(255, 82, 82, 82),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -394,7 +397,7 @@ Widget statusPill(String status, context){
             padding: EdgeInsets.symmetric(horizontal: 2.0),
             child: Text(
               "NO QUORUM",
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(color: Color.fromARGB(255, 230, 230, 230)),
             ),
           )),
     "rejected":Container(
@@ -408,7 +411,7 @@ Widget statusPill(String status, context){
               padding: EdgeInsets.symmetric(horizontal: 2.0),
               child: Text(
                 "REJECTED",
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Color.fromARGB(255, 255, 233, 233)),
               ),
             )),
   };

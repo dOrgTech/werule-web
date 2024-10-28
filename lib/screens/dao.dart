@@ -48,6 +48,7 @@ class _DAOState extends State<DAO> {
                   child: ListView( // Start of ListView
                     shrinkWrap: true, // Set this property to true
                     children: [
+                      SizedBox(height: 2),
                         Column( // Start of Column
                           crossAxisAlignment: CrossAxisAlignment.center, // Set this property to center the items horizontally
                           mainAxisSize: MainAxisSize.min, // Set this property to make the column fit its children's size vertically

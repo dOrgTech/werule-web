@@ -34,7 +34,7 @@ class TokenTransferListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     for (Txaction t in p.transactions) {
-      print("found a transaction here");
+      
       tokenTransfers.add(TokenTransfer(
         t.value,
         "XTZ",

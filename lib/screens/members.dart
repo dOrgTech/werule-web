@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../entities/org.dart';
+import '../entities/proposal.dart';
+import '../main.dart';
 import '../widgets/membersList.dart';
 import '../widgets/voteConcentration.dart';
 
@@ -19,7 +21,7 @@ class _MembersState extends State<Members> {
       children: [
         SizedBox(height: 20),
          SizedBox(
-          height: 230,
+          height: 210,
           child:Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -39,10 +41,9 @@ class _MembersState extends State<Members> {
                       // other properties
                     ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(right:38.0),
-                  child: VotingPowerWidget(),
-                )
+                Transform.scale(
+                  scale: 0.82,
+                  child: VotingPowerWidget())
                 
                 ])),
        const SizedBox(height: 30),
@@ -51,4 +52,26 @@ class _MembersState extends State<Members> {
       ],
     );
   }
+}
+
+
+
+class Pills extends StatelessWidget {
+  const Pills({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    Proposal p =Proposal(org: orgs[0], type: "transfer");
+    List<Widget>pills=[];
+    for (String s in statuses){
+      Widget sp=p.statusPill(s, context);
+      pills.add(
+        Container(
+          width: 200,
+          padding: EdgeInsets.all(9),
+          child: sp)
+        );
+    }
+    return Container(child: Column(children: pills,),);
+  } 
 }

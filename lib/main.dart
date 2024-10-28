@@ -129,7 +129,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'CascadiaCode',
         splashColor: const Color(0xff000000),
-        accentColor: const Color(0xff3bffdb),
+        accentColor: Color.fromARGB(255, 161, 215, 219),
         dividerColor: createMaterialColor(const Color(0xffcfc099)),
         brightness: Brightness.dark,
         hintColor: Colors.white70,
@@ -170,7 +170,7 @@ class MyHomePageState extends State<MyHomePage> {
 
     // body:  DelegationBoxes()
 
-        // body: VotingPowerWidget()
+        // body: Pills()
         // body: Members(org: orgs[2],)
         // body: Prelaunch()
         // body: Account()

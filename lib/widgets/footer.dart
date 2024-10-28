@@ -58,30 +58,11 @@ class Footer extends StatelessWidget {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                       SvgPicture.asset(
-                                   'assets/logos/homebase_logo.svg',
-                                   semanticsLabel: 'Acme Logo'
-                                   ,height: 25,
-                                   color: Theme.of(context).indicatorColor,
-                                   // color: Colors.red,
-                             ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Homebase',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                       Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 58,
                       ),
                       SizedBox(height: 18),
                       Text(
-                        '© Tezos-Homebase ${DateTime.now().year}',
+                        '© ${DateTime.now().year}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.white,

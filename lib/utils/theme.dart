@@ -54,6 +54,7 @@ MaterialColor createMaterialColor(Color color) {
 
         
     ThemeData dark = ThemeData(
+      indicatorColor: Color.fromARGB(255, 109, 134, 210),
       buttonColor: Color(0xff4d4d4d),
       splashColor: Color(0xff000000),
       dividerColor: createMaterialColor(Color(0xffcfc099)),
