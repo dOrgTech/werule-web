@@ -19,8 +19,8 @@ class Org {
     this.govTokenAddress
     });
   DateTime? creationDate;
-  List<Member> members=[];
-  List<String> memberAddresses=[];
+  
+  Map<String, Member> memberAddresses={};
   Token? govToken;
   String? symbol;
   int? decimals;
@@ -53,7 +53,7 @@ class Org {
   tokenXTZ.address="native";
   treasury.addAll({tokenXTZ:nativeBalance});
   treasuryMap.forEach((address, value) {
-    Token? matchingToken = tokens.cast<Token?>().firstWhere(
+      Token? matchingToken = tokens.cast<Token?>().firstWhere(
       (token) => token?.address == address,
       orElse: () => null,
     );
@@ -63,30 +63,61 @@ class Org {
   });
 }
 
-  getMembers()async{
-    print("getting members");
-     var membersCollection = daosCollection.doc(address).collection("members");
-     var membersSnapshot =await  membersCollection.get();
-     for(var doc in membersSnapshot.docs){
-      print("adding one member");
-      Member m=Member(address: doc.data()['address']);
-      memberAddresses.add(m.address.toLowerCase());
-      print("after creating the member"); 
-      m.personalBalance=doc.data()['personalBalance'];
-      
-      m.votingWeight=doc.data()['votingWeight'];
-      List<String> proposalsCreatedHashes=List<String>.from(doc.data()['proposalsCreated'] ?? []);
-      List<String> proposalsVotedHashes=List<String>.from(doc.data()['proposalsVoted'] ?? []);
-      m.proposalsCreated=proposals.where((proposal) => proposalsCreatedHashes.contains(proposal.hash)).toList();
-      m.proposalsVoted=proposals.where((proposal) => proposalsVotedHashes.contains(proposal.hash)).toList();
-      m.lastSeen=  doc.data()['lastSeen'] != null
-    ? (doc.data()['lastSeen'] as Timestamp).toDate()
-    : null;
-      // m.delegate=doc.data()['delegate'];
-      members.add(m); 
-     }
-     
-  }
+
+getMembers()async{
+  print("getting members");
+    var membersCollection = daosCollection.doc(address).collection("members");
+    var membersSnapshot =await  membersCollection.get();
+    for(var doc in membersSnapshot.docs){
+    Member m=Member(address: doc.data()['address']);
+    m.personalBalance=doc.data()['personalBalance'];
+    m.votingWeight="0";
+    List<String> proposalsCreatedHashes=List<String>.from(doc.data()['proposalsCreated'] ?? []);
+    List<String> proposalsVotedHashes=List<String>.from(doc.data()['proposalsVoted'] ?? []);
+    m.proposalsCreated=proposals.where((proposal) => proposalsCreatedHashes.contains(proposal.hash)).toList();
+    m.proposalsVoted=proposals.where((proposal) => proposalsVotedHashes.contains(proposal.hash)).toList();
+    m.lastSeen = doc.data()['lastSeen'] != null
+  ? (doc.data()['lastSeen'] as Timestamp).toDate()
+  : null;
+    memberAddresses[m.address.toLowerCase()]=m;
+    m.delegate=doc.data()['delegate']??"";
+    if (!(m.delegate=="")){
+      if(!memberAddresses.keys.contains(m.delegate.toLowerCase())){
+          Member delegate=Member(address: m.delegate);
+          memberAddresses[delegate.address.toLowerCase()]=delegate;
+          delegate.constituents.add(m);
+      }else{
+          memberAddresses[m.delegate.toLowerCase()]!.constituents.add(m);
+        }
+    }
+    
+    }
+    
+    for (Member m in memberAddresses.values){
+       if (m.delegate==m.address){
+          for (Member constituent in m.constituents){
+            m.votingWeight = (BigInt.parse(m.votingWeight!)
+            +
+            BigInt.parse(constituent.personalBalance!)).toString();
+        }
+      }
+    }
+}
+
+
+Member refreshMember(Member m){
+  m.constituents.add(m);
+  m.votingWeight="0";
+   if (m.delegate==m.address){
+          for (Member constituent in m.constituents){
+            m.votingWeight = (BigInt.parse(m.votingWeight!)
+            +
+            BigInt.parse(constituent.personalBalance!)).toString();
+        }
+      }
+  print("returning voting power "+m.votingWeight.toString());
+  return m;
+}
 
 
   getProposals()async{
@@ -158,15 +189,17 @@ class Org {
 class Member {
   String address;
   int? amount;
-  String? votingWeight;
+  String? votingWeight="0";
   String? personalBalance;
   List<Proposal> proposalsCreated = [];
   List<Proposal> proposalsVoted = [];
   DateTime? lastSeen;
   String delegate="";
+  List<Member> constituents=[];
 
-  Member({required this.address, this.amount,
-  this.votingWeight, this.personalBalance });
+  Member({
+    required this.address, this.amount,
+  this.votingWeight, this.personalBalance});
 
   toJson(){
     return {

@@ -60,20 +60,20 @@ class _TopMenuState extends State<TopMenu> {
                child: Row(
                      children: [
                     
-                    Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 47,
-                    // SvgPicture.asset(
-                    //        'assets/logos/homebase_logo.svg',
-                    //        semanticsLabel: 'Acme Logo'
-                    //        ,height: 25,
-                    //        color: Theme.of(context).indicatorColor,
-                    //        // color: Colors.red,
-                    //  ),
+                    // Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 47,
+                    SvgPicture.asset(
+                           'assets/logos/homebase_logo.svg',
+                           semanticsLabel: 'Acme Logo'
+                           ,height: 25,
+                           color: Theme.of(context).indicatorColor,
+                           // color: Colors.red,
+                     ),
                    
                  
-                //  SizedBox(width: 10),
-                //  const Text(
-                //      'Homebase',
-                //      style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
+                 SizedBox(width: 10),
+                 const Text(
+                     'Homebase',
+                     style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
                  ),
                      ],
                ),
@@ -129,9 +129,9 @@ class _TopMenuState extends State<TopMenu> {
               )
              ),
             const SizedBox(width: 20 ),
-            Padding(
-                 padding: const EdgeInsets.only(top:1.0, right:15),
-              child: TextButton(onPressed:(){}, child: WalletBTN()),
+            const Padding(
+                 padding: EdgeInsets.only(top:1.0, right:15),
+              child: WalletBTN(),
             )
              ],
            ), 

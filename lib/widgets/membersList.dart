@@ -1,5 +1,6 @@
 import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../screens/creator.dart';
 import '../entities/org.dart';
 import 'dart:typed_data';
@@ -13,7 +14,7 @@ class MembersList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<TableRow> tableRows=[];
-    for (Member m in org.members){
+    for (Member m in org.memberAddresses.values){
       tableRows.add(MemberTableRow(m));
     }
     return Column(
@@ -29,7 +30,6 @@ class MembersList extends StatelessWidget {
           3:FlexColumnWidth(),
           4: FlexColumnWidth(),
           5: FlexColumnWidth(),
-  
         },
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: <TableRow>[
@@ -62,8 +62,6 @@ class MembersList extends StatelessWidget {
                 child: const Center(child: Text("Proposals\nVoted", textAlign: TextAlign.center))),
             ],
           ),
-
-         
           ],
         ),
 
@@ -95,6 +93,7 @@ Opacity(
 
 
 class MemberTableRow extends TableRow {
+
   MemberTableRow(Member member)
       : super(
           children: <Widget>[
@@ -141,7 +140,8 @@ class MemberTableRow extends TableRow {
                     const SizedBox(width: 10),
                     TextButton(
                       onPressed: () {
-                        // Copy functionality
+                        Clipboard.setData(ClipboardData(text: member.address));
+                     
                       },
                       child: const Icon(Icons.copy),
                     ),

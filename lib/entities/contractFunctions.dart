@@ -15,6 +15,12 @@ import 'package:web3dart/crypto.dart';
 import 'human.dart';
 import 'org.dart';
 
+delegate(String toWhom){
+  return "delegated to $toWhom";
+
+}
+
+
 getNumberOfDAOs() async {
     var httpClient = Client();
     var ethClient = Web3Client(Human().chain.rpcNode, httpClient);

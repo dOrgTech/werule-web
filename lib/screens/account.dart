@@ -22,13 +22,12 @@ class Account extends StatefulWidget {
   Member? member;
   Org org;
   @override
-  State<Account> createState() => _AccountState();
+  State<Account> createState() => AccountState();
 }
 
-class _AccountState extends State<Account> {
+class AccountState extends State<Account> {
   @override
   Widget build(BuildContext context) {
-      
         ProposalCard p1= ProposalCard(org:orgs[0],proposal:Proposal(type: "New Project", name: "Engagement with another DAO", org:orgs[0]));
         p1.type="votedOn";
         ProposalCard p2=  ProposalCard(org:orgs[0],proposal:Proposal(type: "Transfer", name: "Title of the proposal (nax. 80 characters)", org: orgs[0]));
@@ -39,10 +38,10 @@ class _AccountState extends State<Account> {
     return 
     Human().address == null?
     notSignedin():
-    !widget.org.memberAddresses.contains(Human().address!.toLowerCase())?
+    !widget.org.memberAddresses.keys.contains(Human().address!.toLowerCase())?
     notAMember():
-    accountWide(context); }
-
+    accountWide(context); 
+    }
 
 Widget notSignedin(){
   return const SizedBox(height: 20,
@@ -57,8 +56,8 @@ Widget notAMember(){
 }
 
  Widget accountWide(context){
-    widget.member=widget.org.members.firstWhere((element) => element.address.toLowerCase()==Human().address!.toLowerCase());
-        
+    widget.member=widget.org.memberAddresses[ Human().address!.toLowerCase()];
+
     return ListView(
       children: [
       const  SizedBox(height: 16),
@@ -172,19 +171,21 @@ Widget notAMember(){
                   width: double.infinity,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  const Text("Delegation settings", style: TextStyle(fontSize: 20),),
-                  const SizedBox(height: 9),
-                  const Text("You can either delegate your vote or accept delegations, but not both at the same time."),
+                    children: const [
+                 Text("Delegation settings", style: TextStyle(fontSize: 20),),
+                  SizedBox(height: 9),
+                  Text("You can either delegate your vote or accept delegations, but not both at the same time."),
                     ],
                   ),
                 ),
                   const SizedBox(height: 9),
                   const Divider(),
-                
                 const SizedBox(height: 35),
-           
-                DelegationBoxes()
+                DelegationBoxes(
+                  accountState: this,
+                  org:widget.org,
+                  m: widget.member!,
+                )
               ],
             ),
           ),
@@ -214,25 +215,24 @@ Widget notAMember(){
                 borderWidth: 1.5,
                 activeFgColor: Theme.of(context).indicatorColor,
                 inactiveFgColor: const Color.fromARGB(255, 189, 189, 189),
-                activeBgColor: [const Color.fromARGB(255, 77, 77, 77)],
+                activeBgColor:const [ Color.fromARGB(255, 77, 77, 77)],
                 inactiveBgColor: Theme.of(context).cardColor,
                 borderColor: [Theme.of(context).cardColor],
                 labels: ['VOTING RECORD','PROPOSALS CREATED'],
                 customTextStyles: [const TextStyle( fontSize: 14)],
                 onToggle: (index) {
                   print('switched to: $index');
-            setState(() {
-              widget.status=index!;
-            });
-              },
-            ) 
-            ),
+                      setState(() {
+                        widget.status=index!;
+                      });
+                        },
+                      ) 
+                      ),
                      ],
                    ),
-                  
-                    ],
-                  ),
+                  ],
                 ),
+              ),
                 const SizedBox(height: 9),
                 const Divider(),
                 const SizedBox(height: 30),

@@ -36,7 +36,7 @@ class _FlashingIconState extends State<FlashingIcon> with SingleTickerProviderSt
     _colorAnimation = TweenSequence<Color?>(
       [
         TweenSequenceItem(
-          tween: ColorTween(begin: Colors.white, end: Color.fromARGB(255, 255, 180, 110)),
+          tween: ColorTween(begin: Colors.white, end: const Color.fromARGB(255, 255, 180, 110)),
           weight: 600, // First phase: 300 ms for white to bright gold
         ),
         TweenSequenceItem(
@@ -72,7 +72,7 @@ class _FlashingIconState extends State<FlashingIcon> with SingleTickerProviderSt
 }
 
 
-TextStyle meniu = TextStyle(fontSize: 24,color:Color.fromARGB(255, 178, 178, 178));
+TextStyle meniu = const TextStyle(fontSize: 24,color:Color.fromARGB(255, 178, 178, 178));
 // Configuration classes to store user-provided values
 class DaoConfig {
   String? daoType;
@@ -285,7 +285,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
               Padding(
                 padding: const EdgeInsets.only(top: 28.0, right: 50),
                 child: TextButton(
-                  child: Icon(Icons.close),
+                  child: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -296,7 +296,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
               children: [
                 // Left side: Wizard steps overview
                 Container(
-                  padding: EdgeInsets.only(left: 38.0),
+                  padding: const EdgeInsets.only(left: 38.0),
                   width: 270,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,52 +307,52 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                           shrinkWrap: true,
                           children: [
                             ListTile(
-                              title: Text('1. Org Type'),
+                              title: const Text('1. Org Type'),
                               onTap: () => goToStep(0),
                               selected: currentStep == 0,
                               enabled: true,
                               selectedColor: Colors.black,
-                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                              selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
                             ),
                             ListTile(
-                              title: Text('2. Org Identity'),
+                              title: const Text('2. Org Identity'),
                               onTap: maxStepReached >= 1 ? () => goToStep(1) : null,
                               selected: currentStep == 1,
                               enabled: maxStepReached >= 1,
                               selectedColor: Colors.black,
-                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                              selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
                             ),
                             ListTile(
-                              title: Text('3. Quorums'),
+                              title: const Text('3. Quorums'),
                               onTap: maxStepReached >= 2 ? () => goToStep(2) : null,
                               selected: currentStep == 2,
                               enabled: maxStepReached >= 2,
                               selectedColor: Colors.black,
-                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                              selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
                             ),
                             ListTile(
-                              title: Text('4. Durations'),
+                              title: const Text('4. Durations'),
                               onTap: maxStepReached >= 3 ? () => goToStep(3) : null,
                               selected: currentStep == 3,
                               enabled: maxStepReached >= 3,
                               selectedColor: Colors.black,
-                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                              selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
                             ),
                             ListTile(
-                              title: Text('5. Members'),
+                              title: const Text('5. Members'),
                               onTap: maxStepReached >= 4 ? () => goToStep(4) : null,
                               selected: currentStep == 4,
                               enabled: maxStepReached >= 4,
                               selectedColor: Colors.black,
-                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                              selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
                             ),
                             ListTile(
-                              title: Text('6. Review & Deploy'),
+                              title: const Text('6. Review & Deploy'),
                               onTap: maxStepReached >= 5 ? () => goToStep(5) : null,
                               selected: currentStep == 5,
                               enabled: maxStepReached >= 5,
                               selectedColor: Colors.black,
-                              selectedTileColor: Color.fromARGB(255, 121, 133, 128),
+                              selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
                             ),
                           ],
                         ),
@@ -387,13 +387,13 @@ class Screen1DaoType extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('How serious is this thing?', style: Theme.of(context).textTheme.headline5),
-            SizedBox(height: 16),
-            SizedBox(
+            Text('What will it be today?', style: Theme.of(context).textTheme.headline5),
+            const SizedBox(height: 16),
+            const SizedBox(
               width:400,
 
               child: Text("For distributed management of collective assets, you will need to deploy a contract on-chain.", style: TextStyle(fontSize: 14, color:Color.fromARGB(255, 194, 194, 194)))),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -409,21 +409,21 @@ class Screen1DaoType extends StatelessWidget {
                         onNext();
                       },
                       child: Container(
-                        margin: EdgeInsets.all(12.0),
+                        margin: const EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Color.fromARGB(255, 56, 56, 56)),
+                          border: Border.all(color: const Color.fromARGB(255, 56, 56, 56)),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children:  [
-                            SizedBox(height: 32),
+                            const SizedBox(height: 32),
                           FlashingIcon(),
-                            SizedBox(height: 14),
+                            const SizedBox(height: 14),
                             SizedBox(
                         width: 150,
                         height: 30,
                         child: Center(child: AnimatedContainer(
-                          duration: Duration(milliseconds:489),
+                          duration: const Duration(milliseconds:489),
                           child: 
                           AnimatedTextKit(
                             onTap:(){
@@ -436,19 +436,19 @@ class Screen1DaoType extends StatelessWidget {
         'On-chain',
         textStyle: meniu,
         textDirection: TextDirection.ltr,
-        speed: Duration(milliseconds:700),
-        colors:[Color.fromARGB(255, 219, 219, 219),
-        Color.fromARGB(255, 251, 251, 251),
-        Color.fromARGB(255, 255, 180, 110),
+        speed: const Duration(milliseconds:700),
+        colors:[const Color.fromARGB(255, 219, 219, 219),
+        const Color.fromARGB(255, 251, 251, 251),
+        const Color.fromARGB(255, 255, 180, 110),
         Colors.yellow,
-        Color.fromARGB(255, 255, 169, 163),
-        Color.fromARGB(255, 255, 243, 139),Colors.amber,Color(0xff343434)]
+        const Color.fromARGB(255, 255, 169, 163),
+        const Color.fromARGB(255, 255, 243, 139),Colors.amber,const Color(0xff343434)]
       ),
       ],)
         ))),
                     
-                             SizedBox(height: 10),
-                            Padding(
+                             const SizedBox(height: 10),
+                            const Padding(
                               padding: EdgeInsets.symmetric(horizontal:10),
                               child: Text(
 
@@ -476,40 +476,39 @@ class Screen1DaoType extends StatelessWidget {
                         onNext();
                       },
                       child: Container(
-                        margin: EdgeInsets.all(12.0),
+                        margin: const EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
-                         border: Border.all(color: Color.fromARGB(255, 56, 56, 56)),
+                         border: Border.all(color: const Color.fromARGB(255, 56, 56, 56)),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
+                          children: const [
                              SizedBox(height: 38),
                            Icon(Icons.forum,size:40),
                             SizedBox(height: 14),
                             Text('Off-chain', style: TextStyle(fontSize: 23.5)),
                             SizedBox(height:14),
 
-                            Padding(
-                              padding: EdgeInsets.only(left:13.0, right:13, top:10, bottom:10),
-                              child: Text(
-                                "Tokenized collective debates with fractal topology. \n\nDeclarative only.",
-                                style: TextStyle(height: 1.4),
-                                textAlign: TextAlign.center,
-                              ),
+                          Padding(
+                            padding: EdgeInsets.only(left:13.0, right:13, top:10, bottom:10),
+                            child: Text(
+                              "Tokenized collective debates with fractal topology. \n\nDeclarative only.",
+                              style: TextStyle(height: 1.4),
+                              textAlign: TextAlign.center,
                             ),
-                            
-                          ],
-                        ),
+                          ),                      
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -577,13 +576,13 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
             child: Column(
               children: [
                 Text("Create the identity of your company", style: Theme.of(context).textTheme.headline5),
-                SizedBox(height: 120),
+                const SizedBox(height: 120),
                 SizedBox(
                   width: 500,
                   child: TextFormField(
                     controller: _daoNameController,
                     maxLength: 80,
-                    decoration: InputDecoration(labelText: 'Company Name'),
+                    decoration: const InputDecoration(labelText: 'Company Name'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a name for your company';
@@ -598,7 +597,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                     controller: _daoDescriptionController,
                     maxLength: 400,
                     maxLines: 4,
-                    decoration: InputDecoration(labelText: 'Description or Tagline'),
+                    decoration: const InputDecoration(labelText: 'Description or Tagline'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'What is this company about at a high level?';
@@ -607,7 +606,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                     },
                   ),
                 ),
-                SizedBox(height: 36),
+                const SizedBox(height: 36),
                 SizedBox(
                   width: 500,
                   child: Row(
@@ -617,7 +616,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                         flex: 7,
                         child: TextFormField(
                           controller: _tokenSymbolController,
-                          decoration: InputDecoration(labelText: 'Token Symbol'),
+                          decoration: const InputDecoration(labelText: 'Token Symbol'),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'The ticker symbol of the governance token';
@@ -626,13 +625,13 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                           },
                         ),
                       ),
-                      SizedBox(width: 20),
+                      const SizedBox(width: 20),
                       Expanded(
                         flex: 3,
                         child: TextFormField(
                           controller: _numberOfDecimalsController,
                           keyboardType: TextInputType.number,
-                          decoration: InputDecoration(labelText: 'Decimals'),
+                          decoration: const InputDecoration(labelText: 'Decimals'),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'How many decimal points do want for your governance token?';
@@ -648,11 +647,11 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                     ],
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: 300,
                   child: CheckboxListTile(
-                    title: Text('Non-transferrable'),
+                    title: const Text('Non-transferrable'),
                     value: _nonTransferrable,
                     onChanged: (bool? value) {
                       setState(() {
@@ -661,7 +660,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                     },
                   ),
                 ),
-                SizedBox(height: 56),
+                const SizedBox(height: 56),
                 SizedBox(
                   width: 700,
                   child: Row(
@@ -669,11 +668,11 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                     children: [
                       TextButton(
                         onPressed: widget.onBack,
-                        child: Text('< Back'),
+                        child: const Text('< Back'),
                       ),
                       ElevatedButton(
                         onPressed: _saveAndNext,
-                        child: Text('Save and Continue >'),
+                        child: const Text('Save and Continue >'),
                       ),
                     ],
                   ),
@@ -727,11 +726,11 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text('Set Quorum', style: Theme.of(context).textTheme.headline5),
-            SizedBox(height: 86),
+            const SizedBox(height: 86),
             Text('${_quorumThreshold.toStringAsFixed(0)} %', style: TextStyle(fontWeight: FontWeight.bold, fontSize:27,
             color:Theme.of(context).indicatorColor
             )),
-            SizedBox(height: 86),
+            const SizedBox(height: 86),
 
             SizedBox(
               width: 500,
@@ -750,13 +749,13 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                       });
                     },
                   ),
-                  Text('Minimum participation required for a proposal to pass'),
-                  SizedBox(height: 50),
+                  const Text('Minimum participation required for a proposal to pass'),
+                  const SizedBox(height: 50),
                  
                 ],
               ),
             ),
-            SizedBox(height: 86),
+            const SizedBox(height: 86),
             SizedBox(
               width: 700,
               child: Row(
@@ -764,11 +763,11 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                 children: [
                   TextButton(
                         onPressed: widget.onBack,
-                        child: Text('< Back'),
+                        child: const Text('< Back'),
                       ),
                       ElevatedButton(
                         onPressed: _saveAndNext,
-                        child: Text('Save and Continue >'),
+                        child: const Text('Save and Continue >'),
                       ),
                 ],
               ),
@@ -866,7 +865,7 @@ class _Screen4DurationsState extends State<Screen4Durations> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text('Set the durations of proposal stages', style: Theme.of(context).textTheme.headline5),
-            SizedBox(height: 86),
+            const SizedBox(height: 86),
            
             // Voting Delay
             SizedBox(
@@ -880,7 +879,7 @@ class _Screen4DurationsState extends State<Screen4Durations> {
                 minutesController: _votingDelayMinutesController,
               ),
             ),
-            SizedBox(height: 76),
+            const SizedBox(height: 76),
              // Voting Duration
             SizedBox(
               width: 500,
@@ -892,7 +891,7 @@ class _Screen4DurationsState extends State<Screen4Durations> {
                 minutesController: _votingDurationMinutesController,
               ),
             ),
-            SizedBox(height: 76),
+            const SizedBox(height: 76),
             // Execution Availability
             SizedBox(
               width: 500,
@@ -905,7 +904,7 @@ class _Screen4DurationsState extends State<Screen4Durations> {
                 minutesController: _executionAvailabilityMinutesController,
               ),
             ),
-            SizedBox(height: 86),
+            const SizedBox(height: 86),
             SizedBox(
               width: 700,
               child: Row(
@@ -913,11 +912,11 @@ class _Screen4DurationsState extends State<Screen4Durations> {
                 children: [
                   TextButton(
                         onPressed: widget.onBack,
-                        child: Text('< Back'),
+                        child: const Text('< Back'),
                       ),
                       ElevatedButton(
                         onPressed: _saveAndNext,
-                        child: Text('Save and Continue >'),
+                        child: const Text('Save and Continue >'),
                       ),
                 ],
               ),
@@ -950,8 +949,8 @@ class DurationInput extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -959,31 +958,31 @@ class DurationInput extends StatelessWidget {
                 controller: daysController,
                 maxLength: 2,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Days',
                   counterText: '',
                 ),
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
               child: TextField(
                 controller: hoursController,
                 maxLength: 2,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Hours',
                   counterText: '',
                 ),
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
               child: TextField(
                 controller: minutesController,
                 maxLength: 2,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Minutes',
                   counterText: '',
                 ),
@@ -992,7 +991,7 @@ class DurationInput extends StatelessWidget {
           ],
         ),
         if (description.isNotEmpty) ...[
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(description),
         ],
       ],
@@ -1069,6 +1068,7 @@ class _Screen5MembersState extends State<Screen5Members> {
   void _saveAndNext() {
     widget.daoConfig.members = _memberEntries
         .map((entry) => Member(
+          
               address: entry.addressController.text,
               personalBalance: entry.amountController.text.padRight(
                   widget.daoConfig.numberOfDecimals!, "0"),
@@ -1091,7 +1091,7 @@ class _Screen5MembersState extends State<Screen5Members> {
       // Read file content as string
       final input = utf8.decode(file.bytes!);
       List<List<dynamic>> csvTable =
-          CsvToListConverter().convert(input, eol: '\n');
+          const CsvToListConverter().convert(input, eol: '\n');
 
       // The first row should be headers
       if (csvTable.isNotEmpty) {
@@ -1123,7 +1123,7 @@ class _Screen5MembersState extends State<Screen5Members> {
         } else {
           // Show error: Invalid CSV headers
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
                 content: Text(
                     'Invalid CSV headers. Expected "address" and "amount".')),
           );
@@ -1151,24 +1151,24 @@ class _Screen5MembersState extends State<Screen5Members> {
         child: Column(
           children: [
             Text('Initial members', style: Theme.of(context).textTheme.headline5),
-            SizedBox(height: 26),
+            const SizedBox(height: 26),
             const Text(
                 'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
                 style: TextStyle(fontSize: 14, color: Color.fromARGB(255, 194, 194, 194))),
-            SizedBox(height: 53),
+            const SizedBox(height: 53),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
+                const Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
                 Text('$_totalTokens',
                     style: TextStyle(
                         fontSize: 19, color: Theme.of(context).indicatorColor)),
               ],
             ),
-            SizedBox(height: 75),
+            const SizedBox(height: 75),
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: _memberEntries.length,
               itemBuilder: (context, index) {
                 return MemberEntryWidget(
@@ -1178,21 +1178,21 @@ class _Screen5MembersState extends State<Screen5Members> {
                 );
               },
             ),
-            SizedBox(height: 50),
+            const SizedBox(height: 50),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
                   onPressed: _loadCsvFile,
-                  icon: Icon(Icons.upload_file),
-                  label: Text('Upload CSV'),
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Upload CSV'),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 TextButton(
                   onPressed: _addMemberEntry,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                    children: const [
                       Icon(Icons.add),
                       Text(' Add Member'),
                     ],
@@ -1200,7 +1200,7 @@ class _Screen5MembersState extends State<Screen5Members> {
                 ),
               ],
             ),
-            SizedBox(height: 126),
+            const SizedBox(height: 126),
             SizedBox(
               width: 700,
               child: Row(
@@ -1208,11 +1208,11 @@ class _Screen5MembersState extends State<Screen5Members> {
                 children: [
                   TextButton(
                     onPressed: widget.onBack,
-                    child: Text('< Back'),
+                    child: const Text('< Back'),
                   ),
                   ElevatedButton(
                     onPressed: _saveAndNext,
-                    child: Text('Save and Continue >'),
+                    child: const Text('Save and Continue >'),
                   ),
                 ],
               ),
@@ -1253,33 +1253,33 @@ class MemberEntryWidget extends StatelessWidget {
                 child: TextField(
                   controller: entry.addressController,
                   maxLength: 42,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Member Address',
                     counterText: '',
                   ),
                   onChanged: (value) => onChanged(),
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               // Amount
               Expanded(
                 flex: 3,
                 child: TextField(
                   controller: entry.amountController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Amount'),
+                  decoration: const InputDecoration(labelText: 'Amount'),
                   onChanged: (value) => onChanged(),
                 ),
               ),
               // Remove Button
               IconButton(
-                icon: Icon(Icons.remove_circle),
+                icon: const Icon(Icons.remove_circle),
                 onPressed: onRemove,
               ),
             ],
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -1316,33 +1316,33 @@ class Screen6Review extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Review & Deploy', style: Theme.of(context).textTheme.headline5),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               Text('${daoConfig.daoType} Organization'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('${daoConfig.daoName}'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Container(
-                constraints: BoxConstraints(maxWidth: 430),
+                constraints: const BoxConstraints(maxWidth: 430),
                 child: Text('${daoConfig.daoDescription}')),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('Ticker Symbol: ${daoConfig.tokenSymbol}'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('Number of Decimals: ${daoConfig.numberOfDecimals}'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('Non-Transferrable: ${daoConfig.nonTransferrable ? 'Yes' : 'No'}'),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               Text('Quorum Threshold: ${daoConfig.quorumThreshold}%'),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               Text('Voting Duration: ${formatDuration(daoConfig.votingDuration)}'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('Execution Availability: ${formatDuration(daoConfig.executionAvailability)}'),
-              SizedBox(height: 30),
-              Text('Members:', style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
+              const SizedBox(height: 30),
+              const Text('Members:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
               DataTable(
-                columns: [
+                columns: const [
                   DataColumn(label: Text('Address')),
                   DataColumn(label: Text('Amount')),
                 ],
@@ -1353,7 +1353,7 @@ class Screen6Review extends StatelessWidget {
                   ]);
                 }).toList(),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               SizedBox(
                 width: 700,
                 child: Row(
@@ -1361,14 +1361,14 @@ class Screen6Review extends StatelessWidget {
                   children: [
                     TextButton(
                       onPressed: onBack,
-                      child: Text('< Back'),
+                      child: const Text('< Back'),
                     ),
                     ElevatedButton(
                       style: ButtonStyle(
                        backgroundColor: MaterialStateProperty.all(createMaterialColor(Theme.of(context).indicatorColor))
                       ),
                       onPressed: onFinish,
-                      child: SizedBox(
+                      child: const SizedBox(
                         width: 120,
                         height: 45,
                         child: Center(child: Text('Deploy', style:TextStyle(fontSize:19)))),
@@ -1397,8 +1397,8 @@ class Screen7Deploying extends StatelessWidget {
         // Center the content vertically and horizontally
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(height: 100, width: 100, child: CircularProgressIndicator()),
-          SizedBox(height: 50),
+          const SizedBox(height: 100, width: 100, child: CircularProgressIndicator()),
+          const SizedBox(height: 50),
           Text('Deploying $daoName to the ${Human().chain.name} blockchain...'),
         ],
       ),
@@ -1421,10 +1421,10 @@ class Screen8DeploymentComplete extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text('Deployment Complete!', style: Theme.of(context).textTheme.headline5),
-          SizedBox(height: 60),
+          const SizedBox(height: 60),
           ElevatedButton(
             onPressed: onGoToDAO,
-            child: Text('Go to DAO'),
+            child: const Text('Go to DAO'),
           ),
         ],
       ),
