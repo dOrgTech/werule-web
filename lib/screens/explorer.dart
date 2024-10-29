@@ -82,21 +82,18 @@ class _ExplorerState extends State<Explorer> {
                                 padding: const EdgeInsets.only(right:8.0),
                                 child: Row(
                                   children: [
-                                    Text( orgs.length.toString()+ " DAOs"),
+                                    Text( orgs.length.toString()+ " Companies"),
                                     SizedBox(width: 30,),
-                                    SizedBox(
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          width:0,
+                                          color:Colors.black)
+                                      ),
                                       height: 40,
                                       child: ElevatedButton(onPressed: (){
-                                        Token tkn=Token(
-                                          name:"TeZBugHunt",
-                                          decimals: 18,
-                                          symbol: "BGT"
-                                        );
-                                        Org org=Org(
-                                          name: "TezBugHunt",
-                                          govToken: tkn,
-                                          description: "We hunting bugs",
-                                        );
+                                      
                                         Navigator.push(context, 
                                         MaterialPageRoute(builder: (context)=>
                                          Scaffold(body:
@@ -104,12 +101,13 @@ class _ExplorerState extends State<Explorer> {
                                         ));
                                         
                                       }, 
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Theme.of(context).indicatorColor),
-                                      child: Text("Start a Company", 
+                                      style: TextButton.styleFrom(
+                                        elevation: 5,
+                                        backgroundColor: Theme.of(context).indicatorColor.withOpacity(0.92)),
+                                      child: Text(" Incorporate ", 
                                       style: TextStyle(
-                                        color: Colors.black,
-                                        fontFamily: 'CascadiaCode', fontSize: 18, fontWeight: FontWeight.w100),)),
+                                        color: Color.fromARGB(255, 0, 0, 0),
+                                        fontFamily: 'CascadiaCode', fontSize: 19, fontWeight: FontWeight.bold),)),
                                     )
                                   ],
                                 ),

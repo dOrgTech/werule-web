@@ -25,10 +25,9 @@ var chains={
   id:42793, name: "Etherlink", nativeSymbol: "XTZ", decimals:18, rpcNode: "https://node.mainnet.etherlink.com", blockExplorer:"https://explorer.etherlink.com"),
 };
 class Human extends ChangeNotifier{
-   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
-     GlobalKey<NavigatorState> get navigatorKey => _navigatorKey;
-     String session_id=generateWalletAddress();
-
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
+    GlobalKey<NavigatorState> get navigatorKey => _navigatorKey;
+    String session_id=generateWalletAddress();
   bool busy=false;
   bool beta=true;
   bool wrongChain=false;
@@ -43,12 +42,10 @@ class Human extends ChangeNotifier{
   bool voting=false;
   bool isOverlayVisible = false;
   bool voted=false;
-
   List<ChatItem> chatHistory=[
     ChatItem(isSender: false, 
     message: "If you have questions about the platform, ask them here. I'm not human but I'll do my best.",
     ),
- 
   ];
 
   get balances => null;
@@ -115,6 +112,10 @@ class Human extends ChangeNotifier{
 
   signIn()async{  
     print("signing into the thing") ;
+    address="0x6EF597F8155BC561421800de48852c46e73d9D19";
+    notifyListeners();
+    refreshPage();
+    return "ok";
    try {
       var accounts = await promiseToFuture(
         ethereum!.request(

@@ -9,7 +9,7 @@ class VotingPowerWidget extends StatefulWidget {
 
 class _VotingPowerWidgetState extends State<VotingPowerWidget> {
   double _sliderValue = 1; // Starts at extreme left (100% of members)
-  List<Member> members = [];
+  List<Bloke> members = [];
   int totalMembers = 0;
   double totalVotingPower = 0;
   double totalGovernanceTokenSupply = 0;
@@ -33,7 +33,7 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
     // Ensure at least one member is included
     int membersToInclude = max(1, ((percentageOfMembers / 100) * totalMembers).round());
     // Select the top members based on voting weight
-    List<Member> selectedMembers = members.take(membersToInclude).toList();
+    List<Bloke> selectedMembers = members.take(membersToInclude).toList();
     // Calculate cumulative voting power of selected members
     double cumulativeVotingPower = selectedMembers.fold(0, (sum, member) => sum + member.votingWeight);
     // Calculate percentages
@@ -126,11 +126,11 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
     );
   }
 
-  List<Member> getMembers() {
+  List<Bloke> getMembers() {
     // Generate mock data with more than 2 members
     return List.generate(100, (index) {
       // Generate members with random votingWeight
-      return Member(
+      return Bloke(
         name: 'Member ${index + 1}',
         votingWeight: Random().nextDouble() * 100 + 1, // Ensure non-zero voting weight
       );
@@ -138,9 +138,9 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
   }
 }
 
-class Member {
+class Bloke {
   final String name;
   final double votingWeight;
 
-  Member({required this.name, required this.votingWeight});
+  Bloke({required this.name, required this.votingWeight});
 }

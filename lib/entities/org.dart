@@ -20,6 +20,7 @@ class Org {
     });
   DateTime? creationDate;
   List<Member> members=[];
+  List<String> memberAddresses=[];
   Token? govToken;
   String? symbol;
   int? decimals;
@@ -69,7 +70,8 @@ class Org {
      for(var doc in membersSnapshot.docs){
       print("adding one member");
       Member m=Member(address: doc.data()['address']);
-      print("after creating the member");
+      memberAddresses.add(m.address.toLowerCase());
+      print("after creating the member"); 
       m.personalBalance=doc.data()['personalBalance'];
       
       m.votingWeight=doc.data()['votingWeight'];
@@ -81,14 +83,13 @@ class Org {
     ? (doc.data()['lastSeen'] as Timestamp).toDate()
     : null;
       // m.delegate=doc.data()['delegate'];
-      members.add(m);
+      members.add(m); 
      }
      
   }
 
 
   getProposals()async{
-    print("getting proposals");
     await populateTreasury();
     pollsCollection=FirebaseFirestore
       .instance.collection("daos${Human().chain.name}")
@@ -126,7 +127,7 @@ class Org {
       }).toList();
       
   }
-      print("before getting member");
+      
       await getMembers();
   }
    toJson(){
@@ -151,6 +152,34 @@ class Org {
       'supermajority':supermajority
     };
   }
+}
+
+
+class Member {
+  String address;
+  int? amount;
+  String? votingWeight;
+  String? personalBalance;
+  List<Proposal> proposalsCreated = [];
+  List<Proposal> proposalsVoted = [];
+  DateTime? lastSeen;
+  String delegate="";
+
+  Member({required this.address, this.amount,
+  this.votingWeight, this.personalBalance });
+
+  toJson(){
+    return {
+      'address':address,
+      'votingWeight':votingWeight,
+      'personalBalance':personalBalance,
+      'proposalsCreated':proposalsCreated,
+      'proposalsVoted':proposalsVoted,
+      'lastSeen':lastSeen,
+      'delegate':delegate
+    };
+  }
+
 }
 
 

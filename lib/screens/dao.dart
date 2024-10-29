@@ -96,7 +96,7 @@ class _DAOState extends State<DAO> {
                         // Center(child: Treasury()),
                         Center(child: Registry()),
                         Center(child: Members(org:widget.org)),
-                        Center(child: Account()),
+                        Center(child: Account(org:widget.org)),
                       ],
                     ), // TabBarView end
                    ), 

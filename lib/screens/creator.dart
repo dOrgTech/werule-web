@@ -8,7 +8,11 @@ import '../entities/human.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../entities/token.dart';
+import '../widgets/screen5Members.dart';
 import 'explorer.dart';
+import "package:file_picker/file_picker.dart";
+import 'package:csv/csv.dart';
+import 'dart:convert';
 
 
 class FlashingIcon extends StatefulWidget {
@@ -58,7 +62,7 @@ class _FlashingIconState extends State<FlashingIcon> with SingleTickerProviderSt
       animation: _colorAnimation,
       builder: (context, child) {
         return Icon(
-          Icons.security_outlined, size: 80,
+          Icons.security, size: 44,
           color: _colorAnimation.value,
           
         );
@@ -87,31 +91,7 @@ class DaoConfig {
   DaoConfig();
 }
 
-class Member {
-  String address;
-  int? amount;
-  String? votingWeight;
-  String? personalBalance;
-  List<Proposal> proposalsCreated = [];
-  List<Proposal> proposalsVoted = [];
-  DateTime? lastSeen;
-  String delegate="";
 
-  Member({required this.address, this.amount,
-  this.votingWeight, this.personalBalance });
-
-  toJson(){
-    return {
-      'address':address,
-      'votingWeight':votingWeight,
-      'personalBalance':personalBalance,
-      'proposalsCreated':proposalsCreated,
-      'proposalsVoted':proposalsVoted,
-      'lastSeen':lastSeen
-    };
-  }
-
-}
 
 // Main wizard widget
 class DaoSetupWizard extends StatefulWidget {
@@ -254,7 +234,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           padding: const EdgeInsets.all(38.0),
           child: Screen5Members(
             daoConfig: daoConfig,
-            onNext: nextStep, // Changed from onFinish to onNext
+            onNext: nextStep,
             onBack: previousStep,
           ),
         );
@@ -327,7 +307,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                           shrinkWrap: true,
                           children: [
                             ListTile(
-                              title: Text('1. DAO Type'),
+                              title: Text('1. Org Type'),
                               onTap: () => goToStep(0),
                               selected: currentStep == 0,
                               enabled: true,
@@ -335,7 +315,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                               selectedTileColor: Color.fromARGB(255, 121, 133, 128),
                             ),
                             ListTile(
-                              title: Text('2. Basic Setup'),
+                              title: Text('2. Org Identity'),
                               onTap: maxStepReached >= 1 ? () => goToStep(1) : null,
                               selected: currentStep == 1,
                               enabled: maxStepReached >= 1,
@@ -407,34 +387,38 @@ class Screen1DaoType extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('What type of company do you want?', style: Theme.of(context).textTheme.headline5),
+            Text('How serious is this thing?', style: Theme.of(context).textTheme.headline5),
             SizedBox(height: 16),
-            Text('(one option is better than the other)', style: TextStyle(fontSize: 14, color:Color.fromARGB(255, 194, 194, 194))),
+            SizedBox(
+              width:400,
+
+              child: Text("For distributed management of collective assets, you will need to deploy a contract on-chain.", style: TextStyle(fontSize: 14, color:Color.fromARGB(255, 194, 194, 194)))),
             SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Option 1: On-chain
                 SizedBox(
-                  width: 450,
-                  height: 450,
+                  width: 340,
+                  height: 310,
                   child: Padding(
-                    padding: const EdgeInsets.all(38.0),
+                    padding: const EdgeInsets.all(18.0),
                     child: TextButton(
                       onPressed: () {
                         daoConfig.daoType = 'On-chain';
                         onNext();
                       },
                       child: Container(
-                        margin: EdgeInsets.all(38.0),
+                        margin: EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
                           border: Border.all(color: Color.fromARGB(255, 56, 56, 56)),
                         ),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children:  [
+                            SizedBox(height: 32),
                           FlashingIcon(),
-                            SizedBox(height: 16),
+                            SizedBox(height: 14),
                             SizedBox(
                         width: 150,
                         height: 30,
@@ -468,7 +452,7 @@ class Screen1DaoType extends StatelessWidget {
                               padding: EdgeInsets.symmetric(horizontal:10),
                               child: Text(
 
-                                'All important operations are secured by the will of the members through voting.\nThis includes all capabilities of off-chain companies.',
+                                'All important operations are secured by the will of the members through voting.\n\nExecutive and Declarative.',
                                 style: TextStyle(height: 1.3),
                                 textAlign: TextAlign.center,
                                 // textScaleFactor: 1.2,
@@ -482,36 +466,38 @@ class Screen1DaoType extends StatelessWidget {
                 ),
                 // Option 2: Off-chain
                 SizedBox(
-                  width: 450,
-                  height: 450,
+                  width: 340,
+                  height: 310,
                   child: Padding(
-                    padding: const EdgeInsets.all(38.0),
+                    padding: const EdgeInsets.all(18.0),
                     child: TextButton(
                       onPressed: () {
                         daoConfig.daoType = 'Off-chain';
                         onNext();
                       },
                       child: Container(
-                        margin: EdgeInsets.all(38.0),
+                        margin: EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
                          border: Border.all(color: Color.fromARGB(255, 56, 56, 56)),
                         ),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                           Icon(Icons.forum,size:80),
-                            SizedBox(height: 16),
-                            Text('Off-chain', style: TextStyle(fontSize: 24)),
-                            SizedBox(height: 10),
+                             SizedBox(height: 38),
+                           Icon(Icons.forum,size:40),
+                            SizedBox(height: 14),
+                            Text('Off-chain', style: TextStyle(fontSize: 23.5)),
+                            SizedBox(height:14),
 
                             Padding(
                               padding: EdgeInsets.only(left:13.0, right:13, top:10, bottom:10),
                               child: Text(
-                                "Only use this option if you're too chickenshit to start an on-chain company.",
-                                style: TextStyle(height: 1.3),
+                                "Tokenized collective debates with fractal topology. \n\nDeclarative only.",
+                                style: TextStyle(height: 1.4),
                                 textAlign: TextAlign.center,
                               ),
                             ),
+                            
                           ],
                         ),
                       ),
@@ -1014,16 +1000,16 @@ class DurationInput extends StatelessWidget {
   }
 }
 
-// Screen 5: Members
+
 class Screen5Members extends StatefulWidget {
   final DaoConfig daoConfig;
   final VoidCallback onBack;
-  final VoidCallback onNext; // Changed from onFinish to onNext
+  final VoidCallback onNext;
 
   Screen5Members({
     required this.daoConfig,
     required this.onBack,
-    required this.onNext, // Updated parameter
+    required this.onNext,
   });
 
   @override
@@ -1041,7 +1027,8 @@ class _Screen5MembersState extends State<Screen5Members> {
       _memberEntries = widget.daoConfig.members
           .map((member) => MemberEntry(
                 addressController: TextEditingController(text: member.address),
-                amountController: TextEditingController(text: member.amount.toString()),
+                amountController:
+                    TextEditingController(text: member.amount.toString()),
               ))
           .toList();
     } else {
@@ -1072,24 +1059,79 @@ class _Screen5MembersState extends State<Screen5Members> {
       int amount = int.tryParse(entry.amountController.text) ?? 0;
       total += amount;
     }
-      widget.daoConfig.totalSupply=total.toString().padRight(
-      total.toString().length + widget.daoConfig.numberOfDecimals!, '0');
+    widget.daoConfig.totalSupply = total.toString().padRight(
+        total.toString().length + widget.daoConfig.numberOfDecimals!, '0');
     setState(() {
       _totalTokens = total;
     });
-   
   }
 
   void _saveAndNext() {
     widget.daoConfig.members = _memberEntries
         .map((entry) => Member(
               address: entry.addressController.text,
-              personalBalance: entry.amountController.text.padRight(widget.daoConfig.numberOfDecimals!,"0") ,
+              personalBalance: entry.amountController.text.padRight(
+                  widget.daoConfig.numberOfDecimals!, "0"),
               amount: int.tryParse(entry.amountController.text) ?? 0,
               votingWeight: "0",
             ))
         .toList();
-    widget.onNext(); // Changed from widget.onFinish() to widget.onNext()
+    widget.onNext();
+  }
+
+  void _loadCsvFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+    );
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+
+      // Read file content as string
+      final input = utf8.decode(file.bytes!);
+      List<List<dynamic>> csvTable =
+          CsvToListConverter().convert(input, eol: '\n');
+
+      // The first row should be headers
+      if (csvTable.isNotEmpty) {
+        List<dynamic> headers = csvTable[0];
+        if (headers.length >= 2 &&
+            headers[0].toString().toLowerCase() == 'address' &&
+            headers[1].toString().toLowerCase() == 'amount') {
+          // Remove the header row
+          csvTable.removeAt(0);
+
+          List<MemberEntry> entries = [];
+
+          for (var row in csvTable) {
+            if (row.length >= 2) {
+              String address = row[0].toString();
+              String amount = row[1].toString();
+
+              entries.add(MemberEntry(
+                addressController: TextEditingController(text: address),
+                amountController: TextEditingController(text: amount),
+              ));
+            }
+          }
+
+          setState(() {
+            _memberEntries = entries;
+            _calculateTotalTokens();
+          });
+        } else {
+          // Show error: Invalid CSV headers
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Invalid CSV headers. Expected "address" and "amount".')),
+          );
+        }
+      }
+    } else {
+      // User canceled the picker
+    }
   }
 
   @override
@@ -1110,14 +1152,17 @@ class _Screen5MembersState extends State<Screen5Members> {
           children: [
             Text('Initial members', style: Theme.of(context).textTheme.headline5),
             SizedBox(height: 26),
-            const Text('Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.', style: TextStyle(fontSize: 14, color:Color.fromARGB(255, 194, 194, 194))),
-            
+            const Text(
+                'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
+                style: TextStyle(fontSize: 14, color: Color.fromARGB(255, 194, 194, 194))),
             SizedBox(height: 53),
             Row(
-              mainAxisAlignment:MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Total Tokens: ', style:TextStyle(fontSize:19)),
-                Text('$_totalTokens', style:TextStyle(fontSize:19, color:Theme.of(context).indicatorColor)),
+                Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
+                Text('$_totalTokens',
+                    style: TextStyle(
+                        fontSize: 19, color: Theme.of(context).indicatorColor)),
               ],
             ),
             SizedBox(height: 75),
@@ -1134,21 +1179,26 @@ class _Screen5MembersState extends State<Screen5Members> {
               },
             ),
             SizedBox(height: 50),
-            Container(
-              width:300,
-              child: Center(
-                child: TextButton(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _loadCsvFile,
+                  icon: Icon(Icons.upload_file),
+                  label: Text('Upload CSV'),
+                ),
+                SizedBox(width: 10),
+                TextButton(
                   onPressed: _addMemberEntry,
                   child: Row(
-                    mainAxisAlignment:MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.add),
-                      
                       Text(' Add Member'),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
             SizedBox(height: 126),
             SizedBox(
@@ -1156,14 +1206,14 @@ class _Screen5MembersState extends State<Screen5Members> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                TextButton(
-                        onPressed: widget.onBack,
-                        child: Text('< Back'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _saveAndNext,
-                        child: Text('Save and Continue >'),
-                      ),
+                  TextButton(
+                    onPressed: widget.onBack,
+                    child: Text('< Back'),
+                  ),
+                  ElevatedButton(
+                    onPressed: _saveAndNext,
+                    child: Text('Save and Continue >'),
+                  ),
                 ],
               ),
             ),
@@ -1267,15 +1317,15 @@ class Screen6Review extends StatelessWidget {
             children: [
               Text('Review & Deploy', style: Theme.of(context).textTheme.headline5),
               SizedBox(height: 30),
-              Text('DAO Type: ${daoConfig.daoType}'),
+              Text('${daoConfig.daoType} Organization'),
               SizedBox(height: 10),
-              Text('DAO Name: ${daoConfig.daoName}'),
+              Text('${daoConfig.daoName}'),
               SizedBox(height: 10),
               Container(
                 constraints: BoxConstraints(maxWidth: 430),
-                child: Text('DAO Description: ${daoConfig.daoDescription}')),
+                child: Text('${daoConfig.daoDescription}')),
               SizedBox(height: 10),
-              Text('Token Symbol: ${daoConfig.tokenSymbol}'),
+              Text('Ticker Symbol: ${daoConfig.tokenSymbol}'),
               SizedBox(height: 10),
               Text('Number of Decimals: ${daoConfig.numberOfDecimals}'),
               SizedBox(height: 10),
