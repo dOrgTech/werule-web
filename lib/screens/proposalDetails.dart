@@ -452,7 +452,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children:  [
                                 const SizedBox(width: 34),
-                                const Icon(Icons.circle, color: Colors.teal),
+                                const Icon(Icons.circle, color:Color.fromARGB(255, 0, 196, 137),),
                                 const SizedBox(width: 10),
                                  const SizedBox(
                                     child: Text("Support" ,
@@ -464,7 +464,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                             fontWeight: FontWeight.bold)),
                                 Text(" (${(inFavorPercentage * 100).toStringAsFixed(2)}%)"),
                                 const Spacer(),
-                                const Icon(Icons.circle, color: Colors.redAccent),
+                                const Icon(Icons.circle, color:Color.fromARGB(255, 134, 37, 30),),
                                 const SizedBox(width: 10),
                                 const SizedBox(
                                     child: Text("Oppose",
@@ -659,14 +659,14 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
             AnimatedContainer(
               width: barWidth * _inFavorWidth, // Use the actual widget width
               height: 20, // Height of the bar
-              color: Colors.teal,
+              color: Color.fromARGB(255, 0, 196, 137),
               duration: Duration(milliseconds: durationInMillis),
               curve: Curves.easeInOut,
             ),
             AnimatedContainer(
               width: barWidth * _againstWidth, // Use the actual widget width
               height: 20,
-              color: Colors.red,
+              color: Color.fromARGB(255, 134, 37, 30),
               duration: Duration(milliseconds: durationInMillis),
               curve: Curves.easeInOut,
             ),

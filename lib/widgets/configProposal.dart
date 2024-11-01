@@ -1,7 +1,17 @@
+import 'package:Homebase/widgets/newProposal.dart';
 import 'package:flutter/material.dart';
+import '../entities/org.dart';
+import '../entities/proposal.dart';
 import '../screens/creator.dart'; // Import for DurationInput widget
 
 class DaoConfigurationWidget extends StatefulWidget {
+  Proposal p;
+  Org org;
+  State proposalsState;
+  bool isSetInfo = true;
+  DaoConfigurationWidget(
+      {required this.p, required this.org, required this.proposalsState});
+
   @override
   _DaoConfigurationWidgetState createState() => _DaoConfigurationWidgetState();
 }
@@ -11,20 +21,28 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
   bool _isFormValid = false;
 
   // Controllers for different configuration inputs
-  final TextEditingController _treasuryAddressController = TextEditingController(text: '0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF');
-  final TextEditingController _votingDelayDaysController = TextEditingController(text: '0');
-  final TextEditingController _votingDelayHoursController = TextEditingController(text: '0');
-  final TextEditingController _votingDelayMinutesController = TextEditingController(text: '2');
-  final TextEditingController _votingPeriodDaysController = TextEditingController(text: '0');
-  final TextEditingController _votingPeriodHoursController = TextEditingController(text: '0');
-  final TextEditingController _votingPeriodMinutesController = TextEditingController(text: '5');
+  final TextEditingController _treasuryAddressController =
+      TextEditingController(text: '0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF');
+  final TextEditingController _votingDelayDaysController =
+      TextEditingController(text: '0');
+  final TextEditingController _votingDelayHoursController =
+      TextEditingController(text: '0');
+  final TextEditingController _votingDelayMinutesController =
+      TextEditingController(text: '2');
+  final TextEditingController _votingPeriodDaysController =
+      TextEditingController(text: '0');
+  final TextEditingController _votingPeriodHoursController =
+      TextEditingController(text: '0');
+  final TextEditingController _votingPeriodMinutesController =
+      TextEditingController(text: '5');
 
   double _quorumValue = 4.0;
 
   void _selectConfigType(String configType) {
     setState(() {
       _selectedConfigType = configType;
-      _isFormValid = configType == "Voting Delay" || configType == "Voting Period";
+      _isFormValid =
+          configType == "Voting Delay" || configType == "Voting Period";
     });
   }
 
@@ -33,11 +51,12 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
     if (_selectedConfigType == "Quorum") {
       isValid = _quorumValue != 4.0;
     } else if (_selectedConfigType == "Voting Delay") {
-      isValid = true;  // Always enabled as requested
+      isValid = true; // Always enabled as requested
     } else if (_selectedConfigType == "Voting Period") {
-      isValid = true;  // Always enabled as requested
+      isValid = true; // Always enabled as requested
     } else if (_selectedConfigType == "Switch Treasury") {
-      isValid = _treasuryAddressController.text != '0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF';
+      isValid = _treasuryAddressController.text !=
+          '0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF';
     }
     setState(() {
       _isFormValid = isValid;
@@ -46,17 +65,14 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
 
   Widget _buildConfigSelection() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(height: 20),
         _buildConfigOptionButton("Quorum", Icons.group),
-        SizedBox(height: 45),
         _buildConfigOptionButton("Voting Delay", Icons.hourglass_empty),
-        SizedBox(height: 45),
         _buildConfigOptionButton("Voting Period", Icons.timer),
-        SizedBox(height: 45),
-        _buildConfigOptionButton("Switch Treasury", Icons.account_balance_wallet),
+        _buildConfigOptionButton(
+            "Switch Treasury", Icons.account_balance_wallet),
       ],
     );
   }
@@ -227,41 +243,52 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
       _votingPeriodDaysController.text = '0';
       _votingPeriodHoursController.text = '0';
       _votingPeriodMinutesController.text = '5';
-      _treasuryAddressController.text = '0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF';
+      _treasuryAddressController.text =
+          '0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF';
+    });
+  }
+
+  finishSettingInfo() {
+    setState(() {
+      widget.isSetInfo = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0.3)),
-      width: 600,
-      padding: EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildConfigView(),
-              ),
-            ),
-          ),
-          Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            margin: const EdgeInsets.only(bottom: 50),
-            child: _selectedConfigType != null
-                ? Center(
-                    child: ElevatedButton(
-                      onPressed: _isFormValid ? _resetToInitialView : null,
-                      child: Text('Submit'),
+    return widget.isSetInfo
+        ? NewProposal(p: widget.p, next: finishSettingInfo)
+        : Container(
+            decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey, width: 0.3)),
+            width: 600,
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildConfigView(),
                     ),
-                  )
-                : null,
-          ),
-        ],
-      ),
-    );
+                  ),
+                ),
+                Container(
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  margin: const EdgeInsets.only(bottom: 50),
+                  child: _selectedConfigType != null
+                      ? Center(
+                          child: ElevatedButton(
+                            onPressed:
+                                _isFormValid ? _resetToInitialView : null,
+                            child: Text('Submit'),
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
+          );
   }
 }

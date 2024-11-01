@@ -6,6 +6,8 @@ import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/members.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
+import 'package:Homebase/widgets/newProposal.dart';
+import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
@@ -42,11 +44,12 @@ import 'entities/proposal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-String metamask="https://i.ibb.co/HpmDHg0/metamask.png";
+
+String metamask = "https://i.ibb.co/HpmDHg0/metamask.png";
 List<User>? users;
-List<Org> orgs=[];
-List<Token> tokens=[];
-List<Proposal>?proposals;
+List<Org> orgs = [];
+List<Token> tokens = [];
+List<Proposal>? proposals;
 
 var daosCollection;
 var pollsCollection;
@@ -56,59 +59,60 @@ var tokensCollection;
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
 persist() async {
-  users=[];proposals=[];
-  daosCollection=FirebaseFirestore.instance.collection("daos${Human().chain.name}");
-  tokensCollection=FirebaseFirestore.instance.collection("tokens${Human().chain.name}");
-  var daosSnapshot =await  daosCollection.get();
-  var tokensSnapshot =await  tokensCollection.get();
+  users = [];
+  proposals = [];
+  daosCollection =
+      FirebaseFirestore.instance.collection("daos${Human().chain.name}");
+  tokensCollection =
+      FirebaseFirestore.instance.collection("tokens${Human().chain.name}");
+  var daosSnapshot = await daosCollection.get();
+  var tokensSnapshot = await tokensCollection.get();
 
-  for (var doc in tokensSnapshot.docs){
-    Token t = Token(name: doc.data()['name'], symbol: doc.data()['symbol'], decimals: doc.data()['decimals']);
+  for (var doc in tokensSnapshot.docs) {
+    Token t = Token(
+        name: doc.data()['name'],
+        symbol: doc.data()['symbol'],
+        decimals: doc.data()['decimals']);
     t.address = doc.data()['address'];
     tokens.add(t);
   }
-  orgs=[];
-  for (var doc in daosSnapshot.docs){
+  orgs = [];
+  for (var doc in daosSnapshot.docs) {
     print("we are doing this ");
-    Org org=
-      Org(name: doc.data()['name'],
-      description: doc.data()['description'],
-      govTokenAddress: doc.data()['govTokenAddress']
-    );
-    org.address=doc.data()['address'];
-    org.symbol=doc.data()['symbol'];
-    org.creationDate=(doc.data()['creationDate'] as Timestamp).toDate();
-    org.govToken=Token(symbol: org.symbol!, decimals: org.decimals,name: org.name);
+    Org org = Org(
+        name: doc.data()['name'],
+        description: doc.data()['description'],
+        govTokenAddress: doc.data()['govTokenAddress']);
+    org.address = doc.data()['address'];
+    org.symbol = doc.data()['symbol'];
+    org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
+    org.govToken =
+        Token(symbol: org.symbol!, decimals: org.decimals, name: org.name);
     org.govTokenAddress = doc.data()['token'];
-    org.votingDelay=doc.data()['votingDelay'];
-    org.votingDuration=doc.data()['votingDuration'];
-    org.executionAvailability=doc.data()['executionAvailability'];
-    org.quorum=doc.data()['quorum'];
+    org.votingDelay = doc.data()['votingDelay'];
+    org.votingDuration = doc.data()['votingDuration'];
+    org.executionAvailability = doc.data()['executionAvailability'];
+    org.quorum = doc.data()['quorum'];
     // org.quorum=20;
-    org.decimals=doc.data()['decimals'];
-    org.supermajority=doc.data()['supermajority'];
-    org.holders=doc.data()['holders'];
-    org.treasuryMap=Map<String, String>.from(doc.data()['treasury']);
-    org.totalSupply=doc.data()['totalSupply'];
+    org.decimals = doc.data()['decimals'];
+    org.supermajority = doc.data()['supermajority'];
+    org.holders = doc.data()['holders'];
+    org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
+    org.totalSupply = doc.data()['totalSupply'];
     orgs.add(org);
   }
-  print("orgs length: "+orgs.length.toString());
+  print("orgs length: " + orgs.length.toString());
 }
 
-
 void main() async {
-  
- await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
- await persist();
- 
- 
-  
-  runApp(
-  ChangeNotifierProvider<Human>(
-        create: (context) => Human(),
-        child: const MyApp(),
-      ));
-  }
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+  await persist();
+
+  runApp(ChangeNotifierProvider<Human>(
+    create: (context) => Human(),
+    child: const MyApp(),
+  ));
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -129,21 +133,23 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'CascadiaCode',
         splashColor: const Color(0xff000000),
-        indicatorColor  : Color.fromARGB(255, 161, 215, 219),
+        indicatorColor: Color.fromARGB(255, 161, 215, 219),
         dividerColor: createMaterialColor(const Color(0xffcfc099)),
         brightness: Brightness.dark,
         hintColor: Colors.white70,
         primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
         highlightColor: const Color(0xff6e6e6e),
         // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
-        primarySwatch: createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
+        primarySwatch:
+            createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
       ),
-      home: 
-      Scaffold(body:
-      //  DaoSetupWizard())
-      // Center(child: TransferWidget(org: orgs[0],)))
-      // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
-      Explorer()),
+      home: Scaffold(
+          body:
+              //  DaoSetupWizard())
+              // Center(child: TransferWidget(org: orgs[0],)))
+              // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
+              // RegistryProposalWidget())
+              Explorer()),
     );
   }
 }
@@ -157,34 +163,27 @@ class MyHomePage extends StatefulWidget {
 }
 
 class MyHomePageState extends State<MyHomePage> {
-  
-
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-
-    // body:  DelegationBoxes()
-
-        // body: Pills()
+    return Scaffold(
+        // body:  DelegationBoxes()
+        // body: NewProposal(org: orgs[0])
         // body: Members(org: orgs[2],)
         // body: Prelaunch()
         // body: Account()
-        body: Explorer()
-    
-        );
+        body: Explorer());
   }
 }
 // 0xc5C77EC5A79340f0240D6eE8224099F664A08EEb
 
 class WalletBTN extends StatefulWidget {
   const WalletBTN({super.key});
-
   @override
   State<WalletBTN> createState() => _WalletBTNState();
 }
 
 class _WalletBTNState extends State<WalletBTN> {
- bool _isConnecting=false;
+  bool _isConnecting = false;
   void initState() {
     super.initState();
     // Load existing address
@@ -206,7 +205,6 @@ class _WalletBTNState extends State<WalletBTN> {
         ),
       );
     }
-    
 
     return TextButton(
       onPressed: () async {
@@ -214,63 +212,82 @@ class _WalletBTNState extends State<WalletBTN> {
           showDialog(
             context: context,
             builder: (context) {
-              return  AlertDialog(
+              return AlertDialog(
                 content: Container(
-                  height:260,
+                  height: 260,
                   padding: const EdgeInsets.all(30),
                   child: Column(
                     children: [
-                      const Text("You need the a web3 wallet to sign into the app.",style: TextStyle(fontFamily: "Roboto Mono", fontSize: 16),),
-                      const SizedBox(height: 10,),
+                      const Text(
+                        "You need the a web3 wallet to sign into the app.",
+                        style:
+                            TextStyle(fontFamily: "Roboto Mono", fontSize: 16),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.network(metamask,height: 100,),
-                          const Icon(Icons.arrow_right_alt, size: 40,),
-                          const SizedBox(width: 14,),
-                           Image.network(
+                          Image.network(
+                            metamask,
+                            height: 100,
+                          ),
+                          const Icon(
+                            Icons.arrow_right_alt,
+                            size: 40,
+                          ),
+                          const SizedBox(
+                            width: 14,
+                          ),
+                          Image.network(
                               "https://i.ibb.co/sFqQxYP/Icon-maskable-192.png",
                               height: 70),
-                            const SizedBox(width: 13,),
+                          const SizedBox(
+                            width: 13,
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 10,),
-                      const Text("Download it from",style: TextStyle(fontFamily: "Roboto Mono", fontSize: 16),),
-                      const SizedBox(height: 10,),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      const Text(
+                        "Download it from",
+                        style:
+                            TextStyle(fontFamily: "Roboto Mono", fontSize: 16),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
                       TextButton(
-                        onPressed: (){
-                          launch("https://metamask.io/");
-                        },
-                        child: const Text("https://metamask.io/",style: TextStyle(fontFamily: "Roboto Mono", fontSize: 16),)),
-                        
+                          onPressed: () {
+                            launch("https://metamask.io/");
+                          },
+                          child: const Text(
+                            "https://metamask.io/",
+                            style: TextStyle(
+                                fontFamily: "Roboto Mono", fontSize: 16),
+                          )),
                     ],
                   ),
-                
                 ),
-
               );
             },
           );
         } else {
           // Since we're in a StatelessWidget, no need to call setState
-        if ( human.address == null)
-        {
-        setState(() {  
-        human.busy=true;
-        });
-         await human.signIn(); 
-        setState(() {
-          human.busy=false;
-        });
-        }
-        else{
-           Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: ((context) =>
-           const Explorer()
-          )
-      ));
-        }
+          if (human.address == null) {
+            setState(() {
+              human.busy = true;
+            });
+            await human.signIn();
+            setState(() {
+              human.busy = false;
+            });
+          } else {
+            Navigator.of(context).push(
+                MaterialPageRoute(builder: ((context) => const Explorer())));
+          }
         }
       },
       child: SizedBox(
@@ -286,32 +303,35 @@ class _WalletBTNState extends State<WalletBTN> {
                   ],
                 )
               : Row(
-                children: [
-                   FutureBuilder<Uint8List>(
-                        future: generateAvatarAsync(hashString(human.address!)),  // Make your generateAvatar function return Future<Uint8List>
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return Container(
-                              width: 40.0,
-                              height: 40.0,
-                              color: Colors.grey,
-                            );
-                          } else if (snapshot.hasData) {
-                            print("generating");
-                            return Image.memory(snapshot.data!);
-                          } else {
-                            return Container(
-                              width: 40.0,
-                              height: 40.0,
-                              color: const Color.fromARGB(255, 116, 116, 116),  // Error color
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                  Text(getShortAddress(human.address!)),
-                ],
-              ),
+                  children: [
+                    FutureBuilder<Uint8List>(
+                      future: generateAvatarAsync(hashString(human
+                          .address!)), // Make your generateAvatar function return Future<Uint8List>
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Container(
+                            width: 40.0,
+                            height: 40.0,
+                            color: Colors.grey,
+                          );
+                        } else if (snapshot.hasData) {
+                          print("generating");
+                          return Image.memory(snapshot.data!);
+                        } else {
+                          return Container(
+                            width: 40.0,
+                            height: 40.0,
+                            color: const Color.fromARGB(
+                                255, 116, 116, 116), // Error color
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    Text(getShortAddress(human.address!)),
+                  ],
+                ),
         ),
       ),
     );

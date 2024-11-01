@@ -1,9 +1,16 @@
+import 'package:Homebase/widgets/newProposal.dart';
+import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../entities/proposal.dart';
+
 class ContractInteractionWidget extends StatefulWidget {
+  Proposal p;
+  ContractInteractionWidget({required this.p});
   @override
-  _ContractInteractionWidgetState createState() => _ContractInteractionWidgetState();
+  _ContractInteractionWidgetState createState() =>
+      _ContractInteractionWidgetState();
 }
 
 class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
@@ -24,6 +31,7 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
   };
   String? _selectedFunction;
   List<TextEditingController> _paramControllers = [];
+  bool isSetInfo = true;
   bool _isFirstStep = true;
   bool _isLoading = false;
   bool _isFormValid = false;
@@ -62,7 +70,8 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
       _isLoading = false;
       _isFirstStep = false;
       _selectedFunction = null;
-      _paramControllers.clear(); // Clear parameter controllers for the new function selection
+      _paramControllers
+          .clear(); // Clear parameter controllers for the new function selection
       _isFormValid = false; // Reset form validity for second step
     });
   }
@@ -84,20 +93,17 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
     bool allParamsFilled = _paramControllers.isNotEmpty &&
         _paramControllers.every((controller) => controller.text.isNotEmpty);
     bool allParamsValid = _selectedFunction != null &&
-        _functionParameters[_selectedFunction!]!
-            .asMap()
-            .entries
-            .every((entry) {
-              final paramType = entry.value['type'];
-              final controller = _paramControllers[entry.key];
-              if (paramType == 'address') {
-                return _isValidEvmAddress(controller.text);
-              } else if (paramType == 'number') {
-                return double.tryParse(controller.text) != null;
-              } else {
-                return controller.text.isNotEmpty;
-              }
-            });
+        _functionParameters[_selectedFunction!]!.asMap().entries.every((entry) {
+          final paramType = entry.value['type'];
+          final controller = _paramControllers[entry.key];
+          if (paramType == 'address') {
+            return _isValidEvmAddress(controller.text);
+          } else if (paramType == 'number') {
+            return double.tryParse(controller.text) != null;
+          } else {
+            return controller.text.isNotEmpty;
+          }
+        });
 
     setState(() {
       _isFormValid = allParamsFilled && allParamsValid;
@@ -106,8 +112,6 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
 
   Widget _buildParameterInput(String name, String type, int index) {
     return Container(
-      
-    
       padding: const EdgeInsets.only(top: 12.0),
       child: TextFormField(
         controller: _paramControllers[index],
@@ -211,58 +215,62 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
     );
   }
 
+  completeSetInfo() {
+    setState(() {
+      isSetInfo = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 600,
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _isLoading
-                    ? Center(child: CircularProgressIndicator())
-                    : _isFirstStep
-                        ? _buildFirstStep()
-                        : _buildSecondStep(),
-              ),
-            ),
-          ),
-          Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            margin: const EdgeInsets.only(bottom: 50),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return isSetInfo
+        ? NewProposal(p: widget.p, next: completeSetInfo)
+        : Container(
+            width: 600,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.7),
+            child: Column(
               children: [
-                if (_isFirstStep)
-                 Spacer(),
-                    
-                _isFirstStep
-                    ? ElevatedButton(
-                        onPressed: _isFormValid ? _goToNextStep : null,
-                        child: Text('Next'),
-                      )
-                    : ElevatedButton(
-                        onPressed: _goBack,
-                        child: Text('Back'),
-                      ),
-                if (!_isFirstStep)
-                  ElevatedButton(
-                    onPressed: _isFormValid
-                        ? () {
-                            // Trigger contract interaction logic here
-                          }
-                        : null,
-                    child: Text('Submit'),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _isLoading
+                          ? Center(child: CircularProgressIndicator())
+                          : _isFirstStep
+                              ? _buildFirstStep()
+                              : _buildSecondStep(),
+                    ),
                   ),
+                ),
+                Container(
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  margin: const EdgeInsets.only(bottom: 50),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: isSetInfo
+                        ? []
+                        : [
+                            if (_isFirstStep) Spacer(),
+                            _isFirstStep
+                                ? ElevatedButton(
+                                    onPressed:
+                                        _isFormValid ? _goToNextStep : null,
+                                    child: Text('Next'),
+                                  )
+                                : TextButton(
+                                    onPressed: _goBack,
+                                    child: Text('< Back'),
+                                  ),
+                            if (!_isFirstStep)
+                              SubmitButton(
+                                  submit: () {}, isSubmitEnabled: _isFormValid)
+                          ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 }

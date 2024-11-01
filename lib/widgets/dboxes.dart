@@ -7,13 +7,14 @@ import '../entities/org.dart';
 import '../main.dart';
 import '../screens/account.dart';
 
-class Wait extends StatelessWidget{
-  
+class Wait extends StatelessWidget {
   @override
-  build(BuildContext context){
-    return const Center(child: SizedBox(width:300, height: 3, child: Opacity(
-      opacity: 0.6,
-      child: LinearProgressIndicator())));
+  build(BuildContext context) {
+    return const Center(
+        child: SizedBox(
+            width: 300,
+            height: 3,
+            child: Opacity(opacity: 0.6, child: LinearProgressIndicator())));
   }
 }
 
@@ -21,16 +22,19 @@ class DelegationBoxes extends StatefulWidget {
   Member m;
   AccountState accountState;
   Org org;
-  bool busy=false;
+  bool busy = false;
 
-  DelegationBoxes({super.key, required this.m, required this.accountState, required this.org});
+  DelegationBoxes(
+      {super.key,
+      required this.m,
+      required this.accountState,
+      required this.org});
 
   @override
   _DelegationBoxesState createState() => _DelegationBoxesState();
 }
 
 class _DelegationBoxesState extends State<DelegationBoxes> {
-
   bool isVoteDirectlyEnabled = true; // Default to Vote Directly enabled
   bool showBothOptions = false; // Initially show both options
   int numDelegatedAccounts = 5; // Placeholder value
@@ -38,16 +42,18 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
 
   @override
   Widget build(BuildContext context) {
-     if (widget.m.delegate==""){
-    bool showBothOptions = true; 
-    }else if(widget.m.delegate.toLowerCase()==Human().address!.toLowerCase()){
-      showBothOptions=false;
-      isVoteDirectlyEnabled=true;
-      numDelegatedAccounts=widget.m.constituents.length;
-    }else{
-      showBothOptions=false;
-      isVoteDirectlyEnabled=false;
-      delegateAddress= getShortAddress( widget.m.delegate);
+    if (widget.m.delegate == "") {
+      print("we should show both options");
+      showBothOptions = true;
+    } else if (widget.m.delegate.toLowerCase() ==
+        Human().address!.toLowerCase()) {
+      showBothOptions = false;
+      isVoteDirectlyEnabled = true;
+      numDelegatedAccounts = widget.m.constituents.length;
+    } else {
+      showBothOptions = false;
+      isVoteDirectlyEnabled = false;
+      delegateAddress = getShortAddress(widget.m.delegate);
     }
 
     Widget delegateYourVoteBottomWidget;
@@ -55,84 +61,96 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
 
     if (showBothOptions) {
       // Initial state: show both buttons
-      delegateYourVoteBottomWidget = widget.busy? Wait():
-      ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).indicatorColor,
-        ),
-        onPressed: _setDelegate,
-        child: const Text('Set Delegate'),
-      );
+      delegateYourVoteBottomWidget = widget.busy
+          ? Wait()
+          : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).indicatorColor,
+              ),
+              onPressed: _setDelegate,
+              child: const Text('Set Delegate'),
+            );
 
-      voteDirectlyBottomWidget = widget.busy? Wait():ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).indicatorColor,
-        ),
-        onPressed: _claimVotingPower,
-        child: const Text('Claim Voting Power'),
-      );
+      voteDirectlyBottomWidget = widget.busy
+          ? Wait()
+          : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).indicatorColor,
+              ),
+              onPressed: _claimVotingPower,
+              child: const Text('Claim Voting Power'),
+            );
     } else if (isVoteDirectlyEnabled) {
       // When Vote Directly is enabled
-      voteDirectlyBottomWidget = 
-      widget.busy? Wait():
-      numDelegatedAccounts==1?const Padding(
-        padding:  EdgeInsets.only(bottom:3.0),
-        child: Text("Only voting your your behalf"),
-      ):
-      RichText(
-        text: TextSpan(
-          text: 'Voting on behalf of ',
-          style: const TextStyle(
-            fontFamily: "Cascadia Code",
-            fontSize: 16, color: Colors.white),
-          children: [
-            TextSpan(
-              text: '$numDelegatedAccounts accounts',
-              style: TextStyle(
-                  fontSize: 17,
-                  color: Theme.of(context).indicatorColor,
-                  decoration: TextDecoration.underline),
-              recognizer: TapGestureRecognizer()..onTap = _showAccountsPopup,
-            ),
-          ],
-        ),
-      );
+      voteDirectlyBottomWidget = widget.busy
+          ? Wait()
+          : numDelegatedAccounts == 1
+              ? const Padding(
+                  padding: EdgeInsets.only(bottom: 3.0),
+                  child: Text("Only voting your your behalf"),
+                )
+              : RichText(
+                  text: TextSpan(
+                    text: 'Voting on behalf of ',
+                    style: const TextStyle(
+                        fontFamily: "Cascadia Code",
+                        fontSize: 16,
+                        color: Colors.white),
+                    children: [
+                      TextSpan(
+                        text: '$numDelegatedAccounts accounts',
+                        style: TextStyle(
+                            fontSize: 17,
+                            color: Theme.of(context).indicatorColor,
+                            decoration: TextDecoration.underline),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = _showAccountsPopup,
+                      ),
+                    ],
+                  ),
+                );
 
-      delegateYourVoteBottomWidget =widget.busy? Wait(): ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).indicatorColor,
-        ),
-        onPressed: _setDelegate,
-        child: const Text('Set Delegate'),
-      );
+      delegateYourVoteBottomWidget = widget.busy
+          ? Wait()
+          : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).indicatorColor,
+              ),
+              onPressed: _setDelegate,
+              child: const Text('Set Delegate'),
+            );
     } else {
       // When Delegate Your Vote is enabled
-      delegateYourVoteBottomWidget = widget.busy? Wait():Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Text(
-            '$delegateAddress',
-            style: const TextStyle(fontSize: 16),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).indicatorColor,
-            ),
-            onPressed: () {
-              // Add your edit delegate logic here
-            },
-            child: const Icon(Icons.edit),
-          ),
-        ],
-      );
+      delegateYourVoteBottomWidget = widget.busy
+          ? Wait()
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text(
+                  '$delegateAddress',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).indicatorColor,
+                  ),
+                  onPressed: () {
+                    _setDelegate();
+                  },
+                  child: const Icon(Icons.edit),
+                ),
+              ],
+            );
 
-      voteDirectlyBottomWidget = widget.busy? Wait():ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).indicatorColor,
-        ),
-        onPressed: _claimVotingPower,
-        child: const Text('Claim Voting Power'),
-      );
+      voteDirectlyBottomWidget = widget.busy
+          ? Wait()
+          : ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).indicatorColor,
+              ),
+              onPressed: _claimVotingPower,
+              child: const Text('Claim Voting Power'),
+            );
     }
 
     return Center(
@@ -190,7 +208,8 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.left,
               ),
             ],
@@ -202,12 +221,12 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: RichText(
-                  text: TextSpan(
-                    text:
-                  description,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w100)
-                  )
-                ),
+                    text: TextSpan(
+                        text: description,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w100))),
               ),
             ),
           ),
@@ -220,29 +239,29 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
     );
   }
 
-
   void _showAccountsPopup() {
-    List<Widget>delegatees=[];
-    for (Member constituent in widget.m.constituents){
+    List<Widget> delegatees = [];
+    for (Member constituent in widget.m.constituents) {
       delegatees.add(
         Container(
           margin: const EdgeInsets.all(4),
           padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(border: Border.all(width: 0.3, color:Colors.grey)),
+          decoration:
+              BoxDecoration(border: Border.all(width: 0.3, color: Colors.grey)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               const SizedBox(width: 20),
               Text(constituent.address),
               const SizedBox(width: 40),
-              Text(constituent.personalBalance.toString(),
-              style: TextStyle(color:Theme.of(context).indicatorColor),
+              Text(
+                constituent.personalBalance.toString(),
+                style: TextStyle(color: Theme.of(context).indicatorColor),
               ),
             ],
           ),
         ),
-
-        );
+      );
     }
 
     showDialog(
@@ -254,16 +273,16 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
             children: [
               Text('$numDelegatedAccounts Constituents:'),
               const Spacer(),
-              const OldSchoolLink(text: "Download CSV", url: "https://something.com")
+              const OldSchoolLink(
+                  text: "Download CSV", url: "https://something.com")
             ],
           ),
           content: Container(
-            width: 700,
-            height:500 ,
-            child: ListView(
-              children: delegatees,
-            )
-          ),
+              width: 700,
+              height: 500,
+              child: ListView(
+                children: delegatees,
+              )),
           actions: [
             TextButton(
               child: const Text('Close'),
@@ -276,74 +295,79 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
   }
 
   void _setDelegate() {
-  TextEditingController newDelegateController = TextEditingController();
-   showDialog(context:context, builder: (context)=> AlertDialog(
-      title: const Text("Set Delegate"),
-      
-      content: Container(
-        padding: const EdgeInsets.all(70),
-        width: 500,
-        height: 340,
-        child:
-        widget.busy?
-        const Center(child: CircularProgressIndicator()):
-         Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: newDelegateController,
-              maxLength: 42,
-              maxLines: 1,
-              decoration: const InputDecoration(
-                labelText: "Enter the address of the delegate"
-              ),  
-            ),
-            const SizedBox(height: 80),
-            TextButton(child:const Text("Submit"),
-              onPressed: ()async{
-                 setState(() {
-                   widget.busy=true;
-                 });
-                  String delegateAddress=newDelegateController.text;
-                  widget.m.delegate=delegateAddress;
-                   var memberDoc = await daosCollection.doc(widget.org.address).collection("members")
-                   .doc(widget.m.address).set(widget.m.toJson());
-                  widget.accountState.setState(() {
-                      widget.accountState.widget.member = widget.org.refreshMember(widget.m);
-                    });
-                 setState(() {
-                  widget.busy=false;
-                  showBothOptions = false;
-                  isVoteDirectlyEnabled = false;
-                  widget.busy=false;
-                });
-                Navigator.of(context).pop();
-              },
-            )
-          ],
-        ),
-      ),
-    ));
-   
+    TextEditingController newDelegateController = TextEditingController();
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text("Set Delegate"),
+              content: Container(
+                padding: const EdgeInsets.all(70),
+                width: 500,
+                height: 340,
+                child: widget.busy
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextField(
+                            controller: newDelegateController,
+                            maxLength: 42,
+                            maxLines: 1,
+                            decoration: const InputDecoration(
+                                labelText: "Enter the address of the delegate"),
+                          ),
+                          const SizedBox(height: 80),
+                          TextButton(
+                            child: const Text("Submit"),
+                            onPressed: () async {
+                              setState(() {
+                                widget.busy = true;
+                              });
+                              String delegateAddress =
+                                  newDelegateController.text;
+                              widget.m.delegate = delegateAddress;
+                              var memberDoc = await daosCollection
+                                  .doc(widget.org.address)
+                                  .collection("members")
+                                  .doc(widget.m.address)
+                                  .set(widget.m.toJson());
+                              widget.accountState.setState(() {
+                                widget.accountState.widget.member =
+                                    widget.org.refreshMember(widget.m);
+                              });
+                              setState(() {
+                                widget.busy = false;
+                                showBothOptions = false;
+                                isVoteDirectlyEnabled = false;
+                                widget.busy = false;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          )
+                        ],
+                      ),
+              ),
+            ));
   }
 
-  void _claimVotingPower()async {
+  void _claimVotingPower() async {
     setState(() {
-      widget.busy=true;
-      widget.m.delegate=widget.m.address;
+      widget.busy = true;
+      widget.m.delegate = widget.m.address;
     });
-       await daosCollection.doc(widget.org.address).collection("members")
-                   .doc(widget.m.address).set(widget.m.toJson());
-         widget.accountState.setState(() {
-          widget.accountState.widget.member = widget.org.refreshMember(widget.m);
-        });
+    await daosCollection
+        .doc(widget.org.address)
+        .collection("members")
+        .doc(widget.m.address)
+        .set(widget.m.toJson());
+    widget.accountState.setState(() {
+      widget.accountState.widget.member = widget.org.refreshMember(widget.m);
+    });
 
     setState(() {
-       
       showBothOptions = false;
-      widget.busy=false;
+      widget.busy = false;
     });
-    
   }
 }

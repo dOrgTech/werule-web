@@ -1,12 +1,27 @@
+import 'package:Homebase/widgets/newProposal.dart';
+import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../entities/org.dart';
+import '../entities/proposal.dart';
+
 class GovernanceTokenOperationsWidget extends StatefulWidget {
+  Org org;
+  State proposalsState;
+  Proposal p;
+  bool isSetinfo = true;
+
+  GovernanceTokenOperationsWidget(
+      {required this.org, required this.p, required this.proposalsState});
+
   @override
-  _GovernanceTokenOperationsWidgetState createState() => _GovernanceTokenOperationsWidgetState();
+  _GovernanceTokenOperationsWidgetState createState() =>
+      _GovernanceTokenOperationsWidgetState();
 }
 
-class _GovernanceTokenOperationsWidgetState extends State<GovernanceTokenOperationsWidget> {
+class _GovernanceTokenOperationsWidgetState
+    extends State<GovernanceTokenOperationsWidget> {
   String? _selectedOperation;
   bool _isFormValid = false;
 
@@ -20,6 +35,12 @@ class _GovernanceTokenOperationsWidgetState extends State<GovernanceTokenOperati
       _isFormValid = false;
       _addressController.clear();
       _amountController.clear();
+    });
+  }
+
+  void doneSettingInfo() {
+    setState(() {
+      widget.isSetinfo = false;
     });
   }
 
@@ -54,9 +75,9 @@ class _GovernanceTokenOperationsWidgetState extends State<GovernanceTokenOperati
       child: ElevatedButton(
         onPressed: () => _selectOperation(title),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).cardColor,
+          backgroundColor: Color.fromARGB(255, 91, 91, 91),
           foregroundColor: Colors.white,
-          padding: EdgeInsets.all(10),
+          padding: EdgeInsets.symmetric(vertical: 30),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -148,35 +169,36 @@ class _GovernanceTokenOperationsWidgetState extends State<GovernanceTokenOperati
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0.3)),
-      width: 600,
-      padding: EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildOperationViewContent(),
-              ),
-            ),
-          ),
-          Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            margin: const EdgeInsets.only(bottom: 50),
-            child: _selectedOperation != null
-                ? Center(
-                    child: ElevatedButton(
-                      onPressed: _isFormValid ? _resetToInitialView : null,
-                      child: Text('Submit'),
+    return widget.isSetinfo
+        ? NewProposal(p: widget.p, next: doneSettingInfo)
+        : Container(
+            decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey, width: 0.3)),
+            width: 600,
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildOperationViewContent(),
                     ),
-                  )
-                : null,
-          ),
-        ],
-      ),
-    );
+                  ),
+                ),
+                Container(
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  margin: const EdgeInsets.only(bottom: 50),
+                  child: _selectedOperation != null
+                      ? Center(
+                          child: SubmitButton(
+                              submit: _isFormValid ? _resetToInitialView : null,
+                              isSubmitEnabled: _isFormValid))
+                      : null,
+                ),
+              ],
+            ),
+          );
   }
 }
