@@ -1,15 +1,10 @@
-
-Map<String, DateTime> statusHistory={};
-
-
-
+Map statusHistory = {};
 
 void main() {
-  statusHistory.addAll({"pending":DateTime.now()});
+  statusHistory.addAll({
+    "pending": ["prima"]
+  });
   print("hello");
-  
- statusHistory.forEach((key, value) { 
-  print(key);
- });
+
+  print(statusHistory['pending'][0]);
 }
-  

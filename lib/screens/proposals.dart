@@ -304,7 +304,10 @@ class ProposalListState extends State<ProposalList> {
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 19),
                     ),
-                    Text(proposalTypes[item]!)
+                    Text(
+                      proposalTypes[item]!,
+                      textAlign: TextAlign.center,
+                    )
                   ],
                 ),
               ),

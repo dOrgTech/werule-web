@@ -7,6 +7,7 @@ import 'package:Homebase/screens/members.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
 import 'package:Homebase/widgets/newProposal.dart';
+import 'package:Homebase/widgets/propDetailsWidgets.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:Homebase/widgets/transfer.dart';
@@ -44,6 +45,7 @@ import 'entities/proposal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:Homebase/utils/reusable.dart';
 
 String metamask = "https://i.ibb.co/HpmDHg0/metamask.png";
 List<User>? users;
@@ -149,6 +151,9 @@ class MyApp extends StatelessWidget {
               // Center(child: TransferWidget(org: orgs[0],)))
               // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
               // RegistryProposalWidget())
+              //         MyHomePage(
+              //   title: "ceva",
+              // ))
               Explorer()),
     );
   }
@@ -165,13 +170,35 @@ class MyHomePage extends StatefulWidget {
 class MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    Proposal p = Proposal(org: orgs[0], type: "transfer");
+    p.author = Human().address ?? "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
+    p.name = "Call a contract";
+    p.description = "to do something";
+    p.createdAt = DateTime.now();
+    p.targets = ["0xdestinationcontractad4099F664A08EEb"];
+    p.values = ["0"];
+    p.callDatas = [
+      {
+        "endpoint": "changeString",
+        "params": {
+          "changingItToThis": ["newValue", "string"]
+        }
+      }
+    ];
+
     return Scaffold(
         // body:  DelegationBoxes()
         // body: NewProposal(org: orgs[0])
         // body: Members(org: orgs[2],)
         // body: Prelaunch()
-        // body: Account()
-        body: Explorer());
+
+        // body: DaoConfigurationDetails(
+        //     type: "Quorum",
+        //     proposalData: {"treasuryAddress": "s0a9d09vuj09cj09j4093qjf"})
+        body: RegistryProposalDetails(
+            keyName: "thekeyofthething", value: "and here is the value")
+        // body: Explorer()
+        );
   }
 }
 // 0xc5C77EC5A79340f0240D6eE8224099F664A08EEb

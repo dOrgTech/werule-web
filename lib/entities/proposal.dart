@@ -10,11 +10,12 @@ import 'human.dart';
 import 'org.dart';
 
 var proposalTypes = {
-  "Offchain Poll": "Create in inconsequential poll for your community",
-  "Transfer Assets": "from the DAO Treasury to another account",
-  "Edit Registry": "Change an entry or add a new one",
-  "Contract Call": "Call any function on any contract",
-  "DAO Configuration": "Change the proposal fee and/or the returned amount",
+  "Off-Chain Debate": "Post a thesis and have tokenized arguments around it",
+  "Transfer Assets": "from the DAO Treasury\nto another account",
+  "Edit Registry": "Change an entry\nor add a new one",
+  "Contract Call": "Call any function\non any contract",
+  "DAO Configuration":
+      "Change the quorum,\nthe proposal durations\nor the treasury address",
 };
 
 var state;
@@ -87,7 +88,10 @@ class Proposal {
   String? description = "(no description)";
   String? author;
   double value = 0;
-  String? callData;
+  List<String> targets = [];
+  List<String> values = [];
+  List callDatas = [];
+  String? callData = "0x";
   DateTime? createdAt;
   DateTime? votingStarts;
   DateTime? votingEnds;
@@ -107,7 +111,6 @@ class Proposal {
     id = (org.proposals.isNotEmpty)
         ? org.proposals.map((p) => p.id).reduce((a, b) => a > b ? a : b) + 1
         : 1;
-    this.createdAt = DateTime.now();
   }
 
   castVote(Vote v) async {
