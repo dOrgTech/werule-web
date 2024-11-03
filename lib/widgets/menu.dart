@@ -11,17 +11,16 @@ import '../utils/functions.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../screens/projects.dart';
-import '../screens/users.dart';
 bool isConnected = false;
-String us3rAddress= generateWalletAddress();
-int status=0;
-class TopMenu  extends StatefulWidget  with PreferredSizeWidget{
+String us3rAddress = generateWalletAddress();
+int status = 0;
+
+class TopMenu extends StatefulWidget with PreferredSizeWidget {
   const TopMenu({super.key});
 
   @override
   State<TopMenu> createState() => _TopMenuState();
-  
+
   @override
   // TODO: implement preferredSize
   Size get preferredSize => const Size.fromHeight(50);
@@ -43,101 +42,103 @@ class _TopMenuState extends State<TopMenu> {
           automaticallyImplyLeading: false,
           backgroundColor: Theme.of(context).canvasColor,
           elevation: 1,
-          title: 
-           Row(
+          title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-             children: [
+            children: [
               SizedBox(width: 12),
-               Container(
+              Container(
                 width: 170,
-         child: InkWell(
-          hoverColor: Colors.transparent,
-          onTap: () => 
-         Navigator.push(
-  context,
-  MaterialPageRoute(builder: (context) =>status==0?Explorer():Projects()),
-),
-               child: Row(
-                     children: [
-                    
-                    // Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 47,
-                    SvgPicture.asset(
-                           'assets/logos/homebase_logo.svg',
-                           semanticsLabel: 'Acme Logo'
-                           ,height: 25,
-                           color: Theme.of(context).indicatorColor,
-                           // color: Colors.red,
-                     ),
-                   
-                 
-                 SizedBox(width: 10),
-                 const Text(
-                     'Homebase',
-                     style: TextStyle(fontFamily: 'CascadiaCode', fontSize: 21, fontWeight: FontWeight.w100),
-                 ),
-                     ],
-               ),
-         ),
-               ),
-               Spacer(),
-           
+                child: InkWell(
+                  hoverColor: Colors.transparent,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Explorer()),
+                  ),
+                  child: Row(
+                    children: [
+                      // Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 47,
+                      SvgPicture.asset(
+                        'assets/logos/homebase_logo.svg',
+                        semanticsLabel: 'Acme Logo', height: 25,
+                        color: Theme.of(context).indicatorColor,
+                        // color: Colors.red,
+                      ),
+
+                      SizedBox(width: 10),
+                      const Text(
+                        'Homebase',
+                        style: TextStyle(
+                            fontFamily: 'CascadiaCode',
+                            fontSize: 21,
+                            fontWeight: FontWeight.w100),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Spacer(),
               Padding(
-                padding: const EdgeInsets.only(left:50,right:24),
+                padding: const EdgeInsets.only(left: 50, right: 24),
                 child: Row(
                   children: [
                     SizedBox(
-                          height: 38,
-                              width: 38,
-                          child: TextButton(
-                            onPressed: () {launch("https://discord.gg/XufcBNu277");},
-                            child: Image.network(
-                              "https://i.ibb.co/Nr7Psjm/discord.png",
-                              color: Color.fromARGB(255, 196, 196, 196),
-                              
-                            ),)
-                        ),
+                        height: 38,
+                        width: 38,
+                        child: TextButton(
+                          onPressed: () {
+                            launch("https://discord.gg/XufcBNu277");
+                          },
+                          child: Image.network(
+                            "https://i.ibb.co/Nr7Psjm/discord.png",
+                            color: Color.fromARGB(255, 196, 196, 196),
+                          ),
+                        )),
                     SizedBox(
                       height: 38,
                       width: 38,
-                      child: TextButton(
-                        child: Icon(Icons.info),
-                        onPressed: (){}),
+                      child:
+                          TextButton(child: Icon(Icons.info), onPressed: () {}),
                     )
                   ],
                 ),
               ),
               Spacer(),
-               Container(
-               height: 49,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                        border: Border.all(width: 0.1 , color: Theme.of(context).indicatorColor ),
-                        color: Theme.of(context).indicatorColor.withOpacity(0.05)
+              Container(
+                  height: 49,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                      border: Border.all(
+                          width: 0.1, color: Theme.of(context).indicatorColor),
+                      color:
+                          Theme.of(context).indicatorColor.withOpacity(0.05)),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.connect_without_contact_sharp,
+                        size: 29,
+                        color:
+                            Theme.of(context).indicatorColor.withOpacity(0.7),
                       ),
-              child: Row(
-                children: [
-                  Icon(Icons.connect_without_contact_sharp, size: 29,
-                  color: Theme.of(context).indicatorColor.withOpacity(0.7),
-                  ),
-                  const SizedBox(width: 12),
-                  Text( Human().chain.name
-                  ,style: GoogleFonts.changa(
-                    color: Theme.of(context).indicatorColor.withOpacity(0.7),
-                    fontSize: 19),
-                  )
-                ],
+                      const SizedBox(width: 12),
+                      Text(
+                        Human().chain.name,
+                        style: GoogleFonts.changa(
+                            color: Theme.of(context)
+                                .indicatorColor
+                                .withOpacity(0.7),
+                            fontSize: 19),
+                      )
+                    ],
+                  )),
+              const SizedBox(width: 20),
+              const Padding(
+                padding: EdgeInsets.only(top: 1.0, right: 15),
+                child: WalletBTN(),
               )
-             ),
-            const SizedBox(width: 20 ),
-            const Padding(
-                 padding: EdgeInsets.only(top:1.0, right:15),
-              child: WalletBTN(),
-            )
-             ],
-           ), 
+            ],
+          ),
           // actions: <Widget>[
-           
-             
+
           // ],
         ),
       ),
@@ -154,8 +155,8 @@ class WalletButton extends StatefulWidget {
 
 class _WalletButtonState extends State<WalletButton> {
   bool _isConnecting = false;
-   // Assuming this state is managed
-    // Assuming this is a placeholder
+  // Assuming this state is managed
+  // Assuming this is a placeholder
 
   void _connectWallet() {
     setState(() {
@@ -173,11 +174,11 @@ class _WalletButtonState extends State<WalletButton> {
   @override
   Widget build(BuildContext context) {
     if (_isConnecting) {
-  return SizedBox(
-    width: 180,
-    child: LinearProgressIndicator(),
-  );
-}
+      return SizedBox(
+        width: 180,
+        child: LinearProgressIndicator(),
+      );
+    }
 
     if (!isConnected) {
       return SizedBox(
@@ -224,9 +225,3 @@ class _WalletButtonState extends State<WalletButton> {
     );
   }
 }
-
-
-
-
-
-

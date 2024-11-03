@@ -18,7 +18,6 @@ class Org {
       this.description,
       this.govTokenAddress});
   DateTime? creationDate;
-
   Map<String, Member> memberAddresses = {};
   Token? govToken;
   String? symbol;
@@ -126,10 +125,8 @@ class Org {
         .collection("proposals");
     var proposalsSnapshot = await pollsCollection.get();
     for (var doc in proposalsSnapshot.docs) {
-      Proposal p = Proposal(
-          org: this,
-          type: doc.data()['type'],
-          name: doc.data()['title'] ?? "No title");
+      Proposal p = Proposal(org: this, name: doc.data()['title'] ?? "No title");
+      p.type = doc.data()['type'];
       p.against = doc.data()['against'];
       p.inFavor = doc.data()['inFavor'];
       p.callData = doc.data()['calldata'];
@@ -148,6 +145,14 @@ class Org {
       p.statusHistory = statusHistoryMap.map((key, value) {
         return MapEntry(key, (value as Timestamp).toDate());
       });
+      p.callDatas = List<Map<dynamic, dynamic>>.from(doc['callDatas']);
+
+      // p.callDatas = [
+      //   callDatasMap.map((key, value) {
+      //     return MapEntry(key, value);
+      //   })
+      // ];
+
       p.getStatus();
       p.transactions = (doc.data()['transactions'] as List<dynamic>).map((tx) {
         return Txaction(

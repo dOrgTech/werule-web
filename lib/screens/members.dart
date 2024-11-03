@@ -48,22 +48,3 @@ class _MembersState extends State<Members> {
     );
   }
 }
-
-class Pills extends StatelessWidget {
-  const Pills({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    Proposal p = Proposal(org: orgs[0], type: "transfer");
-    List<Widget> pills = [];
-    for (String s in statuses) {
-      Widget sp = p.statusPill(s, context);
-      pills.add(Container(width: 200, padding: EdgeInsets.all(9), child: sp));
-    }
-    return Container(
-      child: Column(
-        children: pills,
-      ),
-    );
-  }
-}

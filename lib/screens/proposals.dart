@@ -26,7 +26,7 @@ class Proposals extends StatefulWidget {
 }
 
 class _ProposalsState extends State<Proposals> {
-  Proposal p = Proposal(org: orgs[0], type: "transfer");
+  Proposal p = Proposal(org: orgs[0]);
   String? selectedType = 'All';
   List<String> typesDropdown = [
     'All',
@@ -263,7 +263,7 @@ class ProposalList extends StatefulWidget {
 class ProposalListState extends State<ProposalList> {
   @override
   Widget build(BuildContext context) {
-    widget.p = Proposal(org: widget.org, type: "transfer");
+    widget.p = Proposal(org: widget.org);
     widget.p.author =
         Human().address ?? "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
     widget.p.callData = "0x";

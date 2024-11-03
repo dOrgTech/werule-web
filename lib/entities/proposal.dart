@@ -68,16 +68,16 @@ class Txaction {
   }
 }
 
-final List<String> statuses = [
-  "pending",
-  "active",
-  "passed",
-  "executable",
-  "executed",
-  "expired",
-  "no quorum",
-  "rejected"
-];
+enum ProposalStatus {
+  pending,
+  active,
+  passed,
+  executable,
+  executed,
+  expired,
+  noQuorum,
+  rejected
+}
 
 class Proposal {
   late int id;
@@ -107,7 +107,7 @@ class Proposal {
   String? externalResource;
   List<Txaction> transactions = [];
   List<Vote> votes = [];
-  Proposal({required this.org, required this.type, this.name}) {
+  Proposal({required this.org, this.name}) {
     id = (org.proposals.isNotEmpty)
         ? org.proposals.map((p) => p.id).reduce((a, b) => a > b ? a : b) + 1
         : 1;
@@ -156,6 +156,9 @@ class Proposal {
       'author': author,
       'calldata': callData,
       'createdAt': createdAt,
+      'callDatas': callDatas,
+      'targets': targets,
+      'values': values,
       'statusHistory': statusHistory.map((key, value) {
         return MapEntry(key, Timestamp.fromDate(value));
       }),
@@ -167,6 +170,108 @@ class Proposal {
       'externalResource': externalResource,
       'transactions': transactions.map((tx) => tx.toJson()).toList(),
     };
+  }
+
+  ProposalStatus get stage {
+    DateTime start = statusHistory["pending"]!;
+    Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
+    Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
+    Duration executionAvailability =
+        Duration(minutes: org.executionAvailability ?? 0);
+    DateTime activeStart = start.add(votingDelay);
+    DateTime votingEnd = activeStart.add(votingDuration);
+    DateTime executionDeadline = votingEnd.add(executionAvailability);
+    BigInt totalVotes = BigInt.parse(inFavor) + BigInt.parse(against);
+    BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
+    double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
+
+    DateTime now = DateTime.now();
+    ProposalStatus newStatus;
+    if (statusHistory.containsKey("executed")) {
+      DateTime executionTime = statusHistory['executed'] ?? executionDeadline;
+      DateTime queueTime = statusHistory['executable'] ?? votingEnd;
+      status = "executed";
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+      statusHistory.addAll({"executable": queueTime});
+      statusHistory.addAll({status: executionTime});
+      return ProposalStatus.executed;
+    } else if (statusHistory.containsKey("executable")) {
+      DateTime queueTime = statusHistory['executable'] ?? votingEnd;
+      status = "executable";
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+      statusHistory.addAll({"executable": queueTime});
+      return ProposalStatus.executable;
+    }
+
+    if (now.isBefore(activeStart)) {
+      newStatus = ProposalStatus.pending;
+    } else if (now.isBefore(votingEnd)) {
+      newStatus = ProposalStatus.active;
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      status = "active";
+      return newStatus;
+    } else {
+      // Voting has ended, check votes and quorum
+      if (votePercentage < org.quorum) {
+        newStatus = ProposalStatus.noQuorum;
+        statusHistory.clear();
+        statusHistory.addAll({"pending": start});
+        statusHistory.addAll({"active": activeStart});
+        statusHistory.addAll({"no quorum": votingEnd});
+        status = "no quorum";
+        return newStatus;
+      } else if ((BigInt.parse(inFavor) > BigInt.parse(against)) &&
+          now.isBefore(executionDeadline)) {
+        newStatus = ProposalStatus.passed;
+        statusHistory.clear();
+        statusHistory.addAll({"pending": start});
+        statusHistory.addAll({"active": activeStart});
+        statusHistory.addAll({"passed": votingEnd});
+        status = "passed";
+        return newStatus;
+      } else if ((BigInt.parse(inFavor) > BigInt.parse(against)) &&
+          now.isAfter(executionDeadline)) {
+        newStatus = ProposalStatus.expired;
+        statusHistory.clear();
+        statusHistory.addAll({"pending": start});
+        statusHistory.addAll({"active": activeStart});
+        statusHistory.addAll({"passed": votingEnd});
+        statusHistory.addAll({"expired": executionDeadline});
+        status = "expired";
+        return newStatus;
+      } else {
+        // Proposal is rejected
+        newStatus = ProposalStatus.rejected;
+        statusHistory.clear();
+        statusHistory.addAll({"pending": start});
+        statusHistory.addAll({"active": activeStart});
+        statusHistory.addAll({"rejected": votingEnd});
+        status = "rejected";
+        return newStatus;
+      }
+    }
+
+    String latestStatus = statusHistory.entries
+        .reduce((a, b) => a.value.isAfter(b.value) ? a : b)
+        .key;
+
+    if (latestStatus == "executable") {
+      if (now.isBefore(executionDeadline)) {
+        return ProposalStatus.executable;
+      } else {
+        return ProposalStatus.expired;
+      }
+    }
+
+    return newStatus;
   }
 
   String getStatus() {

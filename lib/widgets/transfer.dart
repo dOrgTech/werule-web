@@ -34,6 +34,13 @@ class TransferWidget extends StatefulWidget {
 }
 
 class _TransferWidgetState extends State<TransferWidget> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    widget.p.type = "transfer";
+  }
+
   bool isSubmitEnabled = false;
   List<Map<String, dynamic>> transactions = [
     {
@@ -144,11 +151,7 @@ class _TransferWidgetState extends State<TransferWidget> {
 
     // Print the list of transactions
     print(transactionList);
-    try {
-      // await makeProposal();
-    } on Exception catch (e) {
-      print("Exception from the main try " + e.toString());
-    }
+
     setState(() {
       widget.stage = -1;
     });
@@ -158,6 +161,7 @@ class _TransferWidgetState extends State<TransferWidget> {
         .set(widget.p.toJson());
     widget.org.proposals.add(widget.p);
     widget.org.proposals = widget.org.proposals.reversed.toList();
+    widget.p.status = "pending";
 
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => Scaffold(

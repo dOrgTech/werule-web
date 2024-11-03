@@ -552,28 +552,20 @@ class _GovernanceTokenOperationSwitcherState
 }
 
 class RegistryProposalDetails extends StatelessWidget {
-  final String keyName;
-  final String value;
+  Proposal p;
 
-  RegistryProposalDetails({
-    required this.keyName,
-    required this.value,
-  });
+  RegistryProposalDetails({required this.p});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey, width: 0.3),
-        color: Color.fromARGB(255, 28, 28, 28),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow("Key:", keyName),
+          _buildDetailRow("Key:", p.callDatas[0].keys.first.toString()),
           SizedBox(height: 10),
-          _buildDetailRow("Value:", value),
+          _buildDetailRow("Value:", p.callDatas[0].values.first.toString()),
         ],
       ),
     );
@@ -601,7 +593,7 @@ class RegistryProposalDetails extends StatelessWidget {
                 color: Colors.grey[900],
               ),
               child: Text(
-                value,
+                " " + value,
                 style: TextStyle(color: Colors.white),
               ),
             ),

@@ -31,17 +31,12 @@ class AccountState extends State<Account> {
   Widget build(BuildContext context) {
     ProposalCard p1 = ProposalCard(
         org: orgs[0],
-        proposal: Proposal(
-            type: "New Project",
-            name: "Engagement with another DAO",
-            org: orgs[0]));
+        proposal: Proposal(name: "Engagement with another DAO", org: orgs[0]));
     p1.type = "votedOn";
     ProposalCard p2 = ProposalCard(
         org: orgs[0],
         proposal: Proposal(
-            type: "Transfer",
-            name: "Title of the proposal (nax. 80 characters)",
-            org: orgs[0]));
+            name: "Title of the proposal (nax. 80 characters)", org: orgs[0]));
     p2.type = "votedOn";
     p2.option = 1;
     widget.proposals.addAll([p1, p2]);
