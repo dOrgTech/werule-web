@@ -20,24 +20,77 @@ import '../widgets/footer.dart';
 import '../widgets/menu.dart';
 import '../widgets/propDetailsWidgets.dart';
 import 'dao.dart';
+import 'dart:async';
 
 const Color supportColor = Color.fromARGB(255, 20, 78, 49);
 const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
 
 class ProposalDetails extends StatefulWidget {
-  int id;
-  ProposalDetails({super.key, required this.id, required this.p});
-  Proposal p;
+  // int id;
+  ProposalDetails({super.key, required this.p});
+  final Proposal p;
   bool enabled = false;
-  String? status;
+  // String? status;
   bool busy = false;
+  bool showCountdown = false;
+  late int remainingSeconds;
+  BigInt votesFor = BigInt.zero;
+  BigInt votesAgainst = BigInt.zero;
+
   @override
   State<ProposalDetails> createState() => ProposalDetailsState();
 }
 
 class ProposalDetailsState extends State<ProposalDetails> {
+  Timer? _statusCheckTimer;
+  late String stage;
+  String support = "";
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    stage = widget.p.stage.toString().split(".").last;
+    if (stage == "noQuorum") {
+      stage = "no quorum";
+      widget.showCountdown = false;
+    }
+    print("stage: " + stage);
+
+    if (stage == "active" || stage == "pending" || stage == "executable") {
+      setState(() {
+        widget.remainingSeconds = widget.p.getRemainingTime()!.inSeconds;
+      });
+      widget.showCountdown = true;
+      _statusCheckTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+        setState(() {
+          stage = widget.p.stage.toString().split(".").last;
+          if (stage == "passed" || stage == "executed" || stage == "rejected") {
+            widget.showCountdown = false;
+            timer.cancel();
+          }
+          if (stage == "noQuorum") {
+            stage = "no quorum";
+            widget.showCountdown = false;
+            timer.cancel();
+          }
+
+          widget.remainingSeconds--;
+        });
+      });
+    } else {
+      widget.showCountdown = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _statusCheckTimer?.cancel();
+    super.dispose();
+  }
+
   Widget actions() {
-    if (widget.p.status == "passed") {
+    if (stage == "passed") {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
@@ -53,22 +106,20 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 await queueProposal();
                 print("queue");
                 widget.p.statusHistory.addAll({"executable": DateTime.now()});
-                widget.p.status = "executable";
                 await widget.p.store();
                 setState(() {
+                  stage = widget.p.stage.toString().split(".").last;
+                  widget.remainingSeconds =
+                      widget.p.getRemainingTime()!.inSeconds;
+                  widget.showCountdown = true;
                   widget.busy = false;
                 });
-                Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => DAO(
-                        org: widget.p.org,
-                        InitialTabIndex: 1,
-                        proposalId: widget.p.id)));
               },
               child: const Text("Queue for execution",
                   style: TextStyle(fontSize: 12))),
         ),
       );
-    } else if (widget.p.status == "executable") {
+    } else if (stage == "executable") {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
@@ -81,11 +132,12 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 setState(() {
                   widget.busy = true;
                 });
-                await execute(widget.p.transactions[0].recipient,
-                    widget.p.transactions[0].value.toString());
+                // await execute(widget.p.transactions[0].recipient,
+                //     widget.p.transactions[0].value.toString());
+                await execute("ceva", "altceva");
                 print("execute");
                 widget.p.statusHistory.addAll({"executed": DateTime.now()});
-                widget.p.status = "executed";
+
                 await widget.p.store();
                 setState(() {
                   widget.busy = false;
@@ -94,7 +146,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
               child: const Text("EXECUTE", style: TextStyle(fontSize: 12))),
         ),
       );
-    } else if (widget.p.status == "executed") {
+    } else if (stage == "executed") {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
@@ -129,24 +181,25 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         Vote v = Vote(
                             castAt: DateTime.now(),
                             option: 1,
-                            votingPower: "2000000000",
+                            votingPower: "12000",
                             voter: generateWalletAddress(),
-                            proposalID: widget.p.id);
+                            proposalHash: widget.p.hash);
                         setState(() {
                           widget.busy = true;
-                          widget.p.votes.add(v);
                         });
-                        // await vote();
+                        await vote();
                         await widget.p.castVote(v);
-                        setState(() async {
+                        setState(() {
                           widget.busy = false;
+                          widget.votesFor = BigInt.parse(widget.p.inFavor);
+                          widget.votesAgainst = BigInt.parse(widget.p.against);
                         });
 
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(
-                            builder: (context) => DAO(
-                                org: widget.p.org,
-                                InitialTabIndex: 1,
-                                proposalId: widget.p.id)));
+                        // Navigator.of(context).pushReplacement(MaterialPageRoute(
+                        //     builder: (context) => DAO(
+                        //         org: widget.p.org,
+                        //         InitialTabIndex: 1,
+                        //         proposalId: widget.p.id)));
                         print("vote added");
                       }
                     : null,
@@ -180,22 +233,16 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         Vote v = Vote(
                             castAt: DateTime.now(),
                             option: 0,
-                            votingPower: "142000000",
+                            votingPower: "14200",
                             voter: generateWalletAddress(),
-                            proposalID: widget.p.id);
+                            proposalHash: widget.p.hash);
                         try {
                           await widget.p.castVote(v);
                           widget.p.votes.add(v);
-
                           print("vote added");
                         } on Exception catch (e) {
                           print("error adding vote" + e.toString());
                         }
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(
-                            builder: (context) => DAO(
-                                org: widget.p.org,
-                                InitialTabIndex: 1,
-                                proposalId: widget.p.id)));
                       }
                     : null,
                 style: ButtonStyle(
@@ -234,9 +281,10 @@ class ProposalDetailsState extends State<ProposalDetails> {
 
   @override
   Widget build(BuildContext context) {
-    widget.status = widget.p.getStatus();
+    bool expired = false;
+    stage == "active" ? widget.enabled = true : widget.enabled = false;
+    stage == "expired" ? widget.showCountdown = false : expired = true;
 
-    widget.status == "active" ? widget.enabled = true : widget.enabled = false;
     BigInt totalVotes =
         BigInt.parse(widget.p.inFavor) + BigInt.parse(widget.p.against);
     double inFavorPercentage = BigInt.parse(widget.p.inFavor) / totalVotes;
@@ -259,7 +307,13 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 alignment: Alignment.topLeft,
                 child: TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => DAO(
+                                    InitialTabIndex: 1,
+                                    org: widget.p.org,
+                                  )));
                     },
                     child: const Text("< Back to all proposals"))),
             const SizedBox(height: 10),
@@ -297,7 +351,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         child: Row(
                           children: [
                             const SizedBox(width: 10),
-                            widget.p.statusPill(widget.status!, context),
+                            widget.p.statusPill(stage, context),
                             const SizedBox(width: 20),
                             Text("${widget.p.type!} proposal"),
                             const SizedBox(width: 10),
@@ -424,13 +478,18 @@ class ProposalDetailsState extends State<ProposalDetails> {
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const SizedBox(height: 24),
-                                CountdownTimerWidget(
-                                  duration: widget.p.getRemainingTime(),
-                                  status: widget.status!,
-                                  stare: this,
+                                const SizedBox(height: 9),
+                                ActionLabel(
+                                  status: stage,
                                 ),
-                                const SizedBox(height: 70),
+                                widget.showCountdown
+                                    ? Container(
+                                        padding: EdgeInsets.only(top: 22),
+                                        child: Transform.scale(
+                                            scale: 0.8,
+                                            child: _buildCountdownDisplay()))
+                                    : Text(""),
+                                const SizedBox(height: 32),
                                 actions()
                               ],
                             ),
@@ -466,7 +525,6 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 const SizedBox(width: 32),
                                 ElevatedButton(
                                     onPressed: () {
-                                      print(widget.p.statusHistory);
                                       showDialog(
                                           context: context,
                                           builder: (context) => AlertDialog(
@@ -536,7 +594,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                           Padding(
                               padding: EdgeInsets.symmetric(horizontal: 28.0),
                               child: SizedBox(
-                                  height: 10,
+                                  height: 12,
                                   width: double.infinity,
                                   child: ElectionResultBar(
                                       inFavor: BigInt.parse(widget.p.inFavor),
@@ -556,7 +614,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                             fontWeight: FontWeight.normal))),
                                 const SizedBox(width: 13),
                                 Text(
-                                    "${(BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor)) / BigInt.from(pow(10, widget.p.org.decimals!))} (${(turnout * 100).toString()}%)",
+                                    "${(BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor)) / BigInt.from(pow(10, widget.p.org.decimals!))} (${(turnout * 100).toStringAsFixed(2)}%)",
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold)),
                                 const Spacer(),
@@ -575,7 +633,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                           Padding(
                               padding: EdgeInsets.symmetric(horizontal: 28.0),
                               child: SizedBox(
-                                  height: 10,
+                                  height: 12,
                                   width: double.infinity,
                                   child: ParticipationBar(
                                       totalVoters: BigInt.parse(
@@ -631,7 +689,14 @@ class ProposalDetailsState extends State<ProposalDetails> {
                               )
                             : widget.p.type == "registry"
                                 ? RegistryProposalDetails(p: widget.p)
-                                : Text("")),
+                                : widget.p.type == "contract call"
+                                    ? ContractCall(p: widget.p)
+                                    : widget.p.type!.contains("mint") ||
+                                            widget.p.type!.contains("burn")
+                                        ? GovernanceTokenOperationDetails(
+                                            p: widget.p,
+                                          )
+                                        : Text("")),
                   ),
                 ),
               ],
@@ -642,16 +707,68 @@ class ProposalDetailsState extends State<ProposalDetails> {
       ),
     );
   }
+
+  String _formatTime(int value) => value.toString().padLeft(2, '0');
+
+  // Helper method to format the countdown as days, hours, minutes, and seconds
+  Widget _buildCountdownDisplay() {
+    final days = widget.remainingSeconds ~/ (24 * 3600);
+    final hours = (widget.remainingSeconds % (24 * 3600)) ~/ 3600;
+    final minutes = (widget.remainingSeconds % 3600) ~/ 60;
+    final seconds = widget.remainingSeconds % 60;
+
+    // Determine which units to display based on the remaining time
+    final timeUnits = <MapEntry<String, int>>[];
+
+    if (days > 0) {
+      timeUnits.add(MapEntry("Days", days));
+      timeUnits.add(MapEntry("Hours", hours));
+      timeUnits.add(MapEntry("Minutes", minutes));
+    } else if (hours > 0) {
+      timeUnits.add(MapEntry("Hours", hours));
+      timeUnits.add(MapEntry("Minutes", minutes));
+    } else if (minutes > 0) {
+      timeUnits.add(MapEntry("Minutes", minutes));
+    }
+
+    // Always show seconds as the smallest unit
+    timeUnits.add(MapEntry("Seconds", seconds));
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: timeUnits.map((entry) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Column(
+            children: [
+              Text(
+                entry.key,
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color.fromARGB(255, 238, 238, 238)),
+              ),
+              SizedBox(height: 5),
+              Text(
+                _formatTime(entry.value),
+                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
 }
 
 class ElectionResultBar extends StatefulWidget {
   final BigInt inFavor;
   final BigInt against;
+
   const ElectionResultBar({
-    Key? key,
     required this.inFavor,
     required this.against,
-  }) : super(key: key);
+  });
 
   @override
   _ElectionResultBarState createState() => _ElectionResultBarState();
@@ -664,18 +781,28 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateBar();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant ElectionResultBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Trigger re-animation if inFavor or against values change
+    if (widget.inFavor != oldWidget.inFavor ||
+        widget.against != oldWidget.against) {
+      _animateBar();
+    }
   }
 
   void _animateBar() {
     setState(() {
       BigInt totalVotes = widget.inFavor + widget.against;
       if (totalVotes > BigInt.zero) {
-        _inFavorWidth = widget.inFavor / totalVotes;
-        _againstWidth = widget.against / totalVotes;
+        _inFavorWidth = widget.inFavor.toDouble() / totalVotes.toDouble();
+        _againstWidth = widget.against.toDouble() / totalVotes.toDouble();
       } else {
         // No votes case: both widths should be zero
         _inFavorWidth = 0;
@@ -697,18 +824,13 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
       );
     }
 
-    double inFavorPercentage = widget.inFavor / totalVotes;
-    double againstPercentage = widget.against / totalVotes;
-
     return LayoutBuilder(
       builder: (context, constraints) {
         double barWidth = constraints.maxWidth;
         double maxDuration = 800; // Maximum total duration in milliseconds
 
         // The larger portion determines the animation duration
-        double maxPercentage = inFavorPercentage > againstPercentage
-            ? inFavorPercentage
-            : againstPercentage;
+        double maxPercentage = max(_inFavorWidth, _againstWidth);
         int durationInMillis = (maxDuration * maxPercentage).toInt();
 
         return Row(
@@ -737,14 +859,13 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
 class ParticipationBar extends StatefulWidget {
   final BigInt totalVoters;
   final BigInt turnout;
-  final int quorum; // Provided as a percentage, e.g., 50.0 for 50%
+  final int quorum; // Provided as a percentage, e.g., 50 for 50%
 
   const ParticipationBar({
-    Key? key,
     required this.totalVoters,
     required this.turnout,
     required this.quorum,
-  }) : super(key: key);
+  });
 
   @override
   _ParticipationBarState createState() => _ParticipationBarState();
@@ -756,50 +877,69 @@ class _ParticipationBarState extends State<ParticipationBar> {
   @override
   void initState() {
     super.initState();
-    print("turnout from widget: " + widget.turnout.toString());
-    print("total votes: " + widget.totalVoters.toString());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateTurnout();
     });
   }
 
+  @override
+  void didUpdateWidget(covariant ParticipationBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Recalculate turnout width if turnout or totalVoters change
+    if (widget.turnout != oldWidget.turnout ||
+        widget.totalVoters != oldWidget.totalVoters) {
+      _animateTurnout();
+    }
+  }
+
   void _animateTurnout() {
     setState(() {
-      _turnoutWidth = widget.turnout /
-          widget.totalVoters; // Calculate the turnout percentage
+      // Convert BigInt to double for correct calculation
+      if (widget.totalVoters > BigInt.zero) {
+        _turnoutWidth =
+            widget.turnout.toDouble() / widget.totalVoters.toDouble();
+      } else {
+        _turnoutWidth = 0; // No voters case
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    double turnoutPercentage = (widget.turnout / widget.totalVoters) * 100;
-    double quorumPosition =
-        widget.quorum / 100; // Quorum as a fraction (0 to 1)
+    // Calculate turnout and quorum positions for display
+    double turnoutPercentage =
+        (widget.turnout.toDouble() / widget.totalVoters.toDouble()) * 100;
+    double quorumPosition = widget.quorum / 100; // Convert quorum to a fraction
+
     return LayoutBuilder(
       builder: (context, constraints) {
         double barWidth =
             constraints.maxWidth; // Get the actual width of the widget
+
         return Stack(
           children: [
+            // Background for total possible votes
             Container(
               height: 20,
-              width: barWidth, // Total width based on available space
-              color: Colors.grey[700], // Dark grey for total possible votes
+              width: barWidth,
+              color: Colors.grey[700], // Dark grey
             ),
+            // Animated container for turnout portion
             AnimatedContainer(
-              width: barWidth *
-                  _turnoutWidth, // Use the actual widget width for turnout
+              width: barWidth * _turnoutWidth, // Width proportional to turnout
               height: 20,
               color: Colors.grey[400], // Light grey for turnout
               duration: const Duration(milliseconds: 800),
               curve: Curves.easeInOut,
             ),
+            // Quorum marker
             Positioned(
               left: quorumPosition *
-                  barWidth, // Calculate quorum position relative to bar width
+                  barWidth, // Position based on quorum percentage
               child: Container(
-                height: 15, // Height of the quorum marker
-                width: 6, // Small vertical line for quorum
+                height: 15,
+                width: 6, // Small vertical line for quorum marker
                 color: Colors.black, // Marker color
               ),
             ),
@@ -826,7 +966,7 @@ class _VotesModalState extends State<VotesModal> {
         .collection("daos${Human().chain.name}")
         .doc(widget.p.org.address)
         .collection("proposals")
-        .doc(widget.p.id.toString())
+        .doc(widget.p.hash.toString())
         .collection("votes");
 
     var votesSnapshot = await votesCollection.get();
@@ -835,7 +975,7 @@ class _VotesModalState extends State<VotesModal> {
       widget.p.votes.add(Vote(
         votingPower: doc.data()['weight'],
         voter: doc.id,
-        proposalID: widget.p.id,
+        proposalHash: widget.p.hash,
         option: doc.data()['option'],
         castAt: (doc.data()['cast'] != null)
             ? (doc.data()['cast'] as Timestamp).toDate()

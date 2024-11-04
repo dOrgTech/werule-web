@@ -234,11 +234,10 @@ class _ProposalsState extends State<Proposals> {
             ),
           )
         : ProposalDetails(
-            id: widget.proposalID!,
             p: widget.org.proposals.firstWhere(
-              (proposal) => proposal.id == widget.proposalID,
-              // Returns null if no matching proposal is found
-            ));
+            (proposal) => proposal.id == widget.proposalID,
+            // Returns null if no matching proposal is found
+          ));
   }
 
   Widget noProposals() {

@@ -124,11 +124,14 @@ class Org {
         .doc(address)
         .collection("proposals");
     var proposalsSnapshot = await pollsCollection.get();
+    print("lungimea la docomente " + proposalsSnapshot.docs.length.toString());
     for (var doc in proposalsSnapshot.docs) {
+      print("saide una");
       Proposal p = Proposal(org: this, name: doc.data()['title'] ?? "No title");
       p.type = doc.data()['type'];
       p.against = doc.data()['against'];
       p.inFavor = doc.data()['inFavor'];
+      p.hash = doc.id.toString();
       p.callData = doc.data()['calldata'];
       p.createdAt = (doc.data()['createdAt'] as Timestamp).toDate();
       p.turnoutPercent = doc.data()['turnoutPercent'];
@@ -138,7 +141,6 @@ class Org {
       p.externalResource =
           doc.data()['externalResource'] ?? "(no external resource)";
       p.description = doc.data()['description'] ?? "no description";
-
       proposals.add(p);
       proposalIDs!.add(doc.id);
       var statusHistoryMap = doc['statusHistory'] as Map<String, dynamic>;

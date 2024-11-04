@@ -7,6 +7,7 @@ import 'package:Homebase/screens/members.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
 import 'package:Homebase/widgets/newProposal.dart';
+import 'package:Homebase/widgets/pdetails.dart';
 import 'package:Homebase/widgets/propDetailsWidgets.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:Homebase/widgets/statemgmt.dart';
@@ -99,9 +100,11 @@ persist() async {
     org.holders = doc.data()['holders'];
     org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
     org.totalSupply = doc.data()['totalSupply'];
+    // await org.getProposals();
     orgs.add(org);
   }
   print("orgs length: " + orgs.length.toString());
+  print("proposal is " + orgs[0].proposals.length.toString());
 }
 
 void main() async {
@@ -126,6 +129,37 @@ class MyApp extends StatelessWidget {
     //   print("are metamask");
     //     Human().metamask=true;
     // }
+    Proposal p;
+    // if (orgs[0].proposals.isEmpty) {
+    //   p = Proposal(org: orgs[0]);
+    //   p.author =
+    //       Human().address ?? "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
+    //   p.name = "sarmalele reci";
+    //   p.description = "ce sa facem ca sa fie facut";
+    //   p.createdAt = DateTime.now();
+    //   p.targets = ["0xdestinationcontractad4099F664A08EEb"];
+    //   p.values = ["0"];
+    //   p.hash = makeProposal();
+    //   // p.externalResource = "asdasdasd";
+    //   // p.status = "active";
+    //   p.type = "mint " + orgs[0].symbol.toString();
+    //   p.callDatas = [
+    //     {
+    //       "recipient1address": "100000",
+    //     }
+    //   ];
+    //   // p.callDatas = [
+    //   //   {
+    //   //     "endpoint": "changeString",
+    //   //     "params": {
+    //   //       "changingItToThis": ["newValue", "string"]
+    //   //     }
+    //   //   }
+    //   // ];
+    //   p.store();
+    // } else {
+    //   p = orgs[0].proposals[0];
+    // }
 
     return MaterialApp(
       //remove debug banner
@@ -149,11 +183,13 @@ class MyApp extends StatelessWidget {
               //  DaoSetupWizard())
               // Center(child: TransferWidget(org: orgs[0],)))
               // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
-              // RegistryProposalWidget())
-              //         MyHomePage(
-              //   title: "ceva",
-              // ))
-              // ElephantStatusWidget(elephant: elephant))
+
+              // ProposalDetails(
+              //     // p: orgs[0].proposals[0]))
+              //     p: p))
+              // DAO(org: orgs[0], InitialTabIndex: 1, proposalHash: p.hash
+              //     // orgs[0].proposals[0].hash.toString(),
+              //     ))
               Explorer()),
     );
   }
@@ -170,22 +206,6 @@ class MyHomePage extends StatefulWidget {
 class MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    Proposal p = Proposal(org: orgs[0]);
-    p.author = Human().address ?? "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
-    p.name = "Call a contract";
-    p.description = "to do something";
-    p.createdAt = DateTime.now();
-    p.targets = ["0xdestinationcontractad4099F664A08EEb"];
-    p.values = ["0"];
-    p.callDatas = [
-      {
-        "endpoint": "changeString",
-        "params": {
-          "changingItToThis": ["newValue", "string"]
-        }
-      }
-    ];
-
     return Scaffold(
         // body:  DelegationBoxes()
         // body: NewProposal(org: orgs[0])

@@ -104,7 +104,7 @@ class Proposal {
   String against = "0";
   int votesFor = 0;
   int votesAgainst = 0;
-  String? externalResource;
+  String? externalResource = "(no link provided)";
   List<Txaction> transactions = [];
   List<Vote> votes = [];
   Proposal({required this.org, this.name}) {
@@ -118,7 +118,7 @@ class Proposal {
         .collection("daos${Human().chain.name}")
         .doc(org.address)
         .collection("proposals")
-        .doc(id.toString())
+        .doc(hash.toString())
         .collection("votes");
     votesCollection.add(v.toJson());
 
@@ -135,7 +135,7 @@ class Proposal {
         .collection("daos${Human().chain.name}")
         .doc(org.address)
         .collection("proposals");
-    pollsCollection.doc(id.toString()).set(this.toJson());
+    pollsCollection.doc(hash.toString()).set(this.toJson());
     votes.add(v);
   }
 
@@ -144,7 +144,7 @@ class Proposal {
         .collection("daos${Human().chain.name}")
         .doc(org.address)
         .collection("proposals");
-    pollsCollection.doc(id.toString()).set(this.toJson());
+    pollsCollection.doc(hash).set(toJson());
   }
 
   toJson() {
@@ -180,15 +180,14 @@ class Proposal {
         Duration(minutes: org.executionAvailability ?? 0);
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
-    DateTime executionDeadline = votingEnd.add(executionAvailability);
+    // DateTime executionDeadline = votingEnd.add(executionAvailability);
     BigInt totalVotes = BigInt.parse(inFavor) + BigInt.parse(against);
     BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
     double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
-
     DateTime now = DateTime.now();
     ProposalStatus newStatus;
     if (statusHistory.containsKey("executed")) {
-      DateTime executionTime = statusHistory['executed'] ?? executionDeadline;
+      DateTime executionTime = statusHistory['executed'] ?? DateTime.now();
       DateTime queueTime = statusHistory['executable'] ?? votingEnd;
       status = "executed";
       statusHistory.clear();
@@ -206,6 +205,12 @@ class Proposal {
       statusHistory.addAll({"active": activeStart});
       statusHistory.addAll({"passed": votingEnd});
       statusHistory.addAll({"executable": queueTime});
+      if (DateTime.now().isAfter(queueTime.add(executionAvailability))) {
+        status = "expired";
+        statusHistory.addAll({"expired": queueTime.add(executionAvailability)});
+
+        return ProposalStatus.expired;
+      }
       return ProposalStatus.executable;
     }
 
@@ -228,24 +233,13 @@ class Proposal {
         statusHistory.addAll({"no quorum": votingEnd});
         status = "no quorum";
         return newStatus;
-      } else if ((BigInt.parse(inFavor) > BigInt.parse(against)) &&
-          now.isBefore(executionDeadline)) {
+      } else if (BigInt.parse(inFavor) > BigInt.parse(against)) {
         newStatus = ProposalStatus.passed;
         statusHistory.clear();
         statusHistory.addAll({"pending": start});
         statusHistory.addAll({"active": activeStart});
         statusHistory.addAll({"passed": votingEnd});
         status = "passed";
-        return newStatus;
-      } else if ((BigInt.parse(inFavor) > BigInt.parse(against)) &&
-          now.isAfter(executionDeadline)) {
-        newStatus = ProposalStatus.expired;
-        statusHistory.clear();
-        statusHistory.addAll({"pending": start});
-        statusHistory.addAll({"active": activeStart});
-        statusHistory.addAll({"passed": votingEnd});
-        statusHistory.addAll({"expired": executionDeadline});
-        status = "expired";
         return newStatus;
       } else {
         // Proposal is rejected
@@ -262,15 +256,6 @@ class Proposal {
     String latestStatus = statusHistory.entries
         .reduce((a, b) => a.value.isAfter(b.value) ? a : b)
         .key;
-
-    if (latestStatus == "executable") {
-      if (now.isBefore(executionDeadline)) {
-        return ProposalStatus.executable;
-      } else {
-        return ProposalStatus.expired;
-      }
-    }
-
     return newStatus;
   }
 
@@ -386,10 +371,9 @@ class Proposal {
     Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
     Duration executionAvailability =
         Duration(minutes: org.executionAvailability ?? 0);
-
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
-    DateTime executionDeadline = votingEnd.add(executionAvailability);
+    // DateTime executionDeadline = votingEnd.add(executionAvailability);
 
     DateTime now = DateTime.now();
 
@@ -399,7 +383,9 @@ class Proposal {
     } else if (now.isBefore(votingEnd)) {
       // Time remaining in "active" status
       return votingEnd.difference(now);
-    } else if (now.isBefore(executionDeadline)) {
+    } else if (stage == ProposalStatus.executable) {
+      DateTime queuedTime = statusHistory["executable"]!;
+      DateTime executionDeadline = queuedTime.add(executionAvailability);
       // Time remaining in "executable" status
       return executionDeadline.difference(now);
     }
@@ -540,14 +526,13 @@ class Vote {
   String? voter;
   String? hash;
   String? proposalHash;
-  int proposalID;
   int option;
   String votingPower;
   DateTime? castAt;
   Vote(
       {required this.votingPower,
       required this.voter,
-      required this.proposalID,
+      required this.proposalHash,
       required this.option,
       required castAt});
 

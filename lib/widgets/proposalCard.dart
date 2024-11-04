@@ -27,9 +27,9 @@ class _ProposalCardState extends State<ProposalCard> {
   @override
   void initState() {
     status = widget.proposal.stage.toString().split('.').last;
-    // if (status == "noQuorum") {
-    //   status = "no quorum";
-    // }
+    if (status == "noQuorum") {
+      status = "no quorum";
+    }
     super.initState();
     if (!(status == "rejected") &&
         !(status == "executed") &&
@@ -45,8 +45,18 @@ class _ProposalCardState extends State<ProposalCard> {
   }
 
   @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _timer?.cancel();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final status = widget.proposal.stage.toString().split('.').last;
+    status = widget.proposal.stage.toString().split('.').last;
+    if (status == "noQuorum") {
+      status = "no quorum";
+    }
     return widget.type == "proposals"
         ? proposals(context)
         : widget.type == "votedOn"
@@ -72,7 +82,7 @@ class _ProposalCardState extends State<ProposalCard> {
                     builder: (context) => DAO(
                           InitialTabIndex: 1,
                           org: widget.org,
-                          proposalId: widget.proposal.id,
+                          proposalHash: widget.proposal.hash,
                         )));
           },
           child: SizedBox(
@@ -121,12 +131,7 @@ class _ProposalCardState extends State<ProposalCard> {
                     height: 20,
                     width: 110,
                     child: Center(
-                        child: widget.proposal.statusPill(
-                            widget.proposal.statusHistory.entries
-                                .reduce(
-                                    (a, b) => a.value.isAfter(b.value) ? a : b)
-                                .key,
-                            context))),
+                        child: widget.proposal.statusPill(status, context))),
               ],
             ),
           ),
@@ -149,7 +154,7 @@ class _ProposalCardState extends State<ProposalCard> {
                     builder: (context) => DAO(
                           InitialTabIndex: 1,
                           org: widget.org,
-                          proposalId: widget.proposal.id,
+                          proposalHash: widget.proposal.hash,
                         )));
           },
           child: SizedBox(
@@ -190,12 +195,7 @@ class _ProposalCardState extends State<ProposalCard> {
                     height: 20,
                     width: 110,
                     child: Center(
-                        child: widget.proposal.statusPill(
-                            widget.proposal.statusHistory.entries
-                                .reduce(
-                                    (a, b) => a.value.isAfter(b.value) ? a : b)
-                                .key,
-                            context))),
+                        child: widget.proposal.statusPill(status, context))),
               ],
             ),
           ),

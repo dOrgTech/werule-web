@@ -165,6 +165,7 @@ class ContractCall extends StatelessWidget {
       ));
     });
     return Container(
+      padding: EdgeInsets.only(top: 16.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Row(
           children: [
@@ -192,39 +193,6 @@ class ContractCall extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: Text("on contract:"))),
             SizedBox(width: 9),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Transform.scale(
-                scale: 0.7,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: FutureBuilder<Uint8List>(
-                    future: generateAvatarAsync(p.targets[0]),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: CircularProgressIndicator(),
-                        ); // Placeholder while loading
-                      } else if (snapshot.hasData) {
-                        return Image.memory(
-                          snapshot.data!,
-                          width: 40,
-                          height: 40,
-                        ); // Render the generated avatar
-                      } else {
-                        return SizedBox(
-                          width: 40,
-                          height: 40,
-                        ); // Placeholder if there's an error
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 4),
             Text(
               getShortAddress(p.targets[0]),
               style: TextStyle(fontSize: 14),
@@ -441,28 +409,28 @@ class _DaoConfigurationDetailsSwitcherState
 }
 
 class GovernanceTokenOperationDetails extends StatelessWidget {
-  final String operationType;
-  final String targetAddress;
-  final String amount;
+  final Proposal p;
 
-  GovernanceTokenOperationDetails({
-    required this.operationType,
-    required this.targetAddress,
-    required this.amount,
-  });
-
+  GovernanceTokenOperationDetails({required this.p});
   @override
   Widget build(BuildContext context) {
+    String operationType = p.type!.split(" ").first;
+    operationType = operationType[0].toUpperCase() +
+        operationType.substring(1).toLowerCase();
+    // String operationType = "Mint";
+    String targetAddress =
+        p.callDatas[0].keys.first.toString() ?? "targetaddressaiodnsinoasin";
+    String amount = p.callDatas[0].values.first.toString() ?? "10000";
     return Container(
       padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey, width: 0.3),
-        color: Color.fromARGB(255, 28, 28, 28),
-      ),
+      // decoration: BoxDecoration(
+      //   border: Border.all(color: Colors.grey, width: 0.3),
+      //   color: Color.fromARGB(255, 28, 28, 28),
+      // ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(operationType + " Governance Tokens"),
+          Text(operationType + " " + p.org.symbol! + " tokens"),
           SizedBox(height: 30),
           _buildDetailRow(
               operationType == "Mint" ? "To Address:" : "From Address",
@@ -503,50 +471,6 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// Helper widget for development
-class GovernanceTokenOperationSwitcher extends StatefulWidget {
-  @override
-  _GovernanceTokenOperationSwitcherState createState() =>
-      _GovernanceTokenOperationSwitcherState();
-}
-
-class _GovernanceTokenOperationSwitcherState
-    extends State<GovernanceTokenOperationSwitcher> {
-  String selectedOperationType = "Mint";
-
-  // Sample data for testing
-  String targetAddress = "0x1234567890abcdef1234567890abcdef12345678";
-  String amount = "1000";
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        DropdownButton<String>(
-          value: selectedOperationType,
-          items: ["Mint", "Burn"]
-              .map((type) => DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedOperationType = value!;
-            });
-          },
-        ),
-        SizedBox(height: 20),
-        GovernanceTokenOperationDetails(
-          operationType: selectedOperationType,
-          targetAddress: targetAddress,
-          amount: amount,
-        ),
-      ],
     );
   }
 }
