@@ -111,7 +111,7 @@ class _DAOState extends State<DAO> {
                                       )),
                                     ),
                               // Center(child: Treasury()),
-                              Center(child: Registry()),
+                              Center(child: Registry(org: widget.org)),
                               Center(child: Members(org: widget.org)),
                               Center(child: Account(org: widget.org)),
                             ],

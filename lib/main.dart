@@ -99,8 +99,9 @@ persist() async {
     org.supermajority = doc.data()['supermajority'];
     org.holders = doc.data()['holders'];
     org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
+    org.registry = Map<String, String>.from(doc.data()['registry']);
     org.totalSupply = doc.data()['totalSupply'];
-    // await org.getProposals();
+    await org.getProposals();
     orgs.add(org);
   }
   print("orgs length: " + orgs.length.toString());
@@ -122,15 +123,15 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    //   if (ethereum==null){
-    //    print("n-are metamask");
-    //     Human().metamask=false;
-    // }else{
+    // if (ethereum == null) {
+    //   print("n-are metamask");
+    //   Human().metamask = false;
+    // } else {
     //   print("are metamask");
-    //     Human().metamask=true;
+    //   Human().metamask = true;
     // }
     Proposal p;
-    // if (orgs[0].proposals.isEmpty) {
+    // if (true) {
     //   p = Proposal(org: orgs[0]);
     //   p.author =
     //       Human().address ?? "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
@@ -140,22 +141,24 @@ class MyApp extends StatelessWidget {
     //   p.targets = ["0xdestinationcontractad4099F664A08EEb"];
     //   p.values = ["0"];
     //   p.hash = makeProposal();
-    //   // p.externalResource = "asdasdasd";
-    //   // p.status = "active";
-    //   p.type = "mint " + orgs[0].symbol.toString();
-    //   p.callDatas = [
-    //     {
-    //       "recipient1address": "100000",
-    //     }
-    //   ];
+    //   p.externalResource = "asdasdasd";
+    //   p.status = "active";
+    //   p.type = "contract call";
+    //   // p.type = "mint " + orgs[0].symbol.toString();
+    //   // p.type = "mint " + orgs[0].symbol.toString();
     //   // p.callDatas = [
     //   //   {
-    //   //     "endpoint": "changeString",
-    //   //     "params": {
-    //   //       "changingItToThis": ["newValue", "string"]
-    //   //     }
+    //   //     "recipient1address": "100000",
     //   //   }
     //   // ];
+    //   p.callDatas = [
+    //     {
+    //       "endpoint": "changeString",
+    //       "params": {
+    //         "changingItToThis": ["newValue", "string"]
+    //       }
+    //     }
+    //   ];
     //   p.store();
     // } else {
     //   p = orgs[0].proposals[0];
@@ -180,7 +183,7 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
           body:
-              //  DaoSetupWizard())
+              // DaoSetupWizard()
               // Center(child: TransferWidget(org: orgs[0],)))
               // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
 
@@ -280,19 +283,6 @@ class _WalletBTNState extends State<WalletBTN> {
                             metamask,
                             height: 100,
                           ),
-                          const Icon(
-                            Icons.arrow_right_alt,
-                            size: 40,
-                          ),
-                          const SizedBox(
-                            width: 14,
-                          ),
-                          Image.network(
-                              "https://i.ibb.co/sFqQxYP/Icon-maskable-192.png",
-                              height: 70),
-                          const SizedBox(
-                            width: 13,
-                          ),
                         ],
                       ),
                       const SizedBox(
@@ -332,8 +322,8 @@ class _WalletBTNState extends State<WalletBTN> {
               human.busy = false;
             });
           } else {
-            Navigator.of(context).push(
-                MaterialPageRoute(builder: ((context) => const Explorer())));
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: ((context) => Explorer())));
           }
         }
       },

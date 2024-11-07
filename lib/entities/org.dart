@@ -22,6 +22,7 @@ class Org {
   Token? govToken;
   String? symbol;
   int? decimals;
+  String? proposalThreshold;
   String? totalSupply;
   bool nonTransferrable = false;
   String? govTokenAddress;
@@ -31,6 +32,7 @@ class Org {
   late String name;
   String? description;
   Map<String, String> treasuryMap = {};
+  Map<String, String> registry = {};
   Map<Token, String> treasury = {};
   String? address;
   int holders = 1;
@@ -56,6 +58,10 @@ class Org {
         treasury[matchingToken] = value;
       }
     });
+  }
+
+  populateRegistry() async {
+    registry = {};
   }
 
   getMembers() async {
@@ -180,6 +186,7 @@ class Org {
       'symbol': symbol,
       'decimals': decimals,
       'proposals': proposalIDs,
+      'registry': registry,
       'treasury': treasury,
       'votingDelay': votingDelay,
       'totalSupply': totalSupply,

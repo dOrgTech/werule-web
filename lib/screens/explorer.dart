@@ -2,6 +2,7 @@ import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
+import '../entities/human.dart';
 import '../entities/token.dart';
 import '../main.dart';
 import '../widgets/gameOfLife.dart';
@@ -12,13 +13,25 @@ import '../widgets/footer.dart';
 import 'creator.dart';
 
 class Explorer extends StatefulWidget {
-  const Explorer({super.key});
-
+  Explorer({super.key});
+  Widget? game;
   @override
   State<Explorer> createState() => _ExplorerState();
 }
 
 class _ExplorerState extends State<Explorer> {
+  @override
+  void initState() {
+    widget.game = Container();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    widget.game = SizedBox();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     print("building explorer" + orgs.length.toString());
@@ -102,6 +115,8 @@ class _ExplorerState extends State<Explorer> {
                                                       body: DaoSetupWizard())));
                                         },
                                         style: TextButton.styleFrom(
+                                            disabledBackgroundColor:
+                                                Colors.grey,
                                             elevation: 5,
                                             backgroundColor: Theme.of(context)
                                                 .indicatorColor

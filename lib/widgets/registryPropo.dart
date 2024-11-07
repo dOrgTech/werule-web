@@ -38,9 +38,7 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
-      // widget.onSubmit(_keyController.text, _valueController.text);
-    }
+    if (_formKey.currentState!.validate()) {}
   }
 
   finishSettingInfo() {
@@ -108,6 +106,7 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                             await widget.org.pollsCollection
                                 .doc(widget.p.id.toString())
                                 .set(widget.p.toJson());
+
                             widget.org.proposals.add(widget.p);
                             widget.org.proposals =
                                 widget.org.proposals.reversed.toList();

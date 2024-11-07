@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-
-
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -14,13 +12,14 @@ class GameOfLife extends StatefulWidget {
 }
 
 class _GameOfLifeState extends State<GameOfLife> {
-  // late List<List<int>> grid; 
+  // late List<List<int>> grid;
   List<List<int>> grid = [];
   Timer? timer;
   int rows = 10;
   int cols = 10;
   final double resolution = 60;
-  final double initialProbability = 0.3; // 30% chance for each cell to be alive initially
+  final double initialProbability =
+      0.3; // 30% chance for each cell to be alive initially
 
   @override
   void initState() {
@@ -38,11 +37,15 @@ class _GameOfLifeState extends State<GameOfLife> {
     final screenSize = MediaQuery.of(context).size;
     cols = (screenSize.width / resolution).floor();
     rows = (screenSize.height / resolution).floor();
-    
-    // Adjusted to initialize grid with initial probability correctly
-    grid = List.generate(cols, (_) => List.generate(rows, (_) => Random().nextDouble() < initialProbability ? 1 : 0));
 
-    timer = Timer.periodic(Duration(milliseconds: 120), (Timer t) => _updateGrid());
+    // Adjusted to initialize grid with initial probability correctly
+    grid = List.generate(
+        cols,
+        (_) => List.generate(
+            rows, (_) => Random().nextDouble() < initialProbability ? 1 : 0));
+
+    timer =
+        Timer.periodic(Duration(milliseconds: 120), (Timer t) => _updateGrid());
   }
 
   void _updateGrid() {
@@ -51,24 +54,24 @@ class _GameOfLifeState extends State<GameOfLife> {
     });
   }
 
-
   List<List<int>> _computeNext(List<List<int>> oldGrid) {
-    List<List<int>> newGrid = List.generate(cols, (_) => List.generate(rows, (_) => 0));
+    List<List<int>> newGrid =
+        List.generate(cols, (_) => List.generate(rows, (_) => 0));
     for (int i = 0; i < cols; i++) {
       for (int j = 0; j < rows; j++) {
         int state = oldGrid[i][j];
         int neighbours = _countNeighbours(oldGrid, i, j);
 
         if (state == 0 && neighbours == 3) {
- newGrid[i][j] = 1; // Birth condition
-} else if (state == 1 && (neighbours < 2 || neighbours > 3)) {
-  newGrid[i][j] = Random().nextDouble() > 0.1 ? 0 : 1; // Death condition with a small chance to survive
-} else {
-  newGrid[i][j] = state;
-}
-
-
-       }
+          newGrid[i][j] = 1; // Birth condition
+        } else if (state == 1 && (neighbours < 2 || neighbours > 3)) {
+          newGrid[i][j] = Random().nextDouble() > 0.1
+              ? 0
+              : 1; // Death condition with a small chance to survive
+        } else {
+          newGrid[i][j] = state;
+        }
+      }
     }
     return newGrid;
   }
@@ -98,7 +101,7 @@ class _GameOfLifeState extends State<GameOfLife> {
     if (grid == null) {
       return Center(child: CircularProgressIndicator());
     }
-    
+
     return Scaffold(
       body: CustomPaint(
         painter: GameOfLifePainter(grid, resolution),
@@ -111,6 +114,7 @@ class _GameOfLifeState extends State<GameOfLife> {
     );
   }
 }
+
 class GameOfLifePainter extends CustomPainter {
   final List<List<int>> grid;
   final double resolution;
@@ -119,7 +123,8 @@ class GameOfLifePainter extends CustomPainter {
 
   GameOfLifePainter(this.grid, this.resolution)
       : cellPaint = Paint()..color = Color.fromARGB(255, 109, 109, 109),
-        borderPaint = Paint()..color = Color.fromARGB(255, 190, 190, 190); // Border color
+        borderPaint = Paint()
+          ..color = Color.fromARGB(255, 190, 190, 190); // Border color
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -130,16 +135,19 @@ class GameOfLifePainter extends CustomPainter {
       for (int j = 0; j < grid[i].length; j++) {
         if (grid[i][j] == 1) {
           // Draw the main cell
-          canvas.drawRect(Rect.fromLTWH(i * resolution, j * resolution, resolution, resolution), cellPaint);
+          canvas.drawRect(
+              Rect.fromLTWH(
+                  i * resolution, j * resolution, resolution, resolution),
+              cellPaint);
 
           // Draw the border (smaller rectangle inside)
           canvas.drawRect(
-            Rect.fromLTWH(
-              i * resolution + borderSize,
-              j * resolution + borderSize,
-              resolution - borderSize * 2,
-              resolution - borderSize * 2),
-            borderPaint);
+              Rect.fromLTWH(
+                  i * resolution + borderSize,
+                  j * resolution + borderSize,
+                  resolution - borderSize * 2,
+                  resolution - borderSize * 2),
+              borderPaint);
         }
       }
     }
@@ -148,5 +156,3 @@ class GameOfLifePainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
-
-

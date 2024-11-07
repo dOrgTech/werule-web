@@ -139,6 +139,9 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 widget.p.statusHistory.addAll({"executed": DateTime.now()});
 
                 await widget.p.store();
+                await daosCollection
+                    .doc(widget.p.org.address)
+                    .set(widget.p.org.toJson());
                 setState(() {
                   widget.busy = false;
                 });

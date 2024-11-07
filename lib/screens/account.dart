@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:Homebase/screens/creator.dart';
+// import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/members.dart';
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
@@ -19,7 +19,7 @@ Color listTitleColor = const Color.fromARGB(255, 211, 211, 211);
 class Account extends StatefulWidget {
   Account({super.key, this.member, required this.org});
   int status = 0;
-  List<Widget> proposals = [];
+  List<Widget> createdProposals = [];
   Member? member;
   Org org;
   @override
@@ -29,17 +29,14 @@ class Account extends StatefulWidget {
 class AccountState extends State<Account> {
   @override
   Widget build(BuildContext context) {
-    ProposalCard p1 = ProposalCard(
-        org: orgs[0],
-        proposal: Proposal(name: "Engagement with another DAO", org: orgs[0]));
-    p1.type = "votedOn";
-    ProposalCard p2 = ProposalCard(
-        org: orgs[0],
-        proposal: Proposal(
-            name: "Title of the proposal (nax. 80 characters)", org: orgs[0]));
-    p2.type = "votedOn";
-    p2.option = 1;
-    widget.proposals.addAll([p1, p2]);
+    for (Proposal p in widget.org.proposals) {
+      if (p.author!.toLowerCase() == Human().address!.toLowerCase()) {
+        widget.createdProposals.add(ProposalCard(
+          proposal: p,
+          org: widget.org,
+        ));
+      }
+    }
 
     return Human().address == null
         ? notSignedin()
@@ -358,7 +355,7 @@ class AccountState extends State<Account> {
                     ),
                   ),
                 ),
-                ...widget.proposals
+                ...widget.createdProposals
               ],
             ),
           ),
