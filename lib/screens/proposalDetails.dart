@@ -699,7 +699,16 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         ? GovernanceTokenOperationDetails(
                                             p: widget.p,
                                           )
-                                        : Text("")),
+                                        : widget.p.type!.contains("quorum") ||
+                                                widget.p.type!
+                                                    .contains("voting delay") ||
+                                                widget.p.type!.contains(
+                                                    "voting period") ||
+                                                widget.p.type!
+                                                    .contains("treasury")
+                                            ? DaoConfigurationDetails(
+                                                p: widget.p)
+                                            : Text("")),
                   ),
                 ),
               ],

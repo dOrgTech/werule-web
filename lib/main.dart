@@ -92,20 +92,17 @@ persist() async {
     org.govTokenAddress = doc.data()['token'];
     org.votingDelay = doc.data()['votingDelay'];
     org.votingDuration = doc.data()['votingDuration'];
-    org.executionAvailability = doc.data()['executionAvailability'];
+    org.executionDelay = doc.data()['executionDelay'];
     org.quorum = doc.data()['quorum'];
     // org.quorum=20;
     org.decimals = doc.data()['decimals'];
-    org.supermajority = doc.data()['supermajority'];
     org.holders = doc.data()['holders'];
     org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
     org.registry = Map<String, String>.from(doc.data()['registry']);
     org.totalSupply = doc.data()['totalSupply'];
-    await org.getProposals();
+    // await org.getProposals();
     orgs.add(org);
   }
-  print("orgs length: " + orgs.length.toString());
-  print("proposal is " + orgs[0].proposals.length.toString());
 }
 
 void main() async {
@@ -123,14 +120,14 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    // if (ethereum == null) {
-    //   print("n-are metamask");
-    //   Human().metamask = false;
-    // } else {
-    //   print("are metamask");
-    //   Human().metamask = true;
-    // }
-    Proposal p;
+    if (ethereum == null) {
+      print("n-are metamask");
+      Human().metamask = false;
+    } else {
+      print("are metamask");
+      Human().metamask = true;
+    }
+    // Proposal p;
     // if (true) {
     //   p = Proposal(org: orgs[0]);
     //   p.author =
@@ -143,7 +140,7 @@ class MyApp extends StatelessWidget {
     //   p.hash = makeProposal();
     //   p.externalResource = "asdasdasd";
     //   p.status = "active";
-    //   p.type = "contract call";
+    //   p.type = "treasury";
     //   // p.type = "mint " + orgs[0].symbol.toString();
     //   // p.type = "mint " + orgs[0].symbol.toString();
     //   // p.callDatas = [
@@ -152,12 +149,7 @@ class MyApp extends StatelessWidget {
     //   //   }
     //   // ];
     //   p.callDatas = [
-    //     {
-    //       "endpoint": "changeString",
-    //       "params": {
-    //         "changingItToThis": ["newValue", "string"]
-    //       }
-    //     }
+    //     {"treasuryAddress": "0x09a8ud02398du203987dyas8ouroyaiudy37"}
     //   ];
     //   p.store();
     // } else {
@@ -165,36 +157,36 @@ class MyApp extends StatelessWidget {
     // }
 
     return MaterialApp(
-      //remove debug banner
-      debugShowCheckedModeBanner: false,
-      title: 'Homebase',
-      theme: ThemeData(
-        fontFamily: 'CascadiaCode',
-        splashColor: const Color(0xff000000),
-        indicatorColor: Color.fromARGB(255, 161, 215, 219),
-        dividerColor: createMaterialColor(const Color(0xffcfc099)),
-        brightness: Brightness.dark,
-        hintColor: Colors.white70,
-        primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
-        highlightColor: const Color(0xff6e6e6e),
-        // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
-        primarySwatch:
-            createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
-      ),
-      home: Scaffold(
-          body:
-              // DaoSetupWizard()
-              // Center(child: TransferWidget(org: orgs[0],)))
-              // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
+        //remove debug banner
+        debugShowCheckedModeBanner: false,
+        title: 'Homebase',
+        theme: ThemeData(
+          fontFamily: 'CascadiaCode',
+          splashColor: const Color(0xff000000),
+          indicatorColor: Color.fromARGB(255, 161, 215, 219),
+          dividerColor: createMaterialColor(const Color(0xffcfc099)),
+          brightness: Brightness.dark,
+          hintColor: Colors.white70,
+          primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
+          highlightColor: const Color(0xff6e6e6e),
+          // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
+          primarySwatch:
+              createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
+        ),
+        home:
+            // Scaffold(body: DaoSetupWizard())
+            // Center(child: TransferWidget(org: orgs[0],)))
+            // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
 
-              // ProposalDetails(
-              //     // p: orgs[0].proposals[0]))
-              //     p: p))
-              // DAO(org: orgs[0], InitialTabIndex: 1, proposalHash: p.hash
-              //     // orgs[0].proposals[0].hash.toString(),
-              //     ))
-              Explorer()),
-    );
+            // ProposalDetails(
+            //     // p: orgs[0].proposals[0]))
+            //     p: p))
+            // DAO(org: orgs[0], InitialTabIndex: 1, proposalHash: p.hash
+            //     // orgs[0].proposals[0].hash.toString(),
+            //     ))
+            Explorer()
+        // ),
+        );
   }
 }
 

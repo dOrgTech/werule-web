@@ -22,7 +22,7 @@ var chains = {
       rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede",
       blockExplorer: "https://sepolia.etherscan.io"),
   "0x1f47b": Chain(
-      wrapperContract: "0x80df3CD253d388938F09e4fB836675Fa447d9351",
+      wrapperContract: "0x5326B1e82Df40DA63E2B6D7256Bb6d98d70d1129",
       id: 128123,
       name: "Etherlink-Testnet",
       nativeSymbol: "XTZ",
@@ -137,10 +137,10 @@ class Human extends ChangeNotifier {
 
   signIn() async {
     print("signing into the thing");
-    address = "0xa9F8F9C0bf3188cEDdb9684ae28655187552bAE9";
-    notifyListeners();
-    refreshPage();
-    return "ok";
+    // address = "0xa9F8F9C0bf3188cEDdb9684ae28655187552bAE9";
+    // notifyListeners();
+    // refreshPage();
+    // return "ok";
     try {
       var accounts = await promiseToFuture(
         ethereum!.request(

@@ -1,5 +1,4 @@
 import 'dart:js_util';
-
 import 'package:Homebase/entities/abis.dart';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/utils/functions.dart';
@@ -107,37 +106,46 @@ getTreasuryAddress(position) async {
 }
 
 createDAO(Org org, state) async {
-  return [
-    "dao${generateWalletAddress()}",
-    "token${generateWalletAddress()}",
-    "treasury${generateWalletAddress()}"
-  ];
-  print(
-      " wrapper contract address " + Human().chain.wrapperContract.toString());
+  List<String> amounts = [];
+  List<String> initialMembers = [];
+  for (String adresa in org.memberAddresses.keys) {
+    initialMembers.add(adresa);
+  }
+
+  amounts = org.memberAddresses.values
+      .map((member) =>
+          BigInt.parse(member.personalBalance.toString()).toString())
+      .toList();
+  amounts.addAll([
+    org.votingDelay.toString(),
+    org.votingDuration.toString(),
+    org.proposalThreshold.toString(),
+    org.quorum.toString(),
+  ]);
+  print("wrapper contract address " + Human().chain.wrapperContract.toString());
   print("web3 is of type " + Human().web3user.toString());
   var sourceContract = Contract(
       Human().chain.wrapperContract, wrapperAbiStringGlobal, Human().web3user);
   print("facuram contractu");
   try {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed ok");
-    final transaction =
-        await promiseToFuture(callMethod(sourceContract, "deployDAOwithToken", [
+    print("signed oki");
+
+    final parameters = [
       org.name, // string
       org.govToken!.symbol, // string
-      [
-        "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb",
-        "0xA6A40E0b6DB5a6f808703DBe91DbE50B7FC1fa3E",
-        "0x6EF597F8155BC561421800de48852c46e73d9D19"
-      ], // array of strings (addresses)
-      [
-        "470000000000000000000",
-        "18000000000000000000",
-        "36000000000000000000"
-      ], // array of strings representing uint256
-      "1", // string representing uint48
-      "2", // string representing uint32
-    ]));
+      org.decimals.toString(),
+      org.executionDelay.toString(),
+      initialMembers, // array of strings (addresses)
+      amounts
+    ];
+    print("made params");
+    for (var param in parameters) {
+      print('Parameter: $param, Type: ${param.runtimeType}');
+    }
+
+    final transaction = await promiseToFuture(
+        callMethod(sourceContract, "deployDAOwithToken", parameters));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
 

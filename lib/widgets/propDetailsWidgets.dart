@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'dart:async';
 import 'dart:math';
 import 'package:image/image.dart' as img;
-
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
 
@@ -194,7 +193,8 @@ class ContractCall extends StatelessWidget {
                     child: Text("on contract:"))),
             SizedBox(width: 9),
             Text(
-              getShortAddress(p.targets[0]),
+              getShortAddress(p.targets[0].toString()),
+              // "ndwq89hdp197hdqpo98shdp9q8723hp98qh9"),
               style: TextStyle(fontSize: 14),
             ),
             TextButton(
@@ -224,19 +224,17 @@ class ContractCall extends StatelessWidget {
 }
 
 class DaoConfigurationDetails extends StatelessWidget {
-  final String type;
-  final Map<String, dynamic> proposalData;
+  final Proposal p;
 
-  DaoConfigurationDetails({required this.type, required this.proposalData});
+  DaoConfigurationDetails({required this.p});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey, width: 0.3),
-        color: Color.fromARGB(255, 28, 28, 28),
-      ),
+          // border: Border.all(color: Colors.grey, width: 0.3),
+          ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -251,7 +249,7 @@ class DaoConfigurationDetails extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Text(
-                type,
+                p.type!,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -261,22 +259,24 @@ class DaoConfigurationDetails extends StatelessWidget {
             ],
           ),
           SizedBox(height: 20),
-          _buildDetailsSection(type),
+          _buildDetailsSection(context, p.type!),
         ],
       ),
     );
   }
 
-  Widget _buildDetailsSection(String type) {
+  Widget _buildDetailsSection(context, String type) {
     switch (type) {
-      case "Quorum":
+      case "quorum":
         return _buildQuorumDetails();
-      case "Voting Delay":
-        return _buildDurationDetails("Duration", proposalData['duration']);
-      case "Voting Period":
-        return _buildDurationDetails("Duration", proposalData['duration']);
-      case "Switch Treasury":
-        return _buildTreasuryDetails(proposalData['treasuryAddress']);
+      case "voting delay":
+        return _buildDurationDetails(
+            "new voting delay", p.callDatas[0]['duration']);
+      case "voting period":
+        return _buildDurationDetails("Duration", p.callDatas[0]['duration']);
+      case "treasury":
+        return _buildTreasuryDetails(
+            context, p.callDatas[0]['treasuryAddress']);
       default:
         return SizedBox.shrink();
     }
@@ -286,29 +286,34 @@ class DaoConfigurationDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRow("Parameter:", "Quorum"),
-        _buildRow("Value:", "${proposalData['quorum']}%"),
+        _buildRow("Parameter:", "new quorum (percentage)"),
+        _buildRow("Value:", "${p.callDatas[0]['quorum']}%"),
       ],
     );
   }
 
-  Widget _buildDurationDetails(String title, Map<String, int> duration) {
+  Widget _buildDurationDetails(String title, String totalMinutes) {
+    final totalMinutesInt = int.parse(totalMinutes);
+    final days = totalMinutesInt ~/ (24 * 60);
+    final hours = (totalMinutesInt % (24 * 60)) ~/ 60;
+    final minutes = totalMinutesInt % 60;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildRow("Parameter:", title),
-        _buildRow("Days:", "${duration['days']}"),
-        _buildRow("Hours:", "${duration['hours']}"),
-        _buildRow("Minutes:", "${duration['minutes']}"),
+        _buildRow("Days:", "$days"),
+        _buildRow("Hours:", "$hours"),
+        _buildRow("Minutes:", "$minutes"),
       ],
     );
   }
 
-  Widget _buildTreasuryDetails(String treasuryAddress) {
+  Widget _buildTreasuryDetails(context, String treasuryAddress) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRow("Parameter:", "Treasury Address"),
+        _buildRow("Parameter:", "new treasury (address)"),
         Row(
           children: [
             SizedBox(
@@ -325,9 +330,23 @@ class DaoConfigurationDetails extends StatelessWidget {
                 border: Border.all(color: Colors.grey, width: 0.2),
                 color: Colors.grey[900],
               ),
-              child: Text(
-                treasuryAddress,
-                style: TextStyle(color: Colors.white),
+              child: Row(
+                children: [
+                  Text(
+                    treasuryAddress,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  TextButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                duration: Duration(seconds: 1),
+                                content: Center(
+                                    child:
+                                        Text('Address copied to clipboard'))));
+                      },
+                      child: Icon(Icons.copy))
+                ],
               ),
             ),
           ],
@@ -362,48 +381,6 @@ class DaoConfigurationDetails extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// Helper widget for development
-class DaoConfigurationDetailsSwitcher extends StatefulWidget {
-  @override
-  _DaoConfigurationDetailsSwitcherState createState() =>
-      _DaoConfigurationDetailsSwitcherState();
-}
-
-class _DaoConfigurationDetailsSwitcherState
-    extends State<DaoConfigurationDetailsSwitcher> {
-  String selectedType = "Quorum";
-
-  Map<String, dynamic> proposalData = {
-    'quorum': 10,
-    'duration': {'days': 0, 'hours': 2, 'minutes': 30},
-    'treasuryAddress': "0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF"
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        DropdownButton<String>(
-          value: selectedType,
-          items: ["Quorum", "Voting Delay", "Voting Period", "Switch Treasury"]
-              .map((type) => DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedType = value!;
-            });
-          },
-        ),
-        SizedBox(height: 20),
-        DaoConfigurationDetails(type: selectedType, proposalData: proposalData),
-      ],
     );
   }
 }

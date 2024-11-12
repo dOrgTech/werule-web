@@ -319,12 +319,8 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   width: 300,
                   child: CheckboxListTile(
                     title: const Text('Non-transferrable'),
-                    value: _nonTransferrable,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _nonTransferrable = value ?? false;
-                      });
-                    },
+                    value: true,
+                    onChanged: null,
                   ),
                 ),
                 const SizedBox(height: 56),
@@ -376,7 +372,7 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
   void initState() {
     super.initState();
     _quorumThreshold = widget.daoConfig.quorumThreshold?.toDouble() ?? 0;
-    _proposalThreshold = widget.daoConfig.proposalThreshold!.toDouble() ?? 1;
+    _proposalThreshold = widget.daoConfig.proposalThreshold!.toDouble() ?? 1.0;
     _supermajority = widget.daoConfig.supermajority; // Default at 75%
     thresholdController.text = widget.daoConfig.proposalThreshold.toString();
   }
@@ -516,12 +512,9 @@ class _Screen4DurationsState extends State<Screen4Durations> {
   late TextEditingController _votingDelayDaysController;
   late TextEditingController _votingDelayHoursController;
   late TextEditingController _votingDelayMinutesController;
-  late TextEditingController
-      _executionAvailabilityDaysController; // New controller
-  late TextEditingController
-      _executionAvailabilityHoursController; // New controller
-  late TextEditingController
-      _executionAvailabilityMinutesController; // New controller
+  late TextEditingController _executionDelayDaysController; // New controller
+  late TextEditingController _executionDelayHoursController; // New controller
+  late TextEditingController _executionDelayMinutesController; // New controller
 
   @override
   void initState() {
@@ -532,12 +525,9 @@ class _Screen4DurationsState extends State<Screen4Durations> {
     _votingDelayDaysController = TextEditingController();
     _votingDelayHoursController = TextEditingController();
     _votingDelayMinutesController = TextEditingController();
-    _executionAvailabilityDaysController =
-        TextEditingController(); // Initialize
-    _executionAvailabilityHoursController =
-        TextEditingController(); // Initialize
-    _executionAvailabilityMinutesController =
-        TextEditingController(); // Initialize
+    _executionDelayDaysController = TextEditingController(); // Initialize
+    _executionDelayHoursController = TextEditingController(); // Initialize
+    _executionDelayMinutesController = TextEditingController(); // Initialize
   }
 
   void _saveAndNext() {
@@ -562,16 +552,16 @@ class _Screen4DurationsState extends State<Screen4Durations> {
         hours: votingDelayHours,
         minutes: votingDelayMinutes);
 
-    int executionAvailabilityDays =
-        int.tryParse(_executionAvailabilityDaysController.text) ?? 0;
-    int executionAvailabilityHours =
-        int.tryParse(_executionAvailabilityHoursController.text) ?? 0;
-    int executionAvailabilityMinutes =
-        int.tryParse(_executionAvailabilityMinutesController.text) ?? 0;
-    widget.daoConfig.executionAvailability = Duration(
-        days: executionAvailabilityDays,
-        hours: executionAvailabilityHours,
-        minutes: executionAvailabilityMinutes);
+    int executionDelayDays =
+        int.tryParse(_executionDelayDaysController.text) ?? 0;
+    int executionDelayHours =
+        int.tryParse(_executionDelayHoursController.text) ?? 0;
+    int executionDelayMinutes =
+        int.tryParse(_executionDelayMinutesController.text) ?? 0;
+    widget.daoConfig.executionDelay = Duration(
+        days: executionDelayDays,
+        hours: executionDelayHours,
+        minutes: executionDelayMinutes);
 
     widget.onNext();
   }
@@ -584,9 +574,9 @@ class _Screen4DurationsState extends State<Screen4Durations> {
     _votingDelayDaysController.dispose();
     _votingDelayHoursController.dispose();
     _votingDelayMinutesController.dispose();
-    _executionAvailabilityDaysController.dispose();
-    _executionAvailabilityHoursController.dispose();
-    _executionAvailabilityMinutesController.dispose();
+    _executionDelayDaysController.dispose();
+    _executionDelayHoursController.dispose();
+    _executionDelayMinutesController.dispose();
     super.dispose();
   }
 
@@ -632,12 +622,12 @@ class _Screen4DurationsState extends State<Screen4Durations> {
             SizedBox(
               width: 500,
               child: DurationInput(
-                title: 'Execution Availability',
+                title: 'Execution Delay',
                 description:
-                    'How long will a passed proposal be available for execution before it expires',
-                daysController: _executionAvailabilityDaysController,
-                hoursController: _executionAvailabilityHoursController,
-                minutesController: _executionAvailabilityMinutesController,
+                    'After the proposal passes and before it can be executed.',
+                daysController: _executionDelayDaysController,
+                hoursController: _executionDelayHoursController,
+                minutesController: _executionDelayMinutesController,
               ),
             ),
             const SizedBox(height: 86),
@@ -1080,7 +1070,7 @@ class Screen6Review extends StatelessWidget {
               Text('Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
               const SizedBox(height: 10),
               Text(
-                  'Execution Availability: ${formatDuration(daoConfig.executionAvailability)}'),
+                  'Execution Availability: ${formatDuration(daoConfig.executionDelay)}'),
               const SizedBox(height: 30),
               const Text('Members:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1253,7 +1243,7 @@ class DaoConfig {
   String? daoDescription;
   String? tokenSymbol;
   String? totalSupply;
-  Map<String, String> registry = {}; // Updated to non-nullable
+  Map<String, String> registry = {};
   int? numberOfDecimals;
   int? proposalThreshold = 1;
   bool nonTransferrable = true;
@@ -1261,32 +1251,9 @@ class DaoConfig {
   double supermajority = 75.0; // Added supermajority field
   Duration? votingDuration;
   Duration? votingDelay;
-  Duration? executionAvailability; // Added execution availability duration
+  Duration? executionDelay; // Added execution availability duration
   List<Member> members = [];
   DaoConfig();
-}
-
-class Member {
-  String address;
-  int amount;
-  String personalBalance;
-  String votingWeight;
-
-  Member({
-    required this.address,
-    required this.amount,
-    required this.personalBalance,
-    required this.votingWeight,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'address': address,
-      'amount': amount,
-      'personalBalance': personalBalance,
-      'votingWeight': votingWeight,
-    };
-  }
 }
 
 // Main wizard widget
@@ -1349,26 +1316,29 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         description: daoConfig.daoDescription,
       );
       widget.org.quorum = daoConfig.quorumThreshold;
-      widget.org.supermajority = daoConfig.supermajority.toInt();
       widget.org.votingDuration = daoConfig.votingDuration?.inMinutes ?? 0;
       widget.org.votingDelay = daoConfig.votingDelay?.inMinutes ?? 0;
-      widget.org.executionAvailability =
-          daoConfig.executionAvailability?.inMinutes ?? 0;
+      widget.org.executionDelay = daoConfig.executionDelay?.inSeconds ?? 0;
       widget.org.holders = daoConfig.members.length;
       widget.org.symbol = daoConfig.tokenSymbol;
-      widget.org.registry = daoConfig.registry;
-      widget.org.nonTransferrable = daoConfig.nonTransferrable;
+      widget.org.registry = {"hello": "there"};
+      widget.org.proposalThreshold =
+          daoConfig.proposalThreshold!.toStringAsFixed(0);
+      widget.org.nonTransferrable = true;
       widget.org.creationDate = DateTime.now();
       widget.org.decimals = daoConfig.numberOfDecimals;
       widget.org.totalSupply = daoConfig.totalSupply.toString();
 
       try {
+        for (Member member in daoConfig.members) {
+          widget.org.memberAddresses[member.address] = member;
+        }
         List<String> results = await createDAO(widget.org, this);
         widget.org.address = results[0];
         widget.org.govTokenAddress = results[1];
         widget.org.treasuryAddress = results[2];
-        await daosCollection.doc(widget.org.address).set(widget.org.toJson());
         orgs.add(widget.org);
+        await daosCollection.doc(widget.org.address).set(widget.org.toJson());
         WriteBatch batch = FirebaseFirestore.instance.batch();
         var membersCollection =
             daosCollection.doc(widget.org.address).collection("members");
@@ -1861,7 +1831,7 @@ class Screen7Review extends StatelessWidget {
               Text('Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
               const SizedBox(height: 10),
               Text(
-                  'Execution Availability: ${formatDuration(daoConfig.executionAvailability)}'),
+                  'Execution Availability: ${formatDuration(daoConfig.executionDelay)}'),
               const SizedBox(height: 30),
               const Text('Members:',
                   style: TextStyle(fontWeight: FontWeight.bold)),

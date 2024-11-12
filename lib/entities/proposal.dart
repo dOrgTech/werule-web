@@ -176,11 +176,10 @@ class Proposal {
     DateTime start = statusHistory["pending"]!;
     Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
     Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    Duration executionAvailability =
-        Duration(minutes: org.executionAvailability ?? 0);
+    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
-    // DateTime executionDeadline = votingEnd.add(executionAvailability);
+    // DateTime executionDeadline = votingEnd.add(executionDelay);
     BigInt totalVotes = BigInt.parse(inFavor) + BigInt.parse(against);
     BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
     double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
@@ -205,9 +204,9 @@ class Proposal {
       statusHistory.addAll({"active": activeStart});
       statusHistory.addAll({"passed": votingEnd});
       statusHistory.addAll({"executable": queueTime});
-      if (DateTime.now().isAfter(queueTime.add(executionAvailability))) {
+      if (DateTime.now().isAfter(queueTime.add(executionDelay))) {
         status = "expired";
-        statusHistory.addAll({"expired": queueTime.add(executionAvailability)});
+        statusHistory.addAll({"expired": queueTime.add(executionDelay)});
 
         return ProposalStatus.expired;
       }
@@ -263,12 +262,11 @@ class Proposal {
     DateTime start = statusHistory["pending"]!;
     Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
     Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    Duration executionAvailability =
-        Duration(minutes: org.executionAvailability ?? 0);
+    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
 
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
-    DateTime executionDeadline = votingEnd.add(executionAvailability);
+    DateTime executionDeadline = votingEnd.add(executionDelay);
 
     BigInt totalVotes = BigInt.parse(inFavor) + BigInt.parse(against);
     BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
@@ -369,11 +367,10 @@ class Proposal {
     DateTime start = statusHistory["pending"]!;
     Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
     Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    Duration executionAvailability =
-        Duration(minutes: org.executionAvailability ?? 0);
+    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
-    // DateTime executionDeadline = votingEnd.add(executionAvailability);
+    // DateTime executionDeadline = votingEnd.add(executionDelay);
 
     DateTime now = DateTime.now();
 
@@ -385,7 +382,7 @@ class Proposal {
       return votingEnd.difference(now);
     } else if (stage == ProposalStatus.executable) {
       DateTime queuedTime = statusHistory["executable"]!;
-      DateTime executionDeadline = queuedTime.add(executionAvailability);
+      DateTime executionDeadline = queuedTime.add(executionDelay);
       // Time remaining in "executable" status
       return executionDeadline.difference(now);
     }

@@ -37,11 +37,10 @@ class Org {
   String? address;
   int holders = 1;
   int quorum = 0;
-  int supermajority = 0;
   int votingDelay = 0;
   int votingDuration = 0;
   String nativeBalance = "0";
-  int executionAvailability = 0;
+  int executionDelay = 0;
 
   populateTreasury() async {
     treasury = {};
@@ -143,6 +142,8 @@ class Org {
       p.turnoutPercent = doc.data()['turnoutPercent'];
       p.author = doc.data()['author'];
       p.votesFor = doc.data()['votesFor'];
+      p.targets = List<String>.from(doc.data()['targets']);
+      p.values = List<String>.from(doc.data()['values']);
       p.votesAgainst = doc.data()['votesAgainst'];
       p.externalResource =
           doc.data()['externalResource'] ?? "(no external resource)";
@@ -191,10 +192,9 @@ class Org {
       'votingDelay': votingDelay,
       'totalSupply': totalSupply,
       'votingDuration': votingDuration,
-      'executionAvailability': executionAvailability,
+      'executionDelay': executionDelay,
       'quorum': quorum,
       'nonTransferrable': nonTransferrable,
-      'supermajority': supermajority
     };
   }
 }

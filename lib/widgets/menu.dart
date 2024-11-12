@@ -47,7 +47,6 @@ class _TopMenuState extends State<TopMenu> {
             children: [
               SizedBox(width: 12),
               Container(
-                width: 170,
                 child: InkWell(
                   hoverColor: Colors.transparent,
                   onTap: () => Navigator.push(
