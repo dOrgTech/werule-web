@@ -28,10 +28,12 @@ class ViewConfig extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 10),
+              Text("DAO configuration", style: TextStyle(fontSize: 20)),
+              SizedBox(height: 30),
               Row(
                 children: [
-                  Text('Contract Address: ' + getShortAddress(org.address!)),
+                  Text(
+                      'DAO Contract Address: ' + getShortAddress(org.address!)),
                   TextButton(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: org.address!));
@@ -45,14 +47,68 @@ class ViewConfig extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 10),
+              Row(
+                children: [
+                  Text('Treasury Contract Address: ' +
+                      getShortAddress(org.treasuryAddress!)),
+                  TextButton(
+                    onPressed: () {
+                      Clipboard.setData(
+                          ClipboardData(text: org.treasuryAddress!));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          duration: Duration(seconds: 1),
+                          content: Center(
+                              child: Text('Address copied to clipboard'))));
+                    },
+                    child: Icon(Icons.copy),
+                  )
+                ],
+              ),
+              SizedBox(height: 10),
+              Row(children: [
+                Text('Registry Contract Address: ' +
+                    getShortAddress(org.registryAddress!)),
+                TextButton(
+                  onPressed: () {
+                    Clipboard.setData(
+                        ClipboardData(text: org.registryAddress!));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        duration: Duration(seconds: 1),
+                        content: Center(
+                            child: Text('Address copied to clipboard'))));
+                  },
+                  child: Icon(Icons.copy),
+                )
+              ]),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Text('Token Contract Address: ' +
+                      getShortAddress(org.govTokenAddress!)),
+                  TextButton(
+                    onPressed: () {
+                      Clipboard.setData(
+                          ClipboardData(text: org.govTokenAddress!));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          duration: Duration(seconds: 1),
+                          content: Center(
+                              child: Text('Address copied to clipboard'))));
+                    },
+                    child: Icon(Icons.copy),
+                  )
+                ],
+              ),
               SizedBox(height: 20),
-              Text('Quorum Threshold: ${org.quorum}%'),
+              Text('Quorum : ${org.quorum}%'),
+              SizedBox(height: 20),
+              Text(
+                  'Proposal Threshold: ${org.proposalThreshold} ${org.symbol}'),
               SizedBox(height: 20),
               Text('Voting Duration (minutes): ${org.votingDuration}'),
               SizedBox(height: 10),
               Text('Voting Delay (minutes): ${org.votingDelay}'),
               SizedBox(height: 10),
-              Text('Execution Availability (minutes): ${org.executionDelay}'),
+              Text('Execution Delay (minutes): ${org.executionDelay / 60}'),
               SizedBox(height: 20),
             ],
           ),

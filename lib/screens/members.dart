@@ -40,7 +40,8 @@ class _MembersState extends State<Members> {
                       // other properties
                     ),
                   ),
-                  Transform.scale(scale: 0.82, child: VotingPowerWidget())
+                  Transform.scale(
+                      scale: 0.82, child: VotingPowerWidget(org: widget.org))
                 ])),
         const SizedBox(height: 30),
         MembersList(org: widget.org),

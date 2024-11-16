@@ -323,6 +323,16 @@ String wrapperAbiGlobal = '''
 				"type": "string"
 			},
 			{
+				"internalType": "uint8",
+				"name": "decimals",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "executionDelay",
+				"type": "uint256"
+			},
+			{
 				"internalType": "address[]",
 				"name": "initialMembers",
 				"type": "address[]"
@@ -331,16 +341,6 @@ String wrapperAbiGlobal = '''
 				"internalType": "uint256[]",
 				"name": "initialAmounts",
 				"type": "uint256[]"
-			},
-			{
-				"internalType": "uint48",
-				"name": "minsDelay",
-				"type": "uint48"
-			},
-			{
-				"internalType": "uint32",
-				"name": "minsVoting",
-				"type": "uint32"
 			}
 		],
 		"name": "deployDAOwithToken",
@@ -357,6 +357,25 @@ String wrapperAbiGlobal = '''
 			}
 		],
 		"name": "deployedDAOs",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "deployedRegistries",
 		"outputs": [
 			{
 				"internalType": "address",

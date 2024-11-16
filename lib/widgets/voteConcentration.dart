@@ -2,7 +2,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:gojs/gojs.dart';
 
+import '../entities/org.dart';
+
 class VotingPowerWidget extends StatefulWidget {
+  Org org;
+  VotingPowerWidget({required this.org});
+
   @override
   _VotingPowerWidgetState createState() => _VotingPowerWidgetState();
 }
@@ -13,50 +18,98 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
   int totalMembers = 0;
   double totalVotingPower = 0;
   double totalGovernanceTokenSupply = 0;
-
+  String? selectedWidgetFeature = 'vote concentration';
+  List<String> concentrationDropdown = [];
   @override
   void initState() {
     super.initState();
     // Generate mock data with more than 2 members
     members = getMembers();
     totalMembers = members.length;
-    totalVotingPower = members.fold(0, (sum, member) => sum + member.votingWeight);
-    totalGovernanceTokenSupply = totalVotingPower; // Assuming totalVotingPower equals total token supply
+    totalVotingPower =
+        members.fold(0, (sum, member) => sum + member.votingWeight);
+    totalGovernanceTokenSupply =
+        totalVotingPower; // Assuming totalVotingPower equals total token supply
     // Sort members by votingWeight in descending order
     members.sort((a, b) => b.votingWeight.compareTo(a.votingWeight));
+    concentrationDropdown = [
+      'vote concentration',
+      '${widget.org.symbol} ownership',
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     // Calculate the percentage of members included based on the slider value
-    double percentageOfMembers = (101 - _sliderValue); // Slider ranges from 1 to 100
+    double percentageOfMembers =
+        (101 - _sliderValue); // Slider ranges from 1 to 100
     // Ensure at least one member is included
-    int membersToInclude = max(1, ((percentageOfMembers / 100) * totalMembers).round());
+    int membersToInclude =
+        max(1, ((percentageOfMembers / 100) * totalMembers).round());
     // Select the top members based on voting weight
     List<Bloke> selectedMembers = members.take(membersToInclude).toList();
     // Calculate cumulative voting power of selected members
-    double cumulativeVotingPower = selectedMembers.fold(0, (sum, member) => sum + member.votingWeight);
+    double cumulativeVotingPower =
+        selectedMembers.fold(0, (sum, member) => sum + member.votingWeight);
     // Calculate percentages
     double membersPercentage = (membersToInclude / totalMembers) * 100;
-    double votingPowerPercentage = (cumulativeVotingPower / totalGovernanceTokenSupply) * 100;
+    double votingPowerPercentage =
+        (cumulativeVotingPower / totalGovernanceTokenSupply) * 100;
 
     return Padding(
-      padding: const EdgeInsets.only(right:3.0),
+      padding: const EdgeInsets.only(right: 3.0),
       child: Column(
         // mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Container(
             height: 30,
-             constraints: BoxConstraints(minWidth: 520),
-             child: Center(child: Text("Drag slider to check vote concentration", style: TextStyle(fontWeight: FontWeight.w600, color:Colors.black, fontSize: 17),)),
-             color: Color.fromARGB(255, 224, 224, 224),
+            constraints: BoxConstraints(minWidth: 520),
+            color: Color.fromARGB(255, 224, 224, 224),
+            child: Center(
+                child: Row(
+              children: [
+                const Text(
+                  "Drag slider to check ",
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      fontSize: 15),
+                ),
+                DropdownButton<String>(
+                  value: selectedWidgetFeature,
+                  items: concentrationDropdown.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: value == selectedWidgetFeature
+                              ? Colors.black
+                              : Colors.grey, // Default color for dropdown items
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedWidgetFeature = value;
+                    });
+                  },
+                  style: TextStyle(
+                      color: Colors.black), // Selected item text color
+                  iconEnabledColor: Colors.black, // Dropdown arrow color
+                ),
+              ],
+            )),
           ),
           Container(
-             constraints: BoxConstraints(minWidth: 520),
+            constraints: BoxConstraints(minWidth: 520),
             decoration: BoxDecoration(
-              color:Color.fromARGB(255, 63, 63, 63),
-              border: Border.all(color:Color.fromARGB(255, 224, 224, 224), width: 0.6), 
-             
+              color: Color.fromARGB(255, 63, 63, 63),
+              border: Border.all(
+                  color: Color.fromARGB(255, 224, 224, 224), width: 0.6),
             ),
             height: 180,
             // width: MediaQuery.of(context).size.width*0.4,
@@ -66,42 +119,67 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
               children: [
                 const SizedBox(height: 20),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                   Container(
-                     decoration: const BoxDecoration(
-    
-                     ),
-                     child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("# of Members" , style: TextStyle(
-                              fontSize: 16,
-                              ),),
-                              const SizedBox(height: 10,),
-                              Text(membersToInclude.toString(), style: const TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
-                              Text("${membersPercentage.toStringAsFixed(2)}%", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.normal),),
-                          ],
-                        ),
-                   ),
-                   SizedBox(width: 120,),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
                       Container(
-                       
+                        decoration: const BoxDecoration(),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("Voting Power" , style: TextStyle(
-                              fontSize: 16,
-                              ),),
-                              const SizedBox(height: 10,),
-                              Text(cumulativeVotingPower.toStringAsFixed(2), style: const TextStyle(fontSize: 27, fontWeight: FontWeight.normal),),
-                              Text("${votingPowerPercentage.toStringAsFixed(2)}%", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.normal),),
+                            const Text(
+                              "# of Members",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              membersToInclude.toString(),
+                              style: const TextStyle(
+                                  fontSize: 27, fontWeight: FontWeight.normal),
+                            ),
+                            Text(
+                              "${membersPercentage.toStringAsFixed(2)}%",
+                              style: const TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.normal),
+                            ),
                           ],
                         ),
                       ),
-                ]),
-               const SizedBox(height:18),
-               
+                      SizedBox(
+                        width: 120,
+                      ),
+                      Container(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Voting Power",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              cumulativeVotingPower.toStringAsFixed(2),
+                              style: const TextStyle(
+                                  fontSize: 27, fontWeight: FontWeight.normal),
+                            ),
+                            Text(
+                              "${votingPowerPercentage.toStringAsFixed(2)}%",
+                              style: const TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.normal),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ]),
+                const SizedBox(height: 18),
+
                 SizedBox(
                   width: 430,
                   child: Slider(
@@ -132,7 +210,8 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
       // Generate members with random votingWeight
       return Bloke(
         name: 'Member ${index + 1}',
-        votingWeight: Random().nextDouble() * 100 + 1, // Ensure non-zero voting weight
+        votingWeight:
+            Random().nextDouble() * 100 + 1, // Ensure non-zero voting weight
       );
     });
   }

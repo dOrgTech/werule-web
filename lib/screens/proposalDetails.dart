@@ -13,6 +13,7 @@ import 'dart:math';
 import 'dart:math' as math;
 import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
+import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
 import '../widgets/countdown.dart';
@@ -36,7 +37,7 @@ class ProposalDetails extends StatefulWidget {
   late int remainingSeconds;
   BigInt votesFor = BigInt.zero;
   BigInt votesAgainst = BigInt.zero;
-
+  Member? member;
   @override
   State<ProposalDetails> createState() => ProposalDetailsState();
 }
@@ -62,7 +63,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
         widget.remainingSeconds = widget.p.getRemainingTime()!.inSeconds;
       });
       widget.showCountdown = true;
-      _statusCheckTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           stage = widget.p.stage.toString().split(".").last;
           if (stage == "passed" || stage == "executed" || stage == "rejected") {
@@ -175,35 +176,101 @@ class ProposalDetailsState extends State<ProposalDetails> {
           children: [
             ElevatedButton(
                 style: ButtonStyle(
-                    elevation: MaterialStatePropertyAll(0.0),
+                    elevation: const MaterialStatePropertyAll(0.0),
                     backgroundColor: MaterialStatePropertyAll(widget.enabled
-                        ? Color.fromARGB(255, 141, 255, 244)
-                        : Color.fromARGB(255, 77, 77, 77))),
+                        ? const Color.fromARGB(255, 141, 255, 244)
+                        : const Color.fromARGB(255, 77, 77, 77))),
                 onPressed: widget.enabled
                     ? () async {
-                        Vote v = Vote(
-                            castAt: DateTime.now(),
-                            option: 1,
-                            votingPower: "12000",
-                            voter: generateWalletAddress(),
-                            proposalHash: widget.p.hash);
-                        setState(() {
-                          widget.busy = true;
-                        });
-                        await vote();
-                        await widget.p.castVote(v);
-                        setState(() {
-                          widget.busy = false;
-                          widget.votesFor = BigInt.parse(widget.p.inFavor);
-                          widget.votesAgainst = BigInt.parse(widget.p.against);
-                        });
+                        if (Human().address == null) {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                                  content: Center(
+                            child: Text(
+                              "Connect your wallet first.",
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color.fromARGB(255, 70, 11, 7)),
+                            ),
+                          )));
+                          return;
+                        }
 
-                        // Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        //     builder: (context) => DAO(
-                        //         org: widget.p.org,
-                        //         InitialTabIndex: 1,
-                        //         proposalId: widget.p.id)));
-                        print("vote added");
+                        if (!(widget.p.org.memberAddresses[
+                                Human().address!.toLowerCase()] ==
+                            null)) {
+                          widget.member = widget.p.org
+                              .memberAddresses[Human().address!.toLowerCase()];
+                          if (BigInt.parse(widget.member!.votingWeight!) >
+                              BigInt.zero) {
+                            Vote v = Vote(
+                                castAt: DateTime.now(),
+                                option: 1,
+                                votingPower: widget.member!.votingWeight!,
+                                voter: Human().address,
+                                proposalID: widget.p.id);
+                            setState(() {
+                              widget.busy = true;
+                            });
+                            try {
+                              String cevine = await vote(v, widget.p.org);
+                              if (cevine.contains("not ok")) {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                        content: Center(
+                                  child: Text(
+                                    "Error adding vote.",
+                                    style: TextStyle(
+                                        fontSize: 24,
+                                        color: Color.fromARGB(255, 61, 4, 4)),
+                                  ),
+                                )));
+                                return;
+                              }
+                              await widget.p.castVote(v);
+                              setState(() {
+                                widget.busy = false;
+                                widget.votesFor =
+                                    BigInt.parse(widget.p.inFavor);
+                                widget.votesAgainst =
+                                    BigInt.parse(widget.p.against);
+                              });
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      content: Center(
+                                child: Text(
+                                  "Vote added successfully.",
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      color: Color.fromARGB(255, 4, 61, 23)),
+                                ),
+                              )));
+                              print("vote added");
+                            } catch (e) {}
+                          } else {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(const SnackBar(
+                                    content: Center(
+                              child: Text(
+                                "Claim your voting power if you want to participate in governance (in the Account tab).",
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    color: Color.fromARGB(255, 70, 11, 7)),
+                              ),
+                            )));
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                                  content: Center(
+                            child: Text(
+                              "You are not a member of this organization.",
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color.fromARGB(255, 70, 11, 7)),
+                            ),
+                          )));
+                        }
                       }
                     : null,
                 child: SizedBox(
@@ -216,16 +283,16 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         Icon(Icons.thumb_up,
                             color: widget.enabled
                                 ? supportColor
-                                : Color.fromARGB(255, 160, 160, 160)
+                                : const Color.fromARGB(255, 160, 160, 160)
                                     .withOpacity(0.7)),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           "Support",
                           style: widget.enabled
-                              ? TextStyle(
+                              ? const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: supportColor)
-                              : TextStyle(),
+                              : const TextStyle(),
                         ),
                       ],
                     )))),
@@ -233,26 +300,105 @@ class ProposalDetailsState extends State<ProposalDetails> {
             ElevatedButton(
                 onPressed: widget.enabled
                     ? () async {
-                        Vote v = Vote(
-                            castAt: DateTime.now(),
-                            option: 0,
-                            votingPower: "14200",
-                            voter: generateWalletAddress(),
-                            proposalHash: widget.p.hash);
-                        try {
-                          await widget.p.castVote(v);
-                          widget.p.votes.add(v);
-                          print("vote added");
-                        } on Exception catch (e) {
-                          print("error adding vote" + e.toString());
+                        print("voting baby");
+                        if (Human().address == null) {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                                  content: Center(
+                            child: Text(
+                              "Connect your wallet first.",
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color.fromARGB(255, 70, 11, 7)),
+                            ),
+                          )));
+                          return;
+                        }
+
+                        if (!(widget.p.org.memberAddresses[
+                                Human().address!.toLowerCase()] ==
+                            null)) {
+                          widget.member = widget.p.org
+                              .memberAddresses[Human().address!.toLowerCase()];
+                          if (BigInt.parse(widget.member!.votingWeight!) >
+                              BigInt.zero) {
+                            Vote v = Vote(
+                                castAt: DateTime.now(),
+                                option: 0,
+                                votingPower: widget.member!.votingWeight!,
+                                voter: Human().address,
+                                proposalID: widget.p.id);
+                            setState(() {
+                              widget.busy = true;
+                            });
+                            try {
+                              String cevine = await vote(v, widget.p.org);
+                              if (cevine.contains("not ok")) {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                        content: Center(
+                                  child: Text(
+                                    "Error adding vote.",
+                                    style: TextStyle(
+                                        fontSize: 24,
+                                        color: Color.fromARGB(255, 61, 4, 4)),
+                                  ),
+                                )));
+                                return;
+                              }
+                              await widget.p.castVote(v);
+                              setState(() {
+                                widget.busy = false;
+                                widget.votesFor =
+                                    BigInt.parse(widget.p.inFavor);
+                                widget.votesAgainst =
+                                    BigInt.parse(widget.p.against);
+                              });
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      content: Center(
+                                child: Text(
+                                  "Vote added successfully.",
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      color: Color.fromARGB(255, 4, 61, 23)),
+                                ),
+                              )));
+                              print("vote added");
+                            } catch (e) {
+                              print("some error " + e.toString());
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(const SnackBar(
+                                    content: Center(
+                              child: Text(
+                                "Claim your voting power if you want to participate in governance (in the Account tab).",
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    color: Color.fromARGB(255, 70, 11, 7)),
+                              ),
+                            )));
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                                  content: Center(
+                            child: Text(
+                              "You are not a member of this organization.",
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color.fromARGB(255, 70, 11, 7)),
+                            ),
+                          )));
                         }
                       }
                     : null,
                 style: ButtonStyle(
-                    elevation: MaterialStatePropertyAll(0.0),
+                    elevation: const MaterialStatePropertyAll(0.0),
                     backgroundColor: MaterialStatePropertyAll(widget.enabled
-                        ? Color.fromARGB(255, 255, 135, 135)
-                        : Color.fromARGB(255, 77, 77, 77))),
+                        ? const Color.fromARGB(255, 255, 135, 135)
+                        : const Color.fromARGB(255, 77, 77, 77))),
                 child: SizedBox(
                     width: 120,
                     height: 40,
@@ -263,16 +409,16 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         Icon(Icons.thumb_down,
                             color: widget.enabled
                                 ? rejectColor
-                                : Color.fromARGB(255, 160, 160, 160)
+                                : const Color.fromARGB(255, 160, 160, 160)
                                     .withOpacity(0.7)),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           "Reject",
                           style: widget.enabled
-                              ? TextStyle(
+                              ? const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: rejectColor)
-                              : TextStyle(),
+                              : const TextStyle(),
                         ),
                       ],
                     ))))
@@ -344,7 +490,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
@@ -487,11 +633,11 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 ),
                                 widget.showCountdown
                                     ? Container(
-                                        padding: EdgeInsets.only(top: 22),
+                                        padding: const EdgeInsets.only(top: 22),
                                         child: Transform.scale(
                                             scale: 0.8,
                                             child: _buildCountdownDisplay()))
-                                    : Text(""),
+                                    : const Text(""),
                                 const SizedBox(height: 32),
                                 actions()
                               ],
@@ -595,7 +741,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                           ),
                           const SizedBox(height: 13),
                           Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 28.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 28.0),
                               child: SizedBox(
                                   height: 12,
                                   width: double.infinity,
@@ -626,7 +773,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         (turnout * 100) >= widget.p.org.quorum
                                             ? "Quorum met"
                                             : "Quorum not met",
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontWeight: FontWeight.w900))),
                                 const SizedBox(width: 73)
                               ],
@@ -634,7 +781,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                           ),
                           const SizedBox(height: 13),
                           Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 28.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 28.0),
                               child: SizedBox(
                                   height: 12,
                                   width: double.infinity,
@@ -708,7 +856,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                                     .contains("treasury")
                                             ? DaoConfigurationDetails(
                                                 p: widget.p)
-                                            : Text("")),
+                                            : const Text("")),
                   ),
                 ),
               ],
@@ -755,15 +903,16 @@ class ProposalDetailsState extends State<ProposalDetails> {
             children: [
               Text(
                 entry.key,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: Color.fromARGB(255, 238, 238, 238)),
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               Text(
                 _formatTime(entry.value),
-                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -850,14 +999,14 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
             AnimatedContainer(
               width: barWidth * _inFavorWidth, // Use the actual widget width
               height: 20, // Height of the bar
-              color: Color.fromARGB(255, 0, 196, 137),
+              color: const Color.fromARGB(255, 0, 196, 137),
               duration: Duration(milliseconds: durationInMillis),
               curve: Curves.easeInOut,
             ),
             AnimatedContainer(
               width: barWidth * _againstWidth, // Use the actual widget width
               height: 20,
-              color: Color.fromARGB(255, 134, 37, 30),
+              color: const Color.fromARGB(255, 134, 37, 30),
               duration: Duration(milliseconds: durationInMillis),
               curve: Curves.easeInOut,
             ),
@@ -987,7 +1136,7 @@ class _VotesModalState extends State<VotesModal> {
       widget.p.votes.add(Vote(
         votingPower: doc.data()['weight'],
         voter: doc.id,
-        proposalHash: widget.p.hash,
+        proposalID: widget.p.id,
         option: doc.data()['option'],
         castAt: (doc.data()['cast'] != null)
             ? (doc.data()['cast'] as Timestamp).toDate()
@@ -1040,9 +1189,9 @@ class _VotesModalState extends State<VotesModal> {
                       DataCell(Text(vote.voter!)),
                       DataCell(Container(
                           child: vote.option == 0
-                              ? Icon(Icons.thumb_down,
+                              ? const Icon(Icons.thumb_down,
                                   color: Color.fromARGB(255, 238, 129, 121))
-                              : Icon(Icons.thumb_up_sharp,
+                              : const Icon(Icons.thumb_up_sharp,
                                   color: Color.fromARGB(255, 93, 223, 162)))),
                       DataCell(Text(vote.votingPower.toString())),
                       DataCell(Text(formatDateTime(vote.castAt))),
@@ -1077,7 +1226,7 @@ class ProposalLifeCycleWidget extends StatelessWidget {
         children: [
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.all(43),
+              padding: const EdgeInsets.all(43),
               itemCount: statusHistory.length,
               itemBuilder: (context, index) {
                 final sortedKeys = statusHistory.keys.toList()

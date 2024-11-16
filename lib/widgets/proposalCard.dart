@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import '../screens/proposalDetails.dart';
@@ -142,7 +144,7 @@ class _ProposalCardState extends State<ProposalCard> {
 
   Widget proposals(context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.only(right: 8.0),
       child: Card(
         elevation: 3,
         child: InkWell(
@@ -163,10 +165,21 @@ class _ProposalCardState extends State<ProposalCard> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 25.0),
-                  child: Container(
-                      width: 90, child: Text(widget.proposal.id.toString())),
-                ),
+                    padding: const EdgeInsets.only(left: 25.0, right: 40),
+                    child: Container(
+                        width: 40,
+                        child: TextButton(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(
+                                  text: widget.proposal.id.toString()));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(
+                                          child: Text(
+                                              'Proposal ID copied to clipboard'))));
+                            },
+                            child: Icon(Icons.copy)))),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
@@ -178,8 +191,7 @@ class _ProposalCardState extends State<ProposalCard> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("0x3a84...3eds0"),
-                        TextButton(onPressed: () {}, child: Icon(Icons.copy))
+                        Text(getShortAddress(widget.proposal.author!)),
                       ],
                     )),
                 SizedBox(

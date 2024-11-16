@@ -27,6 +27,7 @@ class Org {
   bool nonTransferrable = false;
   String? govTokenAddress;
   String? treasuryAddress;
+  String? registryAddress;
   List<Proposal> proposals = [];
   List<String>? proposalIDs = [];
   late String name;
@@ -45,7 +46,7 @@ class Org {
   populateTreasury() async {
     treasury = {};
     Token tokenXTZ = Token(name: "Tezos", symbol: "XTZ", decimals: 18);
-    nativeBalance = await getNativeBalance(address!);
+    nativeBalance = await getNativeBalance(treasuryAddress!);
     tokenXTZ.address = "native";
     treasury.addAll({tokenXTZ: nativeBalance});
     treasuryMap.forEach((address, value) {
@@ -108,17 +109,10 @@ class Org {
     }
   }
 
-  Member refreshMember(Member m) {
-    m.constituents.add(m);
+  Future<Member> refreshMember(Member m) async {
     m.votingWeight = "0";
-    if (m.delegate == m.address) {
-      for (Member constituent in m.constituents) {
-        m.votingWeight = (BigInt.parse(m.votingWeight!) +
-                BigInt.parse(constituent.personalBalance!))
-            .toString();
-      }
-    }
-    print("returning voting power " + m.votingWeight.toString());
+    m.votingWeight = await getVotes(m.address, this);
+    m.personalBalance = await getBalance(m.address, this);
     return m;
   }
 
@@ -134,6 +128,8 @@ class Org {
       print("saide una");
       Proposal p = Proposal(org: this, name: doc.data()['title'] ?? "No title");
       p.type = doc.data()['type'];
+      p.id = doc.id.toString();
+
       p.against = doc.data()['against'];
       p.inFavor = doc.data()['inFavor'];
       p.hash = doc.id.toString();
@@ -182,11 +178,13 @@ class Org {
       'description': description,
       'token': govTokenAddress,
       'treasuryAddress': treasuryAddress,
+      'registryAddress': registryAddress,
       'address': address,
       'holders': holders,
       'symbol': symbol,
       'decimals': decimals,
       'proposals': proposalIDs,
+      'proposalThreshold': proposalThreshold,
       'registry': registry,
       'treasury': treasury,
       'votingDelay': votingDelay,

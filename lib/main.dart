@@ -90,17 +90,18 @@ persist() async {
     org.govToken =
         Token(symbol: org.symbol!, decimals: org.decimals, name: org.name);
     org.govTokenAddress = doc.data()['token'];
+    org.proposalThreshold = doc.data()['proposalThreshold'];
     org.votingDelay = doc.data()['votingDelay'];
+    org.treasuryAddress = doc.data()['treasuryAddress'];
+    org.registryAddress = doc.data()['registryAddress'];
     org.votingDuration = doc.data()['votingDuration'];
     org.executionDelay = doc.data()['executionDelay'];
     org.quorum = doc.data()['quorum'];
-    // org.quorum=20;
     org.decimals = doc.data()['decimals'];
     org.holders = doc.data()['holders'];
     org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
     org.registry = Map<String, String>.from(doc.data()['registry']);
     org.totalSupply = doc.data()['totalSupply'];
-    // await org.getProposals();
     orgs.add(org);
   }
 }
@@ -127,6 +128,7 @@ class MyApp extends StatelessWidget {
       print("are metamask");
       Human().metamask = true;
     }
+
     // Proposal p;
     // if (true) {
     //   p = Proposal(org: orgs[0]);

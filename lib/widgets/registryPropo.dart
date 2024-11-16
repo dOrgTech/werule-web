@@ -102,15 +102,45 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                             setState(() {
                               widget.stage = -1;
                             });
-                            await makeProposal();
-                            await widget.org.pollsCollection
-                                .doc(widget.p.id.toString())
-                                .set(widget.p.toJson());
+                            try {
+                              await propose(widget.p);
+                              await widget.org.pollsCollection
+                                  .doc(widget.p.id.toString())
+                                  .set(widget.p.toJson());
+                              widget.org.proposals.add(widget.p);
+                              widget.org.proposals =
+                                  widget.org.proposals.reversed.toList();
+                              widget.p.status = "pending";
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(
+                                          child: SizedBox(
+                                              height: 70,
+                                              child: Center(
+                                                child: Text(
+                                                  "Proposal submitted",
+                                                  style:
+                                                      TextStyle(fontSize: 24),
+                                                ),
+                                              )))));
+                            } catch (e) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(
+                                          child: SizedBox(
+                                              height: 70,
+                                              child: Center(
+                                                child: Text(
+                                                  "Error submitting proposal",
+                                                  style: TextStyle(
+                                                      fontSize: 24,
+                                                      color: Colors.red),
+                                                ),
+                                              )))));
+                            }
 
-                            widget.org.proposals.add(widget.p);
-                            widget.org.proposals =
-                                widget.org.proposals.reversed.toList();
-                            widget.p.status = "pending";
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => Scaffold(
                                     body:
@@ -119,18 +149,6 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                                         DAO(
                                             InitialTabIndex: 1,
                                             org: widget.org))));
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(const SnackBar(
-                                    duration: Duration(seconds: 1),
-                                    content: Center(
-                                        child: SizedBox(
-                                            height: 70,
-                                            child: Center(
-                                              child: Text(
-                                                "Proposal submitted",
-                                                style: TextStyle(fontSize: 24),
-                                              ),
-                                            )))));
                           },
                           isSubmitEnabled: true)
                     ],

@@ -1337,6 +1337,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         widget.org.address = results[0];
         widget.org.govTokenAddress = results[1];
         widget.org.treasuryAddress = results[2];
+        widget.org.registryAddress = results[3];
         orgs.add(widget.org);
         await daosCollection.doc(widget.org.address).set(widget.org.toJson());
         WriteBatch batch = FirebaseFirestore.instance.batch();
@@ -1346,6 +1347,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           batch.set(membersCollection.doc(member.address), member.toJson());
         }
         await batch.commit();
+        widget.org.memberAddresses = {};
 
         setState(() {
           currentStep = 8; // Move to the Deployment Complete screen

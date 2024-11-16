@@ -1,3 +1,4 @@
+import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -327,15 +328,15 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                               String delegateAddress =
                                   newDelegateController.text;
                               widget.m.delegate = delegateAddress;
+                              await delegate(delegateAddress, widget.org);
                               var memberDoc = await daosCollection
                                   .doc(widget.org.address)
                                   .collection("members")
                                   .doc(widget.m.address)
                                   .set(widget.m.toJson());
-                              widget.accountState.setState(() {
-                                widget.accountState.widget.member =
-                                    widget.org.refreshMember(widget.m);
-                              });
+                              widget.accountState.widget.member =
+                                  await widget.org.refreshMember(widget.m);
+                              widget.accountState.setState(() {});
                               setState(() {
                                 widget.busy = false;
                                 showBothOptions = false;
@@ -356,14 +357,15 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       widget.busy = true;
       widget.m.delegate = widget.m.address;
     });
+    await delegate(widget.m.address, widget.org);
     await daosCollection
         .doc(widget.org.address)
         .collection("members")
         .doc(widget.m.address)
         .set(widget.m.toJson());
-    widget.accountState.setState(() {
-      widget.accountState.widget.member = widget.org.refreshMember(widget.m);
-    });
+    widget.accountState.widget.member =
+        await widget.org.refreshMember(widget.m);
+    widget.accountState.setState(() {});
 
     setState(() {
       showBothOptions = false;

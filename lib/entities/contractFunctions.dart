@@ -13,9 +13,99 @@ import 'package:convert/convert.dart';
 import 'package:web3dart/crypto.dart';
 import 'human.dart';
 import 'org.dart';
+import 'dart:typed_data';
+import 'package:web3dart/web3dart.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
-delegate(String toWhom) {
-  return "delegated to $toWhom";
+delegate(String toWhom, Org org) async {
+  var sourceContract =
+      Contract(org.govTokenAddress!, tokenAbiString, Human().web3user);
+  print("facuram contractu");
+  try {
+    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+    print("signed ok");
+    final transaction =
+        await promiseToFuture(callMethod(sourceContract, "delegate", [toWhom]));
+    print("facuram tranzactia");
+    final hash = json.decode(stringify(transaction))["hash"];
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+    if (json.decode(stringify(result))["status"] == 0) {
+      print("nu merge eroare de greseala");
+
+      return "not ok";
+    } else {
+      var rezultat = (json.decode(stringify(result)));
+      return rezultat.toString();
+    }
+  } catch (e) {
+    print("nu s-a putut" + e.toString());
+  }
+}
+
+getVotes(who, Org org) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractWrapper = DeployedContract(
+    ContractAbi.fromJson(tokenAbiGlobal, 'getVotes'),
+    EthereumAddress.fromHex(org.govTokenAddress!),
+  );
+  var getRepToken = contractWrapper.function('getVotes');
+
+  try {
+    var counter = await ethClient.call(
+      contract: contractWrapper,
+      function: getRepToken,
+      params: [EthereumAddress.fromHex(who)],
+    );
+    // Log the RPC response
+    print('RPC Response for votes:');
+    print(counter.toString());
+    String rezultat = counter[0].toString();
+    print('$rezultat ${rezultat.runtimeType}');
+    httpClient.close();
+    ethClient.dispose();
+    return rezultat;
+  } catch (e) {
+    print('Error: $e');
+    // Log the full response body
+    print('Response Body:');
+    print(httpClient.toString());
+    rethrow;
+  }
+}
+
+getBalance(who, Org org) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractWrapper = DeployedContract(
+    ContractAbi.fromJson(tokenAbiGlobal, 'balanceOf'),
+    EthereumAddress.fromHex(org.govTokenAddress!),
+  );
+  var getRepToken = contractWrapper.function('balanceOf');
+
+  try {
+    var counter = await ethClient.call(
+      contract: contractWrapper,
+      function: getRepToken,
+      params: [EthereumAddress.fromHex(who)],
+    );
+    // Log the RPC response
+    print('RPC Response balance:');
+    print(counter.toString());
+    String rezultat = counter[0].toString();
+    print('$rezultat ${rezultat.runtimeType}');
+    httpClient.close();
+    return rezultat;
+  } catch (e) {
+    print('Error: $e');
+    // Log the full response body
+    print('Response Body:');
+    print(httpClient.toString());
+    httpClient.close();
+    rethrow;
+  }
 }
 
 getNumberOfDAOs() async {
@@ -38,6 +128,8 @@ getNumberOfDAOs() async {
     print(counter.toString());
     int rezultat = int.parse(counter[0].toString()) as int;
     print('$rezultat ${rezultat.runtimeType}');
+    httpClient.close();
+    ethClient.dispose();
     return rezultat;
   } catch (e) {
     print('Error: $e');
@@ -64,6 +156,7 @@ getDAOAddress(position) async {
   String rezultat = counter[0].toString();
   print("rezultat" + rezultat);
   print(rezultat.toString() + " " + rezultat.runtimeType.toString());
+  httpClient.close();
   return rezultat;
 }
 
@@ -82,6 +175,7 @@ getTokenAddress(position) async {
       params: [BigInt.from(position)]);
   String rezultat = counter[0].toString();
   print("rezultat" + rezultat);
+  httpClient.close();
   print(rezultat.toString() + " " + rezultat.runtimeType.toString());
   return rezultat;
 }
@@ -100,6 +194,29 @@ getTreasuryAddress(position) async {
       function: getRepToken,
       params: [BigInt.from(position)]);
   String rezultat = counter[0].toString();
+  print("rezultat" + rezultat);
+  httpClient.close();
+  ethClient.dispose();
+  print(rezultat.toString() + " " + rezultat.runtimeType.toString());
+  return rezultat;
+}
+
+getRegistryAddress(position) async {
+  print("getting dao address at position ${position}");
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractSursa = DeployedContract(
+      ContractAbi.fromJson(wrapperAbiGlobal, 'deployedRegistries'),
+      EthereumAddress.fromHex(Human().chain.wrapperContract));
+  var getRepToken = contractSursa.function('deployedRegistries');
+  print("intainte de marea functie");
+  var counter = await ethClient.call(
+      contract: contractSursa,
+      function: getRepToken,
+      params: [BigInt.from(position)]);
+  String rezultat = counter[0].toString();
+  ethClient.dispose();
+  httpClient.close();
   print("rezultat" + rezultat);
   print(rezultat.toString() + " " + rezultat.runtimeType.toString());
   return rezultat;
@@ -172,7 +289,14 @@ createDAO(Org org, state) async {
       tokenAddress = tokenAddress.toString();
       var treasuryAddress = await getTreasuryAddress(cate - 1);
       treasuryAddress = treasuryAddress.toString();
-      List<String> results = [daoAddress, tokenAddress, treasuryAddress];
+      var registryAddress = await getRegistryAddress(cate - 1);
+      registryAddress = registryAddress.toString();
+      List<String> results = [
+        daoAddress,
+        tokenAddress,
+        treasuryAddress,
+        registryAddress
+      ];
       return results;
     }
   } catch (e) {
@@ -186,6 +310,9 @@ createDAO(Org org, state) async {
 }
 
 propose(Proposal p) async {
+  print("description");
+  print(p.description);
+  print("web3user: " + Human().web3user.toString());
   var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
   try {
@@ -193,9 +320,11 @@ propose(Proposal p) async {
     print("signed ok");
     final transaction =
         await promiseToFuture(callMethod(sourceContract, "propose", [
-      [p.transactions[0].recipient],
-      [p.transactions[0].value],
-      [p.transactions[0].callData],
+      ["0x60A93C29e3966c58a5227e1D76dcB185BAa1ac6b"],
+      ["0"],
+      [
+        "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
+      ],
       p.description
     ]));
     print("facuram tranzactia");
@@ -208,7 +337,11 @@ propose(Proposal p) async {
     } else {
       var rezultat = (json.decode(stringify(result)));
       p.hash = rezultat.toString();
-      return rezultat.toString();
+      var id = extractProposalId(rezultat);
+      print("id: ${id.toString()}");
+      BigInt idAsBigInt = BigInt.parse(id.toString());
+      p.id = idAsBigInt.toString();
+      return p.id;
     }
   } catch (e) {
     print("nu s-a putut" + e.toString());
@@ -223,39 +356,6 @@ propose(Proposal p) async {
 // Helper function to convert Uint8List to hex string
 String bytesToHex(Uint8List bytes) {
   return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
-}
-
-makeProposal() {
-  return "proposalHash${generateWalletAddress()}";
-  // var sourceContract =
-  //     Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
-  // print("facuram contractu");
-  // try {
-  //   sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-  //   print("signed ok");
-  //   final transaction = await promiseToFuture(callMethod(
-  //       sourceContract, "createProposal", [
-  //     "0xe06f1901be9db6ad06cb7388e622c47c75e9532ef0ec0022e022ddb25ba324d3"
-  //   ]));
-  //   print("facuram tranzactia");
-  //   final hash = json.decode(stringify(transaction))["hash"];
-  //   final result = await promiseToFuture(
-  //       callMethod(Human().web3user!, 'waitForTransaction', [hash]));
-  //   if (json.decode(stringify(result))["status"] == 0) {
-  //     print("nu merge eroare de greseala");
-  //     return "not ok";
-  //   } else {
-  //     var rezultat = (json.decode(stringify(result)));
-  //     return rezultat.toString();
-  //   }
-  // } catch (e) {
-  //   print("nu s-a putut" + e.toString());
-  //   // state.setState(() {
-  //   //   state.widget.done=true;
-  //   //   state.widget.error=true;
-  //   // });
-  //   return "still not ok";
-  // }
 }
 
 queueProposal() async {
@@ -292,17 +392,14 @@ queueProposal() async {
   }
 }
 
-vote() async {
-  await Future.delayed(Duration(seconds: 1));
-  return "ok";
-  var sourceContract =
-      Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
+vote(Vote v, Org org) async {
+  var sourceContract = Contract(org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
   try {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
     print("signed ok");
-    final transaction =
-        await promiseToFuture(callMethod(sourceContract, "vote", []));
+    final transaction = await promiseToFuture(callMethod(
+        sourceContract, "castVote", [v.proposalID, v.option.toString()]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
@@ -312,11 +409,11 @@ vote() async {
       return "not ok";
     } else {
       var rezultat = (json.decode(stringify(result)));
-      return rezultat.toString();
+      v.hash = rezultat.toString();
+      return v.hash;
     }
   } catch (e) {
     print("nu s-a putut" + e.toString());
-
     return "still not ok";
   }
 }
@@ -354,11 +451,59 @@ execute(String address, String howMuch) async {
 getNativeBalance(String address) async {
   var httpClient = Client();
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
-  final ethAddress = EthereumAddress.fromHex(simpleDAOAddress);
+  final ethAddress = EthereumAddress.fromHex(address);
   final balance = await ethClient.getBalance(ethAddress);
   print("balance:" + balance.getInWei.toString());
   // Close the HTTP client
   httpClient.close();
   return balance.getInWei.toString();
   // return "1000000000";
+}
+
+/// Extracts the `proposalId` from a ProposalCreated event log
+/// in a Governor contract transaction response.
+BigInt? extractProposalId(Map<String, dynamic> transactionResponse) {
+  print("starting to extract the id");
+  const String proposalCreatedSignature =
+      "0x7d84a6263ae0d98d3329bd7b46bb4e8d6f98cd35a7adb45c274c8b7fd5ebd5e0";
+
+  // Step 2: Loop through the logs to find the ProposalCreated event.
+  for (var log in transactionResponse['logs']) {
+    print("executing here 1");
+    // Check if the first topic matches the ProposalCreated signature.
+    if (log['topics'][0] == proposalCreatedSignature) {
+      // Step 3: Decode the `data` field to extract the `proposalId`.
+      print("executing here 2");
+      final String data = log['data'];
+      print("executing here 3");
+
+      // Decode the hex string into bytes.
+      final Uint8List dataBytes = hexToBytes(data);
+      print("executing here 4");
+      // `proposalId` is the first 32 bytes of the `data`.
+      final BigInt proposalId = bytesToBigInt(dataBytes.sublist(0, 32));
+
+      // Validate that `proposalId` is a valid uint256.
+      if (proposalId.sign >= 0) {
+        return proposalId;
+      }
+    }
+  }
+
+  // If no ProposalCreated event was found, return null.
+  return null;
+}
+
+/// Helper: Converts a hex string to bytes.
+Uint8List hexToBytes(String hex) {
+  final normalizedHex = hex.startsWith('0x') ? hex.substring(2) : hex;
+  return Uint8List.fromList(List<int>.generate(normalizedHex.length ~/ 2,
+      (i) => int.parse(normalizedHex.substring(i * 2, i * 2 + 2), radix: 16)));
+}
+
+/// Helper: Converts a byte array to BigInt.
+BigInt bytesToBigInt(Uint8List bytes) {
+  return BigInt.parse(
+      bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join(''),
+      radix: 16);
 }

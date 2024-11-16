@@ -82,7 +82,7 @@ class _HomeState extends State<Home> {
                         children: [
                           const Text(" Treasury: "),
                           Text(
-                            simpleDAOAddress
+                            widget.org.treasuryAddress!
                             // "asiduhwqiudh128hd92w8h19q8dh9w8dh398dhd2938"
                             ,
                             style: const TextStyle(fontSize: 11),
@@ -93,8 +93,8 @@ class _HomeState extends State<Home> {
                           TextButton(
                               onPressed: () {
                                 //copy the address to clipboard
-                                Clipboard.setData(
-                                    ClipboardData(text: simpleDAOAddress));
+                                Clipboard.setData(ClipboardData(
+                                    text: widget.org.treasuryAddress!));
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         duration: Duration(seconds: 1),

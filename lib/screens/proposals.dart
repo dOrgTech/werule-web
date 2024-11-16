@@ -1,9 +1,13 @@
+import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
 import '../entities/human.dart';
+import '../entities/proposal.dart';
+import '../entities/proposal.dart';
 import '../entities/proposal.dart';
 import '../entities/proposal.dart';
 import '../main.dart';
@@ -19,6 +23,7 @@ class Proposals extends StatefulWidget {
       {super.key, required this.which, required this.org, this.proposalID});
   String? which = "all";
   int? proposalID;
+  late var typesOfProposals;
   bool executable = false;
   Org org;
   @override
@@ -67,19 +72,6 @@ class _ProposalsState extends State<Proposals> {
 
   List<Widget> proposalCards = [];
   void populateProposals() {
-    proposalTypes.addAll({
-      '${widget.org.symbol} Operation':
-          "Mint, burn, lock or unlock ${widget.org.symbol} tokens"
-    });
-
-    newProposalWidgets.addAll({
-      '${widget.org.symbol} Operation': (Org org, Proposal p, State state) =>
-          GovernanceTokenOperationsWidget(
-            org: org,
-            p: p,
-            proposalsState: state,
-          )
-    });
     widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
     for (Proposal p in widget.org.proposals) {
       proposalCards.add(ProposalCard(org: widget.org, proposal: p));
@@ -99,7 +91,7 @@ class _ProposalsState extends State<Proposals> {
       }
     }
     ;
-    proposalCards = [];
+
     populateProposals();
     return widget.proposalID == null
         ? Container(
@@ -206,7 +198,7 @@ class _ProposalsState extends State<Proposals> {
                           padding: const EdgeInsets.only(left: 15.0),
                           child: Container(
                               padding: EdgeInsets.only(left: 15),
-                              width: 90,
+                              width: 60,
                               child: Text("ID #")),
                         ),
                         Expanded(
@@ -220,7 +212,7 @@ class _ProposalsState extends State<Proposals> {
                         Container(
                             width: 230, child: Center(child: Text("Author"))),
                         SizedBox(
-                            width: 150, child: Center(child: Text("Posted"))),
+                            width: 150, child: Center(child: Text("▼ Posted"))),
                         SizedBox(
                             width: 150, child: Center(child: Text("Type "))),
                         SizedBox(
@@ -253,6 +245,9 @@ class _ProposalsState extends State<Proposals> {
 class ProposalList extends StatefulWidget {
   final Org org;
   late Proposal p;
+  late var typesOfProposals;
+  late var nProposalWidgets;
+
   ProposalList({super.key, required this.org});
 
   @override
@@ -262,13 +257,36 @@ class ProposalList extends StatefulWidget {
 class ProposalListState extends State<ProposalList> {
   @override
   Widget build(BuildContext context) {
+    var pTypes = {
+      "Off-Chain Debate":
+          "Post a thesis and have tokenized arguments around it",
+      "Transfer Assets": "from the DAO Treasury\nto another account",
+      "Edit Registry": "Change an entry\nor add a new one",
+      "Contract Call": "Call any function\non any contract",
+      "DAO Configuration":
+          "Change the quorum,\nthe proposal durations\nor the treasury address",
+    };
+
+    newProposalWidgets.addAll({
+      '${widget.org.symbol} Operation': (Org org, Proposal p, State state) =>
+          GovernanceTokenOperationsWidget(
+            org: org,
+            p: p,
+            proposalsState: state,
+          )
+    });
+    pTypes.addAll({
+      '${widget.org.symbol} Operation':
+          "Mint, burn, lock or unlock ${widget.org.symbol} tokens"
+    });
+
     widget.p = Proposal(org: widget.org);
     widget.p.author =
         Human().address ?? "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
     widget.p.callData = "0x";
     widget.p.status = "pending";
     List<Widget> propuneri = [];
-    for (String item in proposalTypes.keys) {
+    for (String item in pTypes.keys) {
       propuneri.add(Card(
         child: Container(
           color: Theme.of(context).hoverColor,
@@ -304,7 +322,7 @@ class ProposalListState extends State<ProposalList> {
                       style: TextStyle(fontSize: 19),
                     ),
                     Text(
-                      proposalTypes[item]!,
+                      pTypes[item]!,
                       textAlign: TextAlign.center,
                     )
                   ],

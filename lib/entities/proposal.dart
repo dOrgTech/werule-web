@@ -80,7 +80,8 @@ enum ProposalStatus {
 }
 
 class Proposal {
-  late int id;
+  String? id = "";
+  late int inAppnumber;
   String hash = "";
   Org org;
   String? type;
@@ -91,6 +92,7 @@ class Proposal {
   List<String> targets = [];
   List<String> values = [];
   List callDatas = [];
+
   String? callData = "0x";
   DateTime? createdAt;
   DateTime? votingStarts;
@@ -107,11 +109,7 @@ class Proposal {
   String? externalResource = "(no link provided)";
   List<Txaction> transactions = [];
   List<Vote> votes = [];
-  Proposal({required this.org, this.name}) {
-    id = (org.proposals.isNotEmpty)
-        ? org.proposals.map((p) => p.id).reduce((a, b) => a > b ? a : b) + 1
-        : 1;
-  }
+  Proposal({required this.org, this.name});
 
   castVote(Vote v) async {
     var votesCollection = FirebaseFirestore.instance
@@ -391,13 +389,24 @@ class Proposal {
     return null;
   }
 
+  List<Color> activecolors = [
+    Color.fromARGB(255, 167, 147, 255),
+    Color.fromARGB(255, 121, 111, 168),
+  ];
+  List<Color> pendingColors = [
+    Color.fromARGB(255, 255, 248, 183),
+    Color.fromARGB(255, 255, 251, 209),
+  ];
   Widget statusPill(String status, context) {
     final Map<String, Widget> statuses = {
       "active": Container(
           decoration: BoxDecoration(
-            // border: Border.all(width: 0.7, color:Color.fromARGB(255, 167, 147, 255),),
+            gradient: LinearGradient(colors: activecolors),
+            border: Border.all(
+              width: 0.7,
+              color: Color.fromARGB(255, 150, 126, 255),
+            ),
             borderRadius: BorderRadius.circular(15.0),
-            color: Color.fromARGB(255, 80, 61, 165),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -411,7 +420,7 @@ class Proposal {
       "pending": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            color: Color.fromARGB(255, 255, 248, 183),
+            gradient: LinearGradient(colors: pendingColors),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -522,23 +531,23 @@ class Proposal {
 class Vote {
   String? voter;
   String? hash;
-  String? proposalHash;
+  String? proposalID;
   int option;
   String votingPower;
   DateTime? castAt;
   Vote(
       {required this.votingPower,
       required this.voter,
-      required this.proposalHash,
+      required this.proposalID,
       required this.option,
       required castAt});
-
   toJson() {
     return {
       'weight': votingPower,
       'cast': castAt,
       'voter': voter,
-      'option': option
+      'option': option,
+      'hash': "placeholder"
     };
   }
 }

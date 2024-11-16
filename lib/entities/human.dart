@@ -1,3 +1,4 @@
+import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:flutter_web3_provider/ethers.dart';
@@ -22,7 +23,7 @@ var chains = {
       rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede",
       blockExplorer: "https://sepolia.etherscan.io"),
   "0x1f47b": Chain(
-      wrapperContract: "0x5326B1e82Df40DA63E2B6D7256Bb6d98d70d1129",
+      wrapperContract: "0x9Cc1748d25Fb2D06FdF833c8cD9aBB4171b0C376",
       id: 128123,
       name: "Etherlink-Testnet",
       nativeSymbol: "XTZ",
@@ -148,11 +149,6 @@ class Human extends ChangeNotifier {
         ),
       );
       address = ethereum?.selectedAddress.toString();
-      print("before waiting");
-      await Future.delayed(Duration(milliseconds: 1500));
-      print("before web3user is instantiated");
-
-      print("before chainid");
       var chainaidi = ethereum?.chainId;
       print("chainid is " + chainaidi.toString());
       web3user = Web3Provider(ethereum!);

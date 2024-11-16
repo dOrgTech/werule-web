@@ -155,7 +155,7 @@ class _TransferWidgetState extends State<TransferWidget> {
     setState(() {
       widget.stage = -1;
     });
-    await makeProposal();
+    // await makeProposal();
     await widget.org.pollsCollection
         .doc(widget.p.id.toString())
         .set(widget.p.toJson());
