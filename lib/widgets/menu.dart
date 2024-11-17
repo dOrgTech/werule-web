@@ -55,8 +55,20 @@ class _TopMenuState extends State<TopMenu> {
                   ),
                   child: Row(
                     children: [
+                      // Image.network(
+                      //   "https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 40,
+                      //   // SvgPicture.asset(
+                      //   //   'assets/logos/homebase_logo.svg',
+                      //   //   semanticsLabel: 'Acme Logo', height: 25,
+                      //   //   color: Theme.of(context).indicatorColor,
+                      //   //   // color: Colors.red,
+                      // ),
+                      // SizedBox(width: 10),
                       Image.network(
-                        "https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 40,
+                        // "https://i.ibb.co/2dw4bZg/werule-mic-dark.png",
+                        // "https://i.ibb.co/rsZc9mt/werule-allwhite.png",
+                        "https://i.ibb.co/XXZRs8D/werule-white.png",
+                        height: 26,
                         // SvgPicture.asset(
                         //   'assets/logos/homebase_logo.svg',
                         //   semanticsLabel: 'Acme Logo', height: 25,
@@ -65,10 +77,10 @@ class _TopMenuState extends State<TopMenu> {
                       ),
                       // SizedBox(width: 10),
                       // const Text(
-                      //   'Homebase',
+                      //   'WeRule.io',
                       //   style: TextStyle(
                       //       fontFamily: 'CascadiaCode',
-                      //       fontSize: 21,
+                      //       fontSize: 27,
                       //       fontWeight: FontWeight.w100),
                       // ),
                     ],

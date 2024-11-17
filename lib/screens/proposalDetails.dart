@@ -104,8 +104,18 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 setState(() {
                   widget.busy = true;
                 });
-                await queueProposal();
+                String cevine = await queueProposal(widget.p);
                 print("queue");
+                if (cevine.contains("not ok")) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Center(
+                          child: Text("Error submitting transaction",
+                              style: TextStyle(color: Colors.red)))));
+                  setState(() {
+                    widget.busy = false;
+                  });
+                  return;
+                }
                 widget.p.statusHistory.addAll({"executable": DateTime.now()});
                 await widget.p.store();
                 setState(() {
@@ -135,7 +145,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 });
                 // await execute(widget.p.transactions[0].recipient,
                 //     widget.p.transactions[0].value.toString());
-                await execute("ceva", "altceva");
+                await queueProposal(widget.p);
                 print("execute");
                 widget.p.statusHistory.addAll({"executed": DateTime.now()});
 
@@ -207,8 +217,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 castAt: DateTime.now(),
                                 option: 1,
                                 votingPower: widget.member!.votingWeight!,
-                                voter: Human().address,
-                                proposalID: widget.p.id);
+                                voter: Human().address!,
+                                proposalID: widget.p.id!);
                             setState(() {
                               widget.busy = true;
                             });
@@ -225,8 +235,12 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         color: Color.fromARGB(255, 61, 4, 4)),
                                   ),
                                 )));
+                                setState(() {
+                                  widget.busy = false;
+                                });
                                 return;
                               }
+                              v.hash = cevine;
                               await widget.p.castVote(v);
                               setState(() {
                                 widget.busy = false;
@@ -326,8 +340,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 castAt: DateTime.now(),
                                 option: 0,
                                 votingPower: widget.member!.votingWeight!,
-                                voter: Human().address,
-                                proposalID: widget.p.id);
+                                voter: Human().address!,
+                                proposalID: widget.p.id!);
                             setState(() {
                               widget.busy = true;
                             });
@@ -344,8 +358,12 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         color: Color.fromARGB(255, 61, 4, 4)),
                                   ),
                                 )));
+                                setState(() {
+                                  widget.busy = false;
+                                });
                                 return;
                               }
+                              v.hash = cevine;
                               await widget.p.castVote(v);
                               setState(() {
                                 widget.busy = false;
@@ -438,7 +456,9 @@ class ProposalDetailsState extends State<ProposalDetails> {
         BigInt.parse(widget.p.inFavor) + BigInt.parse(widget.p.against);
     double inFavorPercentage = BigInt.parse(widget.p.inFavor) / totalVotes;
     double againstPercentage = BigInt.parse(widget.p.against) / totalVotes;
-    double turnout = totalVotes / BigInt.parse(widget.p.org.totalSupply!);
+    double turnout = (totalVotes *
+            BigInt.parse(pow(10, widget.p.org.decimals!).toString())) /
+        BigInt.parse(widget.p.org.totalSupply!);
 
     return Container(
       alignment: Alignment.topCenter,
@@ -705,11 +725,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 )),
                                 const SizedBox(width: 13),
                                 Text(
-                                    (BigInt.parse(widget.p.inFavor) /
-                                            BigInt.parse(
-                                                pow(10, widget.p.org.decimals!)
-                                                    .toString()))
-                                        .toStringAsFixed(2),
+                                    (BigInt.parse(widget.p.inFavor).toString()),
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold)),
                                 Text(
@@ -726,11 +742,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 )),
                                 const SizedBox(width: 13),
                                 Text(
-                                    (BigInt.parse(widget.p.against) /
-                                            BigInt.parse(
-                                                pow(10, widget.p.org.decimals!)
-                                                    .toString()))
-                                        .toStringAsFixed(2),
+                                    (BigInt.parse(widget.p.against).toString()),
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold)),
                                 Text(
@@ -764,7 +776,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                             fontWeight: FontWeight.normal))),
                                 const SizedBox(width: 13),
                                 Text(
-                                    "${(BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor)) / BigInt.from(pow(10, widget.p.org.decimals!))} (${(turnout * 100).toStringAsFixed(2)}%)",
+                                    "${(BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor))} (${(turnout * 100).toStringAsFixed(2)}%)",
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold)),
                                 const Spacer(),
@@ -787,10 +799,17 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                   height: 12,
                                   width: double.infinity,
                                   child: ParticipationBar(
-                                      totalVoters: BigInt.parse(
-                                          widget.p.org.totalSupply!),
-                                      turnout: BigInt.parse(widget.p.against) +
-                                          BigInt.parse(widget.p.inFavor),
+                                      decimals: widget.p.org.decimals!,
+                                      totalVoters: BigInt.parse((BigInt.parse(
+                                                  widget.p.org.totalSupply!) /
+                                              BigInt.parse(
+                                                  pow(10, widget.p.org.decimals!)
+                                                      .toString()))
+                                          .toString()),
+                                      turnout: (BigInt.parse(widget.p.against) +
+                                              BigInt.parse(widget.p.inFavor)) *
+                                          BigInt.parse(
+                                              pow(10, widget.p.org.decimals!).toString()),
                                       quorum: widget.p.org.quorum))),
                         ],
                       ),
@@ -1020,13 +1039,13 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
 class ParticipationBar extends StatefulWidget {
   final BigInt totalVoters;
   final BigInt turnout;
-  final int quorum; // Provided as a percentage, e.g., 50 for 50%
-
-  const ParticipationBar({
-    required this.totalVoters,
-    required this.turnout,
-    required this.quorum,
-  });
+  final int quorum;
+  final int decimals;
+  const ParticipationBar(
+      {required this.totalVoters,
+      required this.turnout,
+      required this.quorum,
+      required this.decimals});
 
   @override
   _ParticipationBarState createState() => _ParticipationBarState();
@@ -1034,9 +1053,9 @@ class ParticipationBar extends StatefulWidget {
 
 class _ParticipationBarState extends State<ParticipationBar> {
   double _turnoutWidth = 0;
-
   @override
   void initState() {
+    print('initState called');
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateTurnout();
@@ -1056,12 +1075,17 @@ class _ParticipationBarState extends State<ParticipationBar> {
 
   void _animateTurnout() {
     setState(() {
-      // Convert BigInt to double for correct calculation
       if (widget.totalVoters > BigInt.zero) {
-        _turnoutWidth =
-            widget.turnout.toDouble() / widget.totalVoters.toDouble();
+        double turnout = widget.turnout.toDouble();
+        double totalVoters = widget.totalVoters.toDouble();
+        _turnoutWidth = (turnout / totalVoters) / pow(10, widget.decimals);
+
+        // Debug statements
+        print('Turnout: $turnout');
+        print('Total Voters: $totalVoters');
+        print('Calculated Turnout Width: $_turnoutWidth');
       } else {
-        _turnoutWidth = 0; // No voters case
+        _turnoutWidth = 0;
       }
     });
   }
@@ -1135,8 +1159,8 @@ class _VotesModalState extends State<VotesModal> {
     for (var doc in votesSnapshot.docs) {
       widget.p.votes.add(Vote(
         votingPower: doc.data()['weight'],
-        voter: doc.id,
-        proposalID: widget.p.id,
+        voter: doc.data()['voter'],
+        proposalID: widget.p.id!,
         option: doc.data()['option'],
         castAt: (doc.data()['cast'] != null)
             ? (doc.data()['cast'] as Timestamp).toDate()
@@ -1181,12 +1205,28 @@ class _VotesModalState extends State<VotesModal> {
                     DataColumn(label: Text('Voter')),
                     DataColumn(label: Text('Option')),
                     DataColumn(label: Text('Weight')),
-                    DataColumn(label: Text('Cast At')),
                     DataColumn(label: Text('Details')),
                   ],
                   rows: widget.p.votes.map((vote) {
                     return DataRow(cells: [
-                      DataCell(Text(vote.voter!)),
+                      DataCell(Row(
+                        children: [
+                          Text(getShortAddress(vote.voter!)),
+                          const SizedBox(width: 8),
+                          TextButton(
+                              child: Icon(Icons.copy),
+                              onPressed: () {
+                                Clipboard.setData(
+                                    ClipboardData(text: vote.voter!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        duration: Duration(seconds: 1),
+                                        content: Center(
+                                            child: Text(
+                                                'Address copied to clipboard'))));
+                              })
+                        ],
+                      )),
                       DataCell(Container(
                           child: vote.option == 0
                               ? const Icon(Icons.thumb_down,
@@ -1194,9 +1234,13 @@ class _VotesModalState extends State<VotesModal> {
                               : const Icon(Icons.thumb_up_sharp,
                                   color: Color.fromARGB(255, 93, 223, 162)))),
                       DataCell(Text(vote.votingPower.toString())),
-                      DataCell(Text(formatDateTime(vote.castAt))),
-                      const DataCell(Icon(Icons
-                          .open_in_new)), // You can add onTap functionality here later
+                      DataCell(
+                        TextButton(
+                            onPressed: () => launch(
+                                "${Human().chain.blockExplorer}/tx/${vote.hash}"),
+                            child: Icon(Icons
+                                .open_in_new)), // You can add onTap functionality here later
+                      )
                     ]);
                   }).toList(),
                 ),

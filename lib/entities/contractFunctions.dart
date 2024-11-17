@@ -17,6 +17,7 @@ import 'dart:typed_data';
 import 'package:web3dart/web3dart.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:web3dart/crypto.dart';
 
 delegate(String toWhom, Org org) async {
   var sourceContract =
@@ -358,18 +359,26 @@ String bytesToHex(Uint8List bytes) {
   return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
 }
 
-queueProposal() async {
-  await Future.delayed(Duration(seconds: 1));
-  return "ok";
-  var sourceContract =
-      Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
+queueProposal(Proposal p) async {
+  Uint8List descriptionBytes = Uint8List.fromList(utf8.encode(p.description!));
+
+  // Convert bytes to a hexadecimal string
+  Uint8List descriptionHashBytes = keccak256(descriptionBytes);
+  String descriptionHash = "0x${bytesToHex(descriptionHashBytes)}";
+  print("description hash: " + descriptionHash);
+  var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
   try {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
     print("signed ok");
-    final transaction = await promiseToFuture(callMethod(
-        sourceContract, "queueProposal", [
-      "0xe06f1901be9db6ad06cb7388e622c47c75e9532ef0ec0022e022ddb25ba324d3"
+    final transaction =
+        await promiseToFuture(callMethod(sourceContract, "queue", [
+      ["0x60A93C29e3966c58a5227e1D76dcB185BAa1ac6b"],
+      ["0"],
+      [
+        "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
+      ],
+      descriptionHash
     ]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
@@ -380,6 +389,7 @@ queueProposal() async {
       return "not ok";
     } else {
       var rezultat = (json.decode(stringify(result)));
+      print(rezultat);
       return rezultat.toString();
     }
   } catch (e) {
@@ -408,13 +418,28 @@ vote(Vote v, Org org) async {
       print("nu merge eroare de greseala");
       return "not ok";
     } else {
-      var rezultat = (json.decode(stringify(result)));
-      v.hash = rezultat.toString();
+      var rezultat = (json.decode(stringify(result.toString())));
+      v.hash = extractTransactionHash(rezultat).toString();
+      print("vote hash " + v.hash.toString());
       return v.hash;
     }
   } catch (e) {
     print("nu s-a putut" + e.toString());
     return "still not ok";
+  }
+}
+
+String? extractTransactionHash(String transactionResponse) {
+  try {
+    // Parse the JSON-like string into a Map.
+    final Map<String, dynamic> response = jsonDecode(transactionResponse);
+
+    // Check if the transactionHash key exists and return it.
+    return response['transactionHash'] ?? null;
+  } catch (e) {
+    // Return null if parsing or extraction fails.
+    print("Error extracting transactionHash: $e");
+    return null;
   }
 }
 

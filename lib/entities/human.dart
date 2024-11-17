@@ -29,7 +29,7 @@ var chains = {
       nativeSymbol: "XTZ",
       decimals: 18,
       rpcNode: "https://node.ghostnet.etherlink.com",
-      blockExplorer: "https://testnet-explorer.etherlink.com"),
+      blockExplorer: "https://testnet.explorer.etherlink.com"),
   "0xa729": Chain(
       wrapperContract: "",
       id: 42793,

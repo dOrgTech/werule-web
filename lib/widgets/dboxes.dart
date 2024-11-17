@@ -328,7 +328,24 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                               String delegateAddress =
                                   newDelegateController.text;
                               widget.m.delegate = delegateAddress;
-                              await delegate(delegateAddress, widget.org);
+                              String cevine =
+                                  await delegate(delegateAddress, widget.org);
+                              if (cevine.contains("not ok")) {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                        content: Center(
+                                  child: Text(
+                                    "Transaction error",
+                                    style: TextStyle(
+                                        fontSize: 24,
+                                        color: Color.fromARGB(255, 61, 4, 4)),
+                                  ),
+                                )));
+                                setState(() {
+                                  widget.busy = false;
+                                });
+                                return;
+                              }
                               var memberDoc = await daosCollection
                                   .doc(widget.org.address)
                                   .collection("members")
@@ -357,7 +374,20 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       widget.busy = true;
       widget.m.delegate = widget.m.address;
     });
-    await delegate(widget.m.address, widget.org);
+    String cevine = await delegate(widget.m.address, widget.org);
+    if (cevine.contains("not ok")) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Center(
+        child: Text(
+          "Transaction error",
+          style: TextStyle(fontSize: 24, color: Color.fromARGB(255, 61, 4, 4)),
+        ),
+      )));
+      setState(() {
+        widget.busy = false;
+      });
+      return;
+    }
     await daosCollection
         .doc(widget.org.address)
         .collection("members")

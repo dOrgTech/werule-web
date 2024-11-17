@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:Homebase/entities/token.dart';
 import 'package:Homebase/widgets/configProposal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -52,7 +54,6 @@ class NotImplemented extends StatelessWidget {
 class Txaction {
   Txaction(
       {required this.recipient, required this.value, this.callData = "0x"});
-
   String hash = "none";
   String recipient;
   String value = "0";
@@ -66,6 +67,17 @@ class Txaction {
       'callData': callData
     };
   }
+}
+
+enum ProposalState {
+  Pending,
+  Active,
+  Canceled,
+  Defeated,
+  Succeeded,
+  Queued,
+  Expired,
+  Executed
 }
 
 enum ProposalStatus {
@@ -178,7 +190,8 @@ class Proposal {
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
     // DateTime executionDeadline = votingEnd.add(executionDelay);
-    BigInt totalVotes = BigInt.parse(inFavor) + BigInt.parse(against);
+    BigInt totalVotes = (BigInt.parse(inFavor) + BigInt.parse(against)) *
+        BigInt.parse(pow(10, org.decimals!).toString());
     BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
     double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
     DateTime now = DateTime.now();
@@ -391,7 +404,7 @@ class Proposal {
 
   List<Color> activecolors = [
     Color.fromARGB(255, 167, 147, 255),
-    Color.fromARGB(255, 121, 111, 168),
+    Color.fromARGB(255, 105, 100, 124),
   ];
   List<Color> pendingColors = [
     Color.fromARGB(255, 255, 248, 183),
@@ -529,12 +542,12 @@ class Proposal {
 }
 
 class Vote {
-  String? voter;
+  String voter;
   String? hash;
-  String? proposalID;
+  String proposalID;
   int option;
   String votingPower;
-  DateTime? castAt;
+  DateTime? castAt = DateTime.now();
   Vote(
       {required this.votingPower,
       required this.voter,
@@ -547,7 +560,7 @@ class Vote {
       'cast': castAt,
       'voter': voter,
       'option': option,
-      'hash': "placeholder"
+      'hash': hash
     };
   }
 }
