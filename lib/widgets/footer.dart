@@ -1,3 +1,4 @@
+import 'package:Homebase/widgets/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -5,9 +6,9 @@ class Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-  mainAxisSize: MainAxisSize.min,
-  children: [
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
         Container(
           width: MediaQuery.of(context).size.width,
           color: Color.fromARGB(255, 25, 25, 25),
@@ -58,8 +59,9 @@ class Footer extends StatelessWidget {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                       Image.network("https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 58,
-                      ),
+                      MediaQuery(
+                          data: MediaQueryData(textScaleFactor: 1.7),
+                          child: Logo()),
                       SizedBox(height: 18),
                       Text(
                         '© ${DateTime.now().year}',
@@ -84,47 +86,44 @@ class Footer extends StatelessWidget {
                               ),
                             ),
                           ),
-                           InkWell(
-                    onTap: () {},
-                    child: Text(
-                      'Tezos Commons',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
+                          InkWell(
+                            onTap: () {},
+                            child: Text(
+                              'Tezos Commons',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                        SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Text(
-                        'Developed by ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                        ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Text(
+                            'Developed by ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: Text(
+                              'Eight Rice',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                       InkWell(
-                    onTap: () {},
-                    child: Text(
-                      'dOrg',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
                     ],
                   ),
-                    ],
-                  ),
-                 
-                
-                 
                 ],
               ),
             ),

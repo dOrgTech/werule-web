@@ -15,6 +15,7 @@ import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
+import '../main.dart';
 import '../utils/reusable.dart';
 import '../widgets/countdown.dart';
 import '../widgets/footer.dart';

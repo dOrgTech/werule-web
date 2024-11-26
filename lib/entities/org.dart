@@ -66,7 +66,10 @@ class Org {
 
   getMembers() async {
     print("getting members");
-    var membersCollection = daosCollection.doc(address).collection("members");
+    var membersCollection = FirebaseFirestore.instance
+        .collection("idaos${Human().chain.name}")
+        .doc(address)
+        .collection("members");
     var membersSnapshot = await membersCollection.get();
     for (var doc in membersSnapshot.docs) {
       Member m = Member(address: doc.data()['address']);
@@ -119,7 +122,7 @@ class Org {
   getProposals() async {
     await populateTreasury();
     pollsCollection = FirebaseFirestore.instance
-        .collection("daos${Human().chain.name}")
+        .collection("idaos${Human().chain.name}")
         .doc(address)
         .collection("proposals");
     var proposalsSnapshot = await pollsCollection.get();
@@ -158,7 +161,7 @@ class Org {
       //   })
       // ];
 
-      p.getStatus();
+      p.retrieveStage();
       p.transactions = (doc.data()['transactions'] as List<dynamic>).map((tx) {
         return Txaction(
           recipient: tx['recipient'],

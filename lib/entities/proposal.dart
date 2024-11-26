@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/entities/token.dart';
 import 'package:Homebase/widgets/configProposal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -69,7 +69,7 @@ class Txaction {
   }
 }
 
-enum ProposalState {
+enum StateInContract {
   Pending,
   Active,
   Canceled,
@@ -84,6 +84,7 @@ enum ProposalStatus {
   pending,
   active,
   passed,
+  queued,
   executable,
   executed,
   expired,
@@ -94,6 +95,7 @@ enum ProposalStatus {
 class Proposal {
   String? id = "";
   late int inAppnumber;
+  ProposalStatus? state;
   String hash = "";
   Org org;
   String? type;
@@ -104,10 +106,10 @@ class Proposal {
   List<String> targets = [];
   List<String> values = [];
   List callDatas = [];
-
   String? callData = "0x";
   DateTime? createdAt;
   DateTime? votingStarts;
+  // String? status;
   DateTime? votingEnds;
   DateTime? executionStarts;
   DateTime? executionEnds;
@@ -155,6 +157,90 @@ class Proposal {
         .doc(org.address)
         .collection("proposals");
     pollsCollection.doc(hash).set(toJson());
+  }
+
+  getVotesFromDAO() async {
+    var theVotes = await getProposalVotes(this);
+    if (theVotes.runtimeType == String) {
+      print("some error from getProposalVotes $votes");
+    }
+    this.votesAgainst = theVotes[0];
+    this.votesFor = theVotes[1];
+  }
+
+  retrieveStage() async {
+    DateTime start = statusHistory["pending"]!;
+    Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
+    Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
+    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
+    DateTime activeStart = start.add(votingDelay);
+    DateTime votingEnd = activeStart.add(votingDuration);
+    BigInt totalVotes = (BigInt.parse(inFavor) + BigInt.parse(against)) *
+        BigInt.parse(pow(10, org.decimals!).toString());
+    BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
+    double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
+    int stateNr = getState(this);
+    StateInContract newStatus = StateInContract.values[stateNr];
+    if (newStatus == StateInContract.Pending) {
+      state = ProposalStatus.pending;
+    }
+    if (newStatus == StateInContract.Active) {
+      state = ProposalStatus.active;
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+    }
+    if (newStatus == StateInContract.Succeeded) {
+      state = ProposalStatus.passed;
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+    }
+    if (newStatus == StateInContract.Executed) {
+      state = ProposalStatus.executed;
+      DateTime executionTime = statusHistory['executed'] ?? DateTime.now();
+      DateTime queueTime = statusHistory['executable'] ?? votingEnd;
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+      statusHistory.addAll({"executable": queueTime.add(executionDelay)});
+      statusHistory.addAll({"executed": executionTime});
+    }
+    if (newStatus == StateInContract.Expired) {
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+      statusHistory.addAll(
+          {"expired": votingEnd.add(votingDuration).add(executionDelay)});
+      state = ProposalStatus.expired;
+    }
+    if (newStatus == StateInContract.Queued) {
+      DateTime queueTime = statusHistory['queued']!;
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+      statusHistory.addAll({"queued": queueTime});
+      if (DateTime.now().isBefore(queueTime.add(executionDelay))) {
+        state = ProposalStatus.queued;
+      } else {
+        state = ProposalStatus.executable;
+      }
+    }
+    if (newStatus == StateInContract.Canceled) {
+      state = ProposalStatus.rejected;
+    }
+    if (newStatus == StateInContract.Defeated) {
+      if (votePercentage < org.quorum) statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"rejected": votingEnd});
+      state = ProposalStatus.rejected;
+    }
+    return state;
   }
 
   toJson() {
@@ -404,7 +490,7 @@ class Proposal {
 
   List<Color> activecolors = [
     Color.fromARGB(255, 167, 147, 255),
-    Color.fromARGB(255, 105, 100, 124),
+    Color.fromARGB(255, 159, 150, 196),
   ];
   List<Color> pendingColors = [
     Color.fromARGB(255, 255, 248, 183),

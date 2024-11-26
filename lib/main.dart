@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/account.dart';
 import 'package:Homebase/screens/creator.dart';
+import 'package:Homebase/screens/landing.dart';
 import 'package:Homebase/screens/members.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
@@ -63,7 +64,7 @@ persist() async {
   users = [];
   proposals = [];
   daosCollection =
-      FirebaseFirestore.instance.collection("daos${Human().chain.name}");
+      FirebaseFirestore.instance.collection("idaos${Human().chain.name}");
   tokensCollection =
       FirebaseFirestore.instance.collection("tokens${Human().chain.name}");
   var daosSnapshot = await daosCollection.get();
@@ -108,7 +109,9 @@ persist() async {
 
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
-  await persist();
+  // if (Human().landing == false) {
+  //   await persist();
+  // }
 
   runApp(ChangeNotifierProvider<Human>(
     create: (context) => Human(),
@@ -161,7 +164,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         //remove debug banner
         debugShowCheckedModeBanner: false,
-        title: 'Homebase',
+        title: 'weRule',
         theme: ThemeData(
           fontFamily: 'CascadiaCode',
           splashColor: const Color(0xff000000),
@@ -175,20 +178,21 @@ class MyApp extends StatelessWidget {
           primarySwatch:
               createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
         ),
-        home:
-            // Scaffold(body: DaoSetupWizard())
-            // Center(child: TransferWidget(org: orgs[0],)))
-            // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
+        home: Scaffold(
+            body: Human().landing
+                ? Landing()
+                :
+                // Center(child: Logo()))
+                // Center(child: TransferWidget(org: orgs[0],)))
+                // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
 
-            // ProposalDetails(
-            //     // p: orgs[0].proposals[0]))
-            //     p: p))
-            // DAO(org: orgs[0], InitialTabIndex: 1, proposalHash: p.hash
-            //     // orgs[0].proposals[0].hash.toString(),
-            //     ))
-            Explorer()
-        // ),
-        );
+                // ProposalDetails(
+                //     // p: orgs[0].proposals[0]))
+                //     p: p))
+                // DAO(org: orgs[0], InitialTabIndex: 1, proposalHash: p.hash
+                //     // orgs[0].proposals[0].hash.toString(),
+                //     ))
+                Explorer()));
   }
 }
 

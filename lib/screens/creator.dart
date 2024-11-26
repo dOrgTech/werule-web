@@ -235,7 +235,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
             width: 500,
             child: Column(
               children: [
-                Text("Create the identity of your company",
+                Text("Organization identity",
                     style: Theme.of(context).textTheme.headline5),
                 const SizedBox(height: 120),
                 SizedBox(
@@ -243,11 +243,10 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   child: TextFormField(
                     controller: _daoNameController,
                     maxLength: 80,
-                    decoration:
-                        const InputDecoration(labelText: 'Company Name'),
+                    decoration: const InputDecoration(labelText: 'DAO Name'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter a name for your company';
+                        return 'Please enter a name for your organization';
                       }
                       return null;
                     },
@@ -263,7 +262,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                         labelText: 'Description or Tagline'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'What is this company about at a high level?';
+                        return 'What is this community about at a high level?';
                       }
                       return null;
                     },

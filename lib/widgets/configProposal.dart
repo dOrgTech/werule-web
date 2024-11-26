@@ -22,7 +22,7 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
 
   // Controllers for different configuration inputs
   final TextEditingController _treasuryAddressController =
-      TextEditingController(text: '0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF');
+      TextEditingController(text: "");
   final TextEditingController _votingDelayDaysController =
       TextEditingController(text: '0');
   final TextEditingController _votingDelayHoursController =

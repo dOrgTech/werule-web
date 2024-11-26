@@ -46,47 +46,7 @@ class _TopMenuState extends State<TopMenu> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               SizedBox(width: 12),
-              Container(
-                child: InkWell(
-                  hoverColor: Colors.transparent,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Explorer()),
-                  ),
-                  child: Row(
-                    children: [
-                      // Image.network(
-                      //   "https://i.ibb.co/7g5Dng6/trcom-dark.png", height: 40,
-                      //   // SvgPicture.asset(
-                      //   //   'assets/logos/homebase_logo.svg',
-                      //   //   semanticsLabel: 'Acme Logo', height: 25,
-                      //   //   color: Theme.of(context).indicatorColor,
-                      //   //   // color: Colors.red,
-                      // ),
-                      // SizedBox(width: 10),
-                      Image.network(
-                        // "https://i.ibb.co/2dw4bZg/werule-mic-dark.png",
-                        // "https://i.ibb.co/rsZc9mt/werule-allwhite.png",
-                        "https://i.ibb.co/XXZRs8D/werule-white.png",
-                        height: 26,
-                        // SvgPicture.asset(
-                        //   'assets/logos/homebase_logo.svg',
-                        //   semanticsLabel: 'Acme Logo', height: 25,
-                        //   color: Theme.of(context).indicatorColor,
-                        //   // color: Colors.red,
-                      ),
-                      // SizedBox(width: 10),
-                      // const Text(
-                      //   'WeRule.io',
-                      //   style: TextStyle(
-                      //       fontFamily: 'CascadiaCode',
-                      //       fontSize: 27,
-                      //       fontWeight: FontWeight.w100),
-                      // ),
-                    ],
-                  ),
-                ),
-              ),
+              Logo(),
               Spacer(),
               Padding(
                 padding: const EdgeInsets.only(left: 50, right: 24),
@@ -151,6 +111,61 @@ class _TopMenuState extends State<TopMenu> {
           // actions: <Widget>[
 
           // ],
+        ),
+      ),
+    );
+  }
+}
+
+class Logo extends StatelessWidget {
+  const Logo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: InkWell(
+        hoverColor: Colors.transparent,
+        onTap: Human().landing
+            ? null
+            : () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Explorer()),
+                ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic, // Ensures proper alignment
+          children: [
+            Text(
+              'we',
+              style: TextStyle(
+                fontFamily: 'CascadiaCode',
+                backgroundColor: Color.fromARGB(255, 192, 192, 192),
+                fontSize: 28,
+                color: Color.fromARGB(255, 22, 22, 22),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(width: 2),
+            Text(
+              'R',
+              style: TextStyle(
+                fontFamily: 'CascadiaCode',
+                backgroundColor: Color.fromARGB(255, 26, 26, 26),
+                fontSize: 24, // Match the font size for consistency
+                fontWeight: FontWeight.w100,
+              ),
+            ),
+            Text(
+              'ule',
+              style: TextStyle(
+                fontFamily: 'CascadiaCode',
+                backgroundColor: Color.fromARGB(255, 26, 26, 26),
+                fontSize: 28, // Match the font size for consistency
+                fontWeight: FontWeight.w100,
+              ),
+            ),
+          ],
         ),
       ),
     );

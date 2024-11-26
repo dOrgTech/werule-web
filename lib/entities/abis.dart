@@ -38,7 +38,7 @@ List<String> daoAbiString = [
   'function setProposalThreshold (uint256)',
   'function setVotingDelay (uint48)',
   'function setVotingPeriod (uint32)',
-  'function state (uint256)',
+  'function state (uint256) returns (uint8)',
   'function supportsInterface (bytes4)',
   'function timelock ()',
   'function token ()',

@@ -1,7 +1,10 @@
 import 'package:Homebase/widgets/footer.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
+import '../entities/human.dart';
+import '../entities/token.dart';
 import '../screens/account.dart';
 import '../screens/proposalDetails.dart';
 import '../screens/proposals.dart';
@@ -33,19 +36,53 @@ class _DAOState extends State<DAO> {
     widget.org.proposals = [];
     return Scaffold(
       appBar: const TopMenu(),
-      body: FutureBuilder(
-          future: widget.org.getProposals(),
+      body: StreamBuilder(
+          stream: FirebaseFirestore.instance
+              .collection("idaos${Human().chain.name}")
+              .doc(widget.org.address!)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: SizedBox(
-                    width: 360,
-                    height: 360,
-                    child: Center(child: CircularProgressIndicator())),
-              );
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+              return Center(
+                  child:
+                      CircularProgressIndicator()); // Show a loading indicator
             }
+
+            if (snapshot.hasError) {
+              return Text("Error: ${snapshot.error}");
+            }
+
+            if (!snapshot.hasData) {
+              return Text("No updates yet");
+            }
+
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+
+            Org dao = Org(
+                name: data['name'],
+                description: data['description'],
+                govTokenAddress: data['govTokenAddress']);
+            dao.address = data['address'];
+            dao.symbol = data['symbol'];
+            dao.creationDate = (data['creationDate'] as Timestamp).toDate();
+            dao.govToken = Token(
+                symbol: dao.symbol!, decimals: dao.decimals, name: dao.name);
+            dao.govTokenAddress = data['token'];
+            dao.proposalThreshold = data['proposalThreshold'];
+            dao.votingDelay = data['votingDelay'];
+            dao.treasuryAddress = data['treasuryAddress'];
+            dao.registryAddress = data['registryAddress'];
+            dao.votingDuration = data['votingDuration'];
+            dao.executionDelay = data['executionDelay'];
+            dao.quorum = data['quorum'];
+            dao.decimals = data['decimals'];
+            dao.holders = data['holders'];
+            dao.treasuryMap = Map<String, String>.from(data['treasury']);
+            dao.registry = Map<String, String>.from(data['registry']);
+            dao.totalSupply = data['totalSupply'];
+            dao.getProposals();
+            // dao.getMembers();
+
             return Container(
               alignment: Alignment.topCenter,
               child: DefaultTabController(
@@ -97,11 +134,10 @@ class _DAOState extends State<DAO> {
                           child: TabBarView(
                             // TabBarView start
                             children: [
-                              Home(org: widget.org),
+                              Home(org: dao),
                               widget.proposalHash == null
                                   ? Center(
-                                      child: Proposals(
-                                          which: "all", org: widget.org))
+                                      child: Proposals(which: "all", org: dao))
                                   : Center(
                                       child: ProposalDetails(
                                           p: widget.org.proposals.firstWhere(
@@ -111,9 +147,9 @@ class _DAOState extends State<DAO> {
                                       )),
                                     ),
                               // Center(child: Treasury()),
-                              Center(child: Registry(org: widget.org)),
-                              Center(child: Members(org: widget.org)),
-                              Center(child: Account(org: widget.org)),
+                              Center(child: Registry(org: dao)),
+                              Center(child: Members(org: dao)),
+                              Center(child: Account(org: dao)),
                             ],
                           ), // TabBarView end
                         ),

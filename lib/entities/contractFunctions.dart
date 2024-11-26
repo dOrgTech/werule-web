@@ -53,7 +53,6 @@ getVotes(who, Org org) async {
     EthereumAddress.fromHex(org.govTokenAddress!),
   );
   var getRepToken = contractWrapper.function('getVotes');
-
   try {
     var counter = await ethClient.call(
       contract: contractWrapper,
@@ -105,6 +104,72 @@ getBalance(who, Org org) async {
     print('Response Body:');
     print(httpClient.toString());
     httpClient.close();
+    rethrow;
+  }
+}
+
+getProposalVotes(Proposal p) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final dao = DeployedContract(
+    ContractAbi.fromJson(p.org.address!, 'state'),
+    EthereumAddress.fromHex(p.org.address!),
+  );
+  var getRepToken = dao.function('state');
+  Uint8List encodedData = getRepToken.encodeCall([]);
+  try {
+    var counter = await ethClient.call(
+      contract: dao,
+      function: getRepToken,
+      params: [],
+    );
+    // Log the RPC response
+    print('RPC Response STATE:');
+    print(counter.toString());
+    int againstVotes = int.parse(counter[0].toString()) as int;
+    int forVotes = int.parse(counter[1].toString()) as int;
+    int abstainVotes = int.parse(counter[2].toString()) as int;
+    print('$againstVotes ${againstVotes}');
+    httpClient.close();
+    ethClient.dispose();
+    return [againstVotes, forVotes, abstainVotes];
+  } catch (e) {
+    print('Error: $e');
+    // Log the full response body
+    print('Response Body:');
+    print(httpClient.toString());
+    rethrow;
+  }
+}
+
+getState(Proposal p) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final dao = DeployedContract(
+    ContractAbi.fromJson(p.org.address!, 'state'),
+    EthereumAddress.fromHex(p.org.address!),
+  );
+  var getRepToken = dao.function('state');
+  Uint8List encodedData = getRepToken.encodeCall([]);
+  try {
+    var counter = await ethClient.call(
+      contract: dao,
+      function: getRepToken,
+      params: [],
+    );
+    // Log the RPC response
+    print('RPC Response STATE:');
+    print(counter.toString());
+    int rezultat = int.parse(counter[0].toString()) as int;
+    print('$rezultat ${rezultat.runtimeType}');
+    httpClient.close();
+    ethClient.dispose();
+    return rezultat;
+  } catch (e) {
+    print('Error: $e');
+    // Log the full response body
+    print('Response Body:');
+    print(httpClient.toString());
     rethrow;
   }
 }
@@ -378,7 +443,7 @@ queueProposal(Proposal p) async {
       [
         "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
       ],
-      descriptionHash
+      ""
     ]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
