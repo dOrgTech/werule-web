@@ -105,13 +105,15 @@ persist() async {
     org.totalSupply = doc.data()['totalSupply'];
     orgs.add(org);
   }
+  await orgs[0].getProposals();
 }
 
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
-  // if (Human().landing == false) {
-  //   await persist();
-  // }
+  if (Human().landing == false) {
+    print("persisting");
+    await persist();
+  }
 
   runApp(ChangeNotifierProvider<Human>(
     create: (context) => Human(),
@@ -189,10 +191,13 @@ class MyApp extends StatelessWidget {
                 // ProposalDetails(
                 //     // p: orgs[0].proposals[0]))
                 //     p: p))
-                // DAO(org: orgs[0], InitialTabIndex: 1, proposalHash: p.hash
-                //     // orgs[0].proposals[0].hash.toString(),
-                //     ))
-                Explorer()));
+                DAO(
+                    org: orgs[0],
+                    InitialTabIndex: 1,
+                    proposalHash: orgs[0].proposals[0].hash.toString(),
+                  ))
+        // Explorer())
+        );
   }
 }
 

@@ -132,7 +132,6 @@ class Org {
       Proposal p = Proposal(org: this, name: doc.data()['title'] ?? "No title");
       p.type = doc.data()['type'];
       p.id = doc.id.toString();
-
       p.against = doc.data()['against'];
       p.inFavor = doc.data()['inFavor'];
       p.hash = doc.id.toString();
@@ -150,10 +149,17 @@ class Org {
       proposals.add(p);
       proposalIDs!.add(doc.id);
       var statusHistoryMap = doc['statusHistory'] as Map<String, dynamic>;
+      print("before issue");
       p.statusHistory = statusHistoryMap.map((key, value) {
         return MapEntry(key, (value as Timestamp).toDate());
       });
-      p.callDatas = List<Map<dynamic, dynamic>>.from(doc['callDatas']);
+
+      print("also before issue");
+      p.callDatas = List.from(doc['callDatas']);
+      for (var callData in p.callDatas) {
+        print("calldata $callData and type is ${callData.runtimeType}");
+      }
+      print("after issue");
 
       // p.callDatas = [
       //   callDatasMap.map((key, value) {
@@ -161,7 +167,9 @@ class Org {
       //   })
       // ];
 
-      p.retrieveStage();
+      // p.retrieveStage();
+      p.state = ProposalStatus.pending;
+      p.status = "pending";
       p.transactions = (doc.data()['transactions'] as List<dynamic>).map((tx) {
         return Txaction(
           recipient: tx['recipient'],

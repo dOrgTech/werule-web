@@ -57,7 +57,6 @@ class _DAOState extends State<DAO> {
             }
 
             final data = snapshot.data!.data() as Map<String, dynamic>;
-
             Org dao = Org(
                 name: data['name'],
                 description: data['description'],

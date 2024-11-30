@@ -52,37 +52,38 @@ class ProposalDetailsState extends State<ProposalDetails> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    stage = widget.p.stage.toString().split(".").last;
-    if (stage == "noQuorum") {
-      stage = "no quorum";
-      widget.showCountdown = false;
-    }
-    print("stage: " + stage);
+    // stage = widget.p.stage.toString().split(".").last;
+    // stage = "pending";
+    // if (stage == "noQuorum") {
+    //   stage = "no quorum";
+    //   widget.showCountdown = false;
+    // }
+    // print("stage: " + stage);
 
-    if (stage == "active" || stage == "pending" || stage == "executable") {
-      setState(() {
-        widget.remainingSeconds = widget.p.getRemainingTime()!.inSeconds;
-      });
-      widget.showCountdown = true;
-      _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          stage = widget.p.stage.toString().split(".").last;
-          if (stage == "passed" || stage == "executed" || stage == "rejected") {
-            widget.showCountdown = false;
-            timer.cancel();
-          }
-          if (stage == "noQuorum") {
-            stage = "no quorum";
-            widget.showCountdown = false;
-            timer.cancel();
-          }
+    // if (stage == "active" || stage == "pending" || stage == "executable") {
+    //   setState(() {
+    //     widget.remainingSeconds = widget.p.getRemainingTime()!.inSeconds;
+    //   });
+    //   widget.showCountdown = true;
+    //   _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    //     setState(() {
+    //       stage = widget.p.stage.toString().split(".").last;
+    //       if (stage == "passed" || stage == "executed" || stage == "rejected") {
+    //         widget.showCountdown = false;
+    //         timer.cancel();
+    //       }
+    //       if (stage == "noQuorum") {
+    //         stage = "no quorum";
+    //         widget.showCountdown = false;
+    //         timer.cancel();
+    //       }
 
-          widget.remainingSeconds--;
-        });
-      });
-    } else {
-      widget.showCountdown = false;
-    }
+    //       widget.remainingSeconds--;
+    //     });
+    //   });
+    // } else {
+    //   widget.showCountdown = false;
+    // }
   }
 
   @override
@@ -631,41 +632,41 @@ class ProposalDetailsState extends State<ProposalDetails> {
             const SizedBox(height: 20),
             Row(
               children: [
-                Container(
-                  height: 280,
-                  constraints: const BoxConstraints(
-                    maxWidth: 500,
-                  ),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(18.0),
-                      child: widget.busy
-                          ? const Center(
-                              child: SizedBox(
-                                  height: 100,
-                                  width: 100,
-                                  child: CircularProgressIndicator()))
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 9),
-                                ActionLabel(
-                                  status: stage,
-                                ),
-                                widget.showCountdown
-                                    ? Container(
-                                        padding: const EdgeInsets.only(top: 22),
-                                        child: Transform.scale(
-                                            scale: 0.8,
-                                            child: _buildCountdownDisplay()))
-                                    : const Text(""),
-                                const SizedBox(height: 32),
-                                actions()
-                              ],
-                            ),
-                    ),
-                  ),
-                ),
+                // Container(
+                //   height: 280,
+                //   constraints: const BoxConstraints(
+                //     maxWidth: 500,
+                //   ),
+                //   child: Card(
+                //     child: Padding(
+                //       padding: const EdgeInsets.all(18.0),
+                //       child: widget.busy
+                //           ? const Center(
+                //               child: SizedBox(
+                //                   height: 100,
+                //                   width: 100,
+                //                   child: CircularProgressIndicator()))
+                //           : Column(
+                //               crossAxisAlignment: CrossAxisAlignment.start,
+                //               children: [
+                //                 const SizedBox(height: 9),
+                //                 ActionLabel(
+                //                   status: stage,
+                //                 ),
+                //                 widget.showCountdown
+                //                     ? Container(
+                //                         padding: const EdgeInsets.only(top: 22),
+                //                         child: Transform.scale(
+                //                             scale: 0.8,
+                //                             child: _buildCountdownDisplay()))
+                //                     : const Text(""),
+                //                 const SizedBox(height: 32),
+                //                 actions()
+                //               ],
+                //             ),
+                //     ),
+                //   ),
+                // ),
                 const SizedBox(width: 16),
                 Container(
                   height: 280,
