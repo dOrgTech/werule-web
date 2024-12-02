@@ -288,7 +288,7 @@ getRegistryAddress(position) async {
   return rezultat;
 }
 
-createDAO(Org org, state) async {
+createDAO(Org org) async {
   List<String> amounts = [];
   List<String> initialMembers = [];
   for (String adresa in org.memberAddresses.keys) {
@@ -316,19 +316,22 @@ createDAO(Org org, state) async {
 
     final parameters = [
       org.name, // string
-      org.govToken!.symbol, // string
+      org.symbol, // string
+      org.description,
       org.decimals.toString(),
       org.executionDelay.toString(),
       initialMembers, // array of strings (addresses)
-      amounts
+      amounts,
+      org.registry.keys.toList(),
+      org.registry.values.toList(),
     ];
     print("made params");
     for (var param in parameters) {
       print('Parameter: $param, Type: ${param.runtimeType}');
     }
-
+    final jsDaoParams = jsify(parameters);
     final transaction = await promiseToFuture(
-        callMethod(sourceContract, "deployDAOwithToken", parameters));
+        callMethod(sourceContract, "deployDAOwithToken", [jsDaoParams]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
 
@@ -347,6 +350,93 @@ createDAO(Org org, state) async {
       if (daoAddress.length > 20) {
         org.address = daoAddress;
         org.creationDate = DateTime.now();
+        print("added project");
+        print("suntem inainte de pop");
+        print("projectAddress " + daoAddress.toString());
+      }
+      var tokenAddress = await getTokenAddress(cate - 1);
+      tokenAddress = tokenAddress.toString();
+      var treasuryAddress = await getTreasuryAddress(cate - 1);
+      treasuryAddress = treasuryAddress.toString();
+      var registryAddress = await getRegistryAddress(cate - 1);
+      registryAddress = registryAddress.toString();
+      List<String> results = [
+        daoAddress,
+        tokenAddress,
+        treasuryAddress,
+        registryAddress
+      ];
+      return results;
+    }
+  } catch (e) {
+    print("nu s-a putut" + e.toString());
+    // state.setState(() {
+    //   state.widget.done=true;
+    //   state.widget.error=true;
+    // });
+    return "still not ok";
+  }
+}
+
+oldcreateDAO(Org org, state) async {
+  Org parizer = Org(name: "new dao", description: "something description");
+  parizer.decimals = 2;
+  parizer.symbol = "SMO";
+  parizer.executionDelay = 60;
+
+  List<String> amounts = ["5000000", "3450000", "2", "3", "4000", "50"];
+  List<String> initialMembers = [
+    "0xa9F8F9C0bf3188cEDdb9684ae28655187552bAE9",
+    "0xA6A40E0b6DB5a6f808703DBe91DbE50B7FC1fa3E"
+  ];
+
+  print("here we all are");
+
+  print("wrapper contract address " + Human().chain.wrapperContract.toString());
+  print("web3 is of type " + Human().web3user.toString());
+  var sourceContract = Contract(
+      Human().chain.wrapperContract, wrapperAbiStringGlobal, Human().web3user);
+  print("facuram contractu");
+  try {
+    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+    print("signed oki");
+    final parameters = [
+      parizer.name, // string
+      parizer.symbol, // string
+      parizer.description,
+      parizer.decimals.toString(),
+      parizer.executionDelay.toString(),
+      initialMembers, // array of strings (addresses)
+      amounts,
+      ["something key"],
+      ["something else value"],
+    ];
+    print("made params");
+    for (var param in parameters) {
+      print('Parameter: $param, Type: ${param.runtimeType}');
+    }
+
+    final jsDaoParams = jsify(parameters);
+    final transaction = await promiseToFuture(
+        callMethod(sourceContract, "deployDAOwithToken", [jsDaoParams]));
+    print("facuram tranzactia");
+    final hash = json.decode(stringify(transaction))["hash"];
+
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+    if (json.decode(stringify(result))["status"] == 0) {
+      print("nu merge eroare de greseala");
+      return "not ok";
+    } else {
+      var rezultat = (json.decode(stringify(result)));
+      var cate = await getNumberOfDAOs();
+      print('tip cate ' + cate.runtimeType.toString());
+      print("got the counter and it's " + cate.toString());
+      var daoAddress = await getDAOAddress(cate - 1);
+      daoAddress = daoAddress.toString();
+      if (daoAddress.length > 20) {
+        parizer.address = daoAddress;
+        parizer.creationDate = DateTime.now();
         print("added project");
         print("suntem inainte de pop");
         print("projectAddress " + daoAddress.toString());
@@ -471,8 +561,8 @@ vote(Vote v, Org org) async {
   var sourceContract = Contract(org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
   try {
+    print("before signing");
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed ok");
     final transaction = await promiseToFuture(callMethod(
         sourceContract, "castVote", [v.proposalID, v.option.toString()]));
     print("facuram tranzactia");

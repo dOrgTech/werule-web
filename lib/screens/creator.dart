@@ -3,6 +3,7 @@ import 'package:Homebase/utils/theme.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';
@@ -1320,7 +1321,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
       widget.org.executionDelay = daoConfig.executionDelay?.inSeconds ?? 0;
       widget.org.holders = daoConfig.members.length;
       widget.org.symbol = daoConfig.tokenSymbol;
-      widget.org.registry = {"hello": "there"};
+      widget.org.registry = daoConfig.registry;
       widget.org.proposalThreshold =
           daoConfig.proposalThreshold!.toStringAsFixed(0);
       widget.org.nonTransferrable = true;
@@ -1332,22 +1333,12 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         for (Member member in daoConfig.members) {
           widget.org.memberAddresses[member.address] = member;
         }
-        List<String> results = await createDAO(widget.org, this);
+        List<String> results = await createDAO(widget.org);
         widget.org.address = results[0];
         widget.org.govTokenAddress = results[1];
         widget.org.treasuryAddress = results[2];
         widget.org.registryAddress = results[3];
-        orgs.add(widget.org);
-        await daosCollection.doc(widget.org.address).set(widget.org.toJson());
-        WriteBatch batch = FirebaseFirestore.instance.batch();
-        var membersCollection =
-            daosCollection.doc(widget.org.address).collection("members");
-        for (Member member in daoConfig.members) {
-          batch.set(membersCollection.doc(member.address), member.toJson());
-        }
-        await batch.commit();
-        widget.org.memberAddresses = {};
-
+        print("we caught this back" + results.toString());
         setState(() {
           currentStep = 8; // Move to the Deployment Complete screen
         });

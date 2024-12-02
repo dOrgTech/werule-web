@@ -89,6 +89,7 @@ class _ProposalsState extends State<Proposals> {
 
   @override
   Widget build(BuildContext context) {
+    widget.proposalCards = [];
     for (Proposal p in widget.org.proposals) {
       if (p.status == "executable") {
         widget.executable = true;
@@ -96,7 +97,6 @@ class _ProposalsState extends State<Proposals> {
     }
     ;
 
-    populateProposals();
     return widget.proposalID == null
         ? StreamBuilder(
             stream: FirebaseFirestore.instance
@@ -116,6 +116,10 @@ class _ProposalsState extends State<Proposals> {
                 return const Center(child: Text("Can't retrieve proposals"));
               }
               final docs = snapshot.data!.docs;
+              widget.org.proposals
+                  .clear(); // Clear existing proposals to avoid duplication
+              widget.org.proposalIDs!
+                  .clear(); // Clear existing IDs if necessary
               for (var doc in docs) {
                 Proposal p = Proposal(
                     org: widget.org, name: doc.data()['title'] ?? "No title");
@@ -145,6 +149,7 @@ class _ProposalsState extends State<Proposals> {
                   return MapEntry(key, (value as Timestamp).toDate());
                 });
               }
+              populateProposals();
               return Container(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,6 +195,7 @@ class _ProposalsState extends State<Proposals> {
                           onChanged: (String? newValue) {
                             setState(() {
                               selectedStatus = newValue;
+                              widget.proposalCards = [];
                             });
                           },
                         ),

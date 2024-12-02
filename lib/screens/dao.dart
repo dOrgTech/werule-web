@@ -86,7 +86,7 @@ class _DAOState extends State<DAO> {
             dao.registry = Map<String, String>.from(data['registry']);
             dao.totalSupply = data['totalSupply'];
 
-            // dao.getMembers();
+            dao.getMembers();
 
             return Container(
               alignment: Alignment.topCenter,

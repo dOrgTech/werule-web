@@ -1,4 +1,5 @@
 import 'package:Homebase/entities/contractFunctions.dart';
+import 'package:Homebase/entities/proposal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -163,7 +164,7 @@ class _ExplorerState extends State<Explorer> {
                                                   color: Colors.black)),
                                           height: 40,
                                           child: ElevatedButton(
-                                              onPressed: () {
+                                              onPressed: () async {
                                                 Navigator.push(
                                                     context,
                                                     MaterialPageRoute(

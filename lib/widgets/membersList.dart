@@ -1,7 +1,9 @@
 import 'package:Homebase/utils/reusable.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // import '../screens/creator.dart';
+import '../entities/human.dart';
 import '../entities/org.dart';
 import 'dart:typed_data';
 
@@ -14,82 +16,148 @@ class MembersList extends StatelessWidget {
   Org org;
   @override
   Widget build(BuildContext context) {
-    List<TableRow> tableRows = [];
-    for (Member m in org.memberAddresses.values) {
-      tableRows.add(MemberTableRow(m, context));
-    }
-    return Column(children: [
-      Table(
-        border: TableBorder.all(color: Colors.transparent),
-        columnWidths: const <int, TableColumnWidth>{
-          0: FlexColumnWidth(2.4),
-          1: FlexColumnWidth(),
-          2: FlexColumnWidth(),
-          3: FlexColumnWidth(),
-          4: FlexColumnWidth(),
-          5: FlexColumnWidth(),
-        },
-        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-        children: <TableRow>[
-          TableRow(
-            children: <Widget>[
-              Container(
-                height: 22,
-                color: const Color.fromARGB(0, 76, 175, 79),
-                child: const Padding(
-                  padding: EdgeInsets.only(top: 4.0, left: 75),
-                  child: Text("Address"),
+    return StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection("idaos${Human().chain.name}")
+            .doc(org.address)
+            .collection("members")
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+                child: CircularProgressIndicator()); // Show a loading indicator
+          }
+
+          if (snapshot.hasError) {
+            return Text("Error: ${snapshot.error}");
+          }
+
+          if (!snapshot.hasData) {
+            return Text(
+                "Members are being indexed. Check back later or use Remix to interact with the DAO.");
+          }
+
+          final docs = snapshot.data!.docs;
+          for (var doc in docs) {
+            Member m = Member(address: doc.data()['address']);
+            m.personalBalance = doc.data()['personalBalance'];
+            m.votingWeight = "0";
+            List<String> proposalsCreatedHashes =
+                List<String>.from(doc.data()['proposalsCreated'] ?? []);
+            List<String> proposalsVotedHashes =
+                List<String>.from(doc.data()['proposalsVoted'] ?? []);
+            m.proposalsCreated = org.proposals
+                .where((proposal) =>
+                    proposalsCreatedHashes.contains(proposal.hash))
+                .toList();
+            m.proposalsVoted = org.proposals
+                .where(
+                    (proposal) => proposalsVotedHashes.contains(proposal.hash))
+                .toList();
+            m.lastSeen = doc.data()['lastSeen'] != null
+                ? (doc.data()['lastSeen'] as Timestamp).toDate()
+                : null;
+            org.memberAddresses[m.address.toLowerCase()] = m;
+            m.delegate = doc.data()['delegate'] ?? "";
+            if (!(m.delegate == "")) {
+              if (!org.memberAddresses.keys
+                  .contains(m.delegate.toLowerCase())) {
+                Member delegate = Member(address: m.delegate);
+                org.memberAddresses[delegate.address.toLowerCase()] = delegate;
+                delegate.constituents.add(m);
+              } else {
+                org.memberAddresses[m.delegate.toLowerCase()]!.constituents
+                    .add(m);
+              }
+            }
+          }
+
+          for (Member m in org.memberAddresses.values) {
+            if (m.delegate == m.address) {
+              for (Member constituent in m.constituents) {
+                m.votingWeight = (BigInt.parse(m.votingWeight!) +
+                        BigInt.parse(constituent.personalBalance!))
+                    .toString();
+              }
+            }
+          }
+          List<TableRow> tableRows = [];
+          for (Member m in org.memberAddresses.values) {
+            tableRows.add(MemberTableRow(m, context));
+          }
+          return Column(children: [
+            Table(
+              border: TableBorder.all(color: Colors.transparent),
+              columnWidths: const <int, TableColumnWidth>{
+                0: FlexColumnWidth(2.4),
+                1: FlexColumnWidth(),
+                2: FlexColumnWidth(),
+                3: FlexColumnWidth(),
+                4: FlexColumnWidth(),
+                5: FlexColumnWidth(),
+              },
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              children: <TableRow>[
+                TableRow(
+                  children: <Widget>[
+                    Container(
+                      height: 22,
+                      color: const Color.fromARGB(0, 76, 175, 79),
+                      child: const Padding(
+                        padding: EdgeInsets.only(top: 4.0, left: 75),
+                        child: Text("Address"),
+                      ),
+                    ),
+                    Container(
+                        height: 35,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: const Center(
+                            child: Text(
+                          "Voting\nWeight",
+                          textAlign: TextAlign.center,
+                        ))),
+                    Container(
+                        height: 42,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: Center(
+                            child: Text("Personal\n${org.symbol!} Balance",
+                                textAlign: TextAlign.center))),
+                    Container(
+                        height: 42,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: Center(
+                            child: Text("Proposals\nCreated",
+                                textAlign: TextAlign.center))),
+                    Container(
+                        height: 42,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: const Center(
+                            child: Text("Proposals\nVoted",
+                                textAlign: TextAlign.center))),
+                  ],
                 ),
-              ),
-              Container(
-                  height: 35,
-                  color: const Color.fromARGB(0, 76, 175, 79),
-                  child: const Center(
-                      child: Text(
-                    "Voting\nWeight",
-                    textAlign: TextAlign.center,
-                  ))),
-              Container(
-                  height: 42,
-                  color: const Color.fromARGB(0, 76, 175, 79),
-                  child: Center(
-                      child: Text("Personal\n${org.symbol!} Balance",
-                          textAlign: TextAlign.center))),
-              Container(
-                  height: 42,
-                  color: const Color.fromARGB(0, 76, 175, 79),
-                  child: Center(
-                      child: Text("Proposals\nCreated",
-                          textAlign: TextAlign.center))),
-              Container(
-                  height: 42,
-                  color: const Color.fromARGB(0, 76, 175, 79),
-                  child: const Center(
-                      child: Text("Proposals\nVoted",
-                          textAlign: TextAlign.center))),
-            ],
-          ),
-        ],
-      ),
-      Opacity(
-          opacity: 0.5,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 29.0),
-            child: Divider(),
-          )),
-      Table(
-          border: TableBorder.all(color: Colors.transparent),
-          columnWidths: const <int, TableColumnWidth>{
-            0: FlexColumnWidth(2.4),
-            1: FlexColumnWidth(),
-            2: FlexColumnWidth(),
-            3: FlexColumnWidth(),
-            4: FlexColumnWidth(),
-            5: FlexColumnWidth(),
-          },
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: tableRows)
-    ]);
+              ],
+            ),
+            Opacity(
+                opacity: 0.5,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 29.0),
+                  child: Divider(),
+                )),
+            Table(
+                border: TableBorder.all(color: Colors.transparent),
+                columnWidths: const <int, TableColumnWidth>{
+                  0: FlexColumnWidth(2.4),
+                  1: FlexColumnWidth(),
+                  2: FlexColumnWidth(),
+                  3: FlexColumnWidth(),
+                  4: FlexColumnWidth(),
+                  5: FlexColumnWidth(),
+                },
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: tableRows)
+          ]);
+        });
   }
 }
 

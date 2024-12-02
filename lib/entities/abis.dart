@@ -109,7 +109,7 @@ List<String> timelockAbiString = [
 
 List<String> wrapperAbiStringGlobal = [
   'function deployDAO (address, address, string, uint48, uint32)',
-  'function deployDAOwithToken (string, string, uint8, uint256, address[], uint[])',
+  'function deployDAOwithToken((string name, string symbol, string description, uint8 decimals, uint256 executionDelay, address[] initialMembers, uint256[] initialAmounts, string[] keys, string[] values) params)',
   'function deployedDAOs (uint256)',
   'function getNumberOfDAOs() returns (uint)'
 ];
@@ -134,6 +134,66 @@ String wrapperAbiGlobal = '''
 	{
 		"inputs": [
 			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "symbol",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "description",
+						"type": "string"
+					},
+					{
+						"internalType": "uint8",
+						"name": "decimals",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "executionDelay",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address[]",
+						"name": "initialMembers",
+						"type": "address[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "initialAmounts",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "keys",
+						"type": "string[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "values",
+						"type": "string[]"
+					}
+				],
+				"internalType": "struct WrapperContract.DaoParams",
+				"name": "params",
+				"type": "tuple"
+			}
+		],
+		"name": "deployDAOwithToken",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "_tokenFactory",
 				"type": "address"
@@ -153,42 +213,77 @@ String wrapperAbiGlobal = '''
 		"type": "constructor"
 	},
 	{
+		"anonymous": false,
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
+				"indexed": true,
+				"internalType": "address",
+				"name": "dao",
+				"type": "address"
 			},
 			{
-				"internalType": "string",
-				"name": "symbol",
-				"type": "string"
+				"indexed": false,
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
 			},
 			{
-				"internalType": "uint8",
-				"name": "decimals",
-				"type": "uint8"
-			},
-			{
-				"internalType": "uint256",
-				"name": "executionDelay",
-				"type": "uint256"
-			},
-			{
+				"indexed": false,
 				"internalType": "address[]",
 				"name": "initialMembers",
 				"type": "address[]"
 			},
 			{
+				"indexed": false,
 				"internalType": "uint256[]",
 				"name": "initialAmounts",
 				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "symbol",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "executionDelay",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "registry",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string[]",
+				"name": "keys",
+				"type": "string[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "string[]",
+				"name": "values",
+				"type": "string[]"
 			}
 		],
-		"name": "deployDAOwithToken",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
+		"name": "NewDaoCreated",
+		"type": "event"
 	},
 	{
 		"inputs": [

@@ -23,7 +23,7 @@ var chains = {
       rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede",
       blockExplorer: "https://sepolia.etherscan.io"),
   "0x1f47b": Chain(
-      wrapperContract: "0xF4c36FB549E7cc4Cf75E79f9146dB8d9a4d3fd2F",
+      wrapperContract: "0xDF38eD7d9DcF15577F0E6eb619b945669F1f74b1",
       id: 128123,
       name: "Etherlink-Testnet",
       nativeSymbol: "XTZ",
