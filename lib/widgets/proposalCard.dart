@@ -207,7 +207,8 @@ class _ProposalCardState extends State<ProposalCard> {
                     height: 20,
                     width: 110,
                     child: Center(
-                        child: widget.proposal.statusPill(status, context))),
+                        child: widget.proposal.statusPill(
+                            widget.proposal.latestState!, context))),
               ],
             ),
           ),

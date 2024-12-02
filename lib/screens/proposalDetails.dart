@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:Homebase/main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +32,7 @@ const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
 class ProposalDetails extends StatefulWidget {
   // int id;
   ProposalDetails({super.key, required this.p});
-  final Proposal p;
+  Proposal p;
   bool enabled = false;
   // String? status;
   bool busy = false;
@@ -45,35 +47,35 @@ class ProposalDetails extends StatefulWidget {
 
 class ProposalDetailsState extends State<ProposalDetails> {
   Timer? _statusCheckTimer;
-  late String stage;
+  // late String p.status;
   String support = "";
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    // stage = widget.p.stage.toString().split(".").last;
-    // stage = "pending";
-    // if (stage == "noQuorum") {
-    //   stage = "no quorum";
+    // p.status = widget.p.p.status.toString().split(".").last;
+    // p.status = "pending";
+    // if (p.status == "noQuorum") {
+    //   p.status = "no quorum";
     //   widget.showCountdown = false;
     // }
-    // print("stage: " + stage);
+    // print("p.status: " + p.status);
 
-    // if (stage == "active" || stage == "pending" || stage == "executable") {
+    // if (p.status == "active" || p.status == "pending" || p.status == "executable") {
     //   setState(() {
     //     widget.remainingSeconds = widget.p.getRemainingTime()!.inSeconds;
     //   });
     //   widget.showCountdown = true;
     //   _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
     //     setState(() {
-    //       stage = widget.p.stage.toString().split(".").last;
-    //       if (stage == "passed" || stage == "executed" || stage == "rejected") {
+    //       p.status = widget.p.p.status.toString().split(".").last;
+    //       if (p.status == "passed" || p.status == "executed" || p.status == "rejected") {
     //         widget.showCountdown = false;
     //         timer.cancel();
     //       }
-    //       if (stage == "noQuorum") {
-    //         stage = "no quorum";
+    //       if (p.status == "noQuorum") {
+    //         p.status = "no quorum";
     //         widget.showCountdown = false;
     //         timer.cancel();
     //       }
@@ -93,7 +95,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
   }
 
   Widget actions() {
-    if (stage == "passed") {
+    if (widget.p.status == "passed") {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
@@ -121,7 +123,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 widget.p.statusHistory.addAll({"executable": DateTime.now()});
                 await widget.p.store();
                 setState(() {
-                  stage = widget.p.stage.toString().split(".").last;
+                  widget.p.status = widget.p.status.toString().split(".").last;
                   widget.remainingSeconds =
                       widget.p.getRemainingTime()!.inSeconds;
                   widget.showCountdown = true;
@@ -132,7 +134,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                   style: TextStyle(fontSize: 12))),
         ),
       );
-    } else if (stage == "executable") {
+    } else if (widget.p.status == "executable") {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
@@ -162,7 +164,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
               child: const Text("EXECUTE", style: TextStyle(fontSize: 12))),
         ),
       );
-    } else if (stage == "executed") {
+    } else if (widget.p.status == "executed") {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
@@ -451,8 +453,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
   @override
   Widget build(BuildContext context) {
     bool expired = false;
-    stage == "active" ? widget.enabled = true : widget.enabled = false;
-    stage == "expired" ? widget.showCountdown = false : expired = true;
+    // p.status == "active" ? widget.enabled = true : widget.enabled = false;
+    // p.status == "expired" ? widget.showCountdown = false : expired = true;
 
     BigInt totalVotes =
         BigInt.parse(widget.p.inFavor) + BigInt.parse(widget.p.against);
@@ -462,430 +464,533 @@ class ProposalDetailsState extends State<ProposalDetails> {
             BigInt.parse(pow(10, widget.p.org.decimals!).toString())) /
         BigInt.parse(widget.p.org.totalSupply!);
 
+    // return Text("hello");
+
     return Container(
       alignment: Alignment.topCenter,
-      child: SingleChildScrollView(
-        // Wrap with SingleChildScrollView
-        child: Column(
-          // Start of Column
-          crossAxisAlignment: CrossAxisAlignment
-              .center, // Set this property to center the items horizontally
-          mainAxisSize: MainAxisSize
-              .min, // Set this property to make the column fit its children's size vertically
-          children: [
-            const SizedBox(height: 10),
-            Align(
-                alignment: Alignment.topLeft,
-                child: TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => DAO(
-                                    InitialTabIndex: 1,
-                                    org: widget.p.org,
-                                  )));
-                    },
-                    child: const Text("< Back to all proposals"))),
-            const SizedBox(height: 10),
-            Container(
-              height: 240,
-              color: Theme.of(context).cardColor,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      child: StreamBuilder(
+          stream: FirebaseFirestore.instance
+              .collection("idaos${Human().chain.name}")
+              .doc(widget.p.org.address!)
+              .collection('proposals')
+              .doc(widget.p.id.toString())
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                  child:
+                      CircularProgressIndicator()); // Show a loading indicator
+            }
+            if (snapshot.hasError) {
+              return Text("Error: ${snapshot.error}");
+            }
+
+            var data = snapshot.data!.data() as Map<String, dynamic>;
+            String aidi = widget.p.id!;
+            widget.p = Proposal(org: widget.p.org, name: data['title']);
+            widget.p.id = aidi;
+            widget.p.type = data['type'];
+            widget.p.against = data['against'];
+            widget.p.inFavor = data['inFavor'];
+            widget.p.hash = widget.p.id!;
+            widget.p.callData = data['calldata'];
+            // widget.p.callDatas = data['callDatas'];
+            print("lengthof calldadas ${widget.p.callDatas.length}");
+            List<dynamic> blobArray = data['callDatas'] ?? [];
+
+            for (var blob in blobArray) {
+              if (blob is Blob) {
+                print(blob.bytes); // Prints the raw byte array
+                String hexString = blob.bytes
+                    .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                    .join();
+                widget.p.callDatas.add(hexString);
+              }
+            }
+
+            print("Decoded callDatas: $blobArray");
+            print("these are the calldatas" + widget.p.callDatas.toString());
+            widget.p.createdAt = (data['createdAt'] as Timestamp).toDate();
+            widget.p.turnoutPercent = data['turnoutPercent'];
+            widget.p.author = data['author'];
+            widget.p.votesFor = data['votesFor'];
+            widget.p.targets = List<String>.from(data['targets']);
+            widget.p.values = List<String>.from(data['values']);
+            widget.p.votesAgainst = data['votesAgainst'];
+            widget.p.externalResource =
+                data['externalResource'] ?? "(no external resource)";
+            widget.p.description = data['description'] ?? "no description";
+            return SingleChildScrollView(
+              // Wrap with SingleChildScrollView
+              child: Column(
+                // Start of Column
+                crossAxisAlignment: CrossAxisAlignment
+                    .center, // Set this property to center the items horizontally
+                mainAxisSize: MainAxisSize
+                    .min, // Set this property to make the column fit its children's size vertically
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              widget.p.name!,
-                              style: const TextStyle(
-                                  fontSize: 22, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                            color: Colors.black12,
-                            border:
-                                Border.all(width: 0.5, color: Colors.white12)),
-                        child: Row(
+                  const SizedBox(height: 10),
+                  Align(
+                      alignment: Alignment.topLeft,
+                      child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => DAO(
+                                          InitialTabIndex: 1,
+                                          org: widget.p.org,
+                                        )));
+                          },
+                          child: const Text("< Back to all proposals"))),
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 240,
+                    color: Theme.of(context).cardColor,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(width: 10),
-                            widget.p.statusPill(stage, context),
-                            const SizedBox(width: 20),
-                            Text("${widget.p.type!} proposal"),
-                            const SizedBox(width: 10),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 129),
-                      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                      Padding(
-                        padding: const EdgeInsets.only(top: 14.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            SizedBox(
-                              height: 30,
-                              child: Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Text("Posted By: "),
-                                    Text(
-                                      getShortAddress(widget.p.author!),
-                                      style: const TextStyle(fontSize: 11),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    TextButton(
-                                        onPressed: () {
-                                          Clipboard.setData(ClipboardData(
-                                              text: widget.p.author));
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(const SnackBar(
-                                                  duration:
-                                                      Duration(seconds: 1),
-                                                  content: Center(
-                                                      child: Text(
-                                                          'Address copied to clipboard'))));
-                                        },
-                                        child: const Icon(Icons.copy)),
-                                  ],
+                            const SizedBox(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    widget.p.name!,
+                                    style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                             const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                  color: Colors.black12,
+                                  border: Border.all(
+                                      width: 0.5, color: Colors.white12)),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 10),
+                                  FutureBuilder(
+                                    future: widget.p.anotherStageGetter(),
+                                    builder: (context, asyncSnapshot) {
+                                      if (asyncSnapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return SizedBox(
+                                            width: 80,
+                                            child: LinearProgressIndicator(
+                                              color: Theme.of(context)
+                                                  .indicatorColor,
+                                            ));
+                                      }
+
+                                      if (asyncSnapshot.connectionState ==
+                                          ConnectionState.done) {
+                                        if (asyncSnapshot.hasData) {
+                                        } else if (asyncSnapshot.hasError) {
+                                          return Text('${asyncSnapshot.error}');
+                                        }
+                                      } else {
+                                        // Show a loading indicator
+                                      }
+                                      return widget.p
+                                          .statusPill(widget.p.status, context);
+                                    },
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Text("${widget.p.type!} proposal"),
+                                  const SizedBox(width: 10),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 129),
+                            //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                            Padding(
+                              padding: const EdgeInsets.only(top: 14.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  SizedBox(
+                                    height: 30,
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Text("Posted By: "),
+                                          Text(
+                                            getShortAddress(widget.p.author!),
+                                            style:
+                                                const TextStyle(fontSize: 11),
+                                          ),
+                                          const SizedBox(width: 2),
+                                          TextButton(
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text: widget.p.author));
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(const SnackBar(
+                                                        duration: Duration(
+                                                            seconds: 1),
+                                                        content: Center(
+                                                            child: Text(
+                                                                'Address copied to clipboard'))));
+                                              },
+                                              child: const Icon(Icons.copy)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    height: 30,
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Text("Created At: "),
+                                          Text(
+                                            widget.p.createdAt!
+                                                .toLocal()
+                                                .toString(),
+                                            style:
+                                                const TextStyle(fontSize: 11),
+                                          ),
+                                          const SizedBox(
+                                            width: 14,
+                                          ),
+                                          TextButton(
+                                              onPressed: () {
+                                                launchUrl(widget.p
+                                                    .externalResource! as Uri);
+                                              },
+                                              child: const Icon(
+                                                  Icons.open_in_new)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 45),
+                            Container(
+                              constraints: const BoxConstraints(
+                                maxWidth: 450,
+                              ),
+                              padding: const EdgeInsets.all(18.0),
+                              child: Text(
+                                widget.p.description!,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
                             SizedBox(
                               height: 30,
                               child: Center(
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Text("Created At: "),
-                                    Text(
-                                      widget.p.createdAt!.toLocal().toString(),
-                                      style: const TextStyle(fontSize: 11),
-                                    ),
-                                    const SizedBox(
-                                      width: 14,
-                                    ),
-                                    TextButton(
-                                        onPressed: () {
-                                          launchUrl(widget.p.externalResource!
-                                              as Uri);
-                                        },
-                                        child: const Icon(Icons.open_in_new)),
+                                    const Text("Discussion: "),
+                                    OldSchoolLink(
+                                        text: widget.p.externalResource!,
+                                        url: widget.p.externalResource!)
                                   ],
                                 ),
                               ),
                             ),
                           ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        height: 280,
+                        constraints: const BoxConstraints(
+                          maxWidth: 500,
+                        ),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(18.0),
+                            child: widget.busy
+                                ? const Center(
+                                    child: SizedBox(
+                                        height: 100,
+                                        width: 100,
+                                        child: CircularProgressIndicator()))
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 9),
+                                      ActionLabel(
+                                        status: widget.p.status,
+                                      ),
+                                      widget.showCountdown
+                                          ? Container(
+                                              padding: const EdgeInsets.only(
+                                                  top: 22),
+                                              child: Transform.scale(
+                                                  scale: 0.8,
+                                                  child:
+                                                      _buildCountdownDisplay()))
+                                          : const Text(""),
+                                      const SizedBox(height: 32),
+                                      actions()
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        height: 280,
+                        constraints: const BoxConstraints(
+                          maxWidth: 680,
+                        ),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(18.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      top: 19, left: 28.0),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 8.0),
+                                        child: Text(
+                                          "${widget.p.votesAgainst + widget.p.votesFor} Votes",
+                                          style: TextStyle(
+                                              fontSize: 17,
+                                              color: Theme.of(context)
+                                                  .indicatorColor,
+                                              fontWeight: FontWeight.normal),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 32),
+                                      ElevatedButton(
+                                          onPressed: () {
+                                            showDialog(
+                                                context: context,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                      content: VotesModal(
+                                                        p: widget.p,
+                                                      ),
+                                                    ));
+                                          },
+                                          child: const Text("View"))
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 25),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(width: 34),
+                                      const Icon(
+                                        Icons.circle,
+                                        color: Color.fromARGB(255, 0, 196, 137),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const SizedBox(
+                                          child: Text(
+                                        "Support",
+                                      )),
+                                      const SizedBox(width: 13),
+                                      Text(
+                                          (BigInt.parse(widget.p.inFavor)
+                                              .toString()),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      Text(
+                                          " (${(inFavorPercentage * 100).toStringAsFixed(2)}%)"),
+                                      const Spacer(),
+                                      const Icon(
+                                        Icons.circle,
+                                        color: Color.fromARGB(255, 134, 37, 30),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const SizedBox(
+                                          child: Text(
+                                        "Oppose",
+                                      )),
+                                      const SizedBox(width: 13),
+                                      Text(
+                                          (BigInt.parse(widget.p.against)
+                                              .toString()),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      Text(
+                                          " (${(againstPercentage * 100).toStringAsFixed(2)}%)"),
+                                      const SizedBox(width: 73)
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 13),
+                                Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 28.0),
+                                    child: SizedBox(
+                                        height: 12,
+                                        width: double.infinity,
+                                        child: ElectionResultBar(
+                                            inFavor:
+                                                BigInt.parse(widget.p.inFavor),
+                                            against: BigInt.parse(
+                                                widget.p.against)))),
+                                const SizedBox(height: 43),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(width: 34),
+                                      const SizedBox(
+                                          child: Text("Turnout:",
+                                              style: TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.normal))),
+                                      const SizedBox(width: 13),
+                                      Text(
+                                          "${(BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor))} (${(turnout * 100).toStringAsFixed(2)}%)",
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      const Spacer(),
+                                      SizedBox(
+                                          child: Text(
+                                              (turnout * 100) >=
+                                                      widget.p.org.quorum
+                                                  ? "Quorum met"
+                                                  : "Quorum not met",
+                                              style: const TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.w900))),
+                                      const SizedBox(width: 73)
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 13),
+                                Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 28.0),
+                                    child: SizedBox(
+                                        height: 12,
+                                        width: double.infinity,
+                                        child: ParticipationBar(
+                                            decimals: widget.p.org.decimals!,
+                                            totalVoters: BigInt.parse(
+                                                (BigInt.parse(widget.p.org.totalSupply!) /
+                                                        BigInt.parse(
+                                                            pow(10, widget.p.org.decimals!)
+                                                                .toString()))
+                                                    .toString()),
+                                            turnout: (BigInt.parse(
+                                                        widget.p.against) +
+                                                    BigInt.parse(widget.p.inFavor)) *
+                                                BigInt.parse(pow(10, widget.p.org.decimals!).toString()),
+                                            quorum: widget.p.org.quorum))),
+                              ],
+                            ),
+                          ),
                         ),
                       )
                     ],
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  const SizedBox(height: 20),
+                  // const Align(
+                  //     alignment: Alignment.topLeft,
+                  //     child: Padding(
+                  //       padding: EdgeInsets.only(left: 18.0),
+                  //       child: Text("Execution details:"),
+                  //     )),
+
+                  Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start, // Align children at the top
                     children: [
-                      const SizedBox(height: 45),
-                      Container(
-                        constraints: const BoxConstraints(
-                          maxWidth: 450,
-                        ),
-                        padding: const EdgeInsets.all(18.0),
-                        child: Text(
-                          widget.p.description!,
-                          textAlign: TextAlign.center,
+                      Expanded(
+                        // Ensure the ProposalLifeCycleWidget can expand to fill available space
+                        child: Container(
+                          decoration:
+                              BoxDecoration(color: Theme.of(context).cardColor),
+                          child: ProposalLifeCycleWidget(
+                              statusHistory: widget.p.statusHistory),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        height: 30,
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text("Discussion: "),
-                              OldSchoolLink(
-                                  text: widget.p.externalResource!,
-                                  url: widget.p.externalResource!)
-                            ],
-                          ),
+                      const SizedBox(width: 20),
+                      Container(
+                        constraints: const BoxConstraints(
+                          maxWidth: 680,
+                        ),
+                        height: widget.p.type == "transfer"
+                            ? widget.p.transactions.length * 70
+                            : 270,
+                        // Set a fixed width for the first container
+                        padding: const EdgeInsets.all(4),
+
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Center(
+                              child: widget.p.type == "transfer"
+                                  ? TokenTransferListWidget(
+                                      p: widget.p,
+                                    )
+                                  : widget.p.type == "registry"
+                                      ? RegistryProposalDetails(p: widget.p)
+                                      : widget.p.type == "contract call"
+                                          ? ContractCall(p: widget.p)
+                                          : widget.p.type!.contains("mint") ||
+                                                  widget.p.type!
+                                                      .contains("burn")
+                                              ? GovernanceTokenOperationDetails(
+                                                  p: widget.p,
+                                                )
+                                              : widget.p.type!
+                                                          .contains("quorum") ||
+                                                      widget.p.type!.contains(
+                                                          "voting delay") ||
+                                                      widget.p.type!.contains(
+                                                          "voting period") ||
+                                                      widget.p.type!
+                                                          .contains("treasury")
+                                                  ? DaoConfigurationDetails(
+                                                      p: widget.p)
+                                                  : const Text("")),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 80)
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                // Container(
-                //   height: 280,
-                //   constraints: const BoxConstraints(
-                //     maxWidth: 500,
-                //   ),
-                //   child: Card(
-                //     child: Padding(
-                //       padding: const EdgeInsets.all(18.0),
-                //       child: widget.busy
-                //           ? const Center(
-                //               child: SizedBox(
-                //                   height: 100,
-                //                   width: 100,
-                //                   child: CircularProgressIndicator()))
-                //           : Column(
-                //               crossAxisAlignment: CrossAxisAlignment.start,
-                //               children: [
-                //                 const SizedBox(height: 9),
-                //                 ActionLabel(
-                //                   status: stage,
-                //                 ),
-                //                 widget.showCountdown
-                //                     ? Container(
-                //                         padding: const EdgeInsets.only(top: 22),
-                //                         child: Transform.scale(
-                //                             scale: 0.8,
-                //                             child: _buildCountdownDisplay()))
-                //                     : const Text(""),
-                //                 const SizedBox(height: 32),
-                //                 actions()
-                //               ],
-                //             ),
-                //     ),
-                //   ),
-                // ),
-                const SizedBox(width: 16),
-                Container(
-                  height: 280,
-                  constraints: const BoxConstraints(
-                    maxWidth: 680,
-                  ),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(18.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 19, left: 28.0),
-                            child: Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: Text(
-                                    "${widget.p.votesAgainst + widget.p.votesFor} Votes",
-                                    style: TextStyle(
-                                        fontSize: 17,
-                                        color: Theme.of(context).indicatorColor,
-                                        fontWeight: FontWeight.normal),
-                                  ),
-                                ),
-                                const SizedBox(width: 32),
-                                ElevatedButton(
-                                    onPressed: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                                content: VotesModal(
-                                                  p: widget.p,
-                                                ),
-                                              ));
-                                    },
-                                    child: const Text("View"))
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 25),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(width: 34),
-                                const Icon(
-                                  Icons.circle,
-                                  color: Color.fromARGB(255, 0, 196, 137),
-                                ),
-                                const SizedBox(width: 10),
-                                const SizedBox(
-                                    child: Text(
-                                  "Support",
-                                )),
-                                const SizedBox(width: 13),
-                                Text(
-                                    (BigInt.parse(widget.p.inFavor).toString()),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
-                                Text(
-                                    " (${(inFavorPercentage * 100).toStringAsFixed(2)}%)"),
-                                const Spacer(),
-                                const Icon(
-                                  Icons.circle,
-                                  color: Color.fromARGB(255, 134, 37, 30),
-                                ),
-                                const SizedBox(width: 10),
-                                const SizedBox(
-                                    child: Text(
-                                  "Oppose",
-                                )),
-                                const SizedBox(width: 13),
-                                Text(
-                                    (BigInt.parse(widget.p.against).toString()),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
-                                Text(
-                                    " (${(againstPercentage * 100).toStringAsFixed(2)}%)"),
-                                const SizedBox(width: 73)
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 13),
-                          Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 28.0),
-                              child: SizedBox(
-                                  height: 12,
-                                  width: double.infinity,
-                                  child: ElectionResultBar(
-                                      inFavor: BigInt.parse(widget.p.inFavor),
-                                      against:
-                                          BigInt.parse(widget.p.against)))),
-                          const SizedBox(height: 43),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(width: 34),
-                                const SizedBox(
-                                    child: Text("Turnout:",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.normal))),
-                                const SizedBox(width: 13),
-                                Text(
-                                    "${(BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor))} (${(turnout * 100).toStringAsFixed(2)}%)",
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
-                                const Spacer(),
-                                SizedBox(
-                                    child: Text(
-                                        (turnout * 100) >= widget.p.org.quorum
-                                            ? "Quorum met"
-                                            : "Quorum not met",
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w900))),
-                                const SizedBox(width: 73)
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 13),
-                          Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 28.0),
-                              child: SizedBox(
-                                  height: 12,
-                                  width: double.infinity,
-                                  child: ParticipationBar(
-                                      decimals: widget.p.org.decimals!,
-                                      totalVoters: BigInt.parse((BigInt.parse(
-                                                  widget.p.org.totalSupply!) /
-                                              BigInt.parse(
-                                                  pow(10, widget.p.org.decimals!)
-                                                      .toString()))
-                                          .toString()),
-                                      turnout: (BigInt.parse(widget.p.against) +
-                                              BigInt.parse(widget.p.inFavor)) *
-                                          BigInt.parse(
-                                              pow(10, widget.p.org.decimals!).toString()),
-                                      quorum: widget.p.org.quorum))),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-              ],
-            ),
-            const SizedBox(height: 20),
-            // const Align(
-            //     alignment: Alignment.topLeft,
-            //     child: Padding(
-            //       padding: EdgeInsets.only(left: 18.0),
-            //       child: Text("Execution details:"),
-            //     )),
-
-            Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Align children at the top
-              children: [
-                Expanded(
-                  // Ensure the ProposalLifeCycleWidget can expand to fill available space
-                  child: Container(
-                    decoration:
-                        BoxDecoration(color: Theme.of(context).cardColor),
-                    child: ProposalLifeCycleWidget(
-                        statusHistory: widget.p.statusHistory),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Container(
-                  constraints: const BoxConstraints(
-                    maxWidth: 680,
-                  ),
-                  height: widget.p.type == "transfer"
-                      ? widget.p.transactions.length * 70
-                      : 270,
-                  // Set a fixed width for the first container
-                  padding: const EdgeInsets.all(4),
-
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Center(
-                        child: widget.p.type == "transfer"
-                            ? TokenTransferListWidget(
-                                p: widget.p,
-                              )
-                            : widget.p.type == "registry"
-                                ? RegistryProposalDetails(p: widget.p)
-                                : widget.p.type == "contract call"
-                                    ? ContractCall(p: widget.p)
-                                    : widget.p.type!.contains("mint") ||
-                                            widget.p.type!.contains("burn")
-                                        ? GovernanceTokenOperationDetails(
-                                            p: widget.p,
-                                          )
-                                        : widget.p.type!.contains("quorum") ||
-                                                widget.p.type!
-                                                    .contains("voting delay") ||
-                                                widget.p.type!.contains(
-                                                    "voting period") ||
-                                                widget.p.type!
-                                                    .contains("treasury")
-                                            ? DaoConfigurationDetails(
-                                                p: widget.p)
-                                            : const Text("")),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 80)
-          ],
-        ),
-      ),
+            );
+          }),
     );
   }
 
@@ -1150,18 +1255,26 @@ class _VotesModalState extends State<VotesModal> {
 
   Future<void> getVotes() async {
     var votesCollection = FirebaseFirestore.instance
-        .collection("daos${Human().chain.name}")
+        .collection("idaos${Human().chain.name}")
         .doc(widget.p.org.address)
         .collection("proposals")
-        .doc(widget.p.hash.toString())
+        .doc(widget.p.id.toString())
         .collection("votes");
-
+    print("creating the collection");
     var votesSnapshot = await votesCollection.get();
+    print("length of votesSnapshot.docs ${votesSnapshot.docs.length}");
     widget.p.votes.clear();
     for (var doc in votesSnapshot.docs) {
+      print("adding a vote");
       widget.p.votes.add(Vote(
         votingPower: doc.data()['weight'],
         voter: doc.data()['voter'],
+        hash: "0x" +
+            doc
+                .data()['hash']
+                .bytes
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join(),
         proposalID: widget.p.id!,
         option: doc.data()['option'],
         castAt: (doc.data()['cast'] != null)
@@ -1207,6 +1320,7 @@ class _VotesModalState extends State<VotesModal> {
                     DataColumn(label: Text('Voter')),
                     DataColumn(label: Text('Option')),
                     DataColumn(label: Text('Weight')),
+                    DataColumn(label: Text("Cast At")),
                     DataColumn(label: Text('Details')),
                   ],
                   rows: widget.p.votes.map((vote) {
@@ -1236,6 +1350,8 @@ class _VotesModalState extends State<VotesModal> {
                               : const Icon(Icons.thumb_up_sharp,
                                   color: Color.fromARGB(255, 93, 223, 162)))),
                       DataCell(Text(vote.votingPower.toString())),
+                      DataCell(Text(DateFormat("yyyy-MM-dd – HH:mm")
+                          .format(vote.castAt!))),
                       DataCell(
                         TextButton(
                             onPressed: () => launch(

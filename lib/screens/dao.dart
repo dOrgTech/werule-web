@@ -32,6 +32,12 @@ class DAO extends StatefulWidget {
 
 class _DAOState extends State<DAO> {
   @override
+  void initState() {
+    super.initState();
+    print(widget.proposalHash);
+  }
+
+  @override
   Widget build(BuildContext context) {
     widget.org.proposals = [];
     return Scaffold(
@@ -79,7 +85,7 @@ class _DAOState extends State<DAO> {
             dao.treasuryMap = Map<String, String>.from(data['treasury']);
             dao.registry = Map<String, String>.from(data['registry']);
             dao.totalSupply = data['totalSupply'];
-            dao.getProposals();
+
             // dao.getMembers();
 
             return Container(
@@ -138,12 +144,25 @@ class _DAOState extends State<DAO> {
                                   ? Center(
                                       child: Proposals(which: "all", org: dao))
                                   : Center(
-                                      child: ProposalDetails(
-                                          p: widget.org.proposals.firstWhere(
-                                        (proposal) =>
-                                            proposal.hash ==
-                                            widget.proposalHash,
-                                      )),
+                                      child: FutureBuilder(
+                                          future: widget.org.getProposals(),
+                                          builder: (context, snapshot) {
+                                            return snapshot.connectionState ==
+                                                    ConnectionState.waiting
+                                                ? Center(
+                                                    child: SizedBox(
+                                                        width: 100,
+                                                        height: 100,
+                                                        child:
+                                                            CircularProgressIndicator()))
+                                                : ProposalDetails(
+                                                    p: widget.org.proposals
+                                                        .firstWhere(
+                                                    (proposal) =>
+                                                        proposal.id ==
+                                                        widget.proposalHash,
+                                                  ));
+                                          }),
                                     ),
                               // Center(child: Treasury()),
                               Center(child: Registry(org: dao)),

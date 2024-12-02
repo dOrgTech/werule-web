@@ -1,12 +1,24 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:Homebase/widgets/fundProject.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:typed_data';
 import 'dart:async';
 import 'dart:math';
 import 'package:image/image.dart' as img;
+import 'package:web3dart/crypto.dart';
+import 'package:web3dart/web3dart.dart';
+// import '../entities/contractFunctions.dart';
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
+import 'dart:typed_data';
+import 'package:web3dart/web3dart.dart';
+import 'package:convert/convert.dart';
+import 'package:collection/collection.dart'; // For ListEquality
 
 class TokenTransfer {
   final String amount;
@@ -456,20 +468,58 @@ class RegistryProposalDetails extends StatelessWidget {
   Proposal p;
 
   RegistryProposalDetails({required this.p});
+  decodeParams(hexString) {
+    Uint8List dataBytes = hexToBytes(hexString);
+    Uint8List dataWithoutSelector = dataBytes.sublist(4);
+    Uint8List param1OffsetBytes = dataWithoutSelector.sublist(0, 32);
+    Uint8List param2OffsetBytes = dataWithoutSelector.sublist(32, 64);
+    BigInt param1Offset = bytesToInt(param1OffsetBytes);
+    BigInt param2Offset = bytesToInt(param2OffsetBytes);
+    int param1OffsetInt = param1Offset.toInt();
+    Uint8List param1LengthBytes =
+        dataWithoutSelector.sublist(param1OffsetInt, param1OffsetInt + 32);
+    BigInt param1Length = bytesToInt(param1LengthBytes);
+    int param1LengthInt = param1Length.toInt();
+    Uint8List param1DataBytes = dataWithoutSelector.sublist(
+        param1OffsetInt + 32, param1OffsetInt + 32 + param1LengthInt);
+    String param1Data = String.fromCharCodes(param1DataBytes);
+    int param2OffsetInt = param2Offset.toInt();
+    Uint8List param2LengthBytes =
+        dataWithoutSelector.sublist(param2OffsetInt, param2OffsetInt + 32);
+    BigInt param2Length = bytesToInt(param2LengthBytes);
+    int param2LengthInt = param2Length.toInt();
+    Uint8List param2DataBytes = dataWithoutSelector.sublist(
+        param2OffsetInt + 32, param2OffsetInt + 32 + param2LengthInt);
+    String param2Data = String.fromCharCodes(param2DataBytes);
+    print('Parameter 2 Data: $param2Data');
+    return [param1Data, param2Data];
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget operation(values) {
     return Container(
       padding: EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDetailRow("Key:", p.callDatas[0].keys.first.toString()),
+          _buildDetailRow("Key:", values[0]),
           SizedBox(height: 10),
-          _buildDetailRow("Value:", p.callDatas[0].values.first.toString()),
+          _buildDetailRow("Value:", values[1]),
         ],
+        // children: [Text("Key: ${p.callDatas[0].toString()}")],
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Convert hex string to bytes
+    List<Widget> operations = [];
+    for (var callData in p.callDatas) {
+      List<String> values = decodeParams(p.callDatas[0]);
+      operations.add(operation(values));
+    }
+
+    return ListView(children: operations);
   }
 
   Widget _buildDetailRow(String label, String value) {

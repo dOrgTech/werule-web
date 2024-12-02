@@ -142,23 +142,23 @@ getProposalVotes(Proposal p) async {
   }
 }
 
-getState(Proposal p) async {
+getProposalState(Proposal p) async {
   var httpClient = Client();
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
-  final dao = DeployedContract(
-    ContractAbi.fromJson(p.org.address!, 'state'),
+  final contractWrapper = DeployedContract(
+    ContractAbi.fromJson(daoAbiGlobal, 'state'),
     EthereumAddress.fromHex(p.org.address!),
   );
-  var getRepToken = dao.function('state');
-  Uint8List encodedData = getRepToken.encodeCall([]);
+  var getRepToken = contractWrapper.function('state');
+
   try {
     var counter = await ethClient.call(
-      contract: dao,
+      contract: contractWrapper,
       function: getRepToken,
-      params: [],
+      params: [BigInt.parse(p.id!)],
     );
     // Log the RPC response
-    print('RPC Response STATE:');
+    print('RPC Response Proposal STATE');
     print(counter.toString());
     int rezultat = int.parse(counter[0].toString()) as int;
     print('$rezultat ${rezultat.runtimeType}');

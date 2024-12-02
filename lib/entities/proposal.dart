@@ -92,12 +92,36 @@ enum ProposalStatus {
   rejected
 }
 
+Map<String, String> statuses = {
+  "Pending": "pending",
+  "Active": "active",
+  "Canceled": "canceled",
+  "Defeated": "defeated",
+  "Succeeded": "passed",
+  "Queued": "queued",
+  "Expired": "expired",
+  "Executed": "executed",
+};
+
+// Map<String, String> statuses = {
+//   "pending": "Pending",
+//   "active": "Active",
+//   "passed": "Succeeded",
+//   "queued": "Queued",
+//   "executable": "Queued",
+//   "executed": "Executed",
+//   "expired": "Expired",
+//   "no quorum": "Defeated",
+//   "rejected": "Defeated"
+// };
+
 class Proposal {
   String? id = "";
   late int inAppnumber;
   ProposalStatus? state;
   String hash = "";
   Org org;
+  String? latestState;
   String? type;
   String? name = "Title of the proposal (max 80 characters)";
   String? description = "(no description)";
@@ -168,80 +192,105 @@ class Proposal {
     this.votesFor = theVotes[1];
   }
 
-  retrieveStage() async {
-    DateTime start = statusHistory["pending"]!;
-    Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
-    Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
-    DateTime activeStart = start.add(votingDelay);
-    DateTime votingEnd = activeStart.add(votingDuration);
-    BigInt totalVotes = (BigInt.parse(inFavor) + BigInt.parse(against)) *
-        BigInt.parse(pow(10, org.decimals!).toString());
-    BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
-    double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
-    int stateNr = getState(this);
-    StateInContract newStatus = StateInContract.values[stateNr];
-    if (newStatus == StateInContract.Pending) {
-      state = ProposalStatus.pending;
+  Future<dynamic> anotherStageGetter() async {
+    int stateInContract = await getProposalState(this);
+    String newStatus = StateInContract.values[stateInContract]
+        .toString()
+        .split(".")
+        .last
+        .toLowerCase();
+    if (newStatus == "succeeded") {
+      newStatus = "passed";
     }
-    if (newStatus == StateInContract.Active) {
-      state = ProposalStatus.active;
-      statusHistory.clear();
-      statusHistory.addAll({"pending": start});
-      statusHistory.addAll({"active": activeStart});
-    }
-    if (newStatus == StateInContract.Succeeded) {
-      state = ProposalStatus.passed;
-      statusHistory.clear();
-      statusHistory.addAll({"pending": start});
-      statusHistory.addAll({"active": activeStart});
-      statusHistory.addAll({"passed": votingEnd});
-    }
-    if (newStatus == StateInContract.Executed) {
-      state = ProposalStatus.executed;
-      DateTime executionTime = statusHistory['executed'] ?? DateTime.now();
-      DateTime queueTime = statusHistory['executable'] ?? votingEnd;
-      statusHistory.clear();
-      statusHistory.addAll({"pending": start});
-      statusHistory.addAll({"active": activeStart});
-      statusHistory.addAll({"passed": votingEnd});
-      statusHistory.addAll({"executable": queueTime.add(executionDelay)});
-      statusHistory.addAll({"executed": executionTime});
-    }
-    if (newStatus == StateInContract.Expired) {
-      statusHistory.clear();
-      statusHistory.addAll({"pending": start});
-      statusHistory.addAll({"active": activeStart});
-      statusHistory.addAll({"passed": votingEnd});
-      statusHistory.addAll(
-          {"expired": votingEnd.add(votingDuration).add(executionDelay)});
-      state = ProposalStatus.expired;
-    }
-    if (newStatus == StateInContract.Queued) {
-      DateTime queueTime = statusHistory['queued']!;
-      statusHistory.clear();
-      statusHistory.addAll({"pending": start});
-      statusHistory.addAll({"active": activeStart});
-      statusHistory.addAll({"passed": votingEnd});
-      statusHistory.addAll({"queued": queueTime});
-      if (DateTime.now().isBefore(queueTime.add(executionDelay))) {
-        state = ProposalStatus.queued;
-      } else {
-        state = ProposalStatus.executable;
-      }
-    }
-    if (newStatus == StateInContract.Canceled) {
-      state = ProposalStatus.rejected;
-    }
-    if (newStatus == StateInContract.Defeated) {
-      if (votePercentage < org.quorum) statusHistory.clear();
-      statusHistory.addAll({"pending": start});
-      statusHistory.addAll({"active": activeStart});
-      statusHistory.addAll({"rejected": votingEnd});
-      state = ProposalStatus.rejected;
-    }
-    return state;
+    print("new status baby " + newStatus);
+    // DateTime start = statusHistory["pending"]!;
+    // Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
+    // Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
+    // Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
+    // DateTime activeStart = start.add(votingDelay);
+    // DateTime votingEnd = activeStart.add(votingDuration);
+    // BigInt totalVotes = (BigInt.parse(inFavor) + BigInt.parse(against)) *
+    //     BigInt.parse(pow(10, org.decimals!).toString());
+    // BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
+    // double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
+    status = newStatus;
+    return newStatus;
   }
+
+  // retrieveStage() async {
+  //   DateTime start = statusHistory["pending"]!;
+  //   Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
+  //   Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
+  //   Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
+  //   DateTime activeStart = start.add(votingDelay);
+  //   DateTime votingEnd = activeStart.add(votingDuration);
+  //   BigInt totalVotes = (BigInt.parse(inFavor) + BigInt.parse(against)) *
+  //       BigInt.parse(pow(10, org.decimals!).toString());
+  //   BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
+  //   double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
+  //   int stateNr = await getProposalState(this);
+  //   StateInContract newStatus = StateInContract.values[stateNr];
+  //   if (newStatus == StateInContract.Pending) {
+  //     state = ProposalStatus.pending;
+  //   }
+  //   if (newStatus == StateInContract.Active) {
+  //     state = ProposalStatus.active;
+  //     statusHistory.clear();
+  //     statusHistory.addAll({"pending": start});
+  //     statusHistory.addAll({"active": activeStart});
+  //   }
+  //   if (newStatus == StateInContract.Succeeded) {
+  //     state = ProposalStatus.passed;
+  //     statusHistory.clear();
+  //     statusHistory.addAll({"pending": start});
+  //     statusHistory.addAll({"active": activeStart});
+  //     statusHistory.addAll({"passed": votingEnd});
+  //   }
+  //   if (newStatus == StateInContract.Executed) {
+  //     state = ProposalStatus.executed;
+  //     DateTime executionTime = statusHistory['executed'] ?? DateTime.now();
+  //     DateTime queueTime = statusHistory['executable'] ?? votingEnd;
+  //     statusHistory.clear();
+  //     statusHistory.addAll({"pending": start});
+  //     statusHistory.addAll({"active": activeStart});
+  //     statusHistory.addAll({"passed": votingEnd});
+  //     statusHistory.addAll({"executable": queueTime.add(executionDelay)});
+  //     statusHistory.addAll({"executed": executionTime});
+  //   }
+  //   if (newStatus == StateInContract.Expired) {
+  //     statusHistory.clear();
+  //     statusHistory.addAll({"pending": start});
+  //     statusHistory.addAll({"active": activeStart});
+  //     statusHistory.addAll({"passed": votingEnd});
+  //     statusHistory.addAll(
+  //         {"expired": votingEnd.add(votingDuration).add(executionDelay)});
+  //     state = ProposalStatus.expired;
+  //   }
+  //   if (newStatus == StateInContract.Queued) {
+  //     DateTime queueTime = statusHistory['queued']!;
+  //     statusHistory.clear();
+  //     statusHistory.addAll({"pending": start});
+  //     statusHistory.addAll({"active": activeStart});
+  //     statusHistory.addAll({"passed": votingEnd});
+  //     statusHistory.addAll({"queued": queueTime});
+  //     if (DateTime.now().isBefore(queueTime.add(executionDelay))) {
+  //       state = ProposalStatus.queued;
+  //     } else {
+  //       state = ProposalStatus.executable;
+  //     }
+  //   }
+  //   if (newStatus == StateInContract.Canceled) {
+  //     state = ProposalStatus.rejected;
+  //   }
+  //   if (newStatus == StateInContract.Defeated) {
+  //     if (votePercentage < org.quorum) statusHistory.clear();
+  //     statusHistory.addAll({"pending": start});
+  //     statusHistory.addAll({"active": activeStart});
+  //     statusHistory.addAll({"rejected": votingEnd});
+  //     state = ProposalStatus.rejected;
+  //   }
+  //   return state;
+  // }
 
   toJson() {
     return {
@@ -548,6 +597,54 @@ class Proposal {
               style: TextStyle(color: Colors.white),
             ),
           )),
+      "queued": Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15.0),
+            border:
+                Border.all(width: 0.3, color: Color.fromARGB(255, 26, 26, 26)),
+            color: Color.fromARGB(255, 184, 230, 233),
+          ),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(3),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2.0),
+            child: Text(
+              "QUEUED",
+              style: TextStyle(color: Color.fromARGB(255, 41, 41, 41)),
+            ),
+          )),
+      "defeated": Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15.0),
+            border:
+                Border.all(width: 0.5, color: Color.fromARGB(255, 141, 18, 39)),
+            color: Color.fromARGB(255, 46, 27, 27),
+          ),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(3),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2.0),
+            child: Text(
+              "DEFEATED",
+              style: TextStyle(color: Color.fromARGB(255, 129, 122, 123)),
+            ),
+          )),
+      "cancelled": Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15.0),
+            border:
+                Border.all(width: 0.5, color: Color.fromARGB(255, 141, 18, 39)),
+            color: Color.fromARGB(255, 46, 27, 27),
+          ),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(3),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 2.0),
+            child: Text(
+              "CANCELLED",
+              style: TextStyle(color: Color.fromARGB(255, 129, 122, 123)),
+            ),
+          )),
       "executable": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
@@ -639,6 +736,7 @@ class Vote {
       required this.voter,
       required this.proposalID,
       required this.option,
+      this.hash,
       required castAt});
   toJson() {
     return {

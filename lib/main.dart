@@ -7,6 +7,7 @@ import 'package:Homebase/screens/landing.dart';
 import 'package:Homebase/screens/members.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
+import 'package:Homebase/widgets/gameOfLife.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/pdetails.dart';
 import 'package:Homebase/widgets/propDetailsWidgets.dart';
@@ -16,6 +17,7 @@ import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'entities/contractFunctions.dart';
 import 'entities/org.dart';
@@ -105,7 +107,6 @@ persist() async {
     org.totalSupply = doc.data()['totalSupply'];
     orgs.add(org);
   }
-  await orgs[0].getProposals();
 }
 
 void main() async {
@@ -121,6 +122,59 @@ void main() async {
   ));
 }
 
+final GoRouter router = GoRouter(
+  routes: [
+    // Default route for "/"
+    GoRoute(
+      path: '/',
+      builder: (context, state) => Explorer(),
+    ),
+    // Dynamic route for "/:id" and "/:id/:nestedId"
+    GoRoute(
+      path: '/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!; // Access the outer object ID
+        Org org = orgs.firstWhere((org) => org.address == id);
+        print("org address " + org.address.toString()!);
+        if (org == null) {
+          return SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: Stack(
+                children: [
+                  GameOfLife(),
+                  Center(
+                      child: Text(
+                    "Can't find DAO",
+                    style: TextStyle(fontSize: 40),
+                  ))
+                ],
+              ));
+        }
+        return DAO(org: org, InitialTabIndex: 0);
+      },
+      routes: [
+        GoRoute(
+          path: ':nestedId',
+          builder: (context, state) {
+            print(
+                "||||||||||||||||||||||we got in here in the nested id|||||||");
+            final id = state.pathParameters['id']!; // Outer object ID
+            Org org = orgs.firstWhere((org) => org.address == id);
+
+            final nestedId =
+                state.pathParameters['nestedId']!; // Nested object ID
+            print("nested id " + nestedId);
+
+            // Proposal p = org.proposals.firstWhere((p) => p.id! == nestedId);
+            return DAO(org: org, InitialTabIndex: 1, proposalHash: nestedId);
+          },
+        ),
+      ],
+    ),
+  ],
+);
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   // This widget is the root of your application.
@@ -133,7 +187,7 @@ class MyApp extends StatelessWidget {
       print("are metamask");
       Human().metamask = true;
     }
-
+    print("proposal ID: ${orgs[0].name}");
     // Proposal p;
     // if (true) {
     //   p = Proposal(org: orgs[0]);
@@ -163,7 +217,7 @@ class MyApp extends StatelessWidget {
     //   p = orgs[0].proposals[0];
     // }
 
-    return MaterialApp(
+    return MaterialApp.router(
         //remove debug banner
         debugShowCheckedModeBanner: false,
         title: 'weRule',
@@ -180,24 +234,7 @@ class MyApp extends StatelessWidget {
           primarySwatch:
               createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
         ),
-        home: Scaffold(
-            body: Human().landing
-                ? Landing()
-                :
-                // Center(child: Logo()))
-                // Center(child: TransferWidget(org: orgs[0],)))
-                // DAO(InitialTabIndex: 1, org:orgs[0], proposalId: 1))
-
-                // ProposalDetails(
-                //     // p: orgs[0].proposals[0]))
-                //     p: p))
-                DAO(
-                    org: orgs[0],
-                    InitialTabIndex: 1,
-                    proposalHash: orgs[0].proposals[0].hash.toString(),
-                  ))
-        // Explorer())
-        );
+        routerConfig: router);
   }
 }
 

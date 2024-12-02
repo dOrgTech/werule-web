@@ -8,6 +8,7 @@ import 'proposal.dart';
 import 'token.dart';
 import 'contractFunctions.dart';
 import '../screens/creator.dart';
+import 'dart:convert';
 
 class Org {
   var pollsCollection;
@@ -154,19 +155,14 @@ class Org {
         return MapEntry(key, (value as Timestamp).toDate());
       });
 
-      print("also before issue");
-      p.callDatas = List.from(doc['callDatas']);
-      for (var callData in p.callDatas) {
-        print("calldata $callData and type is ${callData.runtimeType}");
-      }
-      print("after issue");
-
-      // p.callDatas = [
-      //   callDatasMap.map((key, value) {
-      //     return MapEntry(key, value);
-      //   })
-      // ];
-
+      // print("also before issue");
+      // List<dynamic> blobArray = doc.data()?['callDatas'] ?? [];
+      // // Convert Blob to String correctly
+      // p.callDatas = blobArray
+      //     .map((blob) =>
+      //         utf8.decode((blob as Blob).bytes)) // Correctly decode Blob bytes
+      //     .toList()
+      //     .cast<String>();
       // p.retrieveStage();
       p.state = ProposalStatus.pending;
       p.status = "pending";

@@ -1,6 +1,8 @@
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -24,6 +26,7 @@ class Proposals extends StatefulWidget {
   String? which = "all";
   int? proposalID;
   late var typesOfProposals;
+  List<Widget> proposalCards = [];
   bool executable = false;
   Org org;
   @override
@@ -47,6 +50,7 @@ class _ProposalsState extends State<Proposals> {
     'All',
     "active",
     "passed",
+    "queued",
     "executable",
     "executed",
     "expired",
@@ -70,15 +74,15 @@ class _ProposalsState extends State<Proposals> {
     widget.which = "all";
   }
 
-  List<Widget> proposalCards = [];
   void populateProposals() {
+    widget.proposalCards = [];
     widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
     for (Proposal p in widget.org.proposals) {
-      proposalCards.add(ProposalCard(org: widget.org, proposal: p));
+      widget.proposalCards.add(ProposalCard(org: widget.org, proposal: p));
     }
-    if (proposalCards.isEmpty) {
-      proposalCards.add(SizedBox(height: 200));
-      proposalCards
+    if (widget.proposalCards.isEmpty) {
+      widget.proposalCards.add(SizedBox(height: 200));
+      widget.proposalCards
           .add(SizedBox(height: 400, child: Center(child: noProposals())));
     }
   }
@@ -94,137 +98,190 @@ class _ProposalsState extends State<Proposals> {
 
     populateProposals();
     return widget.proposalID == null
-        ? Container(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 30),
-                SizedBox(
-                    child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ? StreamBuilder(
+            stream: FirebaseFirestore.instance
+                .collection("idaos${Human().chain.name}")
+                .doc(widget.org.address!)
+                .collection("proposals")
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                    child: SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: CircularProgressIndicator()));
+              }
+              if (snapshot.hasError) {
+                return const Center(child: Text("Can't retrieve proposals"));
+              }
+              final docs = snapshot.data!.docs;
+              for (var doc in docs) {
+                Proposal p = Proposal(
+                    org: widget.org, name: doc.data()['title'] ?? "No title");
+                p.type = doc.data()['type'];
+                p.id = doc.id.toString();
+                p.against = doc.data()['against'];
+                p.inFavor = doc.data()['inFavor'];
+                p.hash = doc.id.toString();
+                p.callData = doc.data()['calldata'];
+                p.createdAt = (doc.data()['createdAt'] as Timestamp).toDate();
+                p.turnoutPercent = doc.data()['turnoutPercent'];
+                p.author = doc.data()['author'];
+                p.votesFor = doc.data()['votesFor'];
+                p.latestState = doc.data()['latestState'];
+                p.targets = List<String>.from(doc.data()['targets']);
+                p.values = List<String>.from(doc.data()['values']);
+                p.votesAgainst = doc.data()['votesAgainst'];
+                p.externalResource =
+                    doc.data()['externalResource'] ?? "(no external resource)";
+                p.description = doc.data()['description'] ?? "no description";
+                widget.org.proposals.add(p);
+                widget.org.proposalIDs!.add(doc.id);
+                var statusHistoryMap =
+                    doc['statusHistory'] as Map<String, dynamic>;
+                print("before issue");
+                p.statusHistory = statusHistoryMap.map((key, value) {
+                  return MapEntry(key, (value as Timestamp).toDate());
+                });
+              }
+              return Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(width: 40),
-                    const Text("Type:"),
-                    const SizedBox(width: 10),
-                    DropdownButton<String>(
-                      value: selectedType,
-                      focusColor: Colors.transparent,
-                      items: typesDropdown.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedType = newValue;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 40),
-                    const Text("Status:"),
-                    const SizedBox(width: 10),
-                    DropdownButton<String>(
-                      value: selectedStatus,
-                      focusColor: Colors.transparent,
-                      items: statusDropdown.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Container(
-                              height: 29,
-                              padding: EdgeInsets.symmetric(vertical: 3),
-                              child: p.statusPill(value, context)),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedStatus = newValue;
-                        });
-                      },
-                    ),
-                    Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 18.0),
-                      child: SizedBox(
-                          height: 40,
-                          child: ElevatedButton(
-                              onPressed: widget.executable
-                                  ? () {
-                                      //EXECUTE PROPOSAL HERE;
-                                    }
-                                  : null,
-                              child: const Text("Execute"))),
-                    ),
-                    Container(
-                      padding: EdgeInsets.only(right: 50),
-                      height: 40,
-                      child: ElevatedButton(
-                        child: Text(
-                          "Create Proposal",
-                          style: TextStyle(
-                              fontSize: 16,
-                              color: Theme.of(context).primaryColorDark),
-                        ),
-                        style: ButtonStyle(
-                            elevation: MaterialStatePropertyAll(0.0),
-                            backgroundColor: MaterialStatePropertyAll(
-                                Theme.of(context).indicatorColor)),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Padding(
-                                  padding: const EdgeInsets.only(left: 18.0),
-                                  child: Text("Select a proposal type"),
-                                ),
-                                content: ProposalList(org: widget.org),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                )),
-                SizedBox(height: 40),
-                Container(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    SizedBox(height: 30),
+                    SizedBox(
+                        child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 15.0),
-                          child: Container(
-                              padding: EdgeInsets.only(left: 15),
-                              width: 60,
-                              child: Text("ID #")),
+                        const SizedBox(width: 40),
+                        const Text("Type:"),
+                        const SizedBox(width: 10),
+                        DropdownButton<String>(
+                          value: selectedType,
+                          focusColor: Colors.transparent,
+                          items: typesDropdown.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedType = newValue;
+                            });
+                          },
                         ),
-                        Expanded(
-                          child: Container(
-                              width: 230,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 48.0),
-                                child: Text("Title"),
-                              )),
+                        const SizedBox(width: 40),
+                        const Text("Status:"),
+                        const SizedBox(width: 10),
+                        DropdownButton<String>(
+                          value: selectedStatus,
+                          focusColor: Colors.transparent,
+                          items: statusDropdown.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Container(
+                                  height: 29,
+                                  padding: EdgeInsets.symmetric(vertical: 3),
+                                  child: p.statusPill(value, context)),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedStatus = newValue;
+                            });
+                          },
+                        ),
+                        Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 18.0),
+                          child: SizedBox(
+                              height: 40,
+                              child: ElevatedButton(
+                                  onPressed: widget.executable
+                                      ? () {
+                                          //EXECUTE PROPOSAL HERE;
+                                        }
+                                      : null,
+                                  child: const Text("Execute"))),
                         ),
                         Container(
-                            width: 230, child: Center(child: Text("Author"))),
-                        SizedBox(
-                            width: 150, child: Center(child: Text("▼ Posted"))),
-                        SizedBox(
-                            width: 150, child: Center(child: Text("Type "))),
-                        SizedBox(
-                            width: 100, child: Center(child: Text("Status "))),
+                          padding: EdgeInsets.only(right: 50),
+                          height: 40,
+                          child: ElevatedButton(
+                            child: Text(
+                              "Create Proposal",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  color: Theme.of(context).primaryColorDark),
+                            ),
+                            style: ButtonStyle(
+                                elevation: MaterialStatePropertyAll(0.0),
+                                backgroundColor: MaterialStatePropertyAll(
+                                    Theme.of(context).indicatorColor)),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 18.0),
+                                      child: Text("Select a proposal type"),
+                                    ),
+                                    content: ProposalList(org: widget.org),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
                       ],
+                    )),
+                    SizedBox(height: 40),
+                    Container(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 15.0),
+                              child: Container(
+                                  padding: EdgeInsets.only(left: 15),
+                                  width: 60,
+                                  child: Text("ID #")),
+                            ),
+                            Expanded(
+                              child: Container(
+                                  width: 230,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 48.0),
+                                    child: Text("Title"),
+                                  )),
+                            ),
+                            Container(
+                                width: 230,
+                                child: Center(child: Text("Author"))),
+                            SizedBox(
+                                width: 150,
+                                child: Center(child: Text("▼ Posted"))),
+                            SizedBox(
+                                width: 150,
+                                child: Center(child: Text("Type "))),
+                            SizedBox(
+                                width: 100,
+                                child: Center(child: Text("Status "))),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                    ...widget.proposalCards
+                  ],
                 ),
-                ...proposalCards
-              ],
-            ),
-          )
+              );
+            })
         : ProposalDetails(
             p: widget.org.proposals.firstWhere(
             (proposal) => proposal.id == widget.proposalID,
@@ -354,13 +411,15 @@ class ProposalListState extends State<ProposalList> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        "Learn about the different types of Homebase proposals ",
-                        style: TextStyle(fontSize: 12),
+                        "Learn about the different types of proposals ",
+                        style: TextStyle(fontSize: 13),
                       ),
-                      Text("here.",
-                          style: TextStyle(
-                              color: Theme.of(context).indicatorColor,
-                              fontSize: 12)),
+                      OldSchoolLink(
+                          text: "here",
+                          url: "https://example.com",
+                          textStyle: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).indicatorColor)),
                     ],
                   ),
                 ),
