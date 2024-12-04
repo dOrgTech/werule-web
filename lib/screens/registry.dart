@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../entities/org.dart';
 import '../widgets/regitemCard.dart';
 
@@ -33,15 +32,15 @@ class _RegistryState extends State<Registry> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Container(
-                  padding: EdgeInsets.only(left: 50),
+                  padding: const EdgeInsets.only(left: 50),
                   width: 500,
                   child: TextField(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(width: 0.1),
+                        borderSide: const BorderSide(width: 0.1),
                       ),
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: const Icon(Icons.search),
                       hintText: 'Search by Key',
                       // other properties
                     ),
@@ -50,7 +49,7 @@ class _RegistryState extends State<Registry> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: EdgeInsets.only(right: 50),
+                  padding: const EdgeInsets.only(right: 50),
                   height: 40,
                   child: ElevatedButton(
                     child: Text(

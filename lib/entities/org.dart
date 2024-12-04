@@ -214,6 +214,7 @@ class Member {
   DateTime? lastSeen;
   String delegate = "";
   List<Member> constituents = [];
+  List<String> constituentsAddresses = [];
 
   Member(
       {required this.address,

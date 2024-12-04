@@ -104,12 +104,12 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                             });
                             try {
                               await propose(widget.p);
-                              await widget.org.pollsCollection
-                                  .doc(widget.p.id.toString())
-                                  .set(widget.p.toJson());
-                              widget.org.proposals.add(widget.p);
-                              widget.org.proposals =
-                                  widget.org.proposals.reversed.toList();
+                              // await widget.org.pollsCollection
+                              //     .doc(widget.p.id.toString())
+                              //     .set(widget.p.toJson());
+                              // widget.org.proposals.add(widget.p);
+                              // widget.org.proposals =
+                              //     widget.org.proposals.reversed.toList();
                               widget.p.status = "pending";
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(

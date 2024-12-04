@@ -1338,6 +1338,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         widget.org.govTokenAddress = results[1];
         widget.org.treasuryAddress = results[2];
         widget.org.registryAddress = results[3];
+        orgs.add(widget.org);
         print("we caught this back" + results.toString());
         setState(() {
           currentStep = 8; // Move to the Deployment Complete screen
@@ -1436,11 +1437,12 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           child: Screen9DeploymentComplete(
             daoName: daoConfig.daoName ?? 'DAO',
             onGoToDAO: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => DAO(
-                      org: orgs.firstWhere(
-                          (element) => element.address == widget.org.address),
-                      InitialTabIndex: 0)));
+              context.go("/#/" + widget.org.address!);
+              // Navigator.of(context).push(MaterialPageRoute(
+              //     builder: (context) => DAO(
+              //         org: orgs.firstWhere(
+              //             (element) => element.address == widget.org.address),
+              //         InitialTabIndex: 0)));
             },
           ),
         );

@@ -192,7 +192,7 @@ class Proposal {
     this.votesFor = theVotes[1];
   }
 
-  Future<dynamic> anotherStageGetter() async {
+  Future<String> anotherStageGetter() async {
     int stateInContract = await getProposalState(this);
     String newStatus = StateInContract.values[stateInContract]
         .toString()
@@ -203,16 +203,76 @@ class Proposal {
       newStatus = "passed";
     }
     print("new status baby " + newStatus);
-    // DateTime start = statusHistory["pending"]!;
-    // Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
-    // Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    // Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
-    // DateTime activeStart = start.add(votingDelay);
-    // DateTime votingEnd = activeStart.add(votingDuration);
-    // BigInt totalVotes = (BigInt.parse(inFavor) + BigInt.parse(against)) *
-    //     BigInt.parse(pow(10, org.decimals!).toString());
-    // BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
-    // double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
+    DateTime start = statusHistory["pending"]!;
+    Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
+    Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
+    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
+    DateTime activeStart = start.add(votingDelay);
+    DateTime votingEnd = activeStart.add(votingDuration);
+    DateTime now = DateTime.now();
+    BigInt totalVotes = (BigInt.parse(inFavor) + BigInt.parse(against)) *
+        BigInt.parse(pow(10, org.decimals!).toString());
+    BigInt totalSupply = BigInt.parse(org.totalSupply ?? "1");
+    double votePercentage = totalVotes * BigInt.from(100) / totalSupply;
+
+    if (newStatus == "active") {
+      state = ProposalStatus.active;
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+    }
+    if (newStatus == "passed") {
+      state = ProposalStatus.passed;
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+    }
+    if (newStatus == "executed") {
+      DateTime queuedTime =
+          statusHistory['queued'] ?? now.subtract(const Duration(minutes: 23));
+      DateTime executedTime =
+          statusHistory['executed'] ?? now.subtract(const Duration(minutes: 3));
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      statusHistory.addAll({"passed": votingEnd});
+      statusHistory.addAll({"queued": queuedTime});
+      statusHistory.addAll({"executable": queuedTime.add(executionDelay)});
+      statusHistory.addAll({"executed": executedTime});
+    }
+    if (newStatus == "defeated") {
+      statusHistory.clear();
+      statusHistory.addAll({"pending": start});
+      statusHistory.addAll({"active": activeStart});
+      if (votePercentage < org.quorum) {
+        statusHistory.addAll({"no quorum": votingEnd});
+        newStatus = "no quorum";
+      } else {
+        statusHistory.addAll({"rejected": votingEnd});
+        newStatus = "rejected";
+      }
+      if (newStatus == "queued") {
+        bool queuedTimeExists = false;
+        DateTime? queuedTime = statusHistory['queued'];
+        if (queuedTime != null) {
+          queuedTimeExists = true;
+        } else {
+          queuedTime = now.subtract(const Duration(minutes: 13));
+        }
+        statusHistory.clear();
+        statusHistory.addAll({"pending": start});
+        statusHistory.addAll({"active": activeStart});
+        statusHistory.addAll({"passed": votingEnd});
+        statusHistory.addAll({"queued": queuedTime});
+        if (!queuedTimeExists || now.isAfter(queuedTime.add(executionDelay))) {
+          newStatus = "executable";
+        }
+      }
+    }
+    print("from another status getter we are returning status history:");
+    print(statusHistory.toString());
+
     status = newStatus;
     return newStatus;
   }

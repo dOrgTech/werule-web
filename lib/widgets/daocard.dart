@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:go_router/go_router.dart';
 import '../screens/dao.dart';
 
 import '../entities/org.dart';
@@ -17,10 +18,7 @@ class DAOCard extends StatelessWidget {
       ),
       child: TextButton(
         onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => DAO(InitialTabIndex: 0, org: org)));
+          context.go("/" + org.address!);
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 14.0),

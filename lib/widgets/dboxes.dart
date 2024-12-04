@@ -43,7 +43,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.m.delegate == "") {
+    if (widget.m.delegate == "" && widget.m.votingWeight.toString() == "0") {
       print("we should show both options");
       showBothOptions = true;
     } else if (widget.m.delegate.toLowerCase() ==
@@ -85,7 +85,8 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       // When Vote Directly is enabled
       voteDirectlyBottomWidget = widget.busy
           ? Wait()
-          : numDelegatedAccounts == 1
+          : widget.m.personalBalance.toString() ==
+                  widget.m.votingWeight.toString()
               ? const Padding(
                   padding: EdgeInsets.only(bottom: 3.0),
                   child: Text("Only voting your your behalf"),
@@ -242,28 +243,28 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
 
   void _showAccountsPopup() {
     List<Widget> delegatees = [];
-    for (Member constituent in widget.m.constituents) {
-      delegatees.add(
-        Container(
-          margin: const EdgeInsets.all(4),
-          padding: const EdgeInsets.all(6),
-          decoration:
-              BoxDecoration(border: Border.all(width: 0.3, color: Colors.grey)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(width: 20),
-              Text(constituent.address),
-              const SizedBox(width: 40),
-              Text(
-                constituent.personalBalance.toString(),
-                style: TextStyle(color: Theme.of(context).indicatorColor),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    // for (Member constituent in widget.m.constituents) {
+    //   delegatees.add(
+    //     Container(
+    //       margin: const EdgeInsets.all(4),
+    //       padding: const EdgeInsets.all(6),
+    //       decoration:
+    //           BoxDecoration(border: Border.all(width: 0.3, color: Colors.grey)),
+    //       child: Row(
+    //         mainAxisAlignment: MainAxisAlignment.start,
+    //         children: [
+    //           const SizedBox(width: 20),
+    //           Text(constituent.address),
+    //           const SizedBox(width: 40),
+    //           Text(
+    //             constituent.personalBalance.toString(),
+    //             style: TextStyle(color: Theme.of(context).indicatorColor),
+    //           ),
+    //         ],
+    //       ),
+    //     ),
+    //   );
+    // }
 
     showDialog(
       context: context,
@@ -388,11 +389,11 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       });
       return;
     }
-    await daosCollection
-        .doc(widget.org.address)
-        .collection("members")
-        .doc(widget.m.address)
-        .set(widget.m.toJson());
+    // await daosCollection
+    //     .doc(widget.org.address)
+    //     .collection("members")
+    //     .doc(widget.m.address)
+    //     .set(widget.m.toJson());
     widget.accountState.widget.member =
         await widget.org.refreshMember(widget.m);
     widget.accountState.setState(() {});

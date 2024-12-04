@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../entities/human.dart';
 import '../screens/dao.dart';
@@ -125,12 +126,7 @@ class Logo extends StatelessWidget {
     return Container(
       child: InkWell(
         hoverColor: Colors.transparent,
-        onTap: Human().landing
-            ? null
-            : () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Explorer()),
-                ),
+        onTap: Human().landing ? null : () => context.go("/"),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.baseline,

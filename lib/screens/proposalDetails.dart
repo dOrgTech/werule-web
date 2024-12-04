@@ -54,38 +54,6 @@ class ProposalDetailsState extends State<ProposalDetails> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    // p.status = widget.p.p.status.toString().split(".").last;
-    // p.status = "pending";
-    // if (p.status == "noQuorum") {
-    //   p.status = "no quorum";
-    //   widget.showCountdown = false;
-    // }
-    // print("p.status: " + p.status);
-
-    // if (p.status == "active" || p.status == "pending" || p.status == "executable") {
-    //   setState(() {
-    //     widget.remainingSeconds = widget.p.getRemainingTime()!.inSeconds;
-    //   });
-    //   widget.showCountdown = true;
-    //   _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    //     setState(() {
-    //       p.status = widget.p.p.status.toString().split(".").last;
-    //       if (p.status == "passed" || p.status == "executed" || p.status == "rejected") {
-    //         widget.showCountdown = false;
-    //         timer.cancel();
-    //       }
-    //       if (p.status == "noQuorum") {
-    //         p.status = "no quorum";
-    //         widget.showCountdown = false;
-    //         timer.cancel();
-    //       }
-
-    //       widget.remainingSeconds--;
-    //     });
-    //   });
-    // } else {
-    //   widget.showCountdown = false;
-    // }
   }
 
   @override
@@ -494,6 +462,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
             widget.p.inFavor = data['inFavor'];
             widget.p.hash = widget.p.id!;
             widget.p.callData = data['calldata'];
+
             // widget.p.callDatas = data['callDatas'];
             print("lengthof calldadas ${widget.p.callDatas.length}");
             List<dynamic> blobArray = data['callDatas'] ?? [];
@@ -510,6 +479,12 @@ class ProposalDetailsState extends State<ProposalDetails> {
 
             print("Decoded callDatas: $blobArray");
             print("these are the calldatas" + widget.p.callDatas.toString());
+            var statusHistoryMap =
+                data['statusHistory'] as Map<String, dynamic>;
+            print("before issue");
+            widget.p.statusHistory = statusHistoryMap.map((key, value) {
+              return MapEntry(key, (value as Timestamp).toDate());
+            });
             widget.p.createdAt = (data['createdAt'] as Timestamp).toDate();
             widget.p.turnoutPercent = data['turnoutPercent'];
             widget.p.author = data['author'];
@@ -598,9 +573,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         } else if (asyncSnapshot.hasError) {
                                           return Text('${asyncSnapshot.error}');
                                         }
-                                      } else {
-                                        // Show a loading indicator
                                       }
+
                                       return widget.p
                                           .statusPill(widget.p.status, context);
                                     },
@@ -735,27 +709,69 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         height: 100,
                                         width: 100,
                                         child: CircularProgressIndicator()))
-                                : Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 9),
-                                      ActionLabel(
-                                        status: widget.p.status,
-                                      ),
-                                      widget.showCountdown
-                                          ? Container(
-                                              padding: const EdgeInsets.only(
-                                                  top: 22),
-                                              child: Transform.scale(
-                                                  scale: 0.8,
-                                                  child:
-                                                      _buildCountdownDisplay()))
-                                          : const Text(""),
-                                      const SizedBox(height: 32),
-                                      actions()
-                                    ],
-                                  ),
+                                : Builder(builder: (context) {
+                                    if (widget.p.status == "noQuorum") {
+                                      widget.p.status = "no quorum";
+                                      widget.showCountdown = false;
+                                    }
+
+                                    if (widget.p.status == "active" ||
+                                        widget.p.status == "pending" ||
+                                        widget.p.status == "queued") {
+                                      setState(() {
+                                        widget.remainingSeconds = widget.p
+                                            .getRemainingTime()!
+                                            .inSeconds;
+                                      });
+                                      widget.showCountdown = true;
+                                      _statusCheckTimer = Timer.periodic(
+                                          const Duration(seconds: 1), (timer) {
+                                        setState(() {
+                                          widget.p.status = widget.p.status
+                                              .toString()
+                                              .split(".")
+                                              .last;
+                                          if (widget.p.status == "passed" ||
+                                              widget.p.status == "executed" ||
+                                              widget.p.status == "rejected") {
+                                            widget.showCountdown = false;
+                                            timer.cancel();
+                                          }
+                                          if (widget.p.status == "noQuorum") {
+                                            widget.p.status = "no quorum";
+                                            widget.showCountdown = false;
+                                            timer.cancel();
+                                          }
+
+                                          widget.remainingSeconds--;
+                                        });
+                                      });
+                                    } else {
+                                      widget.showCountdown = false;
+                                    }
+
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 9),
+                                        ActionLabel(
+                                          status: widget.p.status,
+                                        ),
+                                        widget.showCountdown
+                                            ? Container(
+                                                padding: const EdgeInsets.only(
+                                                    top: 22),
+                                                child: Transform.scale(
+                                                    scale: 0.8,
+                                                    child:
+                                                        _buildCountdownDisplay()))
+                                            : const Text(""),
+                                        const SizedBox(height: 32),
+                                        actions()
+                                      ],
+                                    );
+                                  }),
                           ),
                         ),
                       ),
@@ -939,8 +955,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         child: Container(
                           decoration:
                               BoxDecoration(color: Theme.of(context).cardColor),
-                          child: ProposalLifeCycleWidget(
-                              statusHistory: widget.p.statusHistory),
+                          child: ProposalLifeCycleWidget(p: widget.p),
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -1372,47 +1387,66 @@ class _VotesModalState extends State<VotesModal> {
 }
 
 class ProposalLifeCycleWidget extends StatelessWidget {
-  final Map<String, DateTime> statusHistory;
-  Proposal p = Proposal(org: orgs[0]);
-  ProposalLifeCycleWidget({required this.statusHistory});
+  Proposal p;
+  ProposalLifeCycleWidget({required this.p});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: (100 + 40 * statusHistory.keys.length)
-          .toDouble(), // Adjust the height as needed
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(43),
-              itemCount: statusHistory.length,
-              itemBuilder: (context, index) {
-                final sortedKeys = statusHistory.keys.toList()
-                  ..sort(
-                      (a, b) => statusHistory[a]!.compareTo(statusHistory[b]!));
-                final status = sortedKeys[index];
-                final date = statusHistory[status]!;
+    print("in the build before the build" + p.statusHistory.toString());
+    return FutureBuilder(
+        future: p.anotherStageGetter(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+                child: SizedBox(
+                    height: 80, width: 80, child: CircularProgressIndicator()));
+          }
+          if (snapshot.hasError) {
+            return Text("Error: ${snapshot.error}");
+          }
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 28.0, vertical: 9.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      p.statusPill(status, context),
-                      Text(DateFormat.yMMMd().add_jm().format(date)),
-                    ],
+          if (!snapshot.hasData) {
+            return Text("No updates yet");
+          }
+
+          print("in proposal lyfecycle widget " + p.statusHistory.toString());
+
+          return SizedBox(
+            height: (100 + 40 * p.statusHistory.keys.length)
+                .toDouble(), // Adjust the height as needed
+            width: double.infinity,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(43),
+                    itemCount: p.statusHistory.length,
+                    itemBuilder: (context, index) {
+                      final sortedKeys = p.statusHistory.keys.toList()
+                        ..sort((a, b) =>
+                            p.statusHistory[a]!.compareTo(p.statusHistory[b]!));
+                      final status = sortedKeys[index];
+                      final date = p.statusHistory[status]!;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28.0, vertical: 9.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            p.statusPill(status, context),
+                            Text(DateFormat.yMMMd().add_jm().format(date)),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
+        });
   }
 }

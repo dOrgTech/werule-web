@@ -13,6 +13,7 @@ import 'package:Homebase/widgets/pdetails.dart';
 import 'package:Homebase/widgets/propDetailsWidgets.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:Homebase/widgets/statemgmt.dart';
+import 'package:Homebase/widgets/testwidget.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +64,7 @@ var tokensCollection;
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
 persist() async {
+  print("persisting");
   users = [];
   proposals = [];
   daosCollection =
@@ -112,8 +114,7 @@ persist() async {
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   if (Human().landing == false) {
-    print("persisting");
-    await persist();
+    // await persist();
   }
 
   runApp(ChangeNotifierProvider<Human>(
@@ -126,8 +127,17 @@ final GoRouter router = GoRouter(
   routes: [
     // Default route for "/"
     GoRoute(
-      path: '/',
-      builder: (context, state) => Explorer(),
+        path: '/',
+        builder: (context, state) {
+          return FutureBuilder(
+              future: persist(),
+              builder: (context, snapshot) {
+                return Explorer();
+              });
+        }),
+    GoRoute(
+      path: '/test',
+      builder: (context, state) => Parent(),
     ),
     // Dynamic route for "/:id" and "/:id/:nestedId"
     GoRoute(
@@ -187,7 +197,7 @@ class MyApp extends StatelessWidget {
       print("are metamask");
       Human().metamask = true;
     }
-    print("proposal ID: ${orgs[0].name}");
+
     // Proposal p;
     // if (true) {
     //   p = Proposal(org: orgs[0]);

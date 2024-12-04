@@ -41,7 +41,7 @@ class MembersList extends StatelessWidget {
           for (var doc in docs) {
             Member m = Member(address: doc.data()['address']);
             m.personalBalance = doc.data()['personalBalance'];
-            m.votingWeight = "0";
+
             List<String> proposalsCreatedHashes =
                 List<String>.from(doc.data()['proposalsCreated'] ?? []);
             List<String> proposalsVotedHashes =
@@ -59,31 +59,13 @@ class MembersList extends StatelessWidget {
                 : null;
             org.memberAddresses[m.address.toLowerCase()] = m;
             m.delegate = doc.data()['delegate'] ?? "";
-            if (!(m.delegate == "")) {
-              if (!org.memberAddresses.keys
-                  .contains(m.delegate.toLowerCase())) {
-                Member delegate = Member(address: m.delegate);
-                org.memberAddresses[delegate.address.toLowerCase()] = delegate;
-                delegate.constituents.add(m);
-              } else {
-                org.memberAddresses[m.delegate.toLowerCase()]!.constituents
-                    .add(m);
-              }
-            }
+            m.constituentsAddresses =
+                List<String>.from(doc.data()['constituents'] ?? []);
           }
 
-          for (Member m in org.memberAddresses.values) {
-            if (m.delegate == m.address) {
-              for (Member constituent in m.constituents) {
-                m.votingWeight = (BigInt.parse(m.votingWeight!) +
-                        BigInt.parse(constituent.personalBalance!))
-                    .toString();
-              }
-            }
-          }
           List<TableRow> tableRows = [];
           for (Member m in org.memberAddresses.values) {
-            tableRows.add(MemberTableRow(m, context));
+            tableRows.add(MemberTableRow(m, context, org.decimals));
           }
           return Column(children: [
             Table(
@@ -163,7 +145,7 @@ class MembersList extends StatelessWidget {
 
 class MemberTableRow extends TableRow {
   BuildContext? context;
-  MemberTableRow(member, context)
+  MemberTableRow(member, context, decimals)
       : super(
           children: <Widget>[
             Container(
@@ -235,7 +217,9 @@ class MemberTableRow extends TableRow {
               height: 42,
               color: const Color.fromARGB(0, 76, 175, 79),
               child: Center(
-                child: Text(member.personalBalance ?? "N/A"),
+                child: Text(
+                    "${BigInt.parse(member.personalBalance.toString()) ~/ BigInt.from(10).pow(decimals)}" ??
+                        "N/A"),
               ),
             ),
             Container(

@@ -132,6 +132,7 @@ class _ProposalsState extends State<Proposals> {
                 p.createdAt = (doc.data()['createdAt'] as Timestamp).toDate();
                 p.turnoutPercent = doc.data()['turnoutPercent'];
                 p.author = doc.data()['author'];
+                p.status = doc.data()['latestStage'];
                 p.votesFor = doc.data()['votesFor'];
                 p.latestState = doc.data()['latestState'];
                 p.targets = List<String>.from(doc.data()['targets']);
@@ -200,18 +201,6 @@ class _ProposalsState extends State<Proposals> {
                           },
                         ),
                         Spacer(),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 18.0),
-                          child: SizedBox(
-                              height: 40,
-                              child: ElevatedButton(
-                                  onPressed: widget.executable
-                                      ? () {
-                                          //EXECUTE PROPOSAL HERE;
-                                        }
-                                      : null,
-                                  child: const Text("Execute"))),
-                        ),
                         Container(
                           padding: EdgeInsets.only(right: 50),
                           height: 40,

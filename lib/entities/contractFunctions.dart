@@ -468,6 +468,13 @@ oldcreateDAO(Org org, state) async {
 propose(Proposal p) async {
   print("description");
   print(p.description);
+  String concatenated = p.name.toString() +
+      "0|||0" +
+      p.type.toString() +
+      "0|||0" +
+      p.description.toString() +
+      "0|||0" +
+      p.externalResource.toString();
   print("web3user: " + Human().web3user.toString());
   var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
@@ -476,12 +483,12 @@ propose(Proposal p) async {
     print("signed ok");
     final transaction =
         await promiseToFuture(callMethod(sourceContract, "propose", [
-      ["0x60A93C29e3966c58a5227e1D76dcB185BAa1ac6b"],
+      [p.org.registryAddress],
       ["0"],
       [
         "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
       ],
-      p.description
+      concatenated
     ]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];

@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../screens/dao.dart';
+import 'package:go_router/go_router.dart';
 
 class ProposalCard extends StatefulWidget {
   ProposalCard({super.key, required this.proposal, required this.org});
@@ -142,22 +143,19 @@ class _ProposalCardState extends State<ProposalCard> {
     );
   }
 
-  Widget proposals(context) {
+  Widget proposals(BuildContext context) {
+    print(
+        "proposal details: ${widget.proposal.name} ${widget.proposal.id} ${widget.proposal.author} ${widget.proposal.type} ${widget.proposal.status} ");
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: Card(
         elevation: 3,
         child: InkWell(
           onTap: () {
-            print("tapped on proposalCard");
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => DAO(
-                          InitialTabIndex: 1,
-                          org: widget.org,
-                          proposalHash: widget.proposal.hash,
-                        )));
+            context.go("/" +
+                widget.org.address! +
+                "/" +
+                widget.proposal.id.toString());
           },
           child: SizedBox(
             height: 44,
@@ -207,8 +205,8 @@ class _ProposalCardState extends State<ProposalCard> {
                     height: 20,
                     width: 110,
                     child: Center(
-                        child: widget.proposal.statusPill(
-                            widget.proposal.latestState!, context))),
+                        child: widget.proposal
+                            .statusPill(widget.proposal.status, context))),
               ],
             ),
           ),
