@@ -140,6 +140,7 @@ class Proposal {
   String status = "";
   Map<String, DateTime> statusHistory = {"pending": DateTime.now()};
   int turnoutPercent = 0;
+  double turnout = 0;
   String inFavor = "0";
   String against = "0";
   int votesFor = 0;
@@ -191,6 +192,8 @@ class Proposal {
     this.votesAgainst = theVotes[0];
     this.votesFor = theVotes[1];
   }
+
+//////////////////////////////////
 
   Future<String> anotherStageGetter() async {
     int stateInContract = await getProposalState(this);

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:typed_data';
 import 'dart:typed_data';
 import 'package:Homebase/widgets/fundProject.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,9 +11,12 @@ import 'dart:typed_data';
 import 'dart:async';
 import 'dart:math';
 import 'package:image/image.dart' as img;
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 // import '../entities/contractFunctions.dart';
+import '../entities/human.dart';
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
 import 'dart:typed_data';
@@ -491,7 +495,7 @@ class RegistryProposalDetails extends StatelessWidget {
     Uint8List param2DataBytes = dataWithoutSelector.sublist(
         param2OffsetInt + 32, param2OffsetInt + 32 + param2LengthInt);
     String param2Data = String.fromCharCodes(param2DataBytes);
-    print('Parameter 2 Data: $param2Data');
+
     return [param1Data, param2Data];
   }
 
@@ -547,6 +551,373 @@ class RegistryProposalDetails extends StatelessWidget {
                 " " + value,
                 style: TextStyle(color: Colors.white),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ElectionResultBar extends StatefulWidget {
+  final BigInt inFavor;
+  final BigInt against;
+
+  const ElectionResultBar({
+    required this.inFavor,
+    required this.against,
+  });
+
+  @override
+  _ElectionResultBarState createState() => _ElectionResultBarState();
+}
+
+class _ElectionResultBarState extends State<ElectionResultBar> {
+  double _inFavorWidth = 0;
+  double _againstWidth = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animateBar();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant ElectionResultBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Trigger re-animation if inFavor or against values change
+    if (widget.inFavor != oldWidget.inFavor ||
+        widget.against != oldWidget.against) {
+      _animateBar();
+    }
+  }
+
+  void _animateBar() {
+    setState(() {
+      BigInt totalVotes = widget.inFavor + widget.against;
+      if (totalVotes > BigInt.zero) {
+        _inFavorWidth = widget.inFavor.toDouble() / totalVotes.toDouble();
+        _againstWidth = widget.against.toDouble() / totalVotes.toDouble();
+      } else {
+        // No votes case: both widths should be zero
+        _inFavorWidth = 0;
+        _againstWidth = 0;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    BigInt totalVotes = widget.inFavor + widget.against;
+
+    // Handle case with no votes
+    if (totalVotes == BigInt.zero) {
+      return Container(
+        height: 20,
+        width: double.infinity, // Use full width available
+        color: Colors.grey[700], // Grey color to represent no votes
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double barWidth = constraints.maxWidth;
+        double maxDuration = 800; // Maximum total duration in milliseconds
+
+        // The larger portion determines the animation duration
+        double maxPercentage = max(_inFavorWidth, _againstWidth);
+        int durationInMillis = (maxDuration * maxPercentage).toInt();
+
+        return Row(
+          children: [
+            AnimatedContainer(
+              width: barWidth * _inFavorWidth, // Use the actual widget width
+              height: 20, // Height of the bar
+              color: const Color.fromARGB(255, 0, 196, 137),
+              duration: Duration(milliseconds: durationInMillis),
+              curve: Curves.easeInOut,
+            ),
+            AnimatedContainer(
+              width: barWidth * _againstWidth, // Use the actual widget width
+              height: 20,
+              color: const Color.fromARGB(255, 134, 37, 30),
+              duration: Duration(milliseconds: durationInMillis),
+              curve: Curves.easeInOut,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class ParticipationBar extends StatefulWidget {
+  final BigInt totalVoters;
+  final double turnout;
+  final int quorum;
+  final int decimals;
+  const ParticipationBar(
+      {required this.totalVoters,
+      required this.turnout,
+      required this.quorum,
+      required this.decimals});
+
+  @override
+  _ParticipationBarState createState() => _ParticipationBarState();
+}
+
+class _ParticipationBarState extends State<ParticipationBar> {
+  double _turnoutWidth = 0;
+  @override
+  void initState() {
+    print('initState called');
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animateTurnout();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant ParticipationBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Recalculate turnout width if turnout or totalVoters change
+    if (widget.turnout != oldWidget.turnout ||
+        widget.totalVoters != oldWidget.totalVoters) {
+      _animateTurnout();
+    }
+  }
+
+  void _animateTurnout() {
+    setState(() {
+      if (widget.totalVoters > BigInt.zero) {
+        double turnout = widget.turnout.toDouble();
+        double totalVoters = widget.totalVoters.toDouble();
+        _turnoutWidth = (turnout / totalVoters) / pow(10, widget.decimals);
+
+        // Debug statements
+        print('Turnout: $turnout');
+        print('Total Voters: $totalVoters');
+        print('Calculated Turnout Width: $_turnoutWidth');
+      } else {
+        _turnoutWidth = 0;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculate turnout and quorum positions for display
+    double turnoutPercentage =
+        (widget.turnout.toDouble() / widget.totalVoters.toDouble()) * 100;
+    double quorumPosition = widget.quorum / 100; // Convert quorum to a fraction
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double barWidth =
+            constraints.maxWidth; // Get the actual width of the widget
+
+        return Stack(
+          children: [
+            // Background for total possible votes
+            Container(
+              height: 20,
+              width: barWidth,
+              color: Colors.grey[700], // Dark grey
+            ),
+            // Animated container for turnout portion
+            AnimatedContainer(
+              width: barWidth * _turnoutWidth, // Width proportional to turnout
+              height: 20,
+              color: Colors.grey[400], // Light grey for turnout
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            ),
+            // Quorum marker
+            Positioned(
+              left: quorumPosition *
+                  barWidth, // Position based on quorum percentage
+              child: Container(
+                height: 15,
+                width: 6, // Small vertical line for quorum marker
+                color: Colors.black, // Marker color
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class VotesModal extends StatefulWidget {
+  final Proposal p;
+  VotesModal({required this.p, super.key});
+
+  @override
+  State<VotesModal> createState() => _VotesModalState();
+}
+
+class _VotesModalState extends State<VotesModal> {
+  late Future<void> _votesFuture;
+
+  Future<void> getVotes() async {
+    var votesCollection = FirebaseFirestore.instance
+        .collection("idaos${Human().chain.name}")
+        .doc(widget.p.org.address)
+        .collection("proposals")
+        .doc(widget.p.id.toString())
+        .collection("votes");
+    print("creating the collection");
+    var votesSnapshot = await votesCollection.get();
+    print("length of votesSnapshot.docs ${votesSnapshot.docs.length}");
+    widget.p.votes.clear();
+    for (var doc in votesSnapshot.docs) {
+      print("adding a vote");
+      widget.p.votes.add(Vote(
+        votingPower: doc.data()['weight'],
+        voter: doc.data()['voter'],
+        hash: "0x" +
+            doc
+                .data()['hash']
+                .bytes
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join(),
+        proposalID: widget.p.id!,
+        option: doc.data()['option'],
+        castAt: (doc.data()['cast'] != null)
+            ? (doc.data()['cast'] as Timestamp).toDate()
+            : null,
+      ));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _votesFuture = getVotes(); // Initialize the Future in initState
+  }
+
+  String formatDateTime(DateTime? dateTime) {
+    if (dateTime == null) return "Unknown";
+    return DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      child: FutureBuilder<void>(
+        future: _votesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Show loading spinner while fetching data
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            // Handle any errors
+            return Center(
+                child: Text("Error loading votes: ${snapshot.error}"));
+          } else {
+            // Data is ready, display the votes in a table
+            return SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Voter')),
+                    DataColumn(label: Text('Option')),
+                    DataColumn(label: Text('Weight')),
+                    DataColumn(label: Text("Cast At")),
+                    DataColumn(label: Text('Details')),
+                  ],
+                  rows: widget.p.votes.map((vote) {
+                    return DataRow(cells: [
+                      DataCell(Row(
+                        children: [
+                          Text(getShortAddress(vote.voter!)),
+                          const SizedBox(width: 8),
+                          TextButton(
+                              child: Icon(Icons.copy),
+                              onPressed: () {
+                                Clipboard.setData(
+                                    ClipboardData(text: vote.voter!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        duration: Duration(seconds: 1),
+                                        content: Center(
+                                            child: Text(
+                                                'Address copied to clipboard'))));
+                              })
+                        ],
+                      )),
+                      DataCell(Container(
+                          child: vote.option == 0
+                              ? const Icon(Icons.thumb_down,
+                                  color: Color.fromARGB(255, 238, 129, 121))
+                              : const Icon(Icons.thumb_up_sharp,
+                                  color: Color.fromARGB(255, 93, 223, 162)))),
+                      DataCell(Text(vote.votingPower.toString())),
+                      DataCell(Text(DateFormat("yyyy-MM-dd – HH:mm")
+                          .format(vote.castAt!))),
+                      DataCell(
+                        TextButton(
+                            onPressed: () => launch(
+                                "${Human().chain.blockExplorer}/tx/${vote.hash}"),
+                            child: Icon(Icons
+                                .open_in_new)), // You can add onTap functionality here later
+                      )
+                    ]);
+                  }).toList(),
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
+
+class ProposalLifeCycleWidget extends StatelessWidget {
+  Proposal p;
+  ProposalLifeCycleWidget({required this.p});
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: (100 + 40 * p.statusHistory.keys.length)
+          .toDouble(), // Adjust the height as needed
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(43),
+              itemCount: p.statusHistory.length,
+              itemBuilder: (context, index) {
+                final sortedKeys = p.statusHistory.keys.toList()
+                  ..sort((a, b) =>
+                      p.statusHistory[a]!.compareTo(p.statusHistory[b]!));
+                final status = sortedKeys[index];
+                final date = p.statusHistory[status]!;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 28.0, vertical: 9.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      p.statusPill(status, context),
+                      Text(DateFormat.yMMMd().add_jm().format(date)),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],

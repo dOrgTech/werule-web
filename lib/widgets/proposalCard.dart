@@ -79,14 +79,10 @@ class _ProposalCardState extends State<ProposalCard> {
         child: InkWell(
           onTap: () {
             print("tapped on proposalCard");
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => DAO(
-                          InitialTabIndex: 1,
-                          org: widget.org,
-                          proposalHash: widget.proposal.hash,
-                        )));
+            context.go("/" +
+                widget.org.address! +
+                "/" +
+                widget.proposal.id.toString());
           },
           child: SizedBox(
             height: 44,

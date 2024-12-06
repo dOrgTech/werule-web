@@ -64,7 +64,16 @@ var tokensCollection;
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
 persist() async {
-  print("persisting");
+  // print("persisting");
+  // var snaps = await systemCollection.doc("whatever").get();
+
+  // DateTime when = (snaps.data()!['what'] as Timestamp).toDate();
+  // print(when.toIso8601String());
+  // print(snaps.data());
+  // DateTime now = DateTime.now();
+  // Duration difference = now.difference(when);
+  // print("difference in seconds" + difference.inSeconds.toString());
+
   users = [];
   proposals = [];
   daosCollection =
@@ -114,7 +123,7 @@ persist() async {
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   if (Human().landing == false) {
-    // await persist();
+    await persist();
   }
 
   runApp(ChangeNotifierProvider<Human>(
@@ -125,59 +134,105 @@ void main() async {
 
 final GoRouter router = GoRouter(
   routes: [
-    // Default route for "/"
     GoRoute(
-        path: '/',
-        builder: (context, state) {
-          return FutureBuilder(
-              future: persist(),
-              builder: (context, snapshot) {
-                return Explorer();
-              });
-        }),
+      path: '/',
+      pageBuilder: (context, state) {
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: FutureBuilder(
+            future: persist(),
+            builder: (context, snapshot) {
+              return Explorer();
+            },
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration:
+              const Duration(milliseconds: 800), // Increase fade time
+        );
+      },
+    ),
     GoRoute(
       path: '/test',
-      builder: (context, state) => Parent(),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: Parent(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        transitionDuration:
+            const Duration(milliseconds: 800), // Increase fade time
+      ),
     ),
-    // Dynamic route for "/:id" and "/:id/:nestedId"
     GoRoute(
       path: '/:id',
-      builder: (context, state) {
-        final id = state.pathParameters['id']!; // Access the outer object ID
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id']!;
         Org org = orgs.firstWhere((org) => org.address == id);
-        print("org address " + org.address.toString()!);
-        if (org == null) {
-          return SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-              child: Stack(
-                children: [
-                  GameOfLife(),
-                  Center(
+        final child = org == null
+            ? SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                child: Stack(
+                  children: [
+                    GameOfLife(),
+                    Center(
                       child: Text(
-                    "Can't find DAO",
-                    style: TextStyle(fontSize: 40),
-                  ))
-                ],
-              ));
-        }
-        return DAO(org: org, InitialTabIndex: 0);
+                        "Can't find DAO",
+                        style: TextStyle(fontSize: 40),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : DAO(org: org, InitialTabIndex: 0);
+
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: child,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration:
+              const Duration(milliseconds: 800), // Increase fade time
+        );
       },
       routes: [
         GoRoute(
           path: ':nestedId',
-          builder: (context, state) {
-            print(
-                "||||||||||||||||||||||we got in here in the nested id|||||||");
-            final id = state.pathParameters['id']!; // Outer object ID
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id']!;
             Org org = orgs.firstWhere((org) => org.address == id);
+            final nestedId = state.pathParameters['nestedId']!;
+            final child = DAO(
+              org: org,
+              InitialTabIndex: 1,
+              proposalHash: nestedId,
+            );
 
-            final nestedId =
-                state.pathParameters['nestedId']!; // Nested object ID
-            print("nested id " + nestedId);
-
-            // Proposal p = org.proposals.firstWhere((p) => p.id! == nestedId);
-            return DAO(org: org, InitialTabIndex: 1, proposalHash: nestedId);
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: child,
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+              transitionDuration:
+                  const Duration(milliseconds: 800), // Increase fade time
+            );
           },
         ),
       ],

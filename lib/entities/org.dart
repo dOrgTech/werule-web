@@ -127,9 +127,7 @@ class Org {
         .doc(address)
         .collection("proposals");
     var proposalsSnapshot = await pollsCollection.get();
-    print("lungimea la docomente " + proposalsSnapshot.docs.length.toString());
     for (var doc in proposalsSnapshot.docs) {
-      print("saide una");
       Proposal p = Proposal(org: this, name: doc.data()['title'] ?? "No title");
       p.type = doc.data()['type'];
       p.id = doc.id.toString();

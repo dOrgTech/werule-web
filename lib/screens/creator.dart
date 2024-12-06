@@ -1437,7 +1437,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           child: Screen9DeploymentComplete(
             daoName: daoConfig.daoName ?? 'DAO',
             onGoToDAO: () {
-              context.go("/#/" + widget.org.address!);
+              context.go("/" + widget.org.address!);
               // Navigator.of(context).push(MaterialPageRoute(
               //     builder: (context) => DAO(
               //         org: orgs.firstWhere(

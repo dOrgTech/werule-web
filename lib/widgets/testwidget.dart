@@ -4,68 +4,54 @@ import 'package:flutter/material.dart';
 class Parent extends StatefulWidget {
   Parent({super.key});
   DateTime pending = DateTime.now();
-  String? status;
-  int? remainingSeconds;
+  String status = "pending";
 
   @override
   State<Parent> createState() => _ParentState();
 }
 
 class _ParentState extends State<Parent> {
-  Timer? _statusTimer;
+  int remainingSeconds = 0;
 
   @override
   void initState() {
     super.initState();
-    _updateStatus();
-    _statusTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateStatus();
-    });
+    _updateStatus(); // Initial status update
   }
 
   void _updateStatus() {
-    String newStatus = "";
     DateTime now = DateTime.now();
 
-    Map statushistory = {
+    // Define state transition times
+    Map<String, DateTime> statusHistory = {
       "pending": widget.pending,
-      "active": widget.pending.add(Duration(seconds: 4)),
-      "passed": widget.pending.add(Duration(seconds: 8)),
-      "executed": widget.pending.add(Duration(seconds: 12))
+      "active": widget.pending.add(const Duration(seconds: 4)),
+      "passed": widget.pending.add(const Duration(seconds: 8)),
+      "executed": widget.pending.add(const Duration(seconds: 12)),
     };
 
-    if (now.isAfter(statushistory['active'])) {
-      if (now.isBefore(statushistory['passed'])) {
-        newStatus = "active";
-        widget.remainingSeconds =
-            statushistory['passed'].difference(now).inSeconds;
-      } else {
-        if (now.isBefore(statushistory['executed'])) {
-          newStatus = "passed";
-          widget.remainingSeconds =
-              statushistory['executed'].difference(now).inSeconds;
-        } else {
-          newStatus = "executed";
-          widget.remainingSeconds = 0; // No more countdown
-        }
-      }
+    if (now.isAfter(statusHistory["active"]!) &&
+        now.isBefore(statusHistory["passed"]!)) {
+      widget.status = "active";
+      remainingSeconds = statusHistory["passed"]!.difference(now).inSeconds;
+    } else if (now.isAfter(statusHistory["passed"]!) &&
+        now.isBefore(statusHistory["executed"]!)) {
+      widget.status = "passed";
+      remainingSeconds = statusHistory["executed"]!.difference(now).inSeconds;
+    } else if (now.isAfter(statusHistory["executed"]!)) {
+      widget.status = "executed";
+      remainingSeconds = 0; // No countdown
     } else {
-      newStatus = "pending";
-      widget.remainingSeconds =
-          statushistory['active'].difference(now).inSeconds;
+      widget.status = "pending";
+      remainingSeconds = statusHistory["active"]!.difference(now).inSeconds;
     }
 
-    if (widget.status != newStatus || widget.remainingSeconds == 0) {
-      setState(() {
-        widget.status = newStatus;
-      });
-    }
+    setState(() {});
   }
 
-  @override
-  void dispose() {
-    _statusTimer?.cancel();
-    super.dispose();
+  void _onCountdownComplete() {
+    // Trigger state update to move to the next phase
+    _updateStatus();
   }
 
   @override
@@ -77,18 +63,18 @@ class _ParentState extends State<Parent> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              widget.status ?? "unknown",
-              style: TextStyle(fontSize: 30),
+              widget.status,
+              style: const TextStyle(fontSize: 30),
             ),
-            SizedBox(height: 100),
+            const SizedBox(height: 100),
             widget.status == "pending" ||
                     widget.status == "active" ||
                     widget.status == "passed"
                 ? CNTDN(
-                    key: ValueKey(widget.remainingSeconds),
-                    remainingSeconds: widget.remainingSeconds!,
+                    remainingSeconds: remainingSeconds,
+                    onCountdownComplete: _onCountdownComplete,
                   )
-                : Center(child: Text("Voting is over")),
+                : const Center(child: Text("Voting is over")),
           ],
         ),
       ),
@@ -97,8 +83,12 @@ class _ParentState extends State<Parent> {
 }
 
 class CNTDN extends StatefulWidget {
-  CNTDN({super.key, required this.remainingSeconds});
-  int remainingSeconds;
+  CNTDN(
+      {super.key,
+      required this.remainingSeconds,
+      required this.onCountdownComplete});
+  final int remainingSeconds;
+  final VoidCallback onCountdownComplete;
 
   @override
   State<CNTDN> createState() => _CNTDNState();
@@ -106,21 +96,34 @@ class CNTDN extends StatefulWidget {
 
 class _CNTDNState extends State<CNTDN> {
   late Timer _timer;
+  late int remainingSeconds;
 
   @override
   void initState() {
     super.initState();
+    remainingSeconds = widget.remainingSeconds;
     _startCountdown();
+  }
+
+  @override
+  void didUpdateWidget(covariant CNTDN oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.remainingSeconds != oldWidget.remainingSeconds) {
+      _timer.cancel();
+      remainingSeconds = widget.remainingSeconds;
+      _startCountdown();
+    }
   }
 
   void _startCountdown() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (widget.remainingSeconds > 0) {
+      if (remainingSeconds > 0) {
         setState(() {
-          widget.remainingSeconds--;
+          remainingSeconds--;
         });
       } else {
         _timer.cancel();
+        widget.onCountdownComplete();
       }
     });
   }
@@ -139,10 +142,10 @@ class _CNTDNState extends State<CNTDN> {
   }
 
   Widget _buildCountdownDisplay() {
-    final days = widget.remainingSeconds ~/ (24 * 3600);
-    final hours = (widget.remainingSeconds % (24 * 3600)) ~/ 3600;
-    final minutes = (widget.remainingSeconds % 3600) ~/ 60;
-    final seconds = widget.remainingSeconds % 60;
+    final days = remainingSeconds ~/ (24 * 3600);
+    final hours = (remainingSeconds % (24 * 3600)) ~/ 3600;
+    final minutes = (remainingSeconds % 3600) ~/ 60;
+    final seconds = remainingSeconds % 60;
 
     final timeUnits = <MapEntry<String, int>>[];
 

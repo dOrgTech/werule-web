@@ -1,10 +1,11 @@
 import 'dart:convert';
-
 import 'package:Homebase/main.dart';
+import 'package:Homebase/utils/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web3/ethers.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart'; // For formatting the date
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -23,6 +24,7 @@ import '../widgets/countdown.dart';
 import '../widgets/footer.dart';
 import '../widgets/menu.dart';
 import '../widgets/propDetailsWidgets.dart';
+import '../widgets/testwidget.dart';
 import 'dao.dart';
 import 'dart:async';
 
@@ -40,7 +42,113 @@ class ProposalDetails extends StatefulWidget {
   late int remainingSeconds;
   BigInt votesFor = BigInt.zero;
   BigInt votesAgainst = BigInt.zero;
+  bool dontKnowWhenItWasQueued = false;
   Member? member;
+
+  Stream<Map<String, dynamic>?> getProposalFromFirestore() async* {
+    final snapshots = FirebaseFirestore.instance
+        .collection("idaos${Human().chain.name}")
+        .doc(p.org.address!)
+        .collection('proposals')
+        .doc(p.id.toString())
+        .snapshots();
+
+    await for (final snapshot in snapshots) {
+      if (snapshot.exists) {
+        var data = snapshot.data() as Map<String, dynamic>;
+        String aidi = p.id!;
+        p = Proposal(org: p.org, name: data['title']);
+        p.id = aidi;
+        p.type = data['type'];
+
+        // BigInt number = BigInt.parse(data['inFavor']);
+        // BigInt divisor = BigInt.from(pow(10, p.org.decimals!));
+        // BigInt result = number ~/ divisor;
+        // p.inFavor = result.toString();
+        // number = BigInt.parse(data['against']);
+        // BigInt againstResult = number ~/ divisor;
+        // p.against = againstResult.toString();
+
+        p.against = data['against'];
+        p.inFavor = data['inFavor'];
+
+        p.hash = p.id!;
+        p.callData = data['calldata'];
+        List<dynamic> blobArray = data['callDatas'] ?? [];
+
+        for (var blob in blobArray) {
+          if (blob is Blob) {
+            print(blob.bytes); // Prints the raw byte array
+            String hexString = blob.bytes
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join();
+            p.callDatas.add(hexString);
+          }
+        }
+
+        var statusHistoryMap = data['statusHistory'] as Map<String, dynamic>;
+        p.statusHistory = statusHistoryMap.map((key, value) {
+          return MapEntry(key, (value as Timestamp).toDate());
+        });
+        p.createdAt = (data['createdAt'] as Timestamp).toDate();
+
+        p.author = data['author'];
+        p.votesFor = data['votesFor'];
+        p.votesAgainst = data['votesAgainst'];
+        BigInt totalVotes =
+            BigInt.parse(data['inFavor']) + BigInt.parse(data['against']);
+        BigInt numerator = totalVotes * BigInt.from(10).pow(18);
+        BigInt turnoutbigInt = numerator ~/ BigInt.parse(p.org.totalSupply!);
+        double ceva =
+            turnoutbigInt.toDouble() / BigInt.from(10).pow(18).toDouble();
+        p.turnout = ceva;
+        p.targets = List<String>.from(data['targets']);
+        p.values = List<String>.from(data['values']);
+        p.externalResource =
+            data['externalResource'] ?? "(no external resource)";
+        p.description = data['description'] ?? "no description";
+        await p.anotherStageGetter();
+        _setRemainingTime();
+        print("this runs every time there's an update");
+        yield snapshot.data() as Map<String, dynamic>?;
+      } else {
+        yield null;
+      }
+    }
+  }
+
+  void _setRemainingTime() {
+    DateTime now = DateTime.now();
+
+    DateTime votingStarts =
+        p.statusHistory["pending"]!.add(Duration(minutes: p.org.votingDelay));
+    DateTime votingEnds =
+        votingStarts.add(Duration(minutes: p.org.votingDuration));
+    if (p.status == "pending") {
+      remainingSeconds = ((now.difference(votingStarts).inSeconds) + 4).abs();
+      print("PENDING and we are setting the remaining seconds: " +
+          remainingSeconds.toString());
+      showCountdown = true;
+    } else if (p.status == "active") {
+      remainingSeconds = (now.difference(votingEnds).inSeconds + 4).abs();
+      print("ACTIVE and we are setting the remaining seconds: " +
+          remainingSeconds.toString());
+      showCountdown = true;
+      enabled = true;
+    } else if (p.status == "queued") {
+      DateTime executionAvailable = p.statusHistory["queued"]!
+          .add(Duration(seconds: p.org.executionDelay));
+      remainingSeconds =
+          (executionAvailable.difference(now).inSeconds + 4).abs();
+      print("ACTIVE and we are setting the remaining seconds: " +
+          remainingSeconds.toString());
+      showCountdown = true;
+    } else {
+      enabled = false;
+      showCountdown = false;
+    }
+  }
+
   @override
   State<ProposalDetails> createState() => ProposalDetailsState();
 }
@@ -52,8 +160,11 @@ class ProposalDetailsState extends State<ProposalDetails> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+  }
+
+  void _updateStatus() {
+    DateTime now = DateTime.now();
   }
 
   @override
@@ -420,29 +531,22 @@ class ProposalDetailsState extends State<ProposalDetails> {
 
   @override
   Widget build(BuildContext context) {
-    bool expired = false;
-    // p.status == "active" ? widget.enabled = true : widget.enabled = false;
-    // p.status == "expired" ? widget.showCountdown = false : expired = true;
+    return everything();
+  }
 
+  Widget everything() {
     BigInt totalVotes =
         BigInt.parse(widget.p.inFavor) + BigInt.parse(widget.p.against);
     double inFavorPercentage = BigInt.parse(widget.p.inFavor) / totalVotes;
     double againstPercentage = BigInt.parse(widget.p.against) / totalVotes;
-    double turnout = (totalVotes *
-            BigInt.parse(pow(10, widget.p.org.decimals!).toString())) /
-        BigInt.parse(widget.p.org.totalSupply!);
 
-    // return Text("hello");
+    // double turnout = double.parse(totalVotes.toString());
+    // double turnout = double.parse(widget.p.org.totalSupply!);
 
     return Container(
       alignment: Alignment.topCenter,
       child: StreamBuilder(
-          stream: FirebaseFirestore.instance
-              .collection("idaos${Human().chain.name}")
-              .doc(widget.p.org.address!)
-              .collection('proposals')
-              .doc(widget.p.id.toString())
-              .snapshots(),
+          stream: widget.getProposalFromFirestore(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(
@@ -453,48 +557,6 @@ class ProposalDetailsState extends State<ProposalDetails> {
               return Text("Error: ${snapshot.error}");
             }
 
-            var data = snapshot.data!.data() as Map<String, dynamic>;
-            String aidi = widget.p.id!;
-            widget.p = Proposal(org: widget.p.org, name: data['title']);
-            widget.p.id = aidi;
-            widget.p.type = data['type'];
-            widget.p.against = data['against'];
-            widget.p.inFavor = data['inFavor'];
-            widget.p.hash = widget.p.id!;
-            widget.p.callData = data['calldata'];
-
-            // widget.p.callDatas = data['callDatas'];
-            print("lengthof calldadas ${widget.p.callDatas.length}");
-            List<dynamic> blobArray = data['callDatas'] ?? [];
-
-            for (var blob in blobArray) {
-              if (blob is Blob) {
-                print(blob.bytes); // Prints the raw byte array
-                String hexString = blob.bytes
-                    .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-                    .join();
-                widget.p.callDatas.add(hexString);
-              }
-            }
-
-            print("Decoded callDatas: $blobArray");
-            print("these are the calldatas" + widget.p.callDatas.toString());
-            var statusHistoryMap =
-                data['statusHistory'] as Map<String, dynamic>;
-            print("before issue");
-            widget.p.statusHistory = statusHistoryMap.map((key, value) {
-              return MapEntry(key, (value as Timestamp).toDate());
-            });
-            widget.p.createdAt = (data['createdAt'] as Timestamp).toDate();
-            widget.p.turnoutPercent = data['turnoutPercent'];
-            widget.p.author = data['author'];
-            widget.p.votesFor = data['votesFor'];
-            widget.p.targets = List<String>.from(data['targets']);
-            widget.p.values = List<String>.from(data['values']);
-            widget.p.votesAgainst = data['votesAgainst'];
-            widget.p.externalResource =
-                data['externalResource'] ?? "(no external resource)";
-            widget.p.description = data['description'] ?? "no description";
             return SingleChildScrollView(
               // Wrap with SingleChildScrollView
               child: Column(
@@ -509,15 +571,16 @@ class ProposalDetailsState extends State<ProposalDetails> {
                       alignment: Alignment.topLeft,
                       child: TextButton(
                           onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => DAO(
-                                          InitialTabIndex: 1,
-                                          org: widget.p.org,
-                                        )));
+                            context.go("/" + widget.p.org.address!);
+                            // Navigator.push(
+                            //     context,
+                            //     MaterialPageRoute(
+                            //         builder: (context) => DAO(
+                            //               InitialTabIndex: 1,
+                            //               org: widget.p.org,
+                            //             )));
                           },
-                          child: const Text("< Back to all proposals"))),
+                          child: const Text("< Back"))),
                   const SizedBox(height: 10),
                   Container(
                     height: 240,
@@ -554,31 +617,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                               child: Row(
                                 children: [
                                   const SizedBox(width: 10),
-                                  FutureBuilder(
-                                    future: widget.p.anotherStageGetter(),
-                                    builder: (context, asyncSnapshot) {
-                                      if (asyncSnapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        return SizedBox(
-                                            width: 80,
-                                            child: LinearProgressIndicator(
-                                              color: Theme.of(context)
-                                                  .indicatorColor,
-                                            ));
-                                      }
-
-                                      if (asyncSnapshot.connectionState ==
-                                          ConnectionState.done) {
-                                        if (asyncSnapshot.hasData) {
-                                        } else if (asyncSnapshot.hasError) {
-                                          return Text('${asyncSnapshot.error}');
-                                        }
-                                      }
-
-                                      return widget.p
-                                          .statusPill(widget.p.status, context);
-                                    },
-                                  ),
+                                  widget.p.statusPill(widget.p.status, context),
                                   const SizedBox(width: 20),
                                   Text("${widget.p.type!} proposal"),
                                   const SizedBox(width: 10),
@@ -710,46 +749,6 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         width: 100,
                                         child: CircularProgressIndicator()))
                                 : Builder(builder: (context) {
-                                    if (widget.p.status == "noQuorum") {
-                                      widget.p.status = "no quorum";
-                                      widget.showCountdown = false;
-                                    }
-
-                                    if (widget.p.status == "active" ||
-                                        widget.p.status == "pending" ||
-                                        widget.p.status == "queued") {
-                                      setState(() {
-                                        widget.remainingSeconds = widget.p
-                                            .getRemainingTime()!
-                                            .inSeconds;
-                                      });
-                                      widget.showCountdown = true;
-                                      _statusCheckTimer = Timer.periodic(
-                                          const Duration(seconds: 1), (timer) {
-                                        setState(() {
-                                          widget.p.status = widget.p.status
-                                              .toString()
-                                              .split(".")
-                                              .last;
-                                          if (widget.p.status == "passed" ||
-                                              widget.p.status == "executed" ||
-                                              widget.p.status == "rejected") {
-                                            widget.showCountdown = false;
-                                            timer.cancel();
-                                          }
-                                          if (widget.p.status == "noQuorum") {
-                                            widget.p.status = "no quorum";
-                                            widget.showCountdown = false;
-                                            timer.cancel();
-                                          }
-
-                                          widget.remainingSeconds--;
-                                        });
-                                      });
-                                    } else {
-                                      widget.showCountdown = false;
-                                    }
-
                                     return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -764,8 +763,15 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                                     top: 22),
                                                 child: Transform.scale(
                                                     scale: 0.8,
-                                                    child:
-                                                        _buildCountdownDisplay()))
+                                                    child: CNTDN(
+                                                      onCountdownComplete: () {
+                                                        setState(() {});
+                                                      },
+                                                      remainingSeconds: widget
+                                                          .remainingSeconds,
+                                                      key: ValueKey(widget
+                                                          .remainingSeconds),
+                                                    )))
                                             : const Text(""),
                                         const SizedBox(height: 32),
                                         actions()
@@ -839,8 +845,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                       )),
                                       const SizedBox(width: 13),
                                       Text(
-                                          (BigInt.parse(widget.p.inFavor)
-                                              .toString()),
+                                          parseNumber(widget.p.inFavor,
+                                              widget.p.org.decimals!),
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold)),
                                       Text(
@@ -857,8 +863,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                       )),
                                       const SizedBox(width: 13),
                                       Text(
-                                          (BigInt.parse(widget.p.against)
-                                              .toString()),
+                                          parseNumber(widget.p.against,
+                                              widget.p.org.decimals!),
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold)),
                                       Text(
@@ -894,13 +900,15 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                                       FontWeight.normal))),
                                       const SizedBox(width: 13),
                                       Text(
-                                          "${(BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor))} (${(turnout * 100).toStringAsFixed(2)}%)",
+                                          "${parseNumber((BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor)).toString(), widget.p.org.decimals!)} ",
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold)),
+                                      Text(
+                                          "(${(widget.p.turnout * 100).toStringAsFixed(2)} %)"),
                                       const Spacer(),
                                       SizedBox(
                                           child: Text(
-                                              (turnout * 100) >=
+                                              widget.p.turnout * 100 >=
                                                       widget.p.org.quorum
                                                   ? "Quorum met"
                                                   : "Quorum not met",
@@ -921,15 +929,9 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         child: ParticipationBar(
                                             decimals: widget.p.org.decimals!,
                                             totalVoters: BigInt.parse(
-                                                (BigInt.parse(widget.p.org.totalSupply!) /
-                                                        BigInt.parse(
-                                                            pow(10, widget.p.org.decimals!)
-                                                                .toString()))
-                                                    .toString()),
-                                            turnout: (BigInt.parse(
-                                                        widget.p.against) +
-                                                    BigInt.parse(widget.p.inFavor)) *
-                                                BigInt.parse(pow(10, widget.p.org.decimals!).toString()),
+                                                widget.p.org.totalSupply!),
+                                            turnout: double.parse(
+                                                widget.p.turnout.toString()),
                                             quorum: widget.p.org.quorum))),
                               ],
                             ),
@@ -1060,393 +1062,5 @@ class ProposalDetailsState extends State<ProposalDetails> {
         );
       }).toList(),
     );
-  }
-}
-
-class ElectionResultBar extends StatefulWidget {
-  final BigInt inFavor;
-  final BigInt against;
-
-  const ElectionResultBar({
-    required this.inFavor,
-    required this.against,
-  });
-
-  @override
-  _ElectionResultBarState createState() => _ElectionResultBarState();
-}
-
-class _ElectionResultBarState extends State<ElectionResultBar> {
-  double _inFavorWidth = 0;
-  double _againstWidth = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateBar();
-    });
-  }
-
-  @override
-  void didUpdateWidget(covariant ElectionResultBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // Trigger re-animation if inFavor or against values change
-    if (widget.inFavor != oldWidget.inFavor ||
-        widget.against != oldWidget.against) {
-      _animateBar();
-    }
-  }
-
-  void _animateBar() {
-    setState(() {
-      BigInt totalVotes = widget.inFavor + widget.against;
-      if (totalVotes > BigInt.zero) {
-        _inFavorWidth = widget.inFavor.toDouble() / totalVotes.toDouble();
-        _againstWidth = widget.against.toDouble() / totalVotes.toDouble();
-      } else {
-        // No votes case: both widths should be zero
-        _inFavorWidth = 0;
-        _againstWidth = 0;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    BigInt totalVotes = widget.inFavor + widget.against;
-
-    // Handle case with no votes
-    if (totalVotes == BigInt.zero) {
-      return Container(
-        height: 20,
-        width: double.infinity, // Use full width available
-        color: Colors.grey[700], // Grey color to represent no votes
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double barWidth = constraints.maxWidth;
-        double maxDuration = 800; // Maximum total duration in milliseconds
-
-        // The larger portion determines the animation duration
-        double maxPercentage = max(_inFavorWidth, _againstWidth);
-        int durationInMillis = (maxDuration * maxPercentage).toInt();
-
-        return Row(
-          children: [
-            AnimatedContainer(
-              width: barWidth * _inFavorWidth, // Use the actual widget width
-              height: 20, // Height of the bar
-              color: const Color.fromARGB(255, 0, 196, 137),
-              duration: Duration(milliseconds: durationInMillis),
-              curve: Curves.easeInOut,
-            ),
-            AnimatedContainer(
-              width: barWidth * _againstWidth, // Use the actual widget width
-              height: 20,
-              color: const Color.fromARGB(255, 134, 37, 30),
-              duration: Duration(milliseconds: durationInMillis),
-              curve: Curves.easeInOut,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class ParticipationBar extends StatefulWidget {
-  final BigInt totalVoters;
-  final BigInt turnout;
-  final int quorum;
-  final int decimals;
-  const ParticipationBar(
-      {required this.totalVoters,
-      required this.turnout,
-      required this.quorum,
-      required this.decimals});
-
-  @override
-  _ParticipationBarState createState() => _ParticipationBarState();
-}
-
-class _ParticipationBarState extends State<ParticipationBar> {
-  double _turnoutWidth = 0;
-  @override
-  void initState() {
-    print('initState called');
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateTurnout();
-    });
-  }
-
-  @override
-  void didUpdateWidget(covariant ParticipationBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // Recalculate turnout width if turnout or totalVoters change
-    if (widget.turnout != oldWidget.turnout ||
-        widget.totalVoters != oldWidget.totalVoters) {
-      _animateTurnout();
-    }
-  }
-
-  void _animateTurnout() {
-    setState(() {
-      if (widget.totalVoters > BigInt.zero) {
-        double turnout = widget.turnout.toDouble();
-        double totalVoters = widget.totalVoters.toDouble();
-        _turnoutWidth = (turnout / totalVoters) / pow(10, widget.decimals);
-
-        // Debug statements
-        print('Turnout: $turnout');
-        print('Total Voters: $totalVoters');
-        print('Calculated Turnout Width: $_turnoutWidth');
-      } else {
-        _turnoutWidth = 0;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Calculate turnout and quorum positions for display
-    double turnoutPercentage =
-        (widget.turnout.toDouble() / widget.totalVoters.toDouble()) * 100;
-    double quorumPosition = widget.quorum / 100; // Convert quorum to a fraction
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double barWidth =
-            constraints.maxWidth; // Get the actual width of the widget
-
-        return Stack(
-          children: [
-            // Background for total possible votes
-            Container(
-              height: 20,
-              width: barWidth,
-              color: Colors.grey[700], // Dark grey
-            ),
-            // Animated container for turnout portion
-            AnimatedContainer(
-              width: barWidth * _turnoutWidth, // Width proportional to turnout
-              height: 20,
-              color: Colors.grey[400], // Light grey for turnout
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeInOut,
-            ),
-            // Quorum marker
-            Positioned(
-              left: quorumPosition *
-                  barWidth, // Position based on quorum percentage
-              child: Container(
-                height: 15,
-                width: 6, // Small vertical line for quorum marker
-                color: Colors.black, // Marker color
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class VotesModal extends StatefulWidget {
-  final Proposal p;
-  VotesModal({required this.p, super.key});
-
-  @override
-  State<VotesModal> createState() => _VotesModalState();
-}
-
-class _VotesModalState extends State<VotesModal> {
-  late Future<void> _votesFuture;
-
-  Future<void> getVotes() async {
-    var votesCollection = FirebaseFirestore.instance
-        .collection("idaos${Human().chain.name}")
-        .doc(widget.p.org.address)
-        .collection("proposals")
-        .doc(widget.p.id.toString())
-        .collection("votes");
-    print("creating the collection");
-    var votesSnapshot = await votesCollection.get();
-    print("length of votesSnapshot.docs ${votesSnapshot.docs.length}");
-    widget.p.votes.clear();
-    for (var doc in votesSnapshot.docs) {
-      print("adding a vote");
-      widget.p.votes.add(Vote(
-        votingPower: doc.data()['weight'],
-        voter: doc.data()['voter'],
-        hash: "0x" +
-            doc
-                .data()['hash']
-                .bytes
-                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-                .join(),
-        proposalID: widget.p.id!,
-        option: doc.data()['option'],
-        castAt: (doc.data()['cast'] != null)
-            ? (doc.data()['cast'] as Timestamp).toDate()
-            : null,
-      ));
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _votesFuture = getVotes(); // Initialize the Future in initState
-  }
-
-  String formatDateTime(DateTime? dateTime) {
-    if (dateTime == null) return "Unknown";
-    return DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      child: FutureBuilder<void>(
-        future: _votesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            // Show loading spinner while fetching data
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            // Handle any errors
-            return Center(
-                child: Text("Error loading votes: ${snapshot.error}"));
-          } else {
-            // Data is ready, display the votes in a table
-            return SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('Voter')),
-                    DataColumn(label: Text('Option')),
-                    DataColumn(label: Text('Weight')),
-                    DataColumn(label: Text("Cast At")),
-                    DataColumn(label: Text('Details')),
-                  ],
-                  rows: widget.p.votes.map((vote) {
-                    return DataRow(cells: [
-                      DataCell(Row(
-                        children: [
-                          Text(getShortAddress(vote.voter!)),
-                          const SizedBox(width: 8),
-                          TextButton(
-                              child: Icon(Icons.copy),
-                              onPressed: () {
-                                Clipboard.setData(
-                                    ClipboardData(text: vote.voter!));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        duration: Duration(seconds: 1),
-                                        content: Center(
-                                            child: Text(
-                                                'Address copied to clipboard'))));
-                              })
-                        ],
-                      )),
-                      DataCell(Container(
-                          child: vote.option == 0
-                              ? const Icon(Icons.thumb_down,
-                                  color: Color.fromARGB(255, 238, 129, 121))
-                              : const Icon(Icons.thumb_up_sharp,
-                                  color: Color.fromARGB(255, 93, 223, 162)))),
-                      DataCell(Text(vote.votingPower.toString())),
-                      DataCell(Text(DateFormat("yyyy-MM-dd – HH:mm")
-                          .format(vote.castAt!))),
-                      DataCell(
-                        TextButton(
-                            onPressed: () => launch(
-                                "${Human().chain.blockExplorer}/tx/${vote.hash}"),
-                            child: Icon(Icons
-                                .open_in_new)), // You can add onTap functionality here later
-                      )
-                    ]);
-                  }).toList(),
-                ),
-              ),
-            );
-          }
-        },
-      ),
-    );
-  }
-}
-
-class ProposalLifeCycleWidget extends StatelessWidget {
-  Proposal p;
-  ProposalLifeCycleWidget({required this.p});
-
-  @override
-  Widget build(BuildContext context) {
-    print("in the build before the build" + p.statusHistory.toString());
-    return FutureBuilder(
-        future: p.anotherStageGetter(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-                child: SizedBox(
-                    height: 80, width: 80, child: CircularProgressIndicator()));
-          }
-          if (snapshot.hasError) {
-            return Text("Error: ${snapshot.error}");
-          }
-
-          if (!snapshot.hasData) {
-            return Text("No updates yet");
-          }
-
-          print("in proposal lyfecycle widget " + p.statusHistory.toString());
-
-          return SizedBox(
-            height: (100 + 40 * p.statusHistory.keys.length)
-                .toDouble(), // Adjust the height as needed
-            width: double.infinity,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(43),
-                    itemCount: p.statusHistory.length,
-                    itemBuilder: (context, index) {
-                      final sortedKeys = p.statusHistory.keys.toList()
-                        ..sort((a, b) =>
-                            p.statusHistory[a]!.compareTo(p.statusHistory[b]!));
-                      final status = sortedKeys[index];
-                      final date = p.statusHistory[status]!;
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 28.0, vertical: 9.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            p.statusPill(status, context),
-                            Text(DateFormat.yMMMd().add_jm().format(date)),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-        });
   }
 }
