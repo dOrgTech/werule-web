@@ -101,7 +101,8 @@ class ProposalDetails extends StatefulWidget {
         BigInt turnoutbigInt = numerator ~/ BigInt.parse(p.org.totalSupply!);
         double ceva =
             turnoutbigInt.toDouble() / BigInt.from(10).pow(18).toDouble();
-        p.turnout = ceva;
+        p.turnout = ceva * BigInt.from(10).pow(p.org.decimals!).toDouble();
+        print("TURNOOOOOOOOOOOOOOOUT " + p.turnout.toString());
         p.targets = List<String>.from(data['targets']);
         p.values = List<String>.from(data['values']);
         p.externalResource =
@@ -199,13 +200,13 @@ class ProposalDetailsState extends State<ProposalDetails> {
                   });
                   return;
                 }
-                widget.p.statusHistory.addAll({"executable": DateTime.now()});
-                await widget.p.store();
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Center(
+                        child: Text("Proposal Queued",
+                            style: TextStyle(
+                                fontSize: 21,
+                                color: Color.fromARGB(255, 19, 27, 16))))));
                 setState(() {
-                  widget.p.status = widget.p.status.toString().split(".").last;
-                  widget.remainingSeconds =
-                      widget.p.getRemainingTime()!.inSeconds;
-                  widget.showCountdown = true;
                   widget.busy = false;
                 });
               },
@@ -216,7 +217,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
     } else if (widget.p.status == "executable") {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.only(bottom: 48.0),
           child: ElevatedButton(
               style: TextButton.styleFrom(
                 side:
@@ -228,14 +229,23 @@ class ProposalDetailsState extends State<ProposalDetails> {
                 });
                 // await execute(widget.p.transactions[0].recipient,
                 //     widget.p.transactions[0].value.toString());
-                await queueProposal(widget.p);
-                print("execute");
-                widget.p.statusHistory.addAll({"executed": DateTime.now()});
-
-                await widget.p.store();
-                await daosCollection
-                    .doc(widget.p.org.address)
-                    .set(widget.p.org.toJson());
+                String cevine = await execute(widget.p);
+                if (cevine.contains("not ok")) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Center(
+                          child: Text("Error executing proposal",
+                              style: TextStyle(color: Colors.red)))));
+                  setState(() {
+                    widget.busy = false;
+                  });
+                  return;
+                }
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Center(
+                        child: Text("Proposal Executed!",
+                            style: TextStyle(
+                                fontSize: 21,
+                                color: Color.fromARGB(255, 19, 27, 16))))));
                 setState(() {
                   widget.busy = false;
                 });
@@ -259,6 +269,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
           ),
         ),
       );
+    } else if (widget.p.status == "queued") {
+      return SizedBox();
     }
     return Padding(
       padding: const EdgeInsets.only(left: 48.0),
@@ -324,13 +336,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 return;
                               }
                               v.hash = cevine;
-                              await widget.p.castVote(v);
                               setState(() {
                                 widget.busy = false;
-                                widget.votesFor =
-                                    BigInt.parse(widget.p.inFavor);
-                                widget.votesAgainst =
-                                    BigInt.parse(widget.p.against);
                               });
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(
@@ -343,7 +350,9 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 ),
                               )));
                               print("vote added");
-                            } catch (e) {}
+                            } catch (e) {
+                              print(e.toString());
+                            }
                           } else {
                             ScaffoldMessenger.of(context)
                                 .showSnackBar(const SnackBar(
@@ -447,13 +456,9 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 return;
                               }
                               v.hash = cevine;
-                              await widget.p.castVote(v);
+
                               setState(() {
                                 widget.busy = false;
-                                widget.votesFor =
-                                    BigInt.parse(widget.p.inFavor);
-                                widget.votesAgainst =
-                                    BigInt.parse(widget.p.against);
                               });
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(
@@ -752,6 +757,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                     return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: [
                                         const SizedBox(height: 9),
                                         ActionLabel(
@@ -774,7 +781,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                                     )))
                                             : const Text(""),
                                         const SizedBox(height: 32),
-                                        actions()
+                                        if (widget.p.status != "queued")
+                                          actions(),
                                       ],
                                     );
                                   }),
@@ -844,9 +852,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         "Support",
                                       )),
                                       const SizedBox(width: 13),
-                                      Text(
-                                          parseNumber(widget.p.inFavor,
-                                              widget.p.org.decimals!),
+                                      Text(parseNumber(widget.p.inFavor, 0),
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold)),
                                       Text(
@@ -862,9 +868,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         "Oppose",
                                       )),
                                       const SizedBox(width: 13),
-                                      Text(
-                                          parseNumber(widget.p.against,
-                                              widget.p.org.decimals!),
+                                      Text(parseNumber(widget.p.against, 0),
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold)),
                                       Text(
@@ -900,7 +904,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                                       FontWeight.normal))),
                                       const SizedBox(width: 13),
                                       Text(
-                                          "${parseNumber((BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor)).toString(), widget.p.org.decimals!)} ",
+                                          "${parseNumber((BigInt.parse(widget.p.against) + BigInt.parse(widget.p.inFavor)).toString(), 0)} ",
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold)),
                                       Text(
@@ -927,12 +931,10 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                         height: 12,
                                         width: double.infinity,
                                         child: ParticipationBar(
-                                            decimals: widget.p.org.decimals!,
-                                            totalVoters: BigInt.parse(
-                                                widget.p.org.totalSupply!),
-                                            turnout: double.parse(
-                                                widget.p.turnout.toString()),
-                                            quorum: widget.p.org.quorum))),
+                                          quorum:
+                                              widget.p.org.quorum.toDouble(),
+                                          turnout: widget.p.turnout,
+                                        ))),
                               ],
                             ),
                           ),

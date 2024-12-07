@@ -42,6 +42,7 @@ delegate(String toWhom, Org org) async {
     }
   } catch (e) {
     print("nu s-a putut" + e.toString());
+    return "not ok";
   }
 }
 
@@ -522,12 +523,18 @@ String bytesToHex(Uint8List bytes) {
 }
 
 queueProposal(Proposal p) async {
-  Uint8List descriptionBytes = Uint8List.fromList(utf8.encode(p.description!));
-
-  // Convert bytes to a hexadecimal string
-  Uint8List descriptionHashBytes = keccak256(descriptionBytes);
-  String descriptionHash = "0x${bytesToHex(descriptionHashBytes)}";
-  print("description hash: " + descriptionHash);
+  String concatenatedDescription = p.name.toString() +
+      "0|||0" +
+      p.type.toString() +
+      "0|||0" +
+      p.description.toString() +
+      "0|||0" +
+      p.externalResource.toString();
+  Uint8List encodedInput =
+      Uint8List.fromList(utf8.encode(concatenatedDescription));
+  Uint8List keccakHash = keccak256(encodedInput);
+  String hashHex = "0x" + bytesToHex(keccakHash);
+  print("Keccak-256 hash: $hashHex");
   var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
   try {
@@ -535,12 +542,12 @@ queueProposal(Proposal p) async {
     print("signed ok");
     final transaction =
         await promiseToFuture(callMethod(sourceContract, "queue", [
-      ["0x60A93C29e3966c58a5227e1D76dcB185BAa1ac6b"],
+      [p.org.registryAddress],
       ["0"],
       [
         "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
       ],
-      ""
+      hashHex
     ]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
@@ -556,10 +563,59 @@ queueProposal(Proposal p) async {
     }
   } catch (e) {
     print("nu s-a putut" + e.toString());
-    // state.setState(() {
-    //   state.widget.done=true;
-    //   state.widget.error=true;
-    // });
+    state.setState(() {
+      state.widget.done = true;
+      state.widget.error = true;
+    });
+    return "still not ok";
+  }
+}
+
+execute(Proposal p) async {
+  String concatenatedDescription = p.name.toString() +
+      "0|||0" +
+      p.type.toString() +
+      "0|||0" +
+      p.description.toString() +
+      "0|||0" +
+      p.externalResource.toString();
+  Uint8List encodedInput =
+      Uint8List.fromList(utf8.encode(concatenatedDescription));
+  Uint8List keccakHash = keccak256(encodedInput);
+  String hashHex = "0x" + bytesToHex(keccakHash);
+  print("Keccak-256 hash: $hashHex");
+  var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
+  print("facuram contractu");
+  try {
+    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+    print("signed ok");
+    final transaction =
+        await promiseToFuture(callMethod(sourceContract, "execute", [
+      [p.org.registryAddress],
+      ["0"],
+      [
+        "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
+      ],
+      hashHex
+    ]));
+    print("facuram tranzactia");
+    final hash = json.decode(stringify(transaction))["hash"];
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+    if (json.decode(stringify(result))["status"] == 0) {
+      print("nu merge eroare de greseala");
+      return "not ok";
+    } else {
+      var rezultat = (json.decode(stringify(result)));
+      print(rezultat);
+      return rezultat.toString();
+    }
+  } catch (e) {
+    print("nu s-a putut" + e.toString());
+    state.setState(() {
+      state.widget.done = true;
+      state.widget.error = true;
+    });
     return "still not ok";
   }
 }
@@ -602,36 +658,6 @@ String? extractTransactionHash(String transactionResponse) {
     // Return null if parsing or extraction fails.
     print("Error extracting transactionHash: $e");
     return null;
-  }
-}
-
-execute(String address, String howMuch) async {
-  print("executing on chain");
-  await Future.delayed(Duration(seconds: 1));
-  return 'done';
-  var sourceContract =
-      Contract(simpleDAOAddress, simpleDAOabiString, Human().web3user);
-  print("facuram contractu");
-  try {
-    howMuch = howMuch + "000000000000000000";
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed ok");
-    final transaction = await promiseToFuture(
-        callMethod(sourceContract, "execute", [address, howMuch]));
-    print("facuram tranzactia");
-    final hash = json.decode(stringify(transaction))["hash"];
-    final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
-    if (json.decode(stringify(result))["status"] == 0) {
-      print("nu merge eroare de greseala");
-      return "not ok";
-    } else {
-      var rezultat = (json.decode(stringify(result)));
-      return rezultat.toString();
-    }
-  } catch (e) {
-    print("nu s-a putut" + e.toString());
-    return "still not ok";
   }
 }
 

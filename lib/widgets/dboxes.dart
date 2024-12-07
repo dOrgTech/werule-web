@@ -389,11 +389,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       });
       return;
     }
-    // await daosCollection
-    //     .doc(widget.org.address)
-    //     .collection("members")
-    //     .doc(widget.m.address)
-    //     .set(widget.m.toJson());
+
     widget.accountState.widget.member =
         await widget.org.refreshMember(widget.m);
     widget.accountState.setState(() {});

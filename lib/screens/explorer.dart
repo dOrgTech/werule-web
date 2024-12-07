@@ -164,15 +164,17 @@ class _ExplorerState extends State<Explorer> {
                                                   color: Colors.black)),
                                           height: 40,
                                           child: ElevatedButton(
-                                              onPressed: () async {
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            Scaffold(
-                                                                body:
-                                                                    DaoSetupWizard())));
-                                              },
+                                              onPressed: Human().address == null
+                                                  ? null
+                                                  : () async {
+                                                      Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  Scaffold(
+                                                                      body:
+                                                                          DaoSetupWizard())));
+                                                    },
                                               style: TextButton.styleFrom(
                                                   disabledBackgroundColor:
                                                       Colors.grey,

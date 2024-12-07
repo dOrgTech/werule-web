@@ -24,8 +24,8 @@ class _ActionLabelState extends State<ActionLabel> {
         return "Voting starts in:";
       case 'active':
         return "Time left to vote:";
-      case 'executable':
-        return "Time left to execute:";
+      case 'queued':
+        return "Execution available in";
       case 'passed':
         return "Queue for execution";
       case 'executed':

@@ -655,26 +655,23 @@ class _ElectionResultBarState extends State<ElectionResultBar> {
 }
 
 class ParticipationBar extends StatefulWidget {
-  final BigInt totalVoters;
-  final double turnout;
-  final int quorum;
-  final int decimals;
-  const ParticipationBar(
-      {required this.totalVoters,
-      required this.turnout,
-      required this.quorum,
-      required this.decimals});
+  double turnout; // value between 0 and 100
+  final double quorum; // value between 0 and 100
+
+  ParticipationBar({required this.turnout, required this.quorum, Key? key})
+      : super(key: key);
 
   @override
   _ParticipationBarState createState() => _ParticipationBarState();
 }
 
 class _ParticipationBarState extends State<ParticipationBar> {
-  double _turnoutWidth = 0;
+  double _turnoutFraction = 0;
+
   @override
   void initState() {
-    print('initState called');
     super.initState();
+    widget.turnout = widget.turnout * 100;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateTurnout();
     });
@@ -683,67 +680,45 @@ class _ParticipationBarState extends State<ParticipationBar> {
   @override
   void didUpdateWidget(covariant ParticipationBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    // Recalculate turnout width if turnout or totalVoters change
     if (widget.turnout != oldWidget.turnout ||
-        widget.totalVoters != oldWidget.totalVoters) {
+        widget.quorum != oldWidget.quorum) {
       _animateTurnout();
     }
   }
 
   void _animateTurnout() {
     setState(() {
-      if (widget.totalVoters > BigInt.zero) {
-        double turnout = widget.turnout.toDouble();
-        double totalVoters = widget.totalVoters.toDouble();
-        _turnoutWidth = (turnout / totalVoters) / pow(10, widget.decimals);
-
-        // Debug statements
-        print('Turnout: $turnout');
-        print('Total Voters: $totalVoters');
-        print('Calculated Turnout Width: $_turnoutWidth');
-      } else {
-        _turnoutWidth = 0;
-      }
+      _turnoutFraction = widget.turnout / 100;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Calculate turnout and quorum positions for display
-    double turnoutPercentage =
-        (widget.turnout.toDouble() / widget.totalVoters.toDouble()) * 100;
-    double quorumPosition = widget.quorum / 100; // Convert quorum to a fraction
+    double quorumFraction = widget.quorum / 100;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        double barWidth =
-            constraints.maxWidth; // Get the actual width of the widget
-
+        double barWidth = constraints.maxWidth;
         return Stack(
           children: [
-            // Background for total possible votes
             Container(
               height: 20,
               width: barWidth,
-              color: Colors.grey[700], // Dark grey
+              color: Colors.grey[700],
             ),
-            // Animated container for turnout portion
             AnimatedContainer(
-              width: barWidth * _turnoutWidth, // Width proportional to turnout
+              width: barWidth * _turnoutFraction,
               height: 20,
-              color: Colors.grey[400], // Light grey for turnout
+              color: Colors.grey[400],
               duration: const Duration(milliseconds: 800),
               curve: Curves.easeInOut,
             ),
-            // Quorum marker
             Positioned(
-              left: quorumPosition *
-                  barWidth, // Position based on quorum percentage
+              left: quorumFraction * barWidth,
               child: Container(
                 height: 15,
-                width: 6, // Small vertical line for quorum marker
-                color: Colors.black, // Marker color
+                width: 6,
+                color: Colors.black,
               ),
             ),
           ],

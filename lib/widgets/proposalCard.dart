@@ -140,8 +140,6 @@ class _ProposalCardState extends State<ProposalCard> {
   }
 
   Widget proposals(BuildContext context) {
-    print(
-        "proposal details: ${widget.proposal.name} ${widget.proposal.id} ${widget.proposal.author} ${widget.proposal.type} ${widget.proposal.status} ");
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: Card(

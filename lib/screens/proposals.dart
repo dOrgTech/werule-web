@@ -202,36 +202,45 @@ class _ProposalsState extends State<Proposals> {
                         ),
                         Spacer(),
                         Container(
-                          padding: EdgeInsets.only(right: 50),
-                          height: 40,
-                          child: ElevatedButton(
-                            child: Text(
-                              "Create Proposal",
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Theme.of(context).primaryColorDark),
-                            ),
-                            style: ButtonStyle(
-                                elevation: MaterialStatePropertyAll(0.0),
-                                backgroundColor: MaterialStatePropertyAll(
-                                    Theme.of(context).indicatorColor)),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 18.0),
-                                      child: Text("Select a proposal type"),
-                                    ),
-                                    content: ProposalList(org: widget.org),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
+                            padding: EdgeInsets.only(right: 50),
+                            height: 40,
+                            child: ElevatedButton(
+                              child: Text(
+                                "Create Proposal",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    color: Theme.of(context).primaryColorDark),
+                              ),
+                              style: ButtonStyle(
+                                elevation: const MaterialStatePropertyAll(0.0),
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith((states) {
+                                  if (states.contains(MaterialState.disabled)) {
+                                    return Colors.grey;
+                                  }
+                                  return Theme.of(context).indicatorColor;
+                                }),
+                              ),
+                              onPressed: Human().address == null
+                                  ? null
+                                  : () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 18.0),
+                                              child: Text(
+                                                  "Select a proposal type"),
+                                            ),
+                                            content:
+                                                ProposalList(org: widget.org),
+                                          );
+                                        },
+                                      );
+                                    },
+                            )),
                       ],
                     )),
                     SizedBox(height: 40),

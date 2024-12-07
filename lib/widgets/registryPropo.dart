@@ -53,16 +53,19 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
         ? NewProposal(p: widget.p, next: finishSettingInfo)
         : widget.stage == -1
             ? Center(
+                child: SizedBox(
+                width: 500,
                 child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    "Awaiting confirmation...",
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  SizedBox(height: 200),
-                  CircularProgressIndicator(),
-                ],
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text(
+                      "Awaiting confirmation...",
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    SizedBox(height: 200),
+                    CircularProgressIndicator(),
+                  ],
+                ),
               ))
             : Form(
                 key: _formKey,
@@ -103,13 +106,25 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                               widget.stage = -1;
                             });
                             try {
-                              await propose(widget.p);
-                              // await widget.org.pollsCollection
-                              //     .doc(widget.p.id.toString())
-                              //     .set(widget.p.toJson());
-                              // widget.org.proposals.add(widget.p);
-                              // widget.org.proposals =
-                              //     widget.org.proposals.reversed.toList();
+                              String cevine = await propose(widget.p);
+                              if (cevine.contains("not ok")) {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                        duration: Duration(seconds: 1),
+                                        content: Center(
+                                            child: SizedBox(
+                                                height: 70,
+                                                child: Center(
+                                                  child: Text(
+                                                    "Error submitting proposal",
+                                                    style: TextStyle(
+                                                        fontSize: 24,
+                                                        color: Colors.red),
+                                                  ),
+                                                )))));
+                                Navigator.of(context).pop();
+                                return;
+                              }
                               widget.p.status = "pending";
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(
