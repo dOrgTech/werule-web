@@ -209,7 +209,7 @@ class Proposal {
     DateTime start = statusHistory["pending"]!;
     Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
     Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
+    Duration executionDelay = Duration(seconds: org.executionDelay ?? 0);
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
     DateTime now = DateTime.now();

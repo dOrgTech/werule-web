@@ -41,7 +41,7 @@ delegate(String toWhom, Org org) async {
       return rezultat.toString();
     }
   } catch (e) {
-    print("nu s-a putut" + e.toString());
+    print("nu s-a putut$e");
     return "not ok";
   }
 }
@@ -75,6 +75,11 @@ getVotes(who, Org org) async {
     print(httpClient.toString());
     rethrow;
   }
+}
+
+String getCalldata(ContractFunction functionAbi, List<dynamic> parameters) {
+  final calldata = functionAbi.encodeCall(parameters);
+  return "0x" + bytesToHex(calldata).toString();
 }
 
 getBalance(who, Org org) async {
@@ -221,8 +226,8 @@ getDAOAddress(position) async {
       function: getRepToken,
       params: [BigInt.from(position)]);
   String rezultat = counter[0].toString();
-  print("rezultat" + rezultat);
-  print(rezultat.toString() + " " + rezultat.runtimeType.toString());
+  print("rezultat$rezultat");
+  print("$rezultat ${rezultat.runtimeType}");
   httpClient.close();
   return rezultat;
 }
@@ -241,9 +246,9 @@ getTokenAddress(position) async {
       function: getRepToken,
       params: [BigInt.from(position)]);
   String rezultat = counter[0].toString();
-  print("rezultat" + rezultat);
+  print("rezultat$rezultat");
   httpClient.close();
-  print(rezultat.toString() + " " + rezultat.runtimeType.toString());
+  print("$rezultat ${rezultat.runtimeType}");
   return rezultat;
 }
 
@@ -261,10 +266,10 @@ getTreasuryAddress(position) async {
       function: getRepToken,
       params: [BigInt.from(position)]);
   String rezultat = counter[0].toString();
-  print("rezultat" + rezultat);
+  print("rezultat$rezultat");
   httpClient.close();
   ethClient.dispose();
-  print(rezultat.toString() + " " + rezultat.runtimeType.toString());
+  print("$rezultat ${rezultat.runtimeType}");
   return rezultat;
 }
 
@@ -284,8 +289,8 @@ getRegistryAddress(position) async {
   String rezultat = counter[0].toString();
   ethClient.dispose();
   httpClient.close();
-  print("rezultat" + rezultat);
-  print(rezultat.toString() + " " + rezultat.runtimeType.toString());
+  print("rezultat$rezultat");
+  print("$rezultat ${rezultat.runtimeType}");
   return rezultat;
 }
 
@@ -306,8 +311,8 @@ createDAO(Org org) async {
     org.proposalThreshold.toString(),
     org.quorum.toString(),
   ]);
-  print("wrapper contract address " + Human().chain.wrapperContract.toString());
-  print("web3 is of type " + Human().web3user.toString());
+  print("wrapper contract address ${Human().chain.wrapperContract}");
+  print("web3 is of type ${Human().web3user}");
   var sourceContract = Contract(
       Human().chain.wrapperContract, wrapperAbiStringGlobal, Human().web3user);
   print("facuram contractu");
@@ -344,8 +349,8 @@ createDAO(Org org) async {
     } else {
       var rezultat = (json.decode(stringify(result)));
       var cate = await getNumberOfDAOs();
-      print('tip cate ' + cate.runtimeType.toString());
-      print("got the counter and it's " + cate.toString());
+      print('tip cate ${cate.runtimeType}');
+      print("got the counter and it's $cate");
       var daoAddress = await getDAOAddress(cate - 1);
       daoAddress = daoAddress.toString();
       if (daoAddress.length > 20) {
@@ -353,7 +358,7 @@ createDAO(Org org) async {
         org.creationDate = DateTime.now();
         print("added project");
         print("suntem inainte de pop");
-        print("projectAddress " + daoAddress.toString());
+        print("projectAddress $daoAddress");
       }
       var tokenAddress = await getTokenAddress(cate - 1);
       tokenAddress = tokenAddress.toString();
@@ -370,94 +375,7 @@ createDAO(Org org) async {
       return results;
     }
   } catch (e) {
-    print("nu s-a putut" + e.toString());
-    // state.setState(() {
-    //   state.widget.done=true;
-    //   state.widget.error=true;
-    // });
-    return "still not ok";
-  }
-}
-
-oldcreateDAO(Org org, state) async {
-  Org parizer = Org(name: "new dao", description: "something description");
-  parizer.decimals = 2;
-  parizer.symbol = "SMO";
-  parizer.executionDelay = 60;
-
-  List<String> amounts = ["5000000", "3450000", "2", "3", "4000", "50"];
-  List<String> initialMembers = [
-    "0xa9F8F9C0bf3188cEDdb9684ae28655187552bAE9",
-    "0xA6A40E0b6DB5a6f808703DBe91DbE50B7FC1fa3E"
-  ];
-
-  print("here we all are");
-
-  print("wrapper contract address " + Human().chain.wrapperContract.toString());
-  print("web3 is of type " + Human().web3user.toString());
-  var sourceContract = Contract(
-      Human().chain.wrapperContract, wrapperAbiStringGlobal, Human().web3user);
-  print("facuram contractu");
-  try {
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed oki");
-    final parameters = [
-      parizer.name, // string
-      parizer.symbol, // string
-      parizer.description,
-      parizer.decimals.toString(),
-      parizer.executionDelay.toString(),
-      initialMembers, // array of strings (addresses)
-      amounts,
-      ["something key"],
-      ["something else value"],
-    ];
-    print("made params");
-    for (var param in parameters) {
-      print('Parameter: $param, Type: ${param.runtimeType}');
-    }
-
-    final jsDaoParams = jsify(parameters);
-    final transaction = await promiseToFuture(
-        callMethod(sourceContract, "deployDAOwithToken", [jsDaoParams]));
-    print("facuram tranzactia");
-    final hash = json.decode(stringify(transaction))["hash"];
-
-    final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
-    if (json.decode(stringify(result))["status"] == 0) {
-      print("nu merge eroare de greseala");
-      return "not ok";
-    } else {
-      var rezultat = (json.decode(stringify(result)));
-      var cate = await getNumberOfDAOs();
-      print('tip cate ' + cate.runtimeType.toString());
-      print("got the counter and it's " + cate.toString());
-      var daoAddress = await getDAOAddress(cate - 1);
-      daoAddress = daoAddress.toString();
-      if (daoAddress.length > 20) {
-        parizer.address = daoAddress;
-        parizer.creationDate = DateTime.now();
-        print("added project");
-        print("suntem inainte de pop");
-        print("projectAddress " + daoAddress.toString());
-      }
-      var tokenAddress = await getTokenAddress(cate - 1);
-      tokenAddress = tokenAddress.toString();
-      var treasuryAddress = await getTreasuryAddress(cate - 1);
-      treasuryAddress = treasuryAddress.toString();
-      var registryAddress = await getRegistryAddress(cate - 1);
-      registryAddress = registryAddress.toString();
-      List<String> results = [
-        daoAddress,
-        tokenAddress,
-        treasuryAddress,
-        registryAddress
-      ];
-      return results;
-    }
-  } catch (e) {
-    print("nu s-a putut" + e.toString());
+    print("nu s-a putut$e");
     // state.setState(() {
     //   state.widget.done=true;
     //   state.widget.error=true;
@@ -469,28 +387,21 @@ oldcreateDAO(Org org, state) async {
 propose(Proposal p) async {
   print("description");
   print(p.description);
-  String concatenated = p.name.toString() +
-      "0|||0" +
-      p.type.toString() +
-      "0|||0" +
-      p.description.toString() +
-      "0|||0" +
-      p.externalResource.toString();
-  print("web3user: " + Human().web3user.toString());
+  String concatenated =
+      "${p.name}0|||0${p.type}0|||0${p.description}0|||0${p.externalResource}";
+  print("web3user: ${Human().web3user}");
   var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
+  String calldata0;
   try {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
     print("signed ok");
-    final transaction =
-        await promiseToFuture(callMethod(sourceContract, "propose", [
-      [p.org.registryAddress],
-      ["0"],
-      [
-        "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
-      ],
-      concatenated
-    ]));
+    print("concatenated: $concatenated");
+    print("targets ${p.targets}");
+    print("values ${p.values}");
+    print("calldatas ${p.callDatas}");
+    final transaction = await promiseToFuture(callMethod(sourceContract,
+        "propose", [p.targets, p.values, p.callDatas, concatenated]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
@@ -508,7 +419,7 @@ propose(Proposal p) async {
       return p.id;
     }
   } catch (e) {
-    print("nu s-a putut" + e.toString());
+    print("nu s-a putut$e");
     // state.setState(() {
     //                     state.widget.done=true;
     //                     state.widget.error=true;
@@ -523,32 +434,25 @@ String bytesToHex(Uint8List bytes) {
 }
 
 queueProposal(Proposal p) async {
-  String concatenatedDescription = p.name.toString() +
-      "0|||0" +
-      p.type.toString() +
-      "0|||0" +
-      p.description.toString() +
-      "0|||0" +
-      p.externalResource.toString();
+  String concatenatedDescription =
+      "${p.name}0|||0${p.type}0|||0${p.description}0|||0${p.externalResource}";
   Uint8List encodedInput =
       Uint8List.fromList(utf8.encode(concatenatedDescription));
   Uint8List keccakHash = keccak256(encodedInput);
-  String hashHex = "0x" + bytesToHex(keccakHash);
+  String hashHex = "0x${bytesToHex(keccakHash)}";
   print("Keccak-256 hash: $hashHex");
   var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
   try {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
     print("signed ok");
-    final transaction =
-        await promiseToFuture(callMethod(sourceContract, "queue", [
-      [p.org.registryAddress],
-      ["0"],
-      [
-        "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
-      ],
-      hashHex
-    ]));
+    List<String> calldatas = [];
+    for (String c in p.callDatas) {
+      calldatas.add("0x" + c);
+      print(c);
+    }
+    final transaction = await promiseToFuture(callMethod(
+        sourceContract, "queue", [p.targets, p.values, calldatas, hashHex]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
@@ -562,7 +466,7 @@ queueProposal(Proposal p) async {
       return rezultat.toString();
     }
   } catch (e) {
-    print("nu s-a putut" + e.toString());
+    print("nu s-a putut$e");
     state.setState(() {
       state.widget.done = true;
       state.widget.error = true;
@@ -572,32 +476,26 @@ queueProposal(Proposal p) async {
 }
 
 execute(Proposal p) async {
-  String concatenatedDescription = p.name.toString() +
-      "0|||0" +
-      p.type.toString() +
-      "0|||0" +
-      p.description.toString() +
-      "0|||0" +
-      p.externalResource.toString();
+  String concatenatedDescription =
+      "${p.name}0|||0${p.type}0|||0${p.description}0|||0${p.externalResource}";
   Uint8List encodedInput =
       Uint8List.fromList(utf8.encode(concatenatedDescription));
   Uint8List keccakHash = keccak256(encodedInput);
-  String hashHex = "0x" + bytesToHex(keccakHash);
+  String hashHex = "0x${bytesToHex(keccakHash)}";
   print("Keccak-256 hash: $hashHex");
   var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
   print("facuram contractu");
   try {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
     print("signed ok");
-    final transaction =
-        await promiseToFuture(callMethod(sourceContract, "execute", [
-      [p.org.registryAddress],
-      ["0"],
-      [
-        "0x2559ddf5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000007636576616d6963000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000017736976616c6f617265616d65612076696e652061696369000000000000000000"
-      ],
-      hashHex
-    ]));
+    print("signed ok");
+    List<String> calldatas = [];
+    for (String c in p.callDatas) {
+      calldatas.add("0x" + c);
+      print(c);
+    }
+    final transaction = await promiseToFuture(callMethod(
+        sourceContract, "execute", [p.targets, p.values, calldatas, hashHex]));
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
@@ -611,7 +509,7 @@ execute(Proposal p) async {
       return rezultat.toString();
     }
   } catch (e) {
-    print("nu s-a putut" + e.toString());
+    print("nu s-a putut$e");
     state.setState(() {
       state.widget.done = true;
       state.widget.error = true;
@@ -638,11 +536,11 @@ vote(Vote v, Org org) async {
     } else {
       var rezultat = (json.decode(stringify(result.toString())));
       v.hash = extractTransactionHash(rezultat).toString();
-      print("vote hash " + v.hash.toString());
+      print("vote hash ${v.hash}");
       return v.hash;
     }
   } catch (e) {
-    print("nu s-a putut" + e.toString());
+    print("nu s-a putut$e");
     return "still not ok";
   }
 }
@@ -666,7 +564,7 @@ getNativeBalance(String address) async {
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
   final ethAddress = EthereumAddress.fromHex(address);
   final balance = await ethClient.getBalance(ethAddress);
-  print("balance:" + balance.getInWei.toString());
+  print("balance:${balance.getInWei}");
   // Close the HTTP client
   httpClient.close();
   return balance.getInWei.toString();

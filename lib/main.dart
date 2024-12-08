@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:web3dart/contracts.dart';
 import 'entities/contractFunctions.dart';
 import 'entities/org.dart';
 import 'entities/project.dart';
@@ -119,6 +120,14 @@ persist() async {
     orgs.add(org);
   }
 }
+
+final functionAbi = ContractFunction(
+  "editRegistry",
+  [
+    FunctionParameter("key", StringType()),
+    FunctionParameter("Value", StringType()),
+  ],
+);
 
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);

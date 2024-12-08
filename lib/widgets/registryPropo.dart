@@ -1,3 +1,4 @@
+import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:flutter/material.dart';
 
@@ -96,9 +97,17 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                       ),
                       SubmitButton(
                           submit: () async {
-                            widget.p.callDatas = [
-                              {_keyController.text: _valueController.text}
+                            List<String> params = [
+                              _keyController.text,
+                              _valueController.text
                             ];
+
+                            widget.p.callDatas = [];
+                            String calldata0 =
+                                getCalldata(editRegistryDef, params);
+                            widget.p.callDatas.add(calldata0);
+                            widget.p.targets = [widget.p.org.registryAddress!];
+                            widget.p.values = ["0"];
                             widget.p.createdAt = DateTime.now();
                             widget.p.statusHistory
                                 .addAll({"pending": DateTime.now()});
