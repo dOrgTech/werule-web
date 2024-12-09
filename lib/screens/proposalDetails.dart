@@ -224,28 +224,34 @@ class ProposalDetailsState extends State<ProposalDetails> {
                     BorderSide(width: 0.2, color: Theme.of(context).hintColor),
               ),
               onPressed: () async {
+                String cevine = "";
                 setState(() {
                   widget.busy = true;
                 });
-                // await execute(widget.p.transactions[0].recipient,
-                //     widget.p.transactions[0].value.toString());
-                String cevine = await execute(widget.p);
-                if (cevine.contains("not ok")) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Center(
-                          child: Text("Error executing proposal",
-                              style: TextStyle(color: Colors.red)))));
+                try {
+                  cevine = await execute(widget.p);
+                  if (cevine.contains("not ok")) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Center(
+                            child: Text("Error executing proposal",
+                                style: TextStyle(color: Colors.red)))));
+                  }
                   setState(() {
                     widget.busy = false;
                   });
-                  return;
+                } catch (e) {
+                  setState(() {
+                    widget.busy = false;
+                  });
                 }
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Center(
-                        child: Text("Proposal Executed!",
-                            style: TextStyle(
-                                fontSize: 21,
-                                color: Color.fromARGB(255, 19, 27, 16))))));
+                if (!cevine.contains("not ok")) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Center(
+                          child: Text("Proposal Executed!",
+                              style: TextStyle(
+                                  fontSize: 21,
+                                  color: Color.fromARGB(255, 19, 27, 16))))));
+                }
                 setState(() {
                   widget.busy = false;
                 });
@@ -984,8 +990,11 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                       ? RegistryProposalDetails(p: widget.p)
                                       : widget.p.type == "contract call"
                                           ? ContractCall(p: widget.p)
-                                          : widget.p.type!.contains("mint") ||
+                                          : widget.p.type!
+                                                      .toLowerCase()
+                                                      .contains("mint") ||
                                                   widget.p.type!
+                                                      .toLowerCase()
                                                       .contains("burn")
                                               ? GovernanceTokenOperationDetails(
                                                   p: widget.p,

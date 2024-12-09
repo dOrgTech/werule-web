@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:typed_data';
 import 'dart:typed_data';
+import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/widgets/fundProject.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -403,6 +404,56 @@ class DaoConfigurationDetails extends StatelessWidget {
 
 class GovernanceTokenOperationDetails extends StatelessWidget {
   final Proposal p;
+  List<dynamic> decodeFunctionParameters(
+      ContractFunction functionAbi, String hexString) {
+    // Convert the hex string to bytes
+    Uint8List dataBytes = hexToBytes(hexString);
+
+    // Remove the 4-byte function selector
+    Uint8List dataWithoutSelector = dataBytes.sublist(4);
+
+    // Initialize decoding variables
+    int offset = 0;
+    List<dynamic> decodedParams = [];
+
+    for (var param in functionAbi.parameters) {
+      // Decode each parameter based on its type
+      if (param.type is StringType) {
+        // String type decoding (dynamic)
+        BigInt paramOffset =
+            bytesToInt(dataWithoutSelector.sublist(offset, offset + 32));
+        int paramOffsetInt = paramOffset.toInt();
+
+        // Decode length of the string
+        BigInt length = bytesToInt(
+            dataWithoutSelector.sublist(paramOffsetInt, paramOffsetInt + 32));
+        int lengthInt = length.toInt();
+
+        // Extract the actual string data
+        Uint8List stringBytes = dataWithoutSelector.sublist(
+            paramOffsetInt + 32, paramOffsetInt + 32 + lengthInt);
+        decodedParams.add(String.fromCharCodes(stringBytes));
+      } else if (param.type is AddressType) {
+        // Address type decoding (last 20 bytes of the first 32-byte slot)
+        Uint8List addressBytes =
+            dataWithoutSelector.sublist(offset + 12, offset + 32);
+        decodedParams.add(
+            EthereumAddress.fromHex(bytesToHex(addressBytes)).hex..toString());
+      } else if (param.type is UintType) {
+        // Uint type decoding (entire 32 bytes)
+        Uint8List uintBytes = dataWithoutSelector.sublist(offset, offset + 32);
+        decodedParams.add(bytesToInt(uintBytes).toString());
+      } else {
+        throw UnsupportedError(
+            "Unsupported parameter type: ${param.type.runtimeType}");
+      }
+
+      // Move to the next 32-byte slot
+      offset += 32;
+    }
+
+    return decodedParams;
+  }
 
   GovernanceTokenOperationDetails({required this.p});
   @override
@@ -411,9 +462,14 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
     operationType = operationType[0].toUpperCase() +
         operationType.substring(1).toLowerCase();
     // String operationType = "Mint";
-    String targetAddress =
-        p.callDatas[0].keys.first.toString() ?? "targetaddressaiodnsinoasin";
-    String amount = p.callDatas[0].values.first.toString() ?? "10000";
+    List params = [];
+    if (operationType == "Mint") {
+      params = decodeFunctionParameters(mintGovTokensDef, p.callDatas[0]);
+    }
+    print("=======decoding params=========");
+    print(params);
+    String targetAddress = params[0];
+    String amount = params[1];
     return Container(
       padding: EdgeInsets.all(16.0),
       // decoration: BoxDecoration(

@@ -53,21 +53,7 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
     return widget.isSetInfo
         ? NewProposal(p: widget.p, next: finishSettingInfo)
         : widget.stage == -1
-            ? Center(
-                child: SizedBox(
-                width: 500,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      "Awaiting confirmation...",
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    SizedBox(height: 200),
-                    CircularProgressIndicator(),
-                  ],
-                ),
-              ))
+            ? const AwaitingConfirmation()
             : Form(
                 key: _formKey,
                 child: Container(
@@ -224,5 +210,28 @@ class _SubmitButtonState extends State<SubmitButton> {
         ),
       ),
     );
+  }
+}
+
+class AwaitingConfirmation extends StatelessWidget {
+  const AwaitingConfirmation({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: SizedBox(
+      width: 500,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Text(
+            "Awaiting confirmation...",
+            style: TextStyle(fontSize: 20),
+          ),
+          SizedBox(height: 200),
+          CircularProgressIndicator(),
+        ],
+      ),
+    ));
   }
 }
