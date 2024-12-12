@@ -408,14 +408,11 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
       ContractFunction functionAbi, String hexString) {
     // Convert the hex string to bytes
     Uint8List dataBytes = hexToBytes(hexString);
-
     // Remove the 4-byte function selector
     Uint8List dataWithoutSelector = dataBytes.sublist(4);
-
     // Initialize decoding variables
     int offset = 0;
     List<dynamic> decodedParams = [];
-
     for (var param in functionAbi.parameters) {
       // Decode each parameter based on its type
       if (param.type is StringType) {
@@ -423,12 +420,10 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
         BigInt paramOffset =
             bytesToInt(dataWithoutSelector.sublist(offset, offset + 32));
         int paramOffsetInt = paramOffset.toInt();
-
         // Decode length of the string
         BigInt length = bytesToInt(
             dataWithoutSelector.sublist(paramOffsetInt, paramOffsetInt + 32));
         int lengthInt = length.toInt();
-
         // Extract the actual string data
         Uint8List stringBytes = dataWithoutSelector.sublist(
             paramOffsetInt + 32, paramOffsetInt + 32 + lengthInt);

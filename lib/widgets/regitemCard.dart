@@ -32,7 +32,9 @@ class RegItemCard extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 48.0),
                   child: Row(
                     children: [
-                      Text(itemValue),
+                      SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.22,
+                          child: Text(itemValue)),
                       TextButton(onPressed: () {}, child: Icon(Icons.copy))
                     ],
                   ),

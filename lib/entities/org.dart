@@ -46,10 +46,11 @@ class Org {
 
   populateTreasury() async {
     treasury = {};
-    Token tokenXTZ = Token(name: "Tezos", symbol: "XTZ", decimals: 18);
-    nativeBalance = await getNativeBalance(treasuryAddress!);
-    tokenXTZ.address = "native";
-    treasury.addAll({tokenXTZ: nativeBalance});
+    Token native = Token(
+        type: "native", name: Human().chain.name, symbol: "XTZ", decimals: 18);
+    nativeBalance = await getNativeBalance(registryAddress!);
+    native.address = "native";
+    treasury.addAll({native: nativeBalance});
     treasuryMap.forEach((address, value) {
       Token? matchingToken = tokens.cast<Token?>().firstWhere(
             (token) => token?.address == address,
@@ -121,7 +122,6 @@ class Org {
   }
 
   getProposals() async {
-    await populateTreasury();
     pollsCollection = FirebaseFirestore.instance
         .collection("idaos${Human().chain.name}")
         .doc(address)
@@ -164,13 +164,6 @@ class Org {
       // p.retrieveStage();
       p.state = ProposalStatus.pending;
       p.status = "pending";
-      p.transactions = (doc.data()['transactions'] as List<dynamic>).map((tx) {
-        return Txaction(
-          recipient: tx['recipient'],
-          value: tx['value'],
-          callData: tx['callData'],
-        )..hash = tx['hash'];
-      }).toList();
     }
 
     await getMembers();

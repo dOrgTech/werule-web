@@ -36,6 +36,11 @@ Widget generateAvatar(String hash, {int size = 100, int pixelSize = 10}) {
           width: size.toDouble(), height: size.toDouble(), color: Colors.grey);
 }
 
+String convertEthToWei(double ethValue) {
+  BigInt weiValue = BigInt.from(ethValue * pow(10, 18));
+  return weiValue.toString();
+}
+
 String parseNumber(String numberString, int decimalPlaces) {
   // Convert the input string to a BigInt
   BigInt number = BigInt.parse(numberString);

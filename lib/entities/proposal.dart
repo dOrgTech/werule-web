@@ -53,9 +53,14 @@ class NotImplemented extends StatelessWidget {
 
 class Txaction {
   Txaction(
-      {required this.recipient, required this.value, this.callData = "0x"});
+      {required this.recipient,
+      required this.value,
+      required this.tokenAddress,
+      this.callData = "0x"});
   String hash = "none";
   String recipient;
+  String tokenAddress;
+  bool isNative = false;
   String value = "0";
   String callData = "0x";
 

@@ -449,8 +449,11 @@ queueProposal(Proposal p) async {
     List<String> calldatas = [];
     for (String c in p.callDatas) {
       calldatas.add("0x" + c);
-      print(c);
     }
+    print("targets: ${p.targets}");
+    print("values: ${p.values}");
+    print("calldatas: ${calldatas}");
+    print("hashHex: $hashHex");
     final transaction = await promiseToFuture(callMethod(
         sourceContract, "queue", [p.targets, p.values, calldatas, hashHex]));
     print("facuram tranzactia");
@@ -476,6 +479,7 @@ queueProposal(Proposal p) async {
 }
 
 execute(Proposal p) async {
+  print("incepem sa executam!!!!!!!!!!!");
   String concatenatedDescription =
       "${p.name}0|||0${p.type}0|||0${p.description}0|||0${p.externalResource}";
   Uint8List encodedInput =
@@ -487,13 +491,15 @@ execute(Proposal p) async {
   print("facuram contractu");
   try {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed ok");
-    print("signed ok");
+    print("signed okkkkk");
     List<String> calldatas = [];
     for (String c in p.callDatas) {
       calldatas.add("0x" + c);
-      print(c);
     }
+    print("targets: ${p.targets}");
+    print("values: ${p.values}");
+    print("calldatas: ${p.callDatas}");
+    print("hashHex: $hashHex");
     final transaction = await promiseToFuture(callMethod(
         sourceContract, "execute", [p.targets, p.values, calldatas, hashHex]));
     print("facuram tranzactia");
@@ -564,7 +570,7 @@ getNativeBalance(String address) async {
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
   final ethAddress = EthereumAddress.fromHex(address);
   final balance = await ethClient.getBalance(ethAddress);
-  print("balance:${balance.getInWei}");
+  print("native balance:${balance.getInWei}");
   // Close the HTTP client
   httpClient.close();
   return balance.getInWei.toString();

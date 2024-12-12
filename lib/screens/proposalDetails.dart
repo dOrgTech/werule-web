@@ -119,8 +119,7 @@ class ProposalDetails extends StatefulWidget {
   }
 
   void _setRemainingTime() {
-    DateTime now = DateTime.now();
-
+    DateTime now = DateTime.now().subtract(Duration(seconds: 10));
     DateTime votingStarts =
         p.statusHistory["pending"]!.add(Duration(minutes: p.org.votingDelay));
     DateTime votingEnds =

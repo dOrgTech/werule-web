@@ -50,11 +50,11 @@ class ViewConfig extends StatelessWidget {
               Row(
                 children: [
                   Text('Treasury Contract Address: ' +
-                      getShortAddress(org.treasuryAddress!)),
+                      getShortAddress(org.registryAddress!)),
                   TextButton(
                     onPressed: () {
                       Clipboard.setData(
-                          ClipboardData(text: org.treasuryAddress!));
+                          ClipboardData(text: org.registryAddress!));
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                           duration: Duration(seconds: 1),
                           content: Center(
@@ -64,22 +64,6 @@ class ViewConfig extends StatelessWidget {
                   )
                 ],
               ),
-              SizedBox(height: 10),
-              Row(children: [
-                Text('Registry Contract Address: ' +
-                    getShortAddress(org.registryAddress!)),
-                TextButton(
-                  onPressed: () {
-                    Clipboard.setData(
-                        ClipboardData(text: org.registryAddress!));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        duration: Duration(seconds: 1),
-                        content: Center(
-                            child: Text('Address copied to clipboard'))));
-                  },
-                  child: Icon(Icons.copy),
-                )
-              ]),
               SizedBox(height: 10),
               Row(
                 children: [

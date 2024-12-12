@@ -71,12 +71,15 @@ class _DAOState extends State<DAO> {
             dao.symbol = data['symbol'];
             dao.creationDate = (data['creationDate'] as Timestamp).toDate();
             dao.govToken = Token(
-                symbol: dao.symbol!, decimals: dao.decimals, name: dao.name);
+                type: "erc20",
+                symbol: dao.symbol!,
+                decimals: dao.decimals,
+                name: dao.name);
             dao.govTokenAddress = data['token'];
             dao.proposalThreshold = data['proposalThreshold'];
             dao.votingDelay = data['votingDelay'];
-            dao.treasuryAddress = data['treasuryAddress'];
             dao.registryAddress = data['registryAddress'];
+            dao.treasuryAddress = dao.registryAddress;
             dao.votingDuration = data['votingDuration'];
             dao.executionDelay = data['executionDelay'];
             dao.quorum = data['quorum'];

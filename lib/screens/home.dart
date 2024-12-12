@@ -82,7 +82,7 @@ class _HomeState extends State<Home> {
                         children: [
                           const Text(" Treasury: "),
                           Text(
-                            widget.org.treasuryAddress!
+                            widget.org.registryAddress!
                             // "asiduhwqiudh128hd92w8h19q8dh9w8dh398dhd2938"
                             ,
                             style: const TextStyle(fontSize: 11),

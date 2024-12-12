@@ -1,6 +1,11 @@
+// ignore_for_file: avoid_print
+
+import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:flutter/material.dart';
+import 'package:web3dart/web3dart.dart';
 import 'dart:math';
 import '../entities/human.dart';
 import '../entities/org.dart';
@@ -132,36 +137,88 @@ class _TransferWidgetState extends State<TransferWidget> {
     });
   }
 
-  // Function to collect and print all transactions
   void submitTransactions() async {
-    List<Map<String, dynamic>> transactionList = [];
+    widget.p.callDatas = [];
     for (var tx in transactions) {
       if (tx['recipientError'].isEmpty && tx['amountError'].isEmpty) {
-        transactionList.add({
-          'token': tx['token'],
-          'recipient': tx['recipient'],
-          'amount': tx['amount'],
-        });
-        widget.p.transactions.add(Txaction(
-            recipient: tx['recipient'], value: tx['amount'], callData: "0x"));
+        List params = [];
+        if (tx['token'].address!.toString().contains("native")) {
+          print("we got so myuch native ${tx['amount']}");
+          double txamount = double.parse(tx['amount'].toString());
+          final BigInt weiAmount = BigInt.from(txamount * 1e18);
+          print("we createdbg");
+          final params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
+          print("getting calldata");
+          widget.p.callDatas.add(getCalldata(transferNativeDef, params));
+          print("got it");
+        } else if (tx['token']
+            .address!
+            .toString()
+            .toLowerCase()
+            .contains("erc20")) {
+          params = [
+            (tx['token'] as Token).address!,
+            tx['recipient'],
+            tx['amount'],
+          ];
+          widget.p.callDatas.add(getCalldata(transferErc20Def, params));
+        } else {}
+        widget.p.targets.add(widget.org.registryAddress!);
+        widget.p.values.add("0");
       }
-      widget.p.createdAt = DateTime.now();
-      widget.p.statusHistory.addAll({"pending": DateTime.now()});
     }
 
-    // Print the list of transactions
-    print(transactionList);
+    widget.p.createdAt = DateTime.now();
+    widget.p.statusHistory.addAll({"pending": DateTime.now()});
 
     setState(() {
       widget.stage = -1;
     });
-    // await makeProposal();
-    await widget.org.pollsCollection
-        .doc(widget.p.id.toString())
-        .set(widget.p.toJson());
-    widget.org.proposals.add(widget.p);
-    widget.org.proposals = widget.org.proposals.reversed.toList();
-    widget.p.status = "pending";
+    try {
+      print("before sending the transaction");
+      String cevine = await propose(widget.p);
+      if (cevine.contains("not ok")) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            duration: Duration(seconds: 1),
+            content: Center(
+                child: SizedBox(
+                    height: 70,
+                    child: Center(
+                      child: Text(
+                        "Error submitting proposal",
+                        style: TextStyle(
+                            fontSize: 24,
+                            color: Color.fromARGB(255, 67, 18, 14)),
+                      ),
+                    )))));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            duration: Duration(seconds: 1),
+            content: Center(
+                child: SizedBox(
+                    height: 70,
+                    child: Center(
+                      child: Text(
+                        "Proposal submitted",
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    )))));
+      }
+    } catch (e) {
+      print("some error here " + e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          duration: Duration(seconds: 1),
+          content: Center(
+              child: SizedBox(
+                  height: 70,
+                  child: Center(
+                    child: Text(
+                      "Error submitting proposal",
+                      style: TextStyle(
+                          fontSize: 24, color: Color.fromARGB(255, 67, 18, 14)),
+                    ),
+                  )))));
+    }
 
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => Scaffold(
@@ -169,17 +226,6 @@ class _TransferWidgetState extends State<TransferWidget> {
                 //  DaoSetupWizard())
                 // Center(child: TransferWidget(org: orgs[0],)))
                 DAO(InitialTabIndex: 1, org: widget.org))));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        duration: Duration(seconds: 1),
-        content: Center(
-            child: SizedBox(
-                height: 70,
-                child: Center(
-                  child: Text(
-                    "Proposal submitted",
-                    style: TextStyle(fontSize: 24),
-                  ),
-                )))));
   }
 
   @override

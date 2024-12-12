@@ -1305,6 +1305,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
     Future.delayed(Duration.zero, () async {
       // Create Token and Org instances using collected data
       Token token = Token(
+        type: "erc20",
         name: daoConfig.daoName ?? '',
         symbol: daoConfig.tokenSymbol ?? '',
         decimals: daoConfig.numberOfDecimals ?? 0,
@@ -1338,6 +1339,11 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         widget.org.govTokenAddress = results[1];
         widget.org.treasuryAddress = results[2];
         widget.org.registryAddress = results[3];
+        widget.org.govToken = Token(
+            type: "erc20",
+            symbol: widget.org.symbol!,
+            decimals: widget.org.decimals,
+            name: widget.org.name);
         orgs.add(widget.org);
         print("we caught this back" + results.toString());
         setState(() {

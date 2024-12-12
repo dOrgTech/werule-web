@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:Homebase/chat/models.dart';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/account.dart';
 import 'package:Homebase/screens/creator.dart';
@@ -65,7 +66,7 @@ var tokensCollection;
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
 persist() async {
-  // print("persisting");
+  print("persisting");
   // var snaps = await systemCollection.doc("whatever").get();
 
   // DateTime when = (snaps.data()!['what'] as Timestamp).toDate();
@@ -85,7 +86,12 @@ persist() async {
   var tokensSnapshot = await tokensCollection.get();
 
   for (var doc in tokensSnapshot.docs) {
+    print(doc.data());
+    if (doc.data()['id'] == "native") {
+      continue;
+    }
     Token t = Token(
+        type: doc.data()['type'],
         name: doc.data()['name'],
         symbol: doc.data()['symbol'],
         decimals: doc.data()['decimals']);
@@ -102,13 +108,16 @@ persist() async {
     org.address = doc.data()['address'];
     org.symbol = doc.data()['symbol'];
     org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
-    org.govToken =
-        Token(symbol: org.symbol!, decimals: org.decimals, name: org.name);
+    org.govToken = Token(
+        type: "erc20",
+        symbol: org.symbol!,
+        decimals: org.decimals,
+        name: org.name);
     org.govTokenAddress = doc.data()['token'];
     org.proposalThreshold = doc.data()['proposalThreshold'];
     org.votingDelay = doc.data()['votingDelay'];
-    org.treasuryAddress = doc.data()['treasuryAddress'];
     org.registryAddress = doc.data()['registryAddress'];
+    org.treasuryAddress = org.registryAddress;
     org.votingDuration = doc.data()['votingDuration'];
     org.executionDelay = doc.data()['executionDelay'];
     org.quorum = doc.data()['quorum'];
@@ -132,7 +141,7 @@ final functionAbi = ContractFunction(
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   if (Human().landing == false) {
-    await persist();
+    // await persist();
   }
 
   runApp(ChangeNotifierProvider<Human>(
@@ -166,10 +175,10 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/test',
+      path: '/chat',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: Parent(),
+        child: Chat(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

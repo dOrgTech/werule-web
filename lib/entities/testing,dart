@@ -1,9 +1,0 @@
-
-import "deploy.dart";
-
-
-
-main() async {
-    await deployDaoSuite();
-    print("done!");
-}

@@ -1,12 +1,10 @@
 import 'dart:math';
-
 import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:web3dart/web3dart.dart';
-
 import '../entities/contractFunctions.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
@@ -219,13 +217,13 @@ class _GovernanceTokenOperationsWidgetState
                                           if (_selectedOperation == "Mint") {
                                             print("we selected mint");
                                             widget.p.type =
-                                                "Mint" + widget.p.org.symbol!;
+                                                "Mint " + widget.p.org.symbol!;
                                             calldata0 = getCalldata(
                                                 mintGovTokensDef, params);
                                           } else {
                                             print("we selected burn");
                                             widget.p.type =
-                                                "Burn" + widget.p.org.symbol!;
+                                                "Burn " + widget.p.org.symbol!;
                                             calldata0 = getCalldata(
                                                 burnGovTokensDef, params);
                                           }
@@ -260,6 +258,7 @@ class _GovernanceTokenOperationsWidgetState
                                               return;
                                             }
                                             widget.p.status = "pending";
+                                            Navigator.of(context).pop();
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(const SnackBar(
                                                     duration:
@@ -276,6 +275,7 @@ class _GovernanceTokenOperationsWidgetState
                                                               ),
                                                             )))));
                                           } catch (e) {
+                                            Navigator.of(context).pop();
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(const SnackBar(
                                                     duration:

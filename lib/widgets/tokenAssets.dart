@@ -1,16 +1,18 @@
+import 'package:Homebase/entities/human.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import '../entities/org.dart';
 import '../entities/token.dart';
-String add1="https://i.ibb.co/2WbL5nC/add1.png";
-String add2="https://i.ibb.co/6rmksXk/add2.png";
-List<String> userPics=[add1, add2];
+
+String add1 = "https://i.ibb.co/2WbL5nC/add1.png";
+String add2 = "https://i.ibb.co/6rmksXk/add2.png";
+List<String> userPics = [add1, add2];
 
 class TokenAssets extends StatefulWidget {
   Org org;
-  int status=0;
+  int status = 0;
   TokenAssets({super.key, required this.org});
 
   @override
@@ -18,164 +20,179 @@ class TokenAssets extends StatefulWidget {
 }
 
 class _TokenAssetsState extends State<TokenAssets> {
-  List<TableRow> assets=[];
-  
-  buildAssets(){
-    assets=[];
-    
-//  assets.add(asset(tokenXTZ,widget.org.nativeBalance));
-    for (Token t in widget.org.treasury.keys){
+  List<TableRow> assets = [];
+
+  buildAssets() {
+    assets = [];
+
+    for (Token t in widget.org.treasury.keys) {
       assets.add(asset(t, widget.org.treasury[t]!));
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    assets=[];
-    buildAssets();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom:28.0, left:9,right: 9),
-        child: Column(
-          children: [
-            SizedBox(
-          height: 120,
-          child:Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-             Container(
-                  padding: EdgeInsets.only(left: 50),
-                  width: 500,
-                  child: TextField(
-                      decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+    assets = [];
+
+    return FutureBuilder(
+        future: widget.org.populateTreasury(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  height: 100,
+                  child: const Center(
+                    child:
+                        SizedBox(height: 4, child: LinearProgressIndicator()),
+                  )),
+            );
+          }
+          buildAssets();
+          return Card(
+              child: Padding(
+            padding: const EdgeInsets.only(bottom: 28.0, left: 9, right: 9),
+            child: Column(children: [
+              SizedBox(
+                  height: 120,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.only(left: 50),
+                        width: 500,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(width: 0.1),
+                            ),
+                            prefixIcon: Icon(Icons.search),
+                            hintText: 'Find token by name or address',
+                            // other properties
                           ),
-                        prefixIcon: Icon(Icons.search),
-                        hintText: 'Find token by name or address',
-                        // other properties
+                          // other properties
+                        ),
                       ),
-                      // other properties
-                    ),
+                      const Spacer(),
+                      Container(
+                          padding: EdgeInsets.only(right: 50),
+                          height: 40,
+                          child: ToggleSwitch(
+                            initialLabelIndex: widget.status,
+                            totalSwitches: 2,
+                            minWidth: 120,
+                            borderWidth: 1.5,
+                            activeFgColor: Theme.of(context).indicatorColor,
+                            inactiveFgColor: Color.fromARGB(255, 189, 189, 189),
+                            activeBgColor: [Color.fromARGB(255, 77, 77, 77)],
+                            inactiveBgColor: Theme.of(context).cardColor,
+                            borderColor: [Theme.of(context).cardColor],
+                            labels: ['Tokens', 'NFTs'],
+                            onToggle: (index) {
+                              print('switched to: $index');
+                              setState(() {
+                                widget.status = index!;
+                              });
+                            },
+                          )),
+                    ],
+                  )),
+              SizedBox(height: 15),
+              Table(
+                border: TableBorder.all(
+                  color: Colors.transparent,
                 ),
-             const Spacer(),
-               Container(
-                      padding: EdgeInsets.only(right: 50),
-                      height: 40,
-                      child: ToggleSwitch(
-                initialLabelIndex: widget.status,
-                totalSwitches: 2,
-                minWidth: 120,
-                borderWidth: 1.5,
-                activeFgColor: Theme.of(context).indicatorColor,
-                inactiveFgColor: Color.fromARGB(255, 189, 189, 189),
-                activeBgColor: [Color.fromARGB(255, 77, 77, 77)],
-                inactiveBgColor: Theme.of(context).cardColor,
-                borderColor: [Theme.of(context).cardColor],
-                labels: ['Tokens','NFTs'],
-                onToggle: (index) {
-                  print('switched to: $index');
-            setState(() {
-              widget.status=index!;
-            });
-              },
-            ) 
-            ),
-            ],
-          )
-        ),
-         SizedBox(height: 15),
-            Table(
-  border: TableBorder.all(
-    color: Colors.transparent,
-  ),
-  columnWidths: const <int, TableColumnWidth>{
-    0: FlexColumnWidth(1.8),  // Left-most item stays as is
-    1: FlexColumnWidth(0.3),  // Slightly reduce column width for SYMBOL
-    2: FlexColumnWidth(1.2),  // Slightly reduce column width for AMOUNT
-    3: FlexColumnWidth(1.4),  // Slightly reduce column width for ADDRESS
-    4: FixedColumnWidth(150), //// Extra space for the button
-  },
-  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-  children: <TableRow>[
-    // Header row
-    TableRow(
-      children: <Widget>[
-        Container(
-          height: 22,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Padding(
-            padding: EdgeInsets.only(top: 4.0, left: 75),
-            child: Text("TOKEN NAME",
-            style: TextStyle(fontWeight: FontWeight.w100),
-            ),
-          ),
-        ),
-        Container(
-          height: 22,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Center(child: Text("SYMBOL")),
-        ),
-        Container(
-          height: 22,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Center(child: Text("AMOUNT")),
-        ),
-        Container(
-          height: 22,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Center(child: Text("ADDRESS")),
-        ),
-        // Empty header for button
-        Container(
-          height: 22,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: const Center(child: Text("")),
-        ),
-      ],
-    ),
-  ],
-),
-
-  const Opacity(
-    opacity: 0.5,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 29.0),
-      child: Divider(),
-    ),
-  ),
-
-  Table(
-    border: TableBorder.all(
-      color: Colors.transparent,
-    ),
-    columnWidths: const <int, TableColumnWidth>{
-      0: FlexColumnWidth(1.8),  // Left-most item stays as is
-      1: FlexColumnWidth(0.3),  // Slightly reduce column width for SYMBOL
-      2: FlexColumnWidth(1.2),  // Slightly reduce column width for AMOUNT
-      3: FlexColumnWidth(1.4),  // Slightly reduce column width for ADDRESS
-      4: FixedColumnWidth(150), // Extra space for the button with more padding
-    },
-    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-    children: assets
-  )
-
- ]),
-     ) );
+                columnWidths: const <int, TableColumnWidth>{
+                  0: FlexColumnWidth(1.8), // Left-most item stays as is
+                  1: FlexColumnWidth(
+                      0.3), // Slightly reduce column width for SYMBOL
+                  2: FlexColumnWidth(
+                      1.2), // Slightly reduce column width for AMOUNT
+                  3: FlexColumnWidth(
+                      1.4), // Slightly reduce column width for ADDRESS
+                  4: FixedColumnWidth(150), //// Extra space for the button
+                },
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: <TableRow>[
+                  // Header row
+                  TableRow(
+                    children: <Widget>[
+                      Container(
+                        height: 22,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: const Padding(
+                          padding: EdgeInsets.only(top: 4.0, left: 75),
+                          child: Text(
+                            "TOKEN NAME",
+                            style: TextStyle(fontWeight: FontWeight.w100),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 22,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: const Center(child: Text("SYMBOL")),
+                      ),
+                      Container(
+                        height: 22,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: const Center(child: Text("AMOUNT")),
+                      ),
+                      Container(
+                        height: 22,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: const Center(child: Text("ADDRESS")),
+                      ),
+                      // Empty header for button
+                      Container(
+                        height: 22,
+                        color: const Color.fromARGB(0, 76, 175, 79),
+                        child: const Center(child: Text("")),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const Opacity(
+                opacity: 0.5,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 29.0),
+                  child: Divider(),
+                ),
+              ),
+              Table(
+                  border: TableBorder.all(
+                    color: Colors.transparent,
+                  ),
+                  columnWidths: const <int, TableColumnWidth>{
+                    0: FlexColumnWidth(1.8), // Left-most item stays as is
+                    1: FlexColumnWidth(
+                        0.3), // Slightly reduce column width for SYMBOL
+                    2: FlexColumnWidth(
+                        1.2), // Slightly reduce column width for AMOUNT
+                    3: FlexColumnWidth(
+                        1.4), // Slightly reduce column width for ADDRESS
+                    4: FixedColumnWidth(
+                        150), // Extra space for the button with more padding
+                  },
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  children: assets)
+            ]),
+          ));
+        });
   }
 
-  TableRow asset(Token token, String value){
-    return  TableRow(
+  TableRow asset(Token token, String value) {
+    return TableRow(
       children: <Widget>[
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child:  Align(
+          child: Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: const EdgeInsets.only(left:60.0),
+              padding: const EdgeInsets.only(left: 60.0),
               child: Text(token.name),
             ),
           ),
@@ -183,12 +200,12 @@ class _TokenAssetsState extends State<TokenAssets> {
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child:  Center(child: Text(token.symbol)),
+          child: Center(child: Text(token.symbol)),
         ),
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child:  Center(child: Text(displayTokenValue(value, token.decimals!))),
+          child: Center(child: Text(displayTokenValue(value, token.decimals!))),
         ),
         Container(
           height: 42,
@@ -200,16 +217,16 @@ class _TokenAssetsState extends State<TokenAssets> {
               children: [
                 // ClipRRect(
                 //         borderRadius: BorderRadius.circular(50),
-                //         child: 
+                //         child:
                 // Image.network(
                 //   genera,
-                //   height: 24, 
+                //   height: 24,
                 // )),
                 // const SizedBox(width: 10),
                 Text(
-                  token.address! == 'native'?
-                  "native token":
-                  getShortAddress(token.address!),
+                  token.address! == 'native'
+                      ? "native token"
+                      : getShortAddress(token.address!),
                   style: const TextStyle(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -239,6 +256,4 @@ class _TokenAssetsState extends State<TokenAssets> {
       ],
     );
   }
-
 }
-

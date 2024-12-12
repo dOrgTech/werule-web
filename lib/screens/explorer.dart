@@ -36,7 +36,10 @@ class Explorer extends StatefulWidget {
           org.symbol = doc.data()['symbol'];
           org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
           org.govToken = Token(
-              symbol: org.symbol!, decimals: org.decimals, name: org.name);
+              type: "erc20",
+              symbol: org.symbol!,
+              decimals: org.decimals,
+              name: org.name);
           org.govTokenAddress = doc.data()['token'];
           org.proposalThreshold = doc.data()['proposalThreshold'];
           org.votingDelay = doc.data()['votingDelay'];
