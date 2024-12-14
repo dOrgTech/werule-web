@@ -48,7 +48,7 @@ class Human extends ChangeNotifier {
   bool beta = true;
   bool wrongChain = false;
   int chainID = 5;
-  bool landing = false;
+  bool landing = true;
   String chainNativeEarnings = "0";
   String chainUSDTEarnings = "0";
   String? address;

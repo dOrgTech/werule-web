@@ -484,7 +484,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                 .showSnackBar(const SnackBar(
                                     content: Center(
                               child: Text(
-                                "Claim your voting power if you want to participate in governance (in the Account tab).",
+                                "You have no voting power at the time when this proposal was created.",
                                 style: TextStyle(
                                     fontSize: 20,
                                     color: Color.fromARGB(255, 70, 11, 7)),
@@ -973,7 +973,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                           maxWidth: 680,
                         ),
                         height: widget.p.type == "transfer"
-                            ? widget.p.transactions.length * 70
+                            ? widget.p.callDatas.length * 70
                             : 270,
                         // Set a fixed width for the first container
                         padding: const EdgeInsets.all(4),
@@ -981,7 +981,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         child: Align(
                           alignment: Alignment.center,
                           child: Center(
-                              child: widget.p.type == "transfer"
+                              child: widget.p.type!.contains("transfer")
                                   ? TokenTransferListWidget(
                                       p: widget.p,
                                     )
@@ -1005,7 +1005,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                                       widget.p.type!.contains(
                                                           "voting period") ||
                                                       widget.p.type!
-                                                          .contains("treasury")
+                                                          .contains("threshold")
                                                   ? DaoConfigurationDetails(
                                                       p: widget.p)
                                                   : const Text("")),

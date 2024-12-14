@@ -11,6 +11,7 @@ import 'package:Homebase/widgets/configProposal.dart';
 import 'package:Homebase/widgets/gameOfLife.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/pdetails.dart';
+import 'package:Homebase/widgets/pleadingForLessDecimals.dart';
 import 'package:Homebase/widgets/propDetailsWidgets.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:Homebase/widgets/statemgmt.dart';
@@ -130,18 +131,10 @@ persist() async {
   }
 }
 
-final functionAbi = ContractFunction(
-  "editRegistry",
-  [
-    FunctionParameter("key", StringType()),
-    FunctionParameter("Value", StringType()),
-  ],
-);
-
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   if (Human().landing == false) {
-    // await persist();
+    await persist();
   }
 
   runApp(ChangeNotifierProvider<Human>(
@@ -157,12 +150,14 @@ final GoRouter router = GoRouter(
       pageBuilder: (context, state) {
         return CustomTransitionPage(
           key: state.pageKey,
-          child: FutureBuilder(
-            future: persist(),
-            builder: (context, snapshot) {
-              return Explorer();
-            },
-          ),
+          child: Human().landing == true
+              ? Scaffold(body: Landing())
+              : FutureBuilder(
+                  future: persist(),
+                  builder: (context, snapshot) {
+                    return Explorer();
+                  },
+                ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -190,6 +185,21 @@ final GoRouter router = GoRouter(
       ),
     ),
     GoRoute(
+      path: '/test',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: Scaffold(body: AnimatedMemeWidget()),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        transitionDuration:
+            const Duration(milliseconds: 800), // Increase fade time
+      ),
+    ),
+    GoRoute(
       path: '/:id',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id']!;
@@ -201,7 +211,7 @@ final GoRouter router = GoRouter(
                 child: Stack(
                   children: [
                     GameOfLife(),
-                    Center(
+                    const Center(
                       child: Text(
                         "Can't find DAO",
                         style: TextStyle(fontSize: 40),
@@ -307,7 +317,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           fontFamily: 'CascadiaCode',
           splashColor: const Color(0xff000000),
-          indicatorColor: Color.fromARGB(255, 161, 215, 219),
+          indicatorColor: const Color.fromARGB(255, 161, 215, 219),
           dividerColor: createMaterialColor(const Color(0xffcfc099)),
           brightness: Brightness.dark,
           hintColor: Colors.white70,
@@ -332,7 +342,7 @@ class MyHomePage extends StatefulWidget {
 class MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
         // body:  DelegationBoxes()
         // body: NewProposal(org: orgs[0])
         // body: Members(org: orgs[2],)

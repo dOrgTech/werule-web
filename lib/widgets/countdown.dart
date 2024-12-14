@@ -43,14 +43,19 @@ class _ActionLabelState extends State<ActionLabel> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           SizedBox(height: _getStatusLabel() == "Voting concluded" ? 80 : 0),
-          Text(
-            _getStatusLabel(),
-            style: TextStyle(
-              color: _getStatusLabel() == "Voting concluded"
-                  ? Colors.grey
-                  : Theme.of(context).indicatorColor,
-              fontSize: 17,
-              fontWeight: FontWeight.normal,
+          SizedBox(
+            height: 55,
+            child: Center(
+              child: Text(
+                _getStatusLabel(),
+                style: TextStyle(
+                  color: _getStatusLabel() == "Voting concluded"
+                      ? Colors.grey
+                      : Theme.of(context).indicatorColor,
+                  fontSize: 17,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
             ),
           ),
         ],

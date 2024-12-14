@@ -221,7 +221,8 @@ class _ProposalsState extends State<Proposals> {
                                   return Theme.of(context).indicatorColor;
                                 }),
                               ),
-                              onPressed: Human().address == null
+                              onPressed: false
+                                  // Human().address == null
                                   ? null
                                   : () {
                                       showDialog(

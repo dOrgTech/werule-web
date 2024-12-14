@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:typed_data';
 import 'dart:typed_data';
 import 'package:Homebase/entities/definitions.dart';
+import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/widgets/fundProject.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -48,13 +49,24 @@ class TokenTransferListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    for (Txaction t in p.transactions) {
-      tokenTransfers.add(TokenTransfer(t.value, "XTZ", t.recipient,
-          "explorerURL", "fashsaodisahodi", false));
+    for (var calldata in p.callDatas) {
+      List params = [];
+      params = decodeFunctionParameters(transferNativeDef, calldata);
+      String to = params[0];
+      String amount = params[1];
+      BigInt bigNumber = BigInt.parse(amount);
+      BigInt divisor = BigInt.from(pow(10, 18));
+      BigInt integerPart = bigNumber ~/ divisor;
+      BigInt fractionalPart =
+          (bigNumber % divisor) * BigInt.from(100) ~/ divisor;
+      String result =
+          '$integerPart.${fractionalPart.toString().padLeft(2, '0')}';
+      tokenTransfers.add(TokenTransfer(
+          result, "XTZ", to, "explorerURL", "fashsaodisahodi", false));
     }
-    ;
+    print("calldatas length: ${p.callDatas.length}");
     return ListView.builder(
-      itemCount: tokenTransfers.length,
+      itemCount: p.callDatas.length,
       itemBuilder: (context, index) {
         final transfer = tokenTransfers[index];
         return SizedBox(
@@ -247,6 +259,7 @@ class DaoConfigurationDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("building the entire thing");
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -276,7 +289,7 @@ class DaoConfigurationDetails extends StatelessWidget {
             ],
           ),
           SizedBox(height: 20),
-          _buildDetailsSection(context, p.type!),
+          _buildDetailsSection(context, p.type!.toLowerCase()),
         ],
       ),
     );
@@ -287,33 +300,44 @@ class DaoConfigurationDetails extends StatelessWidget {
       case "quorum":
         return _buildQuorumDetails();
       case "voting delay":
-        return _buildDurationDetails(
-            "new voting delay", p.callDatas[0]['duration']);
+        return _buildDurationDetails("new voting delay");
       case "voting period":
-        return _buildDurationDetails("Duration", p.callDatas[0]['duration']);
-      case "treasury":
-        return _buildTreasuryDetails(
-            context, p.callDatas[0]['treasuryAddress']);
+        return _buildDurationDetails(
+          "new voting duration",
+        );
+      case "proposal threshold":
+        return _buildChangeProposalThresholdDetails(context);
       default:
         return SizedBox.shrink();
     }
   }
 
   Widget _buildQuorumDetails() {
+    List params = [];
+    params = decodeFunctionParameters(changeQuorumDef, p.callDatas[0]);
+    var value = params[0];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildRow("Parameter:", "new quorum (percentage)"),
-        _buildRow("Value:", "${p.callDatas[0]['quorum']}%"),
+        _buildRow("Value:", "$value %"),
       ],
     );
   }
 
-  Widget _buildDurationDetails(String title, String totalMinutes) {
-    final totalMinutesInt = int.parse(totalMinutes);
-    final days = totalMinutesInt ~/ (24 * 60);
-    final hours = (totalMinutesInt % (24 * 60)) ~/ 60;
-    final minutes = totalMinutesInt % 60;
+  Widget _buildDurationDetails(
+    String title,
+  ) {
+    print("started building duration details");
+    List params = [];
+    params = decodeFunctionParameters(changeVotingDelayDef, p.callDatas[0]);
+    print("we have some params here $params");
+    var value = params[0];
+    final seconds = int.parse(value);
+    final days = seconds ~/ (24 * 60 * 60);
+    final hours = (seconds % (24 * 60 * 60)) ~/ (60 * 60);
+    final minutes = (seconds % (60 * 60)) ~/ 60;
+    final remainingSeconds = seconds % 60;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,18 +350,21 @@ class DaoConfigurationDetails extends StatelessWidget {
     );
   }
 
-  Widget _buildTreasuryDetails(context, String treasuryAddress) {
+  Widget _buildChangeProposalThresholdDetails(context) {
+    List params =
+        decodeFunctionParameters(changeProposalThresholdDef, p.callDatas[0]);
+    String newValue = params[0].toString();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRow("Parameter:", "new treasury (address)"),
+        _buildRow("Parameter:", "new proposal threshold (uint256)"),
         Row(
           children: [
             SizedBox(
               width: 120,
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Text("Address:"),
+                child: Text("Value:"),
               ),
             ),
             SizedBox(width: 8),
@@ -350,19 +377,9 @@ class DaoConfigurationDetails extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    treasuryAddress,
+                    newValue,
                     style: const TextStyle(color: Colors.white),
                   ),
-                  TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                duration: Duration(seconds: 1),
-                                content: Center(
-                                    child:
-                                        Text('Address copied to clipboard'))));
-                      },
-                      child: Icon(Icons.copy))
                 ],
               ),
             ),
@@ -402,53 +419,65 @@ class DaoConfigurationDetails extends StatelessWidget {
   }
 }
 
-class GovernanceTokenOperationDetails extends StatelessWidget {
-  final Proposal p;
-  List<dynamic> decodeFunctionParameters(
-      ContractFunction functionAbi, String hexString) {
-    // Convert the hex string to bytes
-    Uint8List dataBytes = hexToBytes(hexString);
-    // Remove the 4-byte function selector
-    Uint8List dataWithoutSelector = dataBytes.sublist(4);
-    // Initialize decoding variables
-    int offset = 0;
-    List<dynamic> decodedParams = [];
-    for (var param in functionAbi.parameters) {
-      // Decode each parameter based on its type
-      if (param.type is StringType) {
-        // String type decoding (dynamic)
-        BigInt paramOffset =
-            bytesToInt(dataWithoutSelector.sublist(offset, offset + 32));
-        int paramOffsetInt = paramOffset.toInt();
-        // Decode length of the string
-        BigInt length = bytesToInt(
-            dataWithoutSelector.sublist(paramOffsetInt, paramOffsetInt + 32));
-        int lengthInt = length.toInt();
-        // Extract the actual string data
-        Uint8List stringBytes = dataWithoutSelector.sublist(
-            paramOffsetInt + 32, paramOffsetInt + 32 + lengthInt);
-        decodedParams.add(String.fromCharCodes(stringBytes));
-      } else if (param.type is AddressType) {
-        // Address type decoding (last 20 bytes of the first 32-byte slot)
-        Uint8List addressBytes =
-            dataWithoutSelector.sublist(offset + 12, offset + 32);
-        decodedParams.add(
-            EthereumAddress.fromHex(bytesToHex(addressBytes)).hex..toString());
-      } else if (param.type is UintType) {
-        // Uint type decoding (entire 32 bytes)
-        Uint8List uintBytes = dataWithoutSelector.sublist(offset, offset + 32);
-        decodedParams.add(bytesToInt(uintBytes).toString());
-      } else {
-        throw UnsupportedError(
-            "Unsupported parameter type: ${param.type.runtimeType}");
-      }
-
-      // Move to the next 32-byte slot
-      offset += 32;
+List<dynamic> decodeFunctionParameters(
+    ContractFunction functionAbi, String hexString) {
+  // Convert the hex string to bytes
+  Uint8List dataBytes = hexToBytes(hexString);
+  // Remove the 4-byte function selector
+  Uint8List dataWithoutSelector = dataBytes.sublist(4);
+  // Initialize decoding variables
+  int offset = 0;
+  List<dynamic> decodedParams = [];
+  for (var param in functionAbi.parameters) {
+    // Decode each parameter based on its type
+    if (param.type is StringType) {
+      // String type decoding (dynamic)
+      BigInt paramOffset =
+          bytesToInt(dataWithoutSelector.sublist(offset, offset + 32));
+      int paramOffsetInt = paramOffset.toInt();
+      // Decode length of the string
+      BigInt length = bytesToInt(
+          dataWithoutSelector.sublist(paramOffsetInt, paramOffsetInt + 32));
+      int lengthInt = length.toInt();
+      // Extract the actual string data
+      Uint8List stringBytes = dataWithoutSelector.sublist(
+          paramOffsetInt + 32, paramOffsetInt + 32 + lengthInt);
+      decodedParams.add(String.fromCharCodes(stringBytes));
+    } else if (param.type is AddressType) {
+      // Address type decoding (last 20 bytes of the first 32-byte slot)
+      Uint8List addressBytes =
+          dataWithoutSelector.sublist(offset + 12, offset + 32);
+      decodedParams.add(
+          EthereumAddress.fromHex(bytesToHex(addressBytes)).hex..toString());
+    } else if (param.type is UintType) {
+      // Uint type decoding (entire 32 bytes)
+      Uint8List uintBytes = dataWithoutSelector.sublist(offset, offset + 32);
+      decodedParams.add(bytesToInt(uintBytes).toString());
+    } else {
+      throw UnsupportedError(
+          "Unsupported parameter type: ${param.type.runtimeType}");
     }
 
-    return decodedParams;
+    // Move to the next 32-byte slot
+    offset += 32;
   }
+
+  return decodedParams;
+}
+// Voting Period Duration
+
+// 24 blocks
+
+// Flush Delay Duration
+
+// 12 blocks
+
+// Proposal Blocks to Expire
+
+// 120 blocks
+
+class GovernanceTokenOperationDetails extends StatelessWidget {
+  final Proposal p;
 
   GovernanceTokenOperationDetails({required this.p});
   @override
@@ -804,7 +833,7 @@ class _VotesModalState extends State<VotesModal> {
     for (var doc in votesSnapshot.docs) {
       print("adding a vote");
       widget.p.votes.add(Vote(
-        votingPower: doc.data()['weight'],
+        votingPower: parseNumber(doc.data()['weight'], widget.p.org.decimals!),
         voter: doc.data()['voter'],
         hash: "0x" +
             doc
@@ -815,7 +844,7 @@ class _VotesModalState extends State<VotesModal> {
         proposalID: widget.p.id!,
         option: doc.data()['option'],
         castAt: (doc.data()['cast'] != null)
-            ? (doc.data()['cast'] as Timestamp).toDate()
+            ? DateTime.parse(doc.data()['cast'])
             : null,
       ));
     }

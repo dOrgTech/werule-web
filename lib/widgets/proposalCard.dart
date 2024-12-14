@@ -119,11 +119,11 @@ class _ProposalCardState extends State<ProposalCard> {
                       style: TextStyle(fontSize: 14),
                     ))),
                 SizedBox(
-                    width: 150,
+                    width: 120,
                     child: Center(
                         child: Text(
                       widget.proposal.type!,
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 12),
                     ))),
                 Container(
                     padding: EdgeInsets.only(right: 10),
@@ -183,17 +183,31 @@ class _ProposalCardState extends State<ProposalCard> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(getShortAddress(widget.proposal.author!)),
+                        Text(
+                          getShortAddress(widget.proposal.author!),
+                          style: TextStyle(
+                              color: Color.fromARGB(255, 235, 235, 235)),
+                        ),
                       ],
                     )),
                 SizedBox(
                     width: 150,
                     child: Center(
-                        child: Text(DateFormat('M/d/yyyy HH:mm')
-                            .format(widget.proposal.createdAt!)))),
+                        child: Text(
+                      DateFormat('M/d/yyyy HH:mm')
+                          .format(widget.proposal.createdAt!),
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 235, 235, 235)),
+                    ))),
                 SizedBox(
-                    width: 150,
-                    child: Center(child: Text(widget.proposal.type!))),
+                    width: 120,
+                    child: Center(
+                        child: Text(
+                      widget.proposal.type!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13),
+                    ))),
                 Container(
                     padding: EdgeInsets.only(right: 10),
                     height: 20,

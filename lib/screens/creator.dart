@@ -9,6 +9,7 @@ import '../entities/human.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../entities/token.dart';
+import '../widgets/pleadingForLessDecimals.dart';
 import '../widgets/screen5Members.dart';
 import 'dao.dart';
 import 'explorer.dart';
@@ -173,7 +174,7 @@ class Screen2BasicSetup extends StatefulWidget {
   final DaoConfig daoConfig;
   final VoidCallback onNext;
   final VoidCallback onBack;
-
+  bool memeNotShown = true;
   Screen2BasicSetup(
       {required this.daoConfig, required this.onNext, required this.onBack});
 
@@ -293,6 +294,28 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                       Expanded(
                         flex: 3,
                         child: TextFormField(
+                          onChanged: (value) {
+                            int? decimals = int.tryParse(value);
+                            if (decimals != null &&
+                                decimals > 6 &&
+                                widget.memeNotShown) {
+                              widget.memeNotShown = false;
+                              showDialog(
+                                context: context,
+                                builder: ((context) {
+                                  return AlertDialog(
+                                    backgroundColor: Colors.transparent,
+                                    contentPadding: EdgeInsets.zero,
+                                    content: SizedBox(
+                                      width: 500, // Control width
+                                      height: 300, // Control height
+                                      child: AnimatedMemeWidget(),
+                                    ),
+                                  );
+                                }),
+                              );
+                            }
+                          },
                           controller: _numberOfDecimalsController,
                           keyboardType: TextInputType.number,
                           decoration:
@@ -302,10 +325,11 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                               return 'How many decimal points do want for your governance token?';
                             }
                             int? decimals = int.tryParse(value);
+
                             if (decimals == null ||
                                 decimals < 0 ||
-                                decimals > 18) {
-                              return 'Please enter a number between 0 and 18';
+                                decimals > 7) {
+                              return 'between 0 and 6';
                             }
                             return null;
                           },
@@ -725,248 +749,253 @@ class DurationInput extends StatelessWidget {
   }
 }
 
-class Screen5Members extends StatefulWidget {
-  final DaoConfig daoConfig;
-  final VoidCallback onBack;
-  final VoidCallback onNext;
+// class Screen5Members extends StatefulWidget {
+//   final DaoConfig daoConfig;
+//   final VoidCallback onBack;
+//   final VoidCallback onNext;
 
-  Screen5Members({
-    required this.daoConfig,
-    required this.onBack,
-    required this.onNext,
-  });
+//   Screen5Members({
+//     required this.daoConfig,
+//     required this.onBack,
+//     required this.onNext,
+//   });
 
-  @override
-  _Screen5MembersState createState() => _Screen5MembersState();
-}
+//   @override
+//   _Screen5MembersState createState() => _Screen5MembersState();
+// }
 
-class _Screen5MembersState extends State<Screen5Members> {
-  List<MemberEntry> _memberEntries = [];
-  int _totalTokens = 0;
+// class _Screen5MembersState extends State<Screen5Members> {
+//   List<MemberEntry> _memberEntries = [];
+//   int _totalTokens = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.daoConfig.members.isNotEmpty) {
-      _memberEntries = widget.daoConfig.members
-          .map((member) => MemberEntry(
-                addressController: TextEditingController(text: member.address),
-                amountController:
-                    TextEditingController(text: member.amount.toString()),
-              ))
-          .toList();
-    } else {
-      _addMemberEntry();
-    }
-    _calculateTotalTokens();
-  }
+//   @override
+//   void initState() {
+//     super.initState();
+//     if (widget.daoConfig.members.isNotEmpty) {
+//       _memberEntries = widget.daoConfig.members
+//           .map((member) => MemberEntry(
+//                 addressController: TextEditingController(text: member.address),
+//                 amountController:
+//                     TextEditingController(text: member.amount.toString()),
+//               ))
+//           .toList();
+//     } else {
+//       _addMemberEntry();
+//     }
+//     _calculateTotalTokens();
+//   }
 
-  void _addMemberEntry() {
-    setState(() {
-      _memberEntries.add(MemberEntry(
-        addressController: TextEditingController(),
-        amountController: TextEditingController(),
-      ));
-    });
-  }
+//   void _addMemberEntry() {
+//     setState(() {
+//       _memberEntries.add(MemberEntry(
+//         addressController: TextEditingController(),
+//         amountController: TextEditingController(),
+//       ));
+//     });
+//   }
 
-  void _removeMemberEntry(int index) {
-    setState(() {
-      _memberEntries.removeAt(index);
-      _calculateTotalTokens();
-    });
-  }
+//   void _removeMemberEntry(int index) {
+//     setState(() {
+//       _memberEntries.removeAt(index);
+//       _calculateTotalTokens();
+//     });
+//   }
 
-  void _calculateTotalTokens() {
-    int total = 0;
-    for (var entry in _memberEntries) {
-      int amount = int.tryParse(entry.amountController.text) ?? 0;
-      total += amount;
-    }
-    widget.daoConfig.totalSupply = total.toString().padRight(
-        total.toString().length + widget.daoConfig.numberOfDecimals!, '0');
-    setState(() {
-      _totalTokens = total;
-    });
-  }
+//   void _calculateTotalTokens() {
+//     int total = 0;
+//     for (var entry in _memberEntries) {
+//       int amount = int.tryParse(entry.amountController.text) ?? 0;
+//       total += amount;
+//     }
+//     widget.daoConfig.totalSupply = total.toString().padRight(
+//         total.toString().length + widget.daoConfig.numberOfDecimals!, '0');
+//     setState(() {
+//       _totalTokens = total;
+//     });
+//   }
 
-  void _saveAndNext() {
-    widget.daoConfig.members = _memberEntries
-        .map((entry) => Member(
-              address: entry.addressController.text,
-              personalBalance: entry.amountController.text
-                  .padRight(widget.daoConfig.numberOfDecimals!, "0"),
-              amount: int.tryParse(entry.amountController.text) ?? 0,
-              votingWeight: "0",
-            ))
-        .toList();
-    widget.onNext();
-  }
+//   void _saveAndNext() {
+//     widget.daoConfig.members = _memberEntries
+//         .map((entry) => Member(
+//               address: entry.addressController.text,
+//               personalBalance: entry.amountController.text
+//                   .padRight(widget.daoConfig.numberOfDecimals!, "0"),
+//               amount: int.tryParse(entry.amountController.text) ?? 0,
+//               votingWeight: "0",
+//             ))
+//         .toList();
+//     widget.onNext();
+//   }
 
-  void _loadCsvFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-    );
+//   void _loadCsvFile() async {
+//     FilePickerResult? result = await FilePicker.platform.pickFiles(
+//       type: FileType.custom,
+//       allowedExtensions: ['csv'],
+//     );
 
-    if (result != null) {
-      PlatformFile file = result.files.first;
+//     if (result != null) {
+//       PlatformFile file = result.files.first;
 
-      // Read file content as string
-      final input = utf8.decode(file.bytes!);
-      List<List<dynamic>> csvTable =
-          const CsvToListConverter().convert(input, eol: '\n');
+//       // Read file content as string
+//       final input = utf8.decode(file.bytes!);
+//       List<List<dynamic>> csvTable =
+//           const CsvToListConverter().convert(input, eol: '\n');
 
-      // The first row should be headers
-      if (csvTable.isNotEmpty) {
-        List<dynamic> headers = csvTable[0];
-        if (headers.length >= 2 &&
-            headers[0].toString().toLowerCase() == 'address' &&
-            headers[1].toString().toLowerCase() == 'amount') {
-          // Remove the header row
-          csvTable.removeAt(0);
+//       // The first row should be headers
+//       if (csvTable.isNotEmpty) {
+//         List<dynamic> headers = csvTable[0];
+//         if (headers.length >= 2 &&
+//             headers[0].toString().toLowerCase() == 'address' &&
+//             headers[1].toString().toLowerCase() == 'amount') {
+//           // Remove the header row
+//           csvTable.removeAt(0);
 
-          List<MemberEntry> entries = [];
+//           List<MemberEntry> entries = [];
 
-          for (var row in csvTable) {
-            if (row.length >= 2) {
-              String address = row[0].toString();
-              String amount = row[1].toString();
+//           for (var row in csvTable) {
+//             if (row.length >= 2) {
+//               String address = row[0].toString();
+//               String amount = row[1].toString();
 
-              entries.add(MemberEntry(
-                addressController: TextEditingController(text: address),
-                amountController: TextEditingController(text: amount),
-              ));
-            }
-          }
+//               entries.add(MemberEntry(
+//                 addressController: TextEditingController(text: address),
+//                 amountController: TextEditingController(text: amount),
+//               ));
+//             }
+//           }
 
-          setState(() {
-            _memberEntries = entries;
-            _calculateTotalTokens();
-          });
-        } else {
-          // Show error: Invalid CSV headers
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                    'Invalid CSV headers. Expected "address" and "amount".')),
-          );
-        }
-      }
-    } else {
-      // User canceled the picker
-    }
-  }
+//           setState(() {
+//             _memberEntries = entries;
+//             _calculateTotalTokens();
+//           });
+//         } else {
+//           // Show error: Invalid CSV headers
+//           ScaffoldMessenger.of(context).showSnackBar(
+//             const SnackBar(
+//                 content: Text(
+//                     'Invalid CSV headers. Expected "address" and "amount".')),
+//           );
+//         }
+//       }
+//     } else {
+//       // User canceled the picker
+//     }
+//   }
 
-  @override
-  void dispose() {
-    for (var entry in _memberEntries) {
-      entry.addressController.dispose();
-      entry.amountController.dispose();
-    }
-    super.dispose();
-  }
+//   @override
+//   void dispose() {
+//     for (var entry in _memberEntries) {
+//       entry.addressController.dispose();
+//       entry.amountController.dispose();
+//     }
+//     super.dispose();
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      // Ensure content can scroll
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text('Initial members',
-                style: Theme.of(context).textTheme.headline5),
-            const SizedBox(height: 26),
-            const Text(
-                'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
-                style: TextStyle(
-                    fontSize: 14, color: Color.fromARGB(255, 194, 194, 194))),
-            const SizedBox(height: 53),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
-                Text('$_totalTokens',
-                    style: TextStyle(
-                        fontSize: 19, color: Theme.of(context).indicatorColor)),
-              ],
-            ),
-            const SizedBox(height: 75),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _memberEntries.length,
-              itemBuilder: (context, index) {
-                return MemberEntryWidget(
-                  entry: _memberEntries[index],
-                  onRemove: () => _removeMemberEntry(index),
-                  onChanged: _calculateTotalTokens,
-                );
-              },
-            ),
-            const SizedBox(height: 50),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _loadCsvFile,
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text('Upload CSV'),
-                ),
-                const SizedBox(width: 10),
-                TextButton(
-                  onPressed: _addMemberEntry,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.add),
-                      Text(' Add Member'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 126),
-            SizedBox(
-              width: 700,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: widget.onBack,
-                    child: const Text('< Back'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _saveAndNext,
-                    child: const Text('Save and Continue >'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return SingleChildScrollView(
+//       // Ensure content can scroll
+//       child: Padding(
+//         padding: const EdgeInsets.all(16.0),
+//         child: Column(
+//           children: [
+//             Text('Initial members',
+//                 style: Theme.of(context).textTheme.headline5),
+//             const SizedBox(height: 26),
+//             const Text(
+//                 'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
+//                 style: TextStyle(
+//                     fontSize: 14, color: Color.fromARGB(255, 194, 194, 194))),
+//             const SizedBox(height: 53),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 const Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
+//                 Text('$_totalTokens',
+//                     style: TextStyle(
+//                         fontSize: 19, color: Theme.of(context).indicatorColor)),
+//               ],
+//             ),
+//             const SizedBox(height: 75),
+//             ListView.builder(
+//               shrinkWrap: true,
+//               physics: const NeverScrollableScrollPhysics(),
+//               itemCount: _memberEntries.length,
+//               itemBuilder: (context, index) {
+//                 return MemberEntryWidget(
+//                   entry: _memberEntries[index],
+//                   onRemove: () => _removeMemberEntry(index),
+//                   onChanged: _calculateTotalTokens,
+//                 );
+//               },
+//             ),
+//             const SizedBox(height: 50),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 ElevatedButton.icon(
+//                   onPressed: _loadCsvFile,
+//                   icon: const Icon(Icons.upload_file),
+//                   label: const Text('Upload CSV'),
+//                 ),
+//                 const SizedBox(width: 10),
+//                 TextButton(
+//                   onPressed: _addMemberEntry,
+//                   child: Row(
+//                     mainAxisAlignment: MainAxisAlignment.center,
+//                     children: const [
+//                       Icon(Icons.add),
+//                       Text(' Add Member'),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 126),
+//             SizedBox(
+//               width: 700,
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   TextButton(
+//                     onPressed: widget.onBack,
+//                     child: const Text('< Back'),
+//                   ),
+//                   ElevatedButton(
+//                     onPressed: _saveAndNext,
+//                     child: const Text('Save and Continue >'),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 // Helper classes for member entries
 class MemberEntry {
   TextEditingController addressController;
   TextEditingController amountController;
-
+  ValueKey? key;
   MemberEntry(
-      {required this.addressController, required this.amountController});
+      {this.key,
+      required this.addressController,
+      required this.amountController});
 }
 
 class MemberEntryWidget extends StatelessWidget {
   final MemberEntry entry;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
-
+  ValueKey? key;
   MemberEntryWidget(
-      {required this.entry, required this.onRemove, required this.onChanged});
+      {this.key,
+      required this.entry,
+      required this.onRemove,
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -1805,23 +1834,16 @@ class Screen7Review extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Review & Deploy',
+              Text('${daoConfig.daoName}',
                   style: Theme.of(context).textTheme.headline5),
-              const SizedBox(height: 30),
-              Text('${daoConfig.daoType} Organization'),
               const SizedBox(height: 10),
-              Text('${daoConfig.daoName}'),
-              const SizedBox(height: 10),
+              Text('On-Chain Organization'),
+              const SizedBox(height: 20),
               Container(
                   constraints: const BoxConstraints(maxWidth: 430),
                   child: Text('${daoConfig.daoDescription}')),
               const SizedBox(height: 10),
               Text('Ticker Symbol: ${daoConfig.tokenSymbol}'),
-              const SizedBox(height: 10),
-              Text('Number of Decimals: ${daoConfig.numberOfDecimals}'),
-              const SizedBox(height: 10),
-              Text(
-                  'Non-Transferrable: ${daoConfig.nonTransferrable ? 'Yes' : 'No'}'),
               const SizedBox(height: 30),
               Text('Quorum Threshold: ${daoConfig.quorumThreshold}%'),
               const SizedBox(height: 30),
@@ -1831,22 +1853,65 @@ class Screen7Review extends StatelessWidget {
               Text('Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
               const SizedBox(height: 10),
               Text(
-                  'Execution Availability: ${formatDuration(daoConfig.executionDelay)}'),
+                  'Execution Delay: ${formatDuration(daoConfig.executionDelay)}'),
               const SizedBox(height: 30),
-              const Text('Members:',
+              Text('${daoConfig.members.length} Members',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               DataTable(
                 columns: const [
+                  DataColumn(label: Text('#')),
                   DataColumn(label: Text('Address')),
                   DataColumn(label: Text('Amount')),
                 ],
-                rows: daoConfig.members.map((member) {
-                  return DataRow(cells: [
-                    DataCell(Text(member.address)),
-                    DataCell(Text(member.amount.toString())),
-                  ]);
-                }).toList(),
+                rows: (() {
+                  final members = daoConfig.members;
+                  final rowCount = members.length;
+
+                  if (rowCount <= 10) {
+                    // If 10 or fewer rows, display all with numbering
+                    return List<DataRow>.generate(rowCount, (index) {
+                      final member = members[index];
+                      return DataRow(cells: [
+                        DataCell(Text((index + 1).toString())), // Row number
+                        DataCell(Text(member.address)),
+                        DataCell(Text(member.amount.toString())),
+                      ]);
+                    });
+                  } else {
+                    // More than 10 rows, display first 3, dots, and last 3
+                    final List<DataRow> displayedRows = [];
+
+                    // Add first 3 rows
+                    for (int i = 0; i < 3; i++) {
+                      final member = members[i];
+                      displayedRows.add(DataRow(cells: [
+                        DataCell(Text((i + 1).toString())), // Row number
+                        DataCell(Text(member.address)),
+                        DataCell(Text(member.amount.toString())),
+                      ]));
+                    }
+
+                    // Add dots row
+                    displayedRows.add(DataRow(cells: [
+                      const DataCell(Text('...')),
+                      const DataCell(Text('...')),
+                      const DataCell(Text('...')),
+                    ]));
+
+                    // Add last 3 rows
+                    for (int i = rowCount - 3; i < rowCount; i++) {
+                      final member = members[i];
+                      displayedRows.add(DataRow(cells: [
+                        DataCell(Text((i + 1).toString())), // Correct number
+                        DataCell(Text(member.address)),
+                        DataCell(Text(member.amount.toString())),
+                      ]));
+                    }
+
+                    return displayedRows;
+                  }
+                })(),
               ),
               const SizedBox(height: 30),
               const Text('Registry Entries:',

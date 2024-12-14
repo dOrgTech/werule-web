@@ -1,321 +1,338 @@
-// import 'package:flutter/material.dart';
-// import 'dart:html' as html;
-// import '../entities/org.dart';
-// import '../screens/creator.dart';
+import 'package:flutter/material.dart';
+import 'dart:html' as html;
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import '../entities/org.dart';
+import '../screens/creator.dart';
 
-// class Screen5Members extends StatefulWidget {
-//   final DaoConfig daoConfig;
-//   final VoidCallback onBack;
-//   final VoidCallback onNext;
+class Screen5Members extends StatefulWidget {
+  final DaoConfig daoConfig;
+  final VoidCallback onBack;
+  final VoidCallback onNext;
 
-//   Screen5Members({
-//     required this.daoConfig,
-//     required this.onBack,
-//     required this.onNext,
-//   });
+  Screen5Members({
+    required this.daoConfig,
+    required this.onBack,
+    required this.onNext,
+  });
 
-//   @override
-//   _Screen5MembersState createState() => _Screen5MembersState();
-// }
+  @override
+  _Screen5MembersState createState() => _Screen5MembersState();
+}
 
-// class _Screen5MembersState extends State<Screen5Members> {
-//   List<MemberEntry> _memberEntries = [];
-//   bool isManualEntry = false;
-//   bool isCsvUploaded = false;
-//   int _totalTokens = 0;
+class _Screen5MembersState extends State<Screen5Members> {
+  List<MemberEntry> _memberEntries = [];
+  bool isManualEntry = false;
+  bool isCsvUploaded = false;
+  bool isParsingCsv = false;
+  int _totalTokens = 0;
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     if (widget.daoConfig.members.isNotEmpty) {
-//       _memberEntries = widget.daoConfig.members
-//           .map((member) => MemberEntry(
-//                 addressController: TextEditingController(text: member.address),
-//                 amountController:
-//                     TextEditingController(text: member.amount.toString()),
-//               ))
-//           .toList();
-//     } else {
-//       _addMemberEntry();
-//     }
-//     _calculateTotalTokens();
-//   }
-  
+  // Pagination
+  int _currentPage = 1;
+  static const int _entriesPerPage = 50;
 
-//   void _addMemberEntry() {
-//     setState(() {
-//       _memberEntries.add(MemberEntry(
-//         addressController: TextEditingController(),
-//         amountController: TextEditingController(),
-//       ));
-//     });
-//   }
+  int get _totalPages =>
+      (_memberEntries.length / _entriesPerPage).ceil(); // Calculate total pages
 
-//   void _loadCsvFile() async {
-//     html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-//     uploadInput.accept = '.csv';
-//     uploadInput.click();
+  List<MemberEntry> get _paginatedEntries {
+    int startIndex = (_currentPage - 1) * _entriesPerPage;
+    int endIndex =
+        (_currentPage * _entriesPerPage).clamp(0, _memberEntries.length);
+    return _memberEntries.sublist(startIndex, endIndex);
+  }
 
-//     uploadInput.onChange.listen((e) {
-//       final files = uploadInput.files;
-//       if (files != null && files.length == 1) {
-//         final file = files[0];
-//         final reader = html.FileReader();
+  @override
+  void initState() {
+    super.initState();
+    if (widget.daoConfig.members.isNotEmpty) {
+      _memberEntries = widget.daoConfig.members
+          .map((member) => MemberEntry(
+                addressController: TextEditingController(text: member.address),
+                amountController: TextEditingController(
+                    text: (member.amount ?? 0).toString()),
+              ))
+          .toList();
+    }
+    _calculateTotalTokens();
+  }
 
-//         reader.onLoadEnd.listen((e) {
-//           final contents = reader.result as String;
-//           _processCsvData(contents);
-//         });
+  void _syncMembersToDaoConfig() {
+    widget.daoConfig.members = _memberEntries.map((entry) {
+      return Member(
+        address: entry.addressController.text,
+        amount: int.tryParse(entry.amountController.text) ?? 0,
+        personalBalance: entry.amountController.text
+            .padRight(widget.daoConfig.numberOfDecimals ?? 0, "0"),
+        votingWeight: "0",
+      );
+    }).toList();
+  }
 
-//         reader.readAsText(file);
-//       }
-//     });
-//   }
+  void _addMemberEntry() {
+    setState(() {
+      _memberEntries.add(MemberEntry(
+        addressController: TextEditingController(),
+        amountController: TextEditingController(),
+      ));
+      _syncMembersToDaoConfig();
+    });
+  }
 
-//   void _processCsvData(String fileContent) {
-//     List<String> lines = fileContent.split(RegExp(r'\r?\n')).where((line) => line.trim().isNotEmpty).toList();
+  Future<List<MemberEntry>> _parseCsvInBackground(String fileContent) async {
+    return compute(_processCsvData, fileContent);
+  }
 
-//     if (lines.isEmpty) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('The CSV file is empty.')),
-//       );
-//       return;
-//     }
+  void _loadCsvFile() async {
+    html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+    uploadInput.accept = '.csv';
+    uploadInput.click();
 
-//     List<String> headers = lines[0].split(',');
-//     if (headers.length < 2 || headers[0].trim().toLowerCase() != 'address' || headers[1].trim().toLowerCase() != 'amount') {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Invalid CSV headers. Expected "address" and "amount".')),
-//       );
-//       return;
-//     }
-//     lines.removeAt(0);
+    uploadInput.onChange.listen((e) {
+      final files = uploadInput.files;
+      if (files != null && files.length == 1) {
+        final file = files[0];
+        final reader = html.FileReader();
 
-//     List<MemberEntry> entries = [];
-//     for (var line in lines) {
-//       List<String> values = line.split(',');
-//       if (values.length >= 2) {
-//         String address = values[0].trim();
-//         String amount = values[1].trim();
+        reader.onLoadEnd.listen((e) async {
+          final contents = reader.result as String;
+          setState(() => isParsingCsv = true);
 
-//         if (address.isNotEmpty && amount.isNotEmpty) {
-//           entries.add(MemberEntry(
-//             addressController: TextEditingController(text: address),
-//             amountController: TextEditingController(text: amount),
-//           ));
-//         }
-//       }
-//     }
+          List<MemberEntry> entries = await _parseCsvInBackground(contents);
 
-//     setState(() {
-//       _memberEntries = entries;
-//       isCsvUploaded = true;
-//       _calculateTotalTokens();
-//     });
-//   }
+          setState(() {
+            _memberEntries = entries;
+            isCsvUploaded = true;
+            isManualEntry = false;
+            isParsingCsv = false;
+            _currentPage = 1; // Reset pagination
+            _calculateTotalTokens();
+            _syncMembersToDaoConfig();
+          });
+        });
 
-//   Widget _buildInitialButtons() {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 20.0),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           TextButton(
-//             onPressed: () {
-//                     _loadCsvFile();
-//                   },
-//             child: Container(
-//               height: 130,
-//               width: 170,
-//               child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: [
-                
-//                    Icon(Icons.upload_file, size: 35,),
-                  
-//                   SizedBox(height: 25),
-//                    Text("Upload CSV"),
-                  
-//                 ],
-//               ),
-//             ),
-//           ),
-//           SizedBox(width: 20),
-//           TextButton(
-//             onPressed: () {
-//                       setState(() {
-//                         isManualEntry = true;
-//                         _addMemberEntry();
-//                       });
-//                     },
-                  
-//             child: Container(
-//               height: 130,
-//               width: 170,
-//               child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: [
-//                   Icon(Icons.group_add, size: 35),
-//                   SizedBox(height: 25),  
-//               Text("Add members\nmanually", textAlign: TextAlign.center,),
-                  
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
+        reader.readAsText(file);
+      }
+    });
+  }
 
-//   Widget _buildManualEntry() {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 20.0),
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           ListView.builder(
-//             shrinkWrap: true,
-//             physics: NeverScrollableScrollPhysics(),
-//             itemCount: _memberEntries.length,
-//             itemBuilder: (context, index) {
-//               return MemberEntryWidget(
-//                 entry: _memberEntries[index],
-//                 onRemove: () {
-//                   setState(() {
-//                     _memberEntries.removeAt(index);
-//                     _calculateTotalTokens();
-//                   });
-//                 },
-//                 onChanged: _calculateTotalTokens,
-//               );
-//             },
-//           ),
-//           SizedBox(height: 10),
-//           Center(
-//             child: SizedBox(
-//               width: 240,
-//               child: TextButton(
-//                 onPressed: _addMemberEntry,
-//                 child: Row(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     Icon(Icons.add),
-//                     Text(' Add Member'),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
+  static List<MemberEntry> _processCsvData(String fileContent) {
+    List<MemberEntry> entries = [];
+    List<String> lines = fileContent
+        .split(RegExp(r'\r?\n'))
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
 
-//   Widget _buildCsvTable() {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 20.0),
-//       child: Center(
-//         child: Container(
-//           decoration: BoxDecoration(
-//             border: Border.all(color: Color.fromARGB(255, 74, 74, 74)),
-//           color:Color.fromARGB(255, 32, 32, 32),
-//           ),
-//           width: 600,
-//           height: 500,
-//           child: SingleChildScrollView(
-//             scrollDirection: Axis.vertical,
-//             child: DataTable(
-//               columns: [
-//                 DataColumn(label: Text('Address')),
-//                 DataColumn(label: Text('Amount')),
-//               ],
-//               rows: _memberEntries.map((entry) {
-//                 return DataRow(cells: [
-//                   DataCell(Text(entry.addressController.text)),
-//                   DataCell(Text(entry.amountController.text)),
-//                 ]);
-//               }).toList(),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
+    if (lines.isNotEmpty) {
+      lines.removeAt(0); // Remove header line
 
-//   void _calculateTotalTokens() {
-//     int total = 0;
-//     for (var entry in _memberEntries) {
-//       int amount = int.tryParse(entry.amountController.text) ?? 0;
-//       total += amount;
-//     }
-//     widget.daoConfig.totalSupply = total.toString();
-//     setState(() {
-//       _totalTokens = total;
-//     });
-//   }
+      for (var line in lines) {
+        List<String> values = line.split(',');
+        if (values.length >= 2) {
+          String address = values[0].trim();
+          String amount = values[1].trim();
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return SingleChildScrollView(
-//       child: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           crossAxisAlignment: CrossAxisAlignment.center,
-//           children: [
-//             Center(child: Text('Initial members', style: Theme.of(context).textTheme.headline5)),
-//             SizedBox(height: 100),
-//             const Center(
-//               child: Text(
-//                 'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
-//                 style: TextStyle(fontSize: 14, color: Color.fromARGB(255, 194, 194, 194)),
-//                 textAlign: TextAlign.center,
-//               ),
-//             ),
-//             SizedBox(height: 30),
-//             if (isManualEntry || isCsvUploaded)
-//               Padding(
-//                 padding: const EdgeInsets.only(bottom: 20.0),
-//                 child: Row(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
-//                     Text(
-//                       '$_totalTokens',
-//                       style: TextStyle(fontSize: 19, color: Theme.of(context).indicatorColor),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             if (!isManualEntry && !isCsvUploaded) _buildInitialButtons(),
-//             if (isManualEntry) _buildManualEntry(),
-//             if (isCsvUploaded) _buildCsvTable(),
-//             if (isManualEntry || isCsvUploaded)
-//               Padding(
-//                 padding: const EdgeInsets.only(top: 30.0),
-//                 child: Center(
-//                   child: SizedBox(
-//                     width: 700,
-//                     child: Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [
-//                         TextButton(
-//                           onPressed: widget.onBack,
-//                           child: Text('< Back'),
-//                         ),
-//                         ElevatedButton(
-//                           onPressed: widget.onNext,
-//                           child: Text('Continue >'),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
+          entries.add(MemberEntry(
+            addressController: TextEditingController(text: address),
+            amountController: TextEditingController(text: amount),
+          ));
+        }
+      }
+    }
+    return entries;
+  }
+
+  void _calculateTotalTokens() {
+    int total = 0;
+    for (var entry in _memberEntries) {
+      int amount = int.tryParse(entry.amountController.text) ?? 0;
+      total += amount;
+    }
+
+    widget.daoConfig.totalSupply = total.toString().padRight(
+        total.toString().length + (widget.daoConfig.numberOfDecimals ?? 0),
+        '0');
+    setState(() {
+      _totalTokens = total;
+    });
+  }
+
+  void _changePage(int page) {
+    setState(() {
+      _currentPage = page.clamp(1, _totalPages);
+    });
+  }
+
+  Widget _buildPaginationControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: Icon(Icons.first_page),
+          onPressed: _currentPage > 1 ? () => _changePage(1) : null,
+        ),
+        IconButton(
+          icon: Icon(Icons.navigate_before),
+          onPressed:
+              _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
+        ),
+        Text('Page $_currentPage of $_totalPages'),
+        IconButton(
+          icon: Icon(Icons.navigate_next),
+          onPressed: _currentPage < _totalPages
+              ? () => _changePage(_currentPage + 1)
+              : null,
+        ),
+        IconButton(
+          icon: Icon(Icons.last_page),
+          onPressed: _currentPage < _totalPages
+              ? () => _changePage(_totalPages)
+              : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInitialButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton.icon(
+            onPressed: () {
+              setState(() {
+                isManualEntry = true;
+                isCsvUploaded = false;
+
+                // Ensure at least one empty member field is added
+                if (_memberEntries.isEmpty) {
+                  _addMemberEntry();
+                }
+              });
+            },
+            icon: Icon(Icons.group_add),
+            label: Text("Enter Members Manually"),
+          ),
+          SizedBox(width: 20),
+          ElevatedButton.icon(
+            onPressed: _loadCsvFile,
+            icon: Icon(Icons.upload_file),
+            label: Text("Upload CSV"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManualEntry() {
+    return Column(
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: _memberEntries.length,
+          itemBuilder: (context, index) {
+            return MemberEntryWidget(
+              key: ValueKey(
+                  index), // Assign a unique key for efficient rebuilding
+              entry: _memberEntries[index],
+              onRemove: () {
+                setState(() {
+                  _memberEntries.removeAt(index);
+                  _calculateTotalTokens();
+                  _syncMembersToDaoConfig();
+                });
+              },
+              onChanged: () {
+                _calculateTotalTokens();
+                _syncMembersToDaoConfig();
+              },
+            );
+          },
+        ),
+        SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: _addMemberEntry,
+          icon: Icon(Icons.add),
+          label: Text("Add Another Member"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMembersList() {
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black12,
+            border: Border.all(color: Colors.grey.shade700),
+          ),
+          height: 500, // Restrict height for scrollable area
+          child: ListView.builder(
+            itemCount: _paginatedEntries.length,
+            itemBuilder: (context, index) {
+              final memberEntry = _paginatedEntries[index];
+              return MemberEntryWidget(
+                key: ValueKey(index + ((_currentPage - 1) * _entriesPerPage)),
+                entry: memberEntry,
+                onRemove: () {}, // CSV mode has no remove functionality
+                onChanged: () {}, // CSV mode is read-only
+              );
+            },
+          ),
+        ),
+        _buildPaginationControls(),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Initial members', style: Theme.of(context).textTheme.headline5),
+        const SizedBox(height: 26),
+        const Text(
+            'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
+            style: TextStyle(
+                fontSize: 14, color: Color.fromARGB(255, 194, 194, 194))),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
+            Text('$_totalTokens',
+                style: TextStyle(
+                    fontSize: 19, color: Theme.of(context).indicatorColor)),
+          ],
+        ),
+        const SizedBox(height: 20),
+        if (isParsingCsv)
+          LinearProgressIndicator()
+        else if (isManualEntry)
+          _buildManualEntry()
+        else if (isCsvUploaded)
+          _buildMembersList()
+        else
+          _buildInitialButtons(),
+        const SizedBox(height: 50),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            TextButton(onPressed: widget.onBack, child: const Text('< Back')),
+            ElevatedButton(
+              onPressed: () {
+                _syncMembersToDaoConfig();
+                widget.onNext();
+              },
+              child: const Text('Save and Continue >'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}

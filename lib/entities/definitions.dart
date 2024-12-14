@@ -52,3 +52,31 @@ const transferERC721Def = ContractFunction(
     FunctionParameter("tokenId", UintType()),
   ],
 );
+
+const changeQuorumDef = ContractFunction(
+  "updateQuorumNumerator",
+  [
+    FunctionParameter("newQuorumNumerator", UintType()),
+  ],
+);
+
+const changeVotingDelayDef = ContractFunction(
+  "setVotingDelay",
+  [
+    FunctionParameter("newVotingDelay", UintType()),
+  ],
+);
+
+const changeVotingPeriodDef = ContractFunction(
+  "setVotingPeriod",
+  [
+    FunctionParameter("newVotingPeriod", UintType()),
+  ],
+);
+
+const changeProposalThresholdDef = ContractFunction(
+  "setProposalThreshold",
+  [
+    FunctionParameter("newProposalThreshold", UintType()),
+  ],
+);

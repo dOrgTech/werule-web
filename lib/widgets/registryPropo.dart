@@ -58,7 +58,7 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                 key: _formKey,
                 child: Container(
                   width: 650,
-                  padding: EdgeInsets.all(26.0),
+                  padding: const EdgeInsets.all(26.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
