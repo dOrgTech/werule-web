@@ -106,7 +106,6 @@ class _ExplorerState extends State<Explorer> {
                           return Center(child: CircularProgressIndicator());
                         }
                         print("building explorer" + orgs.length.toString());
-
                         return wide();
                       }), // End of ListView
             ),

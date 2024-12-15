@@ -60,7 +60,9 @@ class AccountState extends State<Account> {
   }
 
   Widget accountWide(context) {
-    widget.member = widget.org.memberAddresses[Human().address!.toLowerCase()];
+    widget.member =
+        widget.org.memberAddresses[Human().address!.toLowerCase()] ??
+            Member(address: Human().address!, personalBalance: "0");
 
     return FutureBuilder(
         future: widget.org.refreshMember(widget.member!),
@@ -74,7 +76,7 @@ class AccountState extends State<Account> {
             );
           }
 
-          return BigInt.parse(widget.member!.personalBalance!) < BigInt.one
+          return (BigInt.parse(widget.member!.personalBalance!) < BigInt.one)
               ? notAMember()
               : ListView(
                   children: [

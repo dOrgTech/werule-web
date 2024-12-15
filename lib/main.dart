@@ -203,23 +203,51 @@ final GoRouter router = GoRouter(
       path: '/:id',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id']!;
-        Org org = orgs.firstWhere((org) => org.address == id);
-        final child = org == null
-            ? SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
-                child: Stack(
-                  children: [
-                    GameOfLife(),
-                    const Center(
-                      child: Text(
-                        "Can't find DAO",
-                        style: TextStyle(fontSize: 40),
-                      ),
-                    ),
-                  ],
-                ),
+        Org? org;
+        bool hasOrg = orgs.any((org) => org.address == id);
+        if (hasOrg) {
+          org = orgs.firstWhere((org) => org.address == id);
+        } else {
+          org = null;
+        }
+        var child = org == null
+            ? FutureBuilder(
+                future: persist(),
+                builder: (context, snapshot) {
+                  context.go("/");
+                  return Explorer();
+                },
               )
+            // ? Scaffold(
+            //     body: SizedBox(
+            //       width: MediaQuery.of(context).size.width,
+            //       height: MediaQuery.of(context).size.height,
+            //       child: Stack(
+            //         children: [
+            //           Opacity(opacity: 0.01, child: GameOfLife()),
+            //           Center(
+            //             child: Column(
+            //               mainAxisAlignment: MainAxisAlignment.center,
+            //               children: const [
+            //                 Text(
+            //                   "Can't find DAO",
+            //                   style: TextStyle(fontSize: 40),
+            //                 ),
+            //                 SizedBox(height: 100),
+            //                 SizedBox(
+            //                   width: 350,
+            //                   child: Text(
+            //                     "Before concluding that you have the wrong address, refresh the page once.",
+            //                     style: TextStyle(fontSize: 15),
+            //                   ),
+            //                 ),
+            //               ],
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //     ),
+            //   )
             : DAO(org: org, InitialTabIndex: 0);
 
         return CustomTransitionPage(

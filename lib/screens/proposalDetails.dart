@@ -69,8 +69,8 @@ class ProposalDetails extends StatefulWidget {
         // BigInt againstResult = number ~/ divisor;
         // p.against = againstResult.toString();
 
-        p.against = data['against'];
-        p.inFavor = data['inFavor'];
+        p.against = parseNumber(data['against'], p.org.decimals!);
+        p.inFavor = parseNumber(data['inFavor'], p.org.decimals!);
 
         p.hash = p.id!;
         p.callData = data['calldata'];
@@ -101,7 +101,7 @@ class ProposalDetails extends StatefulWidget {
         BigInt turnoutbigInt = numerator ~/ BigInt.parse(p.org.totalSupply!);
         double ceva =
             turnoutbigInt.toDouble() / BigInt.from(10).pow(18).toDouble();
-        p.turnout = ceva * BigInt.from(10).pow(p.org.decimals!).toDouble();
+        p.turnout = ceva.toDouble();
         print("TURNOOOOOOOOOOOOOOOUT " + p.turnout.toString());
         p.targets = List<String>.from(data['targets']);
         p.values = List<String>.from(data['values']);
@@ -110,6 +110,9 @@ class ProposalDetails extends StatefulWidget {
         p.description = data['description'] ?? "no description";
         await p.anotherStageGetter();
         _setRemainingTime();
+        if (p.status == "executed") {
+          p.executionHash = "0x${parseTransactionHash(data['executionHash'])}";
+        }
         print("this runs every time there's an update");
         yield snapshot.data() as Map<String, dynamic>?;
       } else {
@@ -136,11 +139,18 @@ class ProposalDetails extends StatefulWidget {
       showCountdown = true;
       enabled = true;
     } else if (p.status == "queued") {
-      DateTime executionAvailable = p.statusHistory["queued"]!
-          .add(Duration(seconds: p.org.executionDelay));
+      print("we've been queued");
+      DateTime? executionAvailable;
+      if (p.statusHistory["queued"] != null) {
+        executionAvailable = p.statusHistory["queued"]!
+            .add(Duration(seconds: p.org.executionDelay));
+      } else {
+        executionAvailable =
+            votingEnds.add(Duration(seconds: p.org.executionDelay));
+      }
       remainingSeconds =
           (executionAvailable.difference(now).inSeconds + 4).abs();
-      print("ACTIVE and we are setting the remaining seconds: " +
+      print("QUEUED and we are setting the remaining seconds: " +
           remainingSeconds.toString());
       showCountdown = true;
     } else {
@@ -264,13 +274,10 @@ class ProposalDetailsState extends State<ProposalDetails> {
           padding: const EdgeInsets.all(18.0),
           child: GestureDetector(
             onTap: () {},
-            child: const Text(
-              'View on Block Explorer',
-              style: TextStyle(
-                color: Colors.green,
-                fontSize: 14,
-              ),
-            ),
+            child: OldSchoolLink(
+                text: 'View on Block Explorer',
+                url:
+                    "${Human().chain.blockExplorer}/tx/${widget.p.executionHash}"),
           ),
         ),
       );
@@ -765,16 +772,16 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
                                       children: [
-                                        const SizedBox(height: 9),
+                                        const SizedBox(height: 3),
                                         ActionLabel(
                                           status: widget.p.status,
                                         ),
                                         widget.showCountdown
                                             ? Container(
                                                 padding: const EdgeInsets.only(
-                                                    top: 22),
+                                                    top: 2),
                                                 child: Transform.scale(
-                                                    scale: 0.8,
+                                                    scale: 0.73,
                                                     child: CNTDN(
                                                       onCountdownComplete: () {
                                                         setState(() {});

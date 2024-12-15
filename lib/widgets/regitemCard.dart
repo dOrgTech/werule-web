@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RegItemCard extends StatelessWidget {
   String itemKey;
@@ -33,19 +34,17 @@ class RegItemCard extends StatelessWidget {
                   child: Row(
                     children: [
                       SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.22,
+                          width: MediaQuery.of(context).size.width * 0.30,
                           child: Text(itemValue)),
-                      TextButton(onPressed: () {}, child: Icon(Icons.copy))
+                      TextButton(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: itemValue));
+                          },
+                          child: Icon(Icons.copy))
                     ],
                   ),
                 )),
           ),
-          SizedBox(width: 150, child: Center(child: Text("6/11/2024 14:47"))),
-          SizedBox(
-              width: 150,
-              child: Center(
-                  child:
-                      ElevatedButton(onPressed: () {}, child: Text("Edit")))),
         ],
       ),
     );

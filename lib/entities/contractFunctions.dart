@@ -67,7 +67,8 @@ getVotes(who, Org org) async {
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
     ethClient.dispose();
-    return rezultat;
+    String withoutDecimals = parseNumber(rezultat, org.decimals!);
+    return withoutDecimals;
   } catch (e) {
     print('Error: $e');
     // Log the full response body
@@ -103,7 +104,9 @@ getBalance(who, Org org) async {
     String rezultat = counter[0].toString();
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
-    return rezultat;
+    ethClient.dispose();
+    String withoutDecimals = parseNumber(rezultat, org.decimals!);
+    return withoutDecimals;
   } catch (e) {
     print('Error: $e');
     // Log the full response body
@@ -138,7 +141,13 @@ getProposalVotes(Proposal p) async {
     print('$againstVotes ${againstVotes}');
     httpClient.close();
     ethClient.dispose();
-    return [againstVotes, forVotes, abstainVotes];
+
+    return [
+      parseNumber(againstVotes.toString(), p.org.decimals!),
+      parseNumber(forVotes.toString(), p.org.decimals!),
+      parseNumber(abstainVotes.toString(), p.org.decimals!)
+    ];
+    // return [againstVotes, forVotes, abstainVotes];
   } catch (e) {
     print('Error: $e');
     // Log the full response body
@@ -149,6 +158,38 @@ getProposalVotes(Proposal p) async {
 }
 
 getProposalState(Proposal p) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractWrapper = DeployedContract(
+    ContractAbi.fromJson(daoAbiGlobal, 'state'),
+    EthereumAddress.fromHex(p.org.address!),
+  );
+  var getRepToken = contractWrapper.function('state');
+
+  try {
+    var counter = await ethClient.call(
+      contract: contractWrapper,
+      function: getRepToken,
+      params: [BigInt.parse(p.id!)],
+    );
+    // Log the RPC response
+    print('RPC Response Proposal STATE');
+    print(counter.toString());
+    int rezultat = int.parse(counter[0].toString()) as int;
+    print('$rezultat ${rezultat.runtimeType}');
+    httpClient.close();
+    ethClient.dispose();
+    return rezultat;
+  } catch (e) {
+    print('Error: $e');
+    // Log the full response body
+    print('Response Body:');
+    print(httpClient.toString());
+    rethrow;
+  }
+}
+
+getQueueTime(Proposal p) async {
   var httpClient = Client();
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
   final contractWrapper = DeployedContract(

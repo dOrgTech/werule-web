@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:Homebase/main.dart';
 import 'package:Homebase/utils/theme.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
@@ -16,6 +18,38 @@ import 'explorer.dart';
 import "package:file_picker/file_picker.dart";
 import 'package:csv/csv.dart';
 import 'dart:convert';
+import '/utils/reusable.dart';
+import 'package:pointycastle/digests/keccak.dart';
+
+String toChecksumAddress(String address) {
+  // Remove the 0x prefix if present
+  address = address.replaceFirst('0x', '').toLowerCase();
+
+  // Compute the keccak256 hash of the address
+  var hashedAddress = keccak256(utf8.encode(address));
+  var hashString = bytesToHex(hashedAddress);
+
+  // Apply the checksum rule
+  String checksummedAddress = '0x';
+  for (int i = 0; i < address.length; i++) {
+    if (int.parse(hashString[i], radix: 16) >= 8) {
+      checksummedAddress += address[i].toUpperCase();
+    } else {
+      checksummedAddress += address[i];
+    }
+  }
+
+  return checksummedAddress;
+}
+
+List<int> keccak256(List<int> input) {
+  final keccak = KeccakDigest(256);
+  return keccak.process(Uint8List.fromList(input));
+}
+
+String bytesToHex(List<int> bytes) {
+  return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join('');
+}
 
 // Screen 1: Select DAO type
 class Screen1DaoType extends StatelessWidget {
@@ -749,232 +783,6 @@ class DurationInput extends StatelessWidget {
   }
 }
 
-// class Screen5Members extends StatefulWidget {
-//   final DaoConfig daoConfig;
-//   final VoidCallback onBack;
-//   final VoidCallback onNext;
-
-//   Screen5Members({
-//     required this.daoConfig,
-//     required this.onBack,
-//     required this.onNext,
-//   });
-
-//   @override
-//   _Screen5MembersState createState() => _Screen5MembersState();
-// }
-
-// class _Screen5MembersState extends State<Screen5Members> {
-//   List<MemberEntry> _memberEntries = [];
-//   int _totalTokens = 0;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     if (widget.daoConfig.members.isNotEmpty) {
-//       _memberEntries = widget.daoConfig.members
-//           .map((member) => MemberEntry(
-//                 addressController: TextEditingController(text: member.address),
-//                 amountController:
-//                     TextEditingController(text: member.amount.toString()),
-//               ))
-//           .toList();
-//     } else {
-//       _addMemberEntry();
-//     }
-//     _calculateTotalTokens();
-//   }
-
-//   void _addMemberEntry() {
-//     setState(() {
-//       _memberEntries.add(MemberEntry(
-//         addressController: TextEditingController(),
-//         amountController: TextEditingController(),
-//       ));
-//     });
-//   }
-
-//   void _removeMemberEntry(int index) {
-//     setState(() {
-//       _memberEntries.removeAt(index);
-//       _calculateTotalTokens();
-//     });
-//   }
-
-//   void _calculateTotalTokens() {
-//     int total = 0;
-//     for (var entry in _memberEntries) {
-//       int amount = int.tryParse(entry.amountController.text) ?? 0;
-//       total += amount;
-//     }
-//     widget.daoConfig.totalSupply = total.toString().padRight(
-//         total.toString().length + widget.daoConfig.numberOfDecimals!, '0');
-//     setState(() {
-//       _totalTokens = total;
-//     });
-//   }
-
-//   void _saveAndNext() {
-//     widget.daoConfig.members = _memberEntries
-//         .map((entry) => Member(
-//               address: entry.addressController.text,
-//               personalBalance: entry.amountController.text
-//                   .padRight(widget.daoConfig.numberOfDecimals!, "0"),
-//               amount: int.tryParse(entry.amountController.text) ?? 0,
-//               votingWeight: "0",
-//             ))
-//         .toList();
-//     widget.onNext();
-//   }
-
-//   void _loadCsvFile() async {
-//     FilePickerResult? result = await FilePicker.platform.pickFiles(
-//       type: FileType.custom,
-//       allowedExtensions: ['csv'],
-//     );
-
-//     if (result != null) {
-//       PlatformFile file = result.files.first;
-
-//       // Read file content as string
-//       final input = utf8.decode(file.bytes!);
-//       List<List<dynamic>> csvTable =
-//           const CsvToListConverter().convert(input, eol: '\n');
-
-//       // The first row should be headers
-//       if (csvTable.isNotEmpty) {
-//         List<dynamic> headers = csvTable[0];
-//         if (headers.length >= 2 &&
-//             headers[0].toString().toLowerCase() == 'address' &&
-//             headers[1].toString().toLowerCase() == 'amount') {
-//           // Remove the header row
-//           csvTable.removeAt(0);
-
-//           List<MemberEntry> entries = [];
-
-//           for (var row in csvTable) {
-//             if (row.length >= 2) {
-//               String address = row[0].toString();
-//               String amount = row[1].toString();
-
-//               entries.add(MemberEntry(
-//                 addressController: TextEditingController(text: address),
-//                 amountController: TextEditingController(text: amount),
-//               ));
-//             }
-//           }
-
-//           setState(() {
-//             _memberEntries = entries;
-//             _calculateTotalTokens();
-//           });
-//         } else {
-//           // Show error: Invalid CSV headers
-//           ScaffoldMessenger.of(context).showSnackBar(
-//             const SnackBar(
-//                 content: Text(
-//                     'Invalid CSV headers. Expected "address" and "amount".')),
-//           );
-//         }
-//       }
-//     } else {
-//       // User canceled the picker
-//     }
-//   }
-
-//   @override
-//   void dispose() {
-//     for (var entry in _memberEntries) {
-//       entry.addressController.dispose();
-//       entry.amountController.dispose();
-//     }
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return SingleChildScrollView(
-//       // Ensure content can scroll
-//       child: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           children: [
-//             Text('Initial members',
-//                 style: Theme.of(context).textTheme.headline5),
-//             const SizedBox(height: 26),
-//             const Text(
-//                 'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
-//                 style: TextStyle(
-//                     fontSize: 14, color: Color.fromARGB(255, 194, 194, 194))),
-//             const SizedBox(height: 53),
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 const Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
-//                 Text('$_totalTokens',
-//                     style: TextStyle(
-//                         fontSize: 19, color: Theme.of(context).indicatorColor)),
-//               ],
-//             ),
-//             const SizedBox(height: 75),
-//             ListView.builder(
-//               shrinkWrap: true,
-//               physics: const NeverScrollableScrollPhysics(),
-//               itemCount: _memberEntries.length,
-//               itemBuilder: (context, index) {
-//                 return MemberEntryWidget(
-//                   entry: _memberEntries[index],
-//                   onRemove: () => _removeMemberEntry(index),
-//                   onChanged: _calculateTotalTokens,
-//                 );
-//               },
-//             ),
-//             const SizedBox(height: 50),
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 ElevatedButton.icon(
-//                   onPressed: _loadCsvFile,
-//                   icon: const Icon(Icons.upload_file),
-//                   label: const Text('Upload CSV'),
-//                 ),
-//                 const SizedBox(width: 10),
-//                 TextButton(
-//                   onPressed: _addMemberEntry,
-//                   child: Row(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: const [
-//                       Icon(Icons.add),
-//                       Text(' Add Member'),
-//                     ],
-//                   ),
-//                 ),
-//               ],
-//             ),
-//             const SizedBox(height: 126),
-//             SizedBox(
-//               width: 700,
-//               child: Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                 children: [
-//                   TextButton(
-//                     onPressed: widget.onBack,
-//                     child: const Text('< Back'),
-//                   ),
-//                   ElevatedButton(
-//                     onPressed: _saveAndNext,
-//                     child: const Text('Save and Continue >'),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 // Helper classes for member entries
 class MemberEntry {
   TextEditingController addressController;
@@ -1361,6 +1169,8 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
 
       try {
         for (Member member in daoConfig.members) {
+          member.personalBalance =
+              member.personalBalance.toString() + "0" * widget.org.decimals!;
           widget.org.memberAddresses[member.address] = member;
         }
         List<String> results = await createDAO(widget.org);
@@ -1472,7 +1282,8 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           child: Screen9DeploymentComplete(
             daoName: daoConfig.daoName ?? 'DAO',
             onGoToDAO: () {
-              context.go("/" + widget.org.address!);
+              String checksumaddress = toChecksumAddress(widget.org.address!);
+              context.go("/$checksumaddress");
               // Navigator.of(context).push(MaterialPageRoute(
               //     builder: (context) => DAO(
               //         org: orgs.firstWhere(

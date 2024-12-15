@@ -168,23 +168,23 @@ class _Screen5MembersState extends State<Screen5Members> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          icon: Icon(Icons.first_page),
+          icon: const Icon(Icons.first_page),
           onPressed: _currentPage > 1 ? () => _changePage(1) : null,
         ),
         IconButton(
-          icon: Icon(Icons.navigate_before),
+          icon: const Icon(Icons.navigate_before),
           onPressed:
               _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
         ),
         Text('Page $_currentPage of $_totalPages'),
         IconButton(
-          icon: Icon(Icons.navigate_next),
+          icon: const Icon(Icons.navigate_next),
           onPressed: _currentPage < _totalPages
               ? () => _changePage(_currentPage + 1)
               : null,
         ),
         IconButton(
-          icon: Icon(Icons.last_page),
+          icon: const Icon(Icons.last_page),
           onPressed: _currentPage < _totalPages
               ? () => _changePage(_totalPages)
               : null,
@@ -199,7 +199,7 @@ class _Screen5MembersState extends State<Screen5Members> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ElevatedButton.icon(
+          TextButton(
             onPressed: () {
               setState(() {
                 isManualEntry = true;
@@ -211,14 +211,40 @@ class _Screen5MembersState extends State<Screen5Members> {
                 }
               });
             },
-            icon: Icon(Icons.group_add),
-            label: Text("Enter Members Manually"),
+            child: SizedBox(
+              height: 130,
+              width: 170,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.group_add, size: 35),
+                  SizedBox(height: 25),
+                  Text(
+                    "Add members\nmanually",
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
           ),
-          SizedBox(width: 20),
-          ElevatedButton.icon(
+          const SizedBox(width: 20),
+          TextButton(
             onPressed: _loadCsvFile,
-            icon: Icon(Icons.upload_file),
-            label: Text("Upload CSV"),
+            child: SizedBox(
+              height: 130,
+              width: 170,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(
+                    Icons.upload_file,
+                    size: 35,
+                  ),
+                  SizedBox(height: 25),
+                  Text("Upload CSV"),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -230,7 +256,7 @@ class _Screen5MembersState extends State<Screen5Members> {
       children: [
         ListView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: _memberEntries.length,
           itemBuilder: (context, index) {
             return MemberEntryWidget(
@@ -251,12 +277,13 @@ class _Screen5MembersState extends State<Screen5Members> {
             );
           },
         ),
-        SizedBox(height: 20),
-        ElevatedButton.icon(
+        const SizedBox(height: 40),
+        TextButton.icon(
           onPressed: _addMemberEntry,
-          icon: Icon(Icons.add),
-          label: Text("Add Another Member"),
+          icon: const Icon(Icons.add),
+          label: const Text("Add Another Member"),
         ),
+        const SizedBox(height: 30),
       ],
     );
   }
@@ -311,7 +338,7 @@ class _Screen5MembersState extends State<Screen5Members> {
         ),
         const SizedBox(height: 20),
         if (isParsingCsv)
-          LinearProgressIndicator()
+          const LinearProgressIndicator()
         else if (isManualEntry)
           _buildManualEntry()
         else if (isCsvUploaded)

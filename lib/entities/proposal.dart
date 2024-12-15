@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:math';
 import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/entities/token.dart';
@@ -23,19 +25,19 @@ var proposalTypes = {
 var state;
 var newProposalWidgets = {
   "New Project (arbitrated)": (Org org) => NewProject(org: org),
-  "Offchain Poll": (Org org) => NotImplemented(),
+  "Offchain Poll": (Org org) => const NotImplemented(),
   "Transfer Assets": (Org org, Proposal p, State state) =>
       TransferWidget(org: org, p: p, proposalsState: state),
   "Edit Registry": (Org org, Proposal p, State state) =>
       RegistryProposalWidget(org: org, p: p, proposalsState: state),
-  "Add Lambda": (Org org) => NotImplemented(),
-  "Remove Lambda": (Org org, State state) => NotImplemented(),
+  "Add Lambda": (Org org) => const NotImplemented(),
+  "Remove Lambda": (Org org, State state) => const NotImplemented(),
   "Contract Call": (Org org, Proposal p, State state) =>
       ContractInteractionWidget(p: p),
   "DAO Configuration": (Org org, Proposal p, State state) =>
       DaoConfigurationWidget(org: org, p: p, proposalsState: state),
-  "Change Guardian": (Org org) => NotImplemented(),
-  "Change DAO Delegate": (Org org) => NotImplemented()
+  "Change Guardian": (Org org) => const NotImplemented(),
+  "Change DAO Delegate": (Org org) => const NotImplemented()
 };
 
 class NotImplemented extends StatelessWidget {
@@ -45,7 +47,7 @@ class NotImplemented extends StatelessWidget {
     return Container(
         width: 300,
         height: 240,
-        child: Center(
+        child: const Center(
           child: Text("NOT IMPLEMENTED"),
         ));
   }
@@ -138,11 +140,13 @@ class Proposal {
   String? callData = "0x";
   DateTime? createdAt;
   DateTime? votingStarts;
+  String totalSupply = "";
   // String? status;
   DateTime? votingEnds;
   DateTime? executionStarts;
   DateTime? executionEnds;
   String status = "";
+  String executionHash = "";
   Map<String, DateTime> statusHistory = {"pending": DateTime.now()};
   int turnoutPercent = 0;
   double turnout = 0;
@@ -153,7 +157,9 @@ class Proposal {
   String? externalResource = "(no link provided)";
   List<Txaction> transactions = [];
   List<Vote> votes = [];
-  Proposal({required this.org, this.name});
+  Proposal({required this.org, this.name}) {
+    totalSupply = org.totalSupply!;
+  }
 
   castVote(Vote v) async {
     var votesCollection = FirebaseFirestore.instance
@@ -177,7 +183,7 @@ class Proposal {
         .collection("daos${Human().chain.name}")
         .doc(org.address)
         .collection("proposals");
-    pollsCollection.doc(hash.toString()).set(this.toJson());
+    pollsCollection.doc(hash.toString()).set(toJson());
     votes.add(v);
   }
 
@@ -194,8 +200,8 @@ class Proposal {
     if (theVotes.runtimeType == String) {
       print("some error from getProposalVotes $votes");
     }
-    this.votesAgainst = theVotes[0];
-    this.votesFor = theVotes[1];
+    votesAgainst = theVotes[0];
+    votesFor = theVotes[1];
   }
 
 //////////////////////////////////
@@ -212,9 +218,9 @@ class Proposal {
     }
     print("new status baby " + newStatus);
     DateTime start = statusHistory["pending"]!;
-    Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
-    Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    Duration executionDelay = Duration(seconds: org.executionDelay ?? 0);
+    Duration votingDelay = Duration(minutes: org.votingDelay);
+    Duration votingDuration = Duration(minutes: org.votingDuration);
+    Duration executionDelay = Duration(seconds: org.executionDelay);
     DateTime activeStart = start.add(votingDelay);
     DateTime votingEnd = activeStart.add(votingDuration);
     DateTime now = DateTime.now();
@@ -237,10 +243,12 @@ class Proposal {
       statusHistory.addAll({"passed": votingEnd});
     }
     if (newStatus == "executed") {
-      DateTime queuedTime =
-          statusHistory['queued'] ?? now.subtract(const Duration(minutes: 23));
-      DateTime executedTime =
-          statusHistory['executed'] ?? now.subtract(const Duration(minutes: 3));
+      DateTime queuedTime = statusHistory['queued'] ??
+          statusHistory['queued'] ??
+          now.subtract(const Duration(minutes: 23));
+      DateTime executedTime = statusHistory['executed'] ??
+          statusHistory['executed'] ??
+          now.subtract(const Duration(minutes: 3));
       statusHistory.clear();
       statusHistory.addAll({"pending": start});
       statusHistory.addAll({"active": activeStart});
@@ -262,21 +270,24 @@ class Proposal {
       }
     }
     if (newStatus == "queued") {
-      print("it is in fact queued");
       bool queuedTimeExists = false;
       DateTime? queuedTime = statusHistory['queued'];
       if (queuedTime != null) {
         queuedTimeExists = true;
       } else {
-        queuedTime = now.subtract(const Duration(minutes: 13));
+        queuedTime =
+            votingEnds!.add(votingDuration).add(const Duration(minutes: 5));
       }
       statusHistory.clear();
       statusHistory.addAll({"pending": start});
       statusHistory.addAll({"active": activeStart});
       statusHistory.addAll({"passed": votingEnd});
       statusHistory.addAll({"queued": queuedTime});
-      if (queuedTimeExists || now.isAfter(queuedTime.add(executionDelay))) {
+      if (queuedTimeExists && now.isAfter(queuedTime.add(executionDelay))) {
         print("queued time exists and we are after execution delay");
+        print(now.toIso8601String());
+        print(queuedTime.add(executionDelay).toIso8601String());
+        print("execution delay is " + org.executionDelay.toString());
         statusHistory.addAll({"executable": queuedTime.add(executionDelay)});
         newStatus = "executable";
       }
@@ -301,6 +312,7 @@ class Proposal {
       'callDatas': callDatas,
       'targets': targets,
       'values': values,
+      'totalSupply': totalSupply,
       'statusHistory': statusHistory.map((key, value) {
         return MapEntry(key, Timestamp.fromDate(value));
       }),
@@ -506,41 +518,13 @@ class Proposal {
     return newStatus;
   }
 
-  Duration? getRemainingTime() {
-    DateTime start = statusHistory["pending"]!;
-    Duration votingDelay = Duration(minutes: org.votingDelay ?? 0);
-    Duration votingDuration = Duration(minutes: org.votingDuration ?? 0);
-    Duration executionDelay = Duration(minutes: org.executionDelay ?? 0);
-    DateTime activeStart = start.add(votingDelay);
-    DateTime votingEnd = activeStart.add(votingDuration);
-    // DateTime executionDeadline = votingEnd.add(executionDelay);
-
-    DateTime now = DateTime.now();
-
-    if (now.isBefore(activeStart)) {
-      // Time remaining in "pending" status
-      return activeStart.difference(now);
-    } else if (now.isBefore(votingEnd)) {
-      // Time remaining in "active" status
-      return votingEnd.difference(now);
-    } else if (stage == ProposalStatus.executable) {
-      DateTime queuedTime = statusHistory["executable"]!;
-      DateTime executionDeadline = queuedTime.add(executionDelay);
-      // Time remaining in "executable" status
-      return executionDeadline.difference(now);
-    }
-
-    // If the status is past "executable," return null
-    return null;
-  }
-
   List<Color> activecolors = [
-    Color.fromARGB(255, 167, 147, 255),
-    Color.fromARGB(255, 159, 150, 196),
+    const Color.fromARGB(255, 167, 147, 255),
+    const Color.fromARGB(255, 159, 150, 196),
   ];
   List<Color> pendingColors = [
-    Color.fromARGB(255, 255, 248, 183),
-    Color.fromARGB(255, 255, 251, 209),
+    const Color.fromARGB(255, 255, 248, 183),
+    const Color.fromARGB(255, 255, 251, 209),
   ];
   Widget statusPill(String status, context) {
     final Map<String, Widget> statuses = {
@@ -549,7 +533,7 @@ class Proposal {
             gradient: LinearGradient(colors: activecolors),
             border: Border.all(
               width: 0.7,
-              color: Color.fromARGB(255, 150, 126, 255),
+              color: const Color.fromARGB(255, 150, 126, 255),
             ),
             borderRadius: BorderRadius.circular(15.0),
           ),
@@ -581,9 +565,9 @@ class Proposal {
       "passed": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            border:
-                Border.all(width: 0.5, color: Color.fromARGB(255, 18, 141, 45)),
-            color: Color.fromARGB(255, 21, 50, 65),
+            border: Border.all(
+                width: 0.5, color: const Color.fromARGB(255, 18, 141, 45)),
+            color: const Color.fromARGB(255, 21, 50, 65),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -597,9 +581,9 @@ class Proposal {
       "queued": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            border:
-                Border.all(width: 0.3, color: Color.fromARGB(255, 26, 26, 26)),
-            color: Color.fromARGB(255, 184, 230, 233),
+            border: Border.all(
+                width: 0.3, color: const Color.fromARGB(255, 26, 26, 26)),
+            color: const Color.fromARGB(255, 184, 230, 233),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -613,9 +597,9 @@ class Proposal {
       "defeated": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            border:
-                Border.all(width: 0.5, color: Color.fromARGB(255, 141, 18, 39)),
-            color: Color.fromARGB(255, 46, 27, 27),
+            border: Border.all(
+                width: 0.5, color: const Color.fromARGB(255, 141, 18, 39)),
+            color: const Color.fromARGB(255, 46, 27, 27),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -629,9 +613,9 @@ class Proposal {
       "cancelled": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            border:
-                Border.all(width: 0.5, color: Color.fromARGB(255, 141, 18, 39)),
-            color: Color.fromARGB(255, 46, 27, 27),
+            border: Border.all(
+                width: 0.5, color: const Color.fromARGB(255, 141, 18, 39)),
+            color: const Color.fromARGB(255, 46, 27, 27),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -661,7 +645,7 @@ class Proposal {
       "executed": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            color: Color.fromARGB(255, 63, 117, 86).withOpacity(0.5),
+            color: const Color.fromARGB(255, 63, 117, 86).withOpacity(0.5),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -675,7 +659,7 @@ class Proposal {
       "expired": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            color: Color.fromARGB(255, 202, 202, 202),
+            color: const Color.fromARGB(255, 202, 202, 202),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -689,7 +673,7 @@ class Proposal {
       "no quorum": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            color: Color.fromARGB(255, 82, 82, 82),
+            color: const Color.fromARGB(255, 82, 82, 82),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -703,7 +687,7 @@ class Proposal {
       "rejected": Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
-            color: Color.fromARGB(255, 87, 65, 64),
+            color: const Color.fromARGB(255, 87, 65, 64),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(3),
@@ -714,7 +698,7 @@ class Proposal {
               style: TextStyle(color: Color.fromARGB(255, 255, 233, 233)),
             ),
           )),
-      "All": Text("All")
+      "All": const Text("All")
     };
 
     return statuses[status]!;

@@ -36,8 +36,8 @@ class DAOCard extends StatelessWidget {
                   child: Column(
                     children: [
                       Container(
-                        height: 40,
-                        width: 40,
+                        height: 32,
+                        width: 32,
                         child: FutureBuilder<Uint8List>(
                           future: generateAvatarAsync(hashString(org
                               .address!)), // Make your generateAvatar function return Future<Uint8List>
@@ -45,8 +45,8 @@ class DAOCard extends StatelessWidget {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return Container(
-                                width: 40.0,
-                                height: 40.0,
+                                width: 32.0,
+                                height: 32.0,
                                 color: Colors.grey,
                               );
                             } else if (snapshot.hasData) {
@@ -54,8 +54,8 @@ class DAOCard extends StatelessWidget {
                               return Image.memory(snapshot.data!);
                             } else {
                               return Container(
-                                width: 40.0,
-                                height: 40.0,
+                                width: 32.0,
+                                height: 32.0,
                                 color: const Color.fromARGB(
                                     255, 116, 116, 116), // Error color
                               );
@@ -119,6 +119,11 @@ class DAOCard extends StatelessWidget {
                                             "...",
                                     style: TextStyle(fontSize: 13)))),
                       ),
+                      const Spacer(),
+                      Text(getShortAddress(org.address!),
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context).indicatorColor))
                     ],
                   ),
                 ),
