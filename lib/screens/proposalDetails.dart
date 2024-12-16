@@ -556,10 +556,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
         BigInt.parse(widget.p.inFavor) + BigInt.parse(widget.p.against);
     double inFavorPercentage = BigInt.parse(widget.p.inFavor) / totalVotes;
     double againstPercentage = BigInt.parse(widget.p.against) / totalVotes;
-
     // double turnout = double.parse(totalVotes.toString());
     // double turnout = double.parse(widget.p.org.totalSupply!);
-
     return Container(
       alignment: Alignment.topCenter,
       child: StreamBuilder(
@@ -609,7 +607,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 40),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -618,13 +616,13 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                   child: Text(
                                     widget.p.name!,
                                     style: const TextStyle(
-                                        fontSize: 22,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 6),
                             Container(
                               padding: const EdgeInsets.all(7),
                               decoration: BoxDecoration(
@@ -648,6 +646,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
+                                  const SizedBox(height: 20),
                                   SizedBox(
                                     height: 30,
                                     child: Center(
@@ -675,36 +674,6 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                                                 'Address copied to clipboard'))));
                                               },
                                               child: const Icon(Icons.copy)),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  SizedBox(
-                                    height: 30,
-                                    child: Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Text("Created At: "),
-                                          Text(
-                                            widget.p.createdAt!
-                                                .toLocal()
-                                                .toString(),
-                                            style:
-                                                const TextStyle(fontSize: 11),
-                                          ),
-                                          const SizedBox(
-                                            width: 14,
-                                          ),
-                                          TextButton(
-                                              onPressed: () {
-                                                launchUrl(widget.p
-                                                    .externalResource! as Uri);
-                                              },
-                                              child: const Icon(
-                                                  Icons.open_in_new)),
                                         ],
                                       ),
                                     ),

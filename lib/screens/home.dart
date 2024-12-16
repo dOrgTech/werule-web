@@ -39,12 +39,43 @@ class _HomeState extends State<Home> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Container(
+                          height: 50,
+                          width: 50,
+                          child: FutureBuilder<Uint8List>(
+                            future: generateAvatarAsync(hashString(widget.org
+                                .address!)), // Make your generateAvatar function return Future<Uint8List>
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Container(
+                                  width: 32.0,
+                                  height: 32.0,
+                                  color: Colors.grey,
+                                );
+                              } else if (snapshot.hasData) {
+                                print("generating");
+                                return Image.memory(snapshot.data!);
+                              } else {
+                                return Container(
+                                  width: 32.0,
+                                  height: 32.0,
+                                  color: const Color.fromARGB(
+                                      255, 116, 116, 116), // Error color
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.all(18.0),
                         child: Text(
@@ -55,11 +86,11 @@ class _HomeState extends State<Home> {
                       ),
                       const SizedBox(width: 10),
                       Padding(
-                        padding: const EdgeInsets.all(18.0),
+                        padding: const EdgeInsets.symmetric(vertical: 18.0),
                         child: TextButton(
                             style: TextButton.styleFrom(
                               side: BorderSide(
-                                  width: 0.2,
+                                  width: 0.1,
                                   color: Theme.of(context).hintColor),
                             ),
                             onPressed: () {
@@ -69,8 +100,14 @@ class _HomeState extends State<Home> {
                                         content: ViewConfig(org: widget.org),
                                       )));
                             },
-                            child: const Text("View Config",
-                                style: TextStyle(fontSize: 12))),
+                            child: Opacity(
+                              opacity: 0.7,
+                              child: Icon(
+                                Icons.settings,
+                                color: Theme.of(context).indicatorColor,
+                                size: 14,
+                              ),
+                            )),
                       )
                     ],
                   ),

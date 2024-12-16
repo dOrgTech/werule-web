@@ -356,22 +356,24 @@ class ProposalListState extends State<ProposalList> {
           width: 300,
           height: 160,
           child: TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Padding(
-                      padding: const EdgeInsets.only(left: 18.0),
-                      child: Text(item.toString()),
-                    ),
-                    content:
-                        newProposalWidgets[item]!(widget.org, widget.p, this),
-                  );
-                },
-              );
-            },
+            onPressed: item == "Off-Chain Debate"
+                ? null
+                : () {
+                    Navigator.of(context).pop();
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Padding(
+                            padding: const EdgeInsets.only(left: 18.0),
+                            child: Text(item.toString()),
+                          ),
+                          content: newProposalWidgets[item]!(
+                              widget.org, widget.p, this),
+                        );
+                      },
+                    );
+                  },
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(12.0),

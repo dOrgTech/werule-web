@@ -278,7 +278,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   width: 500,
                   child: TextFormField(
                     controller: _daoNameController,
-                    maxLength: 80,
+                    maxLength: 38,
                     decoration: const InputDecoration(labelText: 'DAO Name'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
