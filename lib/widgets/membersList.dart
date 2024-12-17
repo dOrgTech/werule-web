@@ -11,135 +11,214 @@ String add1 = "https://i.ibb.co/2WbL5nC/add1.png";
 String add2 = "https://i.ibb.co/6rmksXk/add2.png";
 List<String> userPics = [add1, add2];
 
-class MembersList extends StatelessWidget {
+class MembersList extends StatefulWidget {
   MembersList({super.key, required this.org});
-  Org org;
+  final Org org;
+
+  @override
+  State<MembersList> createState() => _MembersListState();
+}
+
+class _MembersListState extends State<MembersList> {
+  Future<void>? _fetchFuture;
+  int _currentPage = 1;
+  static const int _pageSize = 20;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.org.memberAddresses.isEmpty) {
+      _fetchFuture = _fetchMembers();
+    }
+  }
+
+  Future<void> _fetchMembers() async {
+    final querySnap = await FirebaseFirestore.instance
+        .collection("idaos${Human().chain.name}")
+        .doc(widget.org.address)
+        .collection("members")
+        .get();
+
+    for (var doc in querySnap.docs) {
+      Member m = Member(address: doc.data()['address']);
+      // Keep personalBalance as a String to avoid breaking existing code
+      m.personalBalance = doc.data()['personalBalance'].toString();
+      List<String> proposalsCreatedHashes =
+          List<String>.from(doc.data()['proposalsCreated'] ?? []);
+      List<String> proposalsVotedHashes =
+          List<String>.from(doc.data()['proposalsVoted'] ?? []);
+      m.proposalsCreated = widget.org.proposals
+          .where((proposal) => proposalsCreatedHashes.contains(proposal.hash))
+          .toList();
+      m.proposalsVoted = widget.org.proposals
+          .where((proposal) => proposalsVotedHashes.contains(proposal.hash))
+          .toList();
+      m.lastSeen = doc.data()['lastSeen'] != null
+          ? (doc.data()['lastSeen'] as Timestamp).toDate()
+          : null;
+      m.delegate = doc.data()['delegate'] ?? "";
+      m.constituentsAddresses =
+          List<String>.from(doc.data()['constituents'] ?? []);
+      widget.org.memberAddresses[m.address.toLowerCase()] = m;
+    }
+  }
+
+  void _changePage(int pageNumber) {
+    setState(() {
+      _currentPage = pageNumber;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection("idaos${Human().chain.name}")
-            .doc(org.address)
-            .collection("members")
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-                child: CircularProgressIndicator()); // Show a loading indicator
-          }
+    if (widget.org.memberAddresses.isNotEmpty) {
+      return _buildTable();
+    }
 
-          if (snapshot.hasError) {
-            return Text("Error: ${snapshot.error}");
-          }
+    return FutureBuilder<void>(
+      future: _fetchFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (!snapshot.hasData) {
-            return Text(
-                "Members are being indexed. Check back later or use Remix to interact with the DAO.");
-          }
+        if (snapshot.hasError) {
+          return Text("Error: ${snapshot.error}");
+        }
 
-          final docs = snapshot.data!.docs;
-          for (var doc in docs) {
-            Member m = Member(address: doc.data()['address']);
-            m.personalBalance = doc.data()['personalBalance'];
+        if (widget.org.memberAddresses.isEmpty) {
+          return const Text(
+              "Members are being indexed. Check back later or use Remix to interact with the DAO.");
+        }
 
-            List<String> proposalsCreatedHashes =
-                List<String>.from(doc.data()['proposalsCreated'] ?? []);
-            List<String> proposalsVotedHashes =
-                List<String>.from(doc.data()['proposalsVoted'] ?? []);
-            m.proposalsCreated = org.proposals
-                .where((proposal) =>
-                    proposalsCreatedHashes.contains(proposal.hash))
-                .toList();
-            m.proposalsVoted = org.proposals
-                .where(
-                    (proposal) => proposalsVotedHashes.contains(proposal.hash))
-                .toList();
-            m.lastSeen = doc.data()['lastSeen'] != null
-                ? (doc.data()['lastSeen'] as Timestamp).toDate()
-                : null;
-            org.memberAddresses[m.address.toLowerCase()] = m;
-            m.delegate = doc.data()['delegate'] ?? "";
-            m.constituentsAddresses =
-                List<String>.from(doc.data()['constituents'] ?? []);
-          }
+        return _buildTable();
+      },
+    );
+  }
 
-          List<TableRow> tableRows = [];
-          for (Member m in org.memberAddresses.values) {
-            tableRows.add(MemberTableRow(m, context, org.decimals));
-          }
-          return Column(children: [
-            Table(
-              border: TableBorder.all(color: Colors.transparent),
-              columnWidths: const <int, TableColumnWidth>{
-                0: FlexColumnWidth(2.4),
-                1: FlexColumnWidth(),
-                2: FlexColumnWidth(),
-                3: FlexColumnWidth(),
-                4: FlexColumnWidth(),
-                5: FlexColumnWidth(),
-              },
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              children: <TableRow>[
-                TableRow(
-                  children: <Widget>[
-                    Container(
-                      height: 22,
-                      color: const Color.fromARGB(0, 76, 175, 79),
-                      child: const Padding(
-                        padding: EdgeInsets.only(top: 4.0, left: 75),
-                        child: Text("Address"),
-                      ),
-                    ),
-                    Container(
-                        height: 35,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: const Center(
-                            child: Text(
-                          "Voting\nWeight",
-                          textAlign: TextAlign.center,
-                        ))),
-                    Container(
-                        height: 42,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: Center(
-                            child: Text("Personal\n${org.symbol!} Balance",
-                                textAlign: TextAlign.center))),
-                    Container(
-                        height: 42,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: Center(
-                            child: Text("Proposals\nCreated",
-                                textAlign: TextAlign.center))),
-                    Container(
-                        height: 42,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: const Center(
-                            child: Text("Proposals\nVoted",
-                                textAlign: TextAlign.center))),
-                  ],
+  Widget _buildTable() {
+    final allMembers = widget.org.memberAddresses.values.toList();
+    // Sort by personalBalance descending, parsing from String to BigInt
+    allMembers.sort((a, b) => BigInt.parse(b.personalBalance!)
+        .compareTo(BigInt.parse(a.personalBalance!)));
+
+    final totalPages = (allMembers.length / _pageSize).ceil();
+    final startIndex = (_currentPage - 1) * _pageSize;
+    final endIndex = (startIndex + _pageSize).clamp(0, allMembers.length);
+    final pageMembers = allMembers.sublist(startIndex, endIndex);
+
+    List<TableRow> tableRows = pageMembers
+        .map((m) => MemberTableRow(m, context, widget.org.decimals))
+        .toList();
+
+    return Column(children: [
+      Table(
+        border: TableBorder.all(color: Colors.transparent),
+        columnWidths: const <int, TableColumnWidth>{
+          0: FlexColumnWidth(2.4),
+          1: FlexColumnWidth(),
+          2: FlexColumnWidth(),
+          3: FlexColumnWidth(),
+          4: FlexColumnWidth(),
+          5: FlexColumnWidth(),
+        },
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: <TableRow>[
+          TableRow(
+            children: <Widget>[
+              Container(
+                height: 22,
+                color: const Color.fromARGB(0, 76, 175, 79),
+                child: const Padding(
+                  padding: EdgeInsets.only(top: 4.0, left: 75),
+                  child: Text("Address"),
                 ),
-              ],
-            ),
-            Opacity(
-                opacity: 0.5,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 29.0),
-                  child: Divider(),
-                )),
-            Table(
-                border: TableBorder.all(color: Colors.transparent),
-                columnWidths: const <int, TableColumnWidth>{
-                  0: FlexColumnWidth(2.4),
-                  1: FlexColumnWidth(),
-                  2: FlexColumnWidth(),
-                  3: FlexColumnWidth(),
-                  4: FlexColumnWidth(),
-                  5: FlexColumnWidth(),
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: tableRows)
-          ]);
-        });
+              ),
+              Container(
+                height: 35,
+                color: const Color.fromARGB(0, 76, 175, 79),
+                child: const Center(
+                  child: Text("Voting\nWeight", textAlign: TextAlign.center),
+                ),
+              ),
+              Container(
+                height: 42,
+                color: const Color.fromARGB(0, 76, 175, 79),
+                child: Center(
+                  child: Text(
+                    "Personal\n${widget.org.symbol!} Balance ▼",
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              Container(
+                height: 42,
+                color: const Color.fromARGB(0, 76, 175, 79),
+                child: const Center(
+                  child:
+                      Text("Proposals\nCreated", textAlign: TextAlign.center),
+                ),
+              ),
+              Container(
+                height: 42,
+                color: const Color.fromARGB(0, 76, 175, 79),
+                child: const Center(
+                  child: Text("Proposals\nVoted", textAlign: TextAlign.center),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      Opacity(
+        opacity: 0.5,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 29.0),
+          child: Divider(),
+        ),
+      ),
+      Table(
+        border: TableBorder.all(color: Colors.transparent),
+        columnWidths: const <int, TableColumnWidth>{
+          0: FlexColumnWidth(2.4),
+          1: FlexColumnWidth(),
+          2: FlexColumnWidth(),
+          3: FlexColumnWidth(),
+          4: FlexColumnWidth(),
+          5: FlexColumnWidth(),
+        },
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: tableRows,
+      ),
+      const SizedBox(height: 20),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.first_page),
+            onPressed: _currentPage > 1 ? () => _changePage(1) : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.navigate_before),
+            onPressed:
+                _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
+          ),
+          Text('Page $_currentPage of $totalPages'),
+          IconButton(
+            icon: const Icon(Icons.navigate_next),
+            onPressed: _currentPage < totalPages
+                ? () => _changePage(_currentPage + 1)
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.last_page),
+            onPressed: _currentPage < totalPages
+                ? () => _changePage(totalPages)
+                : null,
+          ),
+        ],
+      )
+    ]);
   }
 }
 

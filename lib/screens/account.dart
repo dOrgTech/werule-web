@@ -20,6 +20,7 @@ class Account extends StatefulWidget {
   Account({super.key, this.member, required this.org});
   int status = 0;
   List<Widget> createdProposals = [];
+  List<Widget> votedOnProposals = [];
   Member? member;
   Org org;
   @override
@@ -29,6 +30,8 @@ class Account extends StatefulWidget {
 class AccountState extends State<Account> {
   @override
   Widget build(BuildContext context) {
+    widget.createdProposals = [];
+    widget.votedOnProposals = [];
     if (!(Human().address == null)) {
       for (Proposal p in widget.org.proposals) {
         if (p.author!.toLowerCase() == Human().address!.toLowerCase()) {
