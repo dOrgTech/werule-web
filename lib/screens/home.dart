@@ -20,8 +20,11 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     int activeProposals = 0;
     int awaitingExecution = 0;
+    print("number of total proposals");
     for (Proposal p in widget.org.proposals) {
+      print("this one has the status " + p.status);
       if (p.status == "active") {
+        print("found an active proposal");
         activeProposals++;
       } else if (p.status == "executable") {
         awaitingExecution++;
@@ -185,11 +188,13 @@ class _HomeState extends State<Home> {
         ),
         Wrap(spacing: 20, runSpacing: 20, children: [
           metricBox(
+              context,
               formatTotalSupply(widget.org.totalSupply!, widget.org.decimals!),
               "Total\nVoting\nPower"),
-          metricBox(widget.org.holders.toString(), "Members"),
-          metricBox(activeProposals, "Active\nProposals"),
-          metricBox(awaitingExecution, "Proposals \nAwaiting \nExecution"),
+          metricBox(context, widget.org.holders.toString(), "Members"),
+          metricBox(context, activeProposals, "Active\nProposals"),
+          metricBox(
+              context, awaitingExecution, "Proposals \nAwaiting \nExecution"),
         ]),
         const SizedBox(height: 25),
         TokenAssets(org: widget.org)
@@ -197,7 +202,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget metricBox(number, label) {
+  Widget metricBox(context, number, label) {
     return SizedBox(
       width: 285,
       height: 140,
@@ -209,8 +214,10 @@ class _HomeState extends State<Home> {
               padding: const EdgeInsets.only(left: 55),
               child: Text(
                 number.toString(),
-                style:
-                    const TextStyle(fontSize: 27, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Theme.of(context).indicatorColor,
+                    fontSize: 27,
+                    fontWeight: FontWeight.bold),
               ),
             ),
             Expanded(

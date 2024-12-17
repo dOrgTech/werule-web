@@ -350,46 +350,54 @@ class ProposalListState extends State<ProposalList> {
     List<Widget> propuneri = [];
     for (String item in pTypes.keys) {
       propuneri.add(Card(
-        child: Container(
-          color: Theme.of(context).hoverColor,
-          padding: EdgeInsets.all(3),
-          width: 300,
-          height: 160,
-          child: TextButton(
-            onPressed: item == "Off-Chain Debate"
-                ? null
-                : () {
-                    Navigator.of(context).pop();
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Padding(
-                            padding: const EdgeInsets.only(left: 18.0),
-                            child: Text(item.toString()),
-                          ),
-                          content: newProposalWidgets[item]!(
-                              widget.org, widget.p, this),
-                        );
-                      },
-                    );
-                  },
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Text(
-                      item,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 19),
-                    ),
-                    Text(
-                      pTypes[item]!,
-                      textAlign: TextAlign.center,
-                    )
-                  ],
+        child: Tooltip(
+          decoration: BoxDecoration(color: Theme.of(context).canvasColor),
+          message: item == "Off-Chain Debate" ? "Soon..." : "",
+          textStyle: const TextStyle(
+            fontSize: 30,
+            color: Color.fromARGB(255, 216, 216, 216),
+          ),
+          child: Container(
+            color: Theme.of(context).hoverColor,
+            padding: EdgeInsets.all(3),
+            width: 300,
+            height: 160,
+            child: TextButton(
+              onPressed: item == "Off-Chain Debate"
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Padding(
+                              padding: const EdgeInsets.only(left: 18.0),
+                              child: Text(item.toString()),
+                            ),
+                            content: newProposalWidgets[item]!(
+                                widget.org, widget.p, this),
+                          );
+                        },
+                      );
+                    },
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text(
+                        item,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 19),
+                      ),
+                      Text(
+                        pTypes[item]!,
+                        textAlign: TextAlign.center,
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -418,12 +426,13 @@ class ProposalListState extends State<ProposalList> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        "Learn about the different types of proposals ",
+                        "Implementing OpenZeppelin's Governor framework. Learn more about it ",
                         style: TextStyle(fontSize: 13),
                       ),
                       OldSchoolLink(
                           text: "here",
-                          url: "https://example.com",
+                          url:
+                              "https://docs.openzeppelin.com/contracts/5.x/api/governance",
                           textStyle: TextStyle(
                               fontSize: 13,
                               color: Theme.of(context).indicatorColor)),

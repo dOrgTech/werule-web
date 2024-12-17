@@ -200,7 +200,9 @@ class _TokenAssetsState extends State<TokenAssets> {
         Container(
           height: 42,
           color: const Color.fromARGB(0, 76, 175, 79),
-          child: Center(child: Text(token.symbol)),
+          child: Center(
+              child: Text(token.symbol,
+                  style: TextStyle(color: Theme.of(context).indicatorColor))),
         ),
         Container(
           height: 42,

@@ -37,61 +37,76 @@ class _DAOState extends State<DAO> {
     print(widget.proposalHash);
   }
 
+  Stream<void> customStream() async* {
+    // Perform some async operations
+    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(Duration(seconds: 2));
+    // Do not yield any values
+  }
+
   @override
   Widget build(BuildContext context) {
     widget.org.proposals = [];
+
+    // Wrap the original snapshots stream in an asyncMap to handle the async call
+    final stream = FirebaseFirestore.instance
+        .collection("idaos${Human().chain.name}")
+        .doc(widget.org.address!)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      if (!snapshot.exists) return null;
+      final data = snapshot.data() as Map<String, dynamic>;
+      Org dao = Org(
+        name: data['name'],
+        description: data['description'],
+        govTokenAddress: data['govTokenAddress'],
+      );
+      dao.address = data['address'];
+      dao.symbol = data['symbol'];
+      dao.creationDate = (data['creationDate'] as Timestamp).toDate();
+      dao.govToken = Token(
+          type: "erc20",
+          symbol: dao.symbol!,
+          decimals: data['decimals'],
+          name: dao.name);
+      dao.govTokenAddress = data['token'];
+      dao.proposalThreshold = data['proposalThreshold'];
+      dao.votingDelay = data['votingDelay'];
+      dao.registryAddress = data['registryAddress'];
+      dao.treasuryAddress = dao.registryAddress;
+      dao.votingDuration = data['votingDuration'];
+      dao.executionDelay = data['executionDelay'];
+      dao.quorum = data['quorum'];
+      dao.decimals = data['decimals'];
+      dao.holders = data['holders'];
+      dao.treasuryMap = Map<String, String>.from(data['treasury']);
+      dao.registry = Map<String, String>.from(data['registry']);
+      dao.totalSupply = data['totalSupply'];
+
+      // Perform the async task before yielding
+      await dao.getProposals();
+      dao.getMembers();
+      return dao;
+    });
+
     return Scaffold(
       appBar: const TopMenu(),
-      body: StreamBuilder(
-          stream: FirebaseFirestore.instance
-              .collection("idaos${Human().chain.name}")
-              .doc(widget.org.address!)
-              .snapshots(),
+      body: StreamBuilder<Org?>(
+          stream: stream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                  child:
-                      CircularProgressIndicator()); // Show a loading indicator
+              return const Center(child: CircularProgressIndicator());
             }
-
             if (snapshot.hasError) {
               return Text("Error: ${snapshot.error}");
             }
-
             if (!snapshot.hasData) {
-              return Text("No updates yet");
+              return const Text("No updates yet");
             }
 
-            final data = snapshot.data!.data() as Map<String, dynamic>;
-            Org dao = Org(
-                name: data['name'],
-                description: data['description'],
-                govTokenAddress: data['govTokenAddress']);
-            dao.address = data['address'];
-            dao.symbol = data['symbol'];
-            dao.creationDate = (data['creationDate'] as Timestamp).toDate();
-            dao.govToken = Token(
-                type: "erc20",
-                symbol: dao.symbol!,
-                decimals: dao.decimals,
-                name: dao.name);
-            dao.govTokenAddress = data['token'];
-            dao.proposalThreshold = data['proposalThreshold'];
-            dao.votingDelay = data['votingDelay'];
-            dao.registryAddress = data['registryAddress'];
-            dao.treasuryAddress = dao.registryAddress;
-            dao.votingDuration = data['votingDuration'];
-            dao.executionDelay = data['executionDelay'];
-            dao.quorum = data['quorum'];
-            dao.decimals = data['decimals'];
-            dao.holders = data['holders'];
-            dao.treasuryMap = Map<String, String>.from(data['treasury']);
-            dao.registry = Map<String, String>.from(data['registry']);
-            dao.totalSupply = data['totalSupply'];
-
-            dao.getMembers();
-
+            final dao = snapshot.data!;
             return Container(
+              // ... rest of your widget
               alignment: Alignment.topCenter,
               child: DefaultTabController(
                 initialIndex: widget.InitialTabIndex,

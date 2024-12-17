@@ -1,11 +1,11 @@
 import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:flutter/material.dart';
-
 import '../entities/contractFunctions.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../screens/dao.dart';
+import 'package:lottie/lottie.dart';
 
 class RegistryProposalWidget extends StatefulWidget {
   Proposal p;
@@ -150,7 +150,6 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                                                 ),
                                               )))));
                             }
-
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => Scaffold(
                                     body:
@@ -219,19 +218,27 @@ class AwaitingConfirmation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-        child: SizedBox(
-      width: 500,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            "Awaiting confirmation...",
-            style: TextStyle(fontSize: 20),
-          ),
-          SizedBox(height: 200),
-          CircularProgressIndicator(),
-        ],
+      child: Container(
+        width: 500,
+        height: 500,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Transaction pending...",
+              style: TextStyle(fontSize: 26),
+            ),
+            SizedBox(height: 20),
+            SizedBox(height: 50),
+            SizedBox(
+              height: 250,
+              width: 250,
+              child: Lottie.asset("assets/d4.json"),
+            )
+          ],
+        ),
       ),
-    ));
+    );
   }
 }

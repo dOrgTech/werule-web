@@ -32,8 +32,11 @@ var newProposalWidgets = {
       RegistryProposalWidget(org: org, p: p, proposalsState: state),
   "Add Lambda": (Org org) => const NotImplemented(),
   "Remove Lambda": (Org org, State state) => const NotImplemented(),
-  "Contract Call": (Org org, Proposal p, State state) =>
-      ContractInteractionWidget(p: p),
+  "Contract Call": (Org org, Proposal p, State state) => ACI(
+        p: p,
+        org: org,
+        proposalsState: state,
+      ),
   "DAO Configuration": (Org org, Proposal p, State state) =>
       DaoConfigurationWidget(org: org, p: p, proposalsState: state),
   "Change Guardian": (Org org) => const NotImplemented(),

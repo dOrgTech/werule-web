@@ -1,9 +1,231 @@
+import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import '../entities/contractFunctions.dart';
+import '../entities/org.dart';
 import '../entities/proposal.dart';
+import '../screens/dao.dart';
+
+class ACI extends StatefulWidget {
+  Proposal p;
+  Org? org;
+  int stage = 0;
+  State proposalsState;
+  bool isSetInfo = true;
+  ACI({
+    Key? key,
+    required this.proposalsState,
+    required this.p,
+    required this.org,
+  }) : super(key: key) {
+    p.type = "contract call";
+  }
+
+  @override
+  State<ACI> createState() => _ACIState();
+}
+
+class _ACIState extends State<ACI> {
+  final _formKey = GlobalKey<FormState>();
+  final _keyController = TextEditingController();
+  final _callDataController = TextEditingController();
+  final _targetController = TextEditingController();
+  final _amountController = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  // Example JSON placeholder
+  final String _jsonExample = '''
+        {
+          "function": "transfer",
+          "parameters": {
+            "uint": 12345,
+            "address": "0x1234567890abcdef"
+          }
+        }''';
+  @override
+  void dispose() {
+    _keyController.dispose();
+    _callDataController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {}
+  }
+
+  finishSettingInfo() {
+    setState(() {
+      widget.isSetInfo = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocusChange);
+  }
+
+  void _handleFocusChange() {
+    if (!_focusNode.hasFocus && _controller.text.isEmpty) {
+      setState(() {
+        _controller.text = _jsonExample;
+      });
+    } else if (_focusNode.hasFocus && _controller.text == _jsonExample) {
+      setState(() {
+        _controller.clear();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.isSetInfo
+        ? NewProposal(p: widget.p, next: finishSettingInfo)
+        : widget.stage == -1
+            ? const AwaitingConfirmation()
+            : Form(
+                key: _formKey,
+                child: Container(
+                  width: 650,
+                  padding: const EdgeInsets.all(26.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 52.0),
+                        child: TextFormField(
+                          onChanged: (value) {
+                            widget.p.values = [value.toString()];
+                          },
+                          controller: _targetController,
+                          decoration: const InputDecoration(
+                              labelText: 'Target Contract'),
+                          validator: (value) => value == null || value.isEmpty
+                              ? '0xa47Fe903cE6d....'
+                              : null,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 152.0),
+                        child: TextFormField(
+                          onChanged: (value) {},
+                          controller: _amountController,
+                          decoration: const InputDecoration(
+                              labelText: 'Value in XTZ to attach'),
+                          validator: (value) => value == null || value.isEmpty
+                              ? '0xa47Fe903cE6d....'
+                              : "0",
+                        ),
+                      ),
+                      TextFormField(
+                        maxLines: 8,
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Function JSON Definition',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Please enter a value'
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 52.0),
+                        child: TextFormField(
+                          onChanged: (value) {},
+                          controller: _callDataController,
+                          decoration:
+                              const InputDecoration(labelText: 'callData'),
+                          validator: (value) => value == null || value.isEmpty
+                              ? '0xa47Fe903cE6d....'
+                              : null,
+                        ),
+                      ),
+                      SubmitButton(
+                          submit: () async {
+                            widget.p.callDatas = [];
+                            widget.p.callData = _controller.text;
+                            String calldata0 = _callDataController.text;
+                            widget.p.callDatas.add(calldata0);
+                            widget.p.targets = [_targetController.text];
+                            widget.p.values = [_amountController.text];
+                            widget.p.createdAt = DateTime.now();
+                            widget.p.statusHistory
+                                .addAll({"pending": DateTime.now()});
+                            setState(() {
+                              widget.stage = -1;
+                            });
+                            try {
+                              String cevine = "";
+                              await propose(widget.p);
+                              if (cevine.contains("not ok")) {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                        duration: Duration(seconds: 1),
+                                        content: Center(
+                                            child: SizedBox(
+                                                height: 70,
+                                                child: Center(
+                                                  child: Text(
+                                                    "Error submitting proposal",
+                                                    style: TextStyle(
+                                                        fontSize: 24,
+                                                        color: Colors.red),
+                                                  ),
+                                                )))));
+                                Navigator.of(context).pop();
+                                return;
+                              }
+                              // widget.p.status = "pending";
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(
+                                          child: SizedBox(
+                                              height: 70,
+                                              child: Center(
+                                                child: Text(
+                                                  "Proposal submitted",
+                                                  style:
+                                                      TextStyle(fontSize: 24),
+                                                ),
+                                              )))));
+                            } catch (e) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(
+                                          child: SizedBox(
+                                              height: 70,
+                                              child: Center(
+                                                child: Text(
+                                                  "Error submitting proposal",
+                                                  style: TextStyle(
+                                                      fontSize: 24,
+                                                      color: Colors.red),
+                                                ),
+                                              )))));
+                            }
+
+                            // Navigator.of(context).push(MaterialPageRoute(
+                            //     builder: (context) => Scaffold(
+                            //         body:
+                            //             //  DaoSetupWizard())
+                            //             // Center(child: TransferWidget(org: orgs[0],)))
+                            //             DAO(
+                            //                 InitialTabIndex: 1,
+                            //                 org: widget.org))));
+                          },
+                          isSubmitEnabled: true)
+                    ],
+                  ),
+                ),
+              );
+  }
+}
 
 class ContractInteractionWidget extends StatefulWidget {
   Proposal p;

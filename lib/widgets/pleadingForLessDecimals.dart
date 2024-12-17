@@ -166,6 +166,27 @@ class _AnimatedMemeWidgetState extends State<AnimatedMemeWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const Text("My brother in", style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 14),
+            if (_isImageLoaded)
+              SizedBox(
+                height: 150,
+                child: _christImage,
+              )
+            else
+              const SizedBox(
+                height: 150,
+                child: CircularProgressIndicator(),
+              ),
+            const SizedBox(height: 16),
+            const Text(
+              "CHRIST",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 30),
             const Text("Please realize,"),
             const SizedBox(height: 30),
             Text(

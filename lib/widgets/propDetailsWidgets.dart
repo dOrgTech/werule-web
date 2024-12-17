@@ -138,62 +138,8 @@ class ContractCall extends StatelessWidget {
   ContractCall({super.key, required this.p});
   @override
   Widget build(BuildContext context) {
-    List<Widget> params = [];
-    (p.callDatas[0]["params"]).forEach((key, value) {
-      params.add(Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            SizedBox(height: 6),
-            Container(
-                constraints: BoxConstraints(maxWidth: 370),
-                decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey,
-                      width: 0.2,
-                    ),
-                    color: Color.fromARGB(255, 28, 28, 28)),
-                child: Column(
-                  children: [
-                    Container(
-                      constraints: BoxConstraints(maxWidth: 370),
-                      width: double.infinity,
-                      color: Colors.grey,
-                      child: Center(
-                        child: RichText(
-                          text: TextSpan(
-                              text: value[0],
-                              style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color.fromARGB(255, 40, 40, 40)),
-                              children: [
-                                const TextSpan(text: "  -  "),
-                                TextSpan(
-                                  text: value[1],
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color.fromARGB(255, 5, 56, 66),
-                                  ),
-                                )
-                              ]),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(key),
-                    ),
-                  ],
-                )),
-            SizedBox(width: 10),
-          ],
-        ),
-      ));
-    });
     return Container(
-      padding: EdgeInsets.only(top: 16.0),
+      padding: EdgeInsets.only(left: 30, top: 16.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Row(
           children: [
@@ -201,7 +147,7 @@ class ContractCall extends StatelessWidget {
                 width: 120,
                 child: Align(
                     alignment: Alignment.centerRight, child: Text("calling:"))),
-            SizedBox(width: 9),
+            SizedBox(width: 19),
             Container(
                 padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(
@@ -210,19 +156,20 @@ class ContractCall extends StatelessWidget {
                       width: 0.2,
                     ),
                     color: Color.fromARGB(255, 28, 28, 28)),
-                child: Text(p.callDatas[0]["endpoint"]))
+                child: Text(p.targets[0]))
           ],
         ),
+        const SizedBox(height: 25),
         Row(
           children: [
             const SizedBox(
                 width: 120,
                 child: Align(
                     alignment: Alignment.centerRight,
-                    child: Text("on contract:"))),
-            SizedBox(width: 9),
+                    child: Text("with callData:"))),
+            SizedBox(width: 19),
             Text(
-              getShortAddress(p.targets[0].toString()),
+              "0x" + getShortAddress(p.callDatas[0].toString()),
               // "ndwq89hdp197hdqpo98shdp9q8723hp98qh9"),
               style: TextStyle(fontSize: 14),
             ),
@@ -234,19 +181,12 @@ class ContractCall extends StatelessWidget {
                       content: SizedBox(
                           height: 40,
                           child: Center(
-                              child: Text("Address copied to clipboard")))));
+                              child: Text("Calldata copied to clipboard")))));
                 },
                 child: Icon(Icons.copy))
           ],
         ),
         SizedBox(height: 5),
-        Align(
-            alignment: Alignment.topLeft,
-            child: SizedBox(
-                width: 120,
-                child: Align(
-                    alignment: Alignment.centerRight, child: Text("params:")))),
-        ...params
       ]),
     );
   }

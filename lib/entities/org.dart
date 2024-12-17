@@ -163,7 +163,7 @@ class Org {
       //     .cast<String>();
       // p.retrieveStage();
       p.state = ProposalStatus.pending;
-      p.status = "pending";
+      p.status = await p.anotherStageGetter();
     }
 
     await getMembers();

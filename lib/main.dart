@@ -188,7 +188,8 @@ final GoRouter router = GoRouter(
       path: '/test',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: Scaffold(body: AnimatedMemeWidget()),
+        child:
+            Scaffold(body: Center(child: Text("what are you testing, champ?"))),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

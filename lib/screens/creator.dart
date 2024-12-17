@@ -5,6 +5,7 @@ import 'package:Homebase/utils/theme.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
@@ -20,6 +21,17 @@ import 'package:csv/csv.dart';
 import 'dart:convert';
 import '/utils/reusable.dart';
 import 'package:pointycastle/digests/keccak.dart';
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    return newValue.copyWith(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
 
 String toChecksumAddress(String address) {
   // Remove the 0x prefix if present
@@ -161,34 +173,41 @@ class Screen1DaoType extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(18.0),
                     child: TextButton(
-                      onPressed: () {
-                        daoConfig.daoType = 'Off-chain';
-                        onNext();
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                              color: const Color.fromARGB(255, 56, 56, 56)),
+                      onPressed: null,
+                      child: Tooltip(
+                        decoration:
+                            BoxDecoration(color: Theme.of(context).canvasColor),
+                        message: "Soon...",
+                        textStyle: const TextStyle(
+                          fontSize: 30,
+                          color: Color.fromARGB(255, 216, 216, 216),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: const [
-                            SizedBox(height: 38),
-                            Icon(Icons.forum, size: 40),
-                            SizedBox(height: 14),
-                            Text('Off-chain', style: TextStyle(fontSize: 23.5)),
-                            SizedBox(height: 14),
-                            Padding(
-                              padding: EdgeInsets.only(
-                                  left: 13.0, right: 13, top: 10, bottom: 10),
-                              child: Text(
-                                "Tokenized collective debates with fractal topology. \n\nDeclarative only.",
-                                style: TextStyle(height: 1.4),
-                                textAlign: TextAlign.center,
+                        child: Container(
+                          margin: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                                color: const Color.fromARGB(255, 56, 56, 56)),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: const [
+                              SizedBox(height: 38),
+                              Icon(Icons.forum, size: 40),
+                              SizedBox(height: 14),
+                              Text('Off-chain',
+                                  style: TextStyle(fontSize: 23.5)),
+                              SizedBox(height: 14),
+                              Padding(
+                                padding: EdgeInsets.only(
+                                    left: 13.0, right: 13, top: 10, bottom: 10),
+                                child: Text(
+                                  "Tokenized collective debates with fractal topology. \n\nDeclarative only.",
+                                  style: TextStyle(height: 1.4),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -313,9 +332,15 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                       Expanded(
                         flex: 7,
                         child: TextFormField(
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z0-9]')),
+                            UpperCaseTextFormatter(),
+                          ],
+                          maxLength: 5,
                           controller: _tokenSymbolController,
-                          decoration:
-                              const InputDecoration(labelText: 'Ticker Symbol'),
+                          decoration: const InputDecoration(
+                              counterText: "", labelText: 'Ticker Symbol'),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'The ticker symbol of the governance token';
@@ -342,7 +367,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                                     contentPadding: EdgeInsets.zero,
                                     content: SizedBox(
                                       width: 500, // Control width
-                                      height: 300, // Control height
+                                      height: 550, // Control height
                                       child: AnimatedMemeWidget(),
                                     ),
                                   );
