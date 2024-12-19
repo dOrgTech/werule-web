@@ -24,7 +24,7 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
   void initState() {
     super.initState();
     // Generate mock data with more than 2 members
-    members = getMembers();
+    members = getMembers() as List<Bloke>;
     totalMembers = members.length;
     totalVotingPower =
         members.fold(0, (sum, member) => sum + member.votingWeight);
@@ -204,22 +204,26 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
     );
   }
 
-  List<Bloke> getMembers() {
-    // Generate mock data with more than 2 members
-    return List.generate(100, (index) {
-      // Generate members with random votingWeight
-      return Bloke(
-        name: 'Member ${index + 1}',
+  List getMembers() {
+    List<Bloke> members = [];
+    widget.org.memberAddresses.forEach((key, Member value) {
+      members.add(Bloke(
+        personalBalance: double.parse(value.votingWeight!),
+        name: 'Member ',
         votingWeight:
-            Random().nextDouble() * 100 + 1, // Ensure non-zero voting weight
-      );
+            double.parse(value.votingWeight!), // Ensure non-zero voting weight
+      ));
     });
+    return members;
   }
 }
 
 class Bloke {
   final String name;
   final double votingWeight;
-
-  Bloke({required this.name, required this.votingWeight});
+  final double personalBalance;
+  Bloke(
+      {required this.personalBalance,
+      required this.name,
+      required this.votingWeight});
 }

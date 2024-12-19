@@ -4,6 +4,7 @@ import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import '../entities/org.dart';
+import '../entities/proposal.dart';
 import '../entities/token.dart';
 
 String add1 = "https://i.ibb.co/2WbL5nC/add1.png";
@@ -249,6 +250,20 @@ class _TokenAssetsState extends State<TokenAssets> {
             padding: const EdgeInsets.only(right: 40), // Adding right padding
             child: ElevatedButton(
               onPressed: () {
+                Proposal p = Proposal(org: widget.org);
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Padding(
+                        padding: const EdgeInsets.only(left: 18.0),
+                        child: Text("Transfer Assets"),
+                      ),
+                      content: newProposalWidgets["Transfer Assets"]!(
+                          widget.org, p, this),
+                    );
+                  },
+                );
                 // Transfer logic
               },
               child: const Text("Transfer"),

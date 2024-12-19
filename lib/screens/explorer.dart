@@ -23,7 +23,6 @@ class Explorer extends StatefulWidget {
   TextEditingController controlla = TextEditingController();
   @override
   State<Explorer> createState() => _ExplorerState();
-
   Future<String> getDaos() async {
     var daosSnapshot = await daosCollection.get();
     orgs = [];

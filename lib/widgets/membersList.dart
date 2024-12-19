@@ -289,7 +289,9 @@ class MemberTableRow extends TableRow {
               height: 42,
               color: const Color.fromARGB(0, 76, 175, 79),
               child: Center(
-                child: Text(member.votingWeight?.toString() ?? "N/A"),
+                child: Text(
+                    "${BigInt.parse(member.votingWeight.toString()) ~/ BigInt.from(10).pow(decimals)}" ??
+                        "N/A"),
               ),
             ),
             Container(

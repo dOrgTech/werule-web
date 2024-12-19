@@ -14,10 +14,12 @@ import 'package:Homebase/widgets/pdetails.dart';
 import 'package:Homebase/widgets/pleadingForLessDecimals.dart';
 import 'package:Homebase/widgets/propDetailsWidgets.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
+import 'package:Homebase/widgets/release.dart';
 import 'package:Homebase/widgets/statemgmt.dart';
 import 'package:Homebase/widgets/testwidget.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:Homebase/widgets/transfer.dart';
+import 'package:Homebase/widgets/waiting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:go_router/go_router.dart';
@@ -188,8 +190,7 @@ final GoRouter router = GoRouter(
       path: '/test',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child:
-            Scaffold(body: Center(child: Text("what are you testing, champ?"))),
+        child: Scaffold(body: Center(child: TestomgTJomgs())),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

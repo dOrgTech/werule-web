@@ -1,5 +1,4 @@
 import 'package:Homebase/entities/proposal.dart';
-import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,14 +8,10 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
 import '../entities/human.dart';
 import '../entities/proposal.dart';
-import '../entities/proposal.dart';
-import '../entities/proposal.dart';
-import '../entities/proposal.dart';
 import '../main.dart';
 import '../screens/proposalDetails.dart';
 import '../utils/theme.dart';
 import '../widgets/proposalCard.dart';
-
 import '../entities/org.dart';
 import '../widgets/transfer.dart';
 

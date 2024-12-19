@@ -317,49 +317,84 @@ class _Screen5MembersState extends State<Screen5Members> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('Initial members', style: Theme.of(context).textTheme.headline5),
-        const SizedBox(height: 26),
-        const Text(
-            'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.',
-            style: TextStyle(
-                fontSize: 14, color: Color.fromARGB(255, 194, 194, 194))),
-        const SizedBox(height: 20),
-        Row(
+    return Scrollbar(
+      child: SingleChildScrollView(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
-            Text('$_totalTokens',
+            Text('Initial members',
+                style: Theme.of(context).textTheme.headline5),
+            const SizedBox(height: 26),
+            RichText(
+              text: TextSpan(
                 style: TextStyle(
-                    fontSize: 19, color: Theme.of(context).indicatorColor)),
-          ],
-        ),
-        const SizedBox(height: 20),
-        if (isParsingCsv)
-          const LinearProgressIndicator()
-        else if (isManualEntry)
-          _buildManualEntry()
-        else if (isCsvUploaded)
-          _buildMembersList()
-        else
-          _buildInitialButtons(),
-        const SizedBox(height: 50),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            TextButton(onPressed: widget.onBack, child: const Text('< Back')),
-            ElevatedButton(
-              onPressed: () {
-                _syncMembersToDaoConfig();
-                widget.onNext();
-              },
-              child: const Text('Save and Continue >'),
+                  fontSize: 14,
+                  color: Color.fromARGB(255, 194, 194, 194),
+                ),
+                children: [
+                  TextSpan(
+                    text:
+                        'Specify the address and the voting power of your associates.\nVoting power is represented by their amount of tokens.\n\nYou may add the members one by one or upload a CSV\nfile with the following format: ',
+                  ),
+                  TextSpan(
+                    text: 'member',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color.fromARGB(255, 194, 194, 194),
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  TextSpan(text: ', '),
+                  TextSpan(
+                    text: 'amount',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color.fromARGB(255, 194, 194, 194),
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Total Tokens: ', style: TextStyle(fontSize: 19)),
+                Text('$_totalTokens',
+                    style: TextStyle(
+                        fontSize: 19, color: Theme.of(context).indicatorColor)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (isParsingCsv)
+              const LinearProgressIndicator()
+            else if (isManualEntry)
+              _buildManualEntry()
+            else if (isCsvUploaded)
+              _buildMembersList()
+            else
+              _buildInitialButtons(),
+            const SizedBox(height: 50),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton(
+                    onPressed: widget.onBack, child: const Text('< Back')),
+                ElevatedButton(
+                  onPressed: () {
+                    _syncMembersToDaoConfig();
+                    widget.onNext();
+                  },
+                  child: const Text('Save and Continue >'),
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -23,10 +23,13 @@ class WaitingOnChain extends StatelessWidget {
             ),
             SizedBox(height: 20),
             SizedBox(height: 50),
-            SizedBox(
-              height: 250,
-              width: 250,
-              child: Lottie.asset("assets/d4.json"),
+            Opacity(
+              opacity: 0.7,
+              child: SizedBox(
+                height: 250,
+                width: 250,
+                child: Lottie.asset("assets/d4.json"),
+              ),
             )
           ],
         ),
