@@ -21,13 +21,11 @@ class Explorer extends StatefulWidget {
   bool loaded = false;
   List<Widget> daos = [];
   TextEditingController controlla = TextEditingController();
-  @override
-  State<Explorer> createState() => _ExplorerState();
+
   Future<String> getDaos() async {
     var daosSnapshot = await daosCollection.get();
     orgs = [];
     for (var doc in daosSnapshot.docs) {
-      print("we are doing this ");
       try {
         Org org = Org(
             name: doc.data()['name'],
@@ -59,15 +57,19 @@ class Explorer extends StatefulWidget {
         print("could not go " + e.toString());
       }
     }
-
-    // Optionally include a message or other logic here
-    print("New data received: ${daosSnapshot.docs.length} documents");
-    // yield "yielding"; // Pass processed data to the widget
     return "done";
   }
+
+  @override
+  State<Explorer> createState() => _ExplorerState();
 }
 
 class _ExplorerState extends State<Explorer> {
+  final int _itemsPerPage = 21;
+  int _currentPage = 1;
+  int _totalPages = 1;
+  List<Org> _filteredOrgs = [];
+
   @override
   void initState() {
     widget.game = Container();
@@ -80,9 +82,69 @@ class _ExplorerState extends State<Explorer> {
     super.dispose();
   }
 
+  void _applyFilterAndPagination() {
+    _filteredOrgs =
+        orgs.where((o) => o.name.toLowerCase().contains(widget.query)).toList();
+
+    _totalPages = (_filteredOrgs.length / _itemsPerPage).ceil();
+    if (_totalPages == 0) {
+      _totalPages = 1;
+    }
+    if (_currentPage > _totalPages) {
+      _currentPage = _totalPages;
+    }
+
+    int startIndex = (_currentPage - 1) * _itemsPerPage;
+    int endIndex = startIndex + _itemsPerPage;
+    if (endIndex > _filteredOrgs.length) {
+      endIndex = _filteredOrgs.length;
+    }
+
+    widget.daos = _filteredOrgs
+        .sublist(startIndex, endIndex)
+        .map((org) => DAOCard(org: org))
+        .toList();
+  }
+
+  void _changePage(int newPage) {
+    setState(() {
+      _currentPage = newPage;
+      _applyFilterAndPagination();
+    });
+  }
+
+  Widget _buildPaginationControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: Icon(Icons.first_page),
+          onPressed: _currentPage > 1 ? () => _changePage(1) : null,
+        ),
+        IconButton(
+          icon: Icon(Icons.navigate_before),
+          onPressed:
+              _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
+        ),
+        Text('Page $_currentPage of $_totalPages'),
+        IconButton(
+          icon: Icon(Icons.navigate_next),
+          onPressed: _currentPage < _totalPages
+              ? () => _changePage(_currentPage + 1)
+              : null,
+        ),
+        IconButton(
+          icon: Icon(Icons.last_page),
+          onPressed: _currentPage < _totalPages
+              ? () => _changePage(_totalPages)
+              : null,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    print("widget loaded?? " + widget.loaded.toString());
     return Scaffold(
       floatingActionButton:
           TextButton(onPressed: () {}, child: Icon(Icons.help_center)),
@@ -104,9 +166,10 @@ class _ExplorerState extends State<Explorer> {
                             ConnectionState.waiting) {
                           return Center(child: CircularProgressIndicator());
                         }
-                        print("building explorer" + orgs.length.toString());
+                        widget.loaded = true;
+                        _applyFilterAndPagination();
                         return wide();
-                      }), // End of ListView
+                      }),
             ),
           ],
         ),
@@ -114,25 +177,13 @@ class _ExplorerState extends State<Explorer> {
     );
   }
 
-  wide() {
-    widget.daos = [];
-
-    for (var org in orgs) {
-      if (org.name.toLowerCase().contains(widget.query)) {
-        widget.daos.add(DAOCard(org: org));
-      }
-    }
-    widget.loaded = true;
+  Widget wide() {
     return ListView(
-      // Start of ListView
-      shrinkWrap: true, // Set this property to true
+      shrinkWrap: true,
       children: [
         Column(
-          // Start of Column
-          crossAxisAlignment: CrossAxisAlignment
-              .center, // Set this property to center the items horizontally
-          mainAxisSize: MainAxisSize
-              .min, // Set this property to make the column fit its children's size vertically
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -153,7 +204,9 @@ class _ExplorerState extends State<Explorer> {
                         onChanged: (value) {
                           final cursorPosition = widget.controlla.selection;
                           setState(() {
-                            widget.query = value;
+                            widget.query = value.toLowerCase();
+                            _currentPage = 1;
+                            _applyFilterAndPagination();
                           });
                           widget.controlla.value =
                               widget.controlla.value.copyWith(
@@ -168,9 +221,7 @@ class _ExplorerState extends State<Explorer> {
                           ),
                           prefixIcon: Icon(Icons.search),
                           hintText: 'Search by DAO Name or Token Symbol',
-                          // other properties
                         ),
-                        // other properties
                       ),
                     ),
                   ),
@@ -178,10 +229,8 @@ class _ExplorerState extends State<Explorer> {
                     padding: const EdgeInsets.only(right: 8.0),
                     child: Row(
                       children: [
-                        Text(orgs.length.toString() + " DAOs"),
-                        SizedBox(
-                          width: 30,
-                        ),
+                        Text(_filteredOrgs.length.toString() + " DAOs"),
+                        SizedBox(width: 30),
                         Container(
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
@@ -189,11 +238,7 @@ class _ExplorerState extends State<Explorer> {
                                   Border.all(width: 0, color: Colors.black)),
                           height: 40,
                           child: ElevatedButton(
-                              onPressed:
-                                  // Human().address == null
-                                  //     ? null
-                                  //     :
-                                  () async {
+                              onPressed: () async {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -221,9 +266,7 @@ class _ExplorerState extends State<Explorer> {
                 ],
               ),
             ),
-            SizedBox(
-              height: 10,
-            ),
+            SizedBox(height: 10),
             Container(
               alignment: Alignment.topCenter,
               width: double.infinity,
@@ -232,13 +275,14 @@ class _ExplorerState extends State<Explorer> {
                 spacing: 8,
                 runSpacing: 8,
                 alignment: WrapAlignment.start,
-                children: widget.daos as List<Widget>,
+                children: widget.daos,
               ),
-            )
+            ),
+            SizedBox(height: 20),
+            _buildPaginationControls(),
           ],
-        ), // End of Column
+        ),
         const SizedBox(height: 83),
-        // other widgets
       ],
     );
   }

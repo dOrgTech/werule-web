@@ -147,7 +147,7 @@ class _TransferWidgetState extends State<TransferWidget> {
           double txamount = double.parse(tx['amount'].toString());
           final BigInt weiAmount = BigInt.from(txamount * 1e18);
           print("we createdbg");
-          final params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
+          params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
           print("getting calldata");
           widget.p.callDatas.add(getCalldata(transferNativeDef, params));
           print("got it");
