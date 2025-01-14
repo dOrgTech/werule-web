@@ -1,11 +1,13 @@
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/utils/reusable.dart';
+import 'package:Homebase/widgets/debate_card.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
+import '../debates/models/debate.dart';
 import '../entities/human.dart';
 import '../entities/proposal.dart';
 import '../main.dart';
@@ -33,7 +35,7 @@ class _ProposalsState extends State<Proposals> {
   String? selectedType = 'All';
   List<String> typesDropdown = [
     'All',
-    'Off-Chain',
+    'Debate',
     'Gov Token Operation',
     'Registry',
     'Transfer',
@@ -57,14 +59,14 @@ class _ProposalsState extends State<Proposals> {
   void initState() {
     typesDropdown = [
       'All',
-      'Off-Chain',
+      'Debate',
       '${widget.org.symbol} Operation',
       'Registry',
       'Transfer',
       'Contract Call',
       'Change Config'
     ];
-    // TODO: implement i
+
     super.initState();
     widget.which = "all";
   }
@@ -74,6 +76,10 @@ class _ProposalsState extends State<Proposals> {
     widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
     for (Proposal p in widget.org.proposals) {
       widget.proposalCards.add(ProposalCard(org: widget.org, proposal: p));
+    }
+    for (Debate d in widget.org.debates) {
+      print("adding a debate to the list of proposals");
+      widget.proposalCards.add(DebateCard(org: widget.org, debate: d));
     }
     if (widget.proposalCards.isEmpty) {
       widget.proposalCards.add(SizedBox(height: 200));
@@ -230,8 +236,9 @@ class _ProposalsState extends State<Proposals> {
                                               child: Text(
                                                   "Select a proposal type"),
                                             ),
-                                            content:
-                                                ProposalList(org: widget.org),
+                                            content: ProposalList(
+                                              org: widget.org,
+                                            ),
                                           );
                                         },
                                       );
@@ -302,10 +309,14 @@ class _ProposalsState extends State<Proposals> {
 class ProposalList extends StatefulWidget {
   final Org org;
   late Proposal p;
+
   late var typesOfProposals;
   late var nProposalWidgets;
 
-  ProposalList({super.key, required this.org});
+  ProposalList({
+    super.key,
+    required this.org,
+  });
 
   @override
   State<ProposalList> createState() => ProposalListState();
@@ -315,13 +326,22 @@ class ProposalListState extends State<ProposalList> {
   @override
   Widget build(BuildContext context) {
     var pTypes = {
-      "Off-Chain Debate":
-          "Post a thesis and have tokenized arguments around it",
+      "Debate": "Post a thesis and have tokenized arguments around it",
       "Transfer Assets": "from the DAO Treasury\nto another account",
       "Edit Registry": "Change an entry\nor add a new one",
       "Contract Call": "Call any function\non any contract",
       "DAO Configuration":
           "Change the quorum,\nthe proposal durations\nor the treasury address",
+    };
+    var proposalIcons = {
+      "Debate": Icons.forum_outlined, // Represents discussion or debate
+      "Transfer Assets":
+          Icons.attach_money_outlined, // Symbolizes monetary transactions
+      "Edit Registry":
+          Icons.list_alt_outlined, // Clearly indicates editing functionality
+      "Contract Call": Icons.link_outlined, // Represents linking or connecting
+      "DAO Configuration":
+          Icons.settings_outlined, // Suits configuration and settings
     };
 
     newProposalWidgets.addAll({
@@ -347,7 +367,7 @@ class ProposalListState extends State<ProposalList> {
       propuneri.add(Card(
         child: Tooltip(
           decoration: BoxDecoration(color: Theme.of(context).canvasColor),
-          message: item == "Off-Chain Debate" ? "Soon..." : "",
+          message: "",
           textStyle: const TextStyle(
             fontSize: 30,
             color: Color.fromARGB(255, 216, 216, 216),
@@ -358,34 +378,46 @@ class ProposalListState extends State<ProposalList> {
             width: 300,
             height: 160,
             child: TextButton(
-              onPressed: item == "Off-Chain Debate"
-                  ? null
-                  : () {
-                      Navigator.of(context).pop();
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Padding(
-                              padding: const EdgeInsets.only(left: 18.0),
-                              child: Text(item.toString()),
-                            ),
-                            content: newProposalWidgets[item]!(
-                                widget.org, widget.p, this),
-                          );
-                        },
-                      );
-                    },
+              onPressed: () {
+                Navigator.of(context).pop();
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Padding(
+                        padding: const EdgeInsets.only(left: 18.0),
+                        child: Text(item.toString()),
+                      ),
+                      content: newProposalWidgets[item]!(
+                        widget.org,
+                        widget.p,
+                        this,
+                      ),
+                    );
+                  },
+                );
+              },
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text(
-                        item,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 19),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(proposalIcons[item] ?? Icons.transform,
+                              size: 30,
+                              color: Theme.of(context).indicatorColor),
+                          SizedBox(width: 10),
+                          Text(
+                            item,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 19,
+                                color: Theme.of(context).indicatorColor),
+                          ),
+                        ],
                       ),
                       Text(
                         pTypes[item]!,

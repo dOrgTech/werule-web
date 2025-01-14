@@ -78,17 +78,17 @@ class Screen1DaoType extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('Make the votes binding?',
+            Text('Will you be needing a treasury?',
                 style: Theme.of(context).textTheme.headline5),
-            const SizedBox(height: 16),
+            const SizedBox(height: 26),
             const SizedBox(
-                width: 400,
+                width: 510,
                 child: Text(
-                    "For distributed management of collective assets, you will need to deploy a contract on-chain.",
+                    "For distributed management of collective assets, you will need to deploy a Full DAO. If you just want collective ideation and large-scale brainstorming, pick Debates. Another valid reason to pick Debates is if you're too chickenshit to start a Full DAO.\n\nThe Full DAO includes the Debates system.\n\nThe Debates instance can be upgraded to a Full DAO at a later time, should the need arise.",
                     style: TextStyle(
                         fontSize: 14,
                         color: Color.fromARGB(255, 194, 194, 194)))),
-            const SizedBox(height: 16),
+            const SizedBox(height: 21),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -100,7 +100,7 @@ class Screen1DaoType extends StatelessWidget {
                     padding: const EdgeInsets.all(18.0),
                     child: TextButton(
                       onPressed: () {
-                        daoConfig.daoType = 'On-chain';
+                        daoConfig.daoType = 'Full DAO';
                         onNext();
                       },
                       child: Container(
@@ -127,7 +127,7 @@ class Screen1DaoType extends StatelessWidget {
                                           isRepeatingAnimation: false,
                                           repeatForever: false,
                                           animatedTexts: [
-                                            ColorizeAnimatedText('On-chain',
+                                            ColorizeAnimatedText('Full DAO',
                                                 textStyle: meniu,
                                                 textDirection:
                                                     TextDirection.ltr,
@@ -154,12 +154,19 @@ class Screen1DaoType extends StatelessWidget {
                             const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 10),
                               child: Text(
-                                'All important operations are secured by the will of the members through voting.\n\nExecutive and Declarative.',
+                                'All important operations are secured by the will of the members through voting.',
                                 style: TextStyle(height: 1.3),
                                 textAlign: TextAlign.center,
                                 // textScaleFactor: 1.2,
                               ),
                             ),
+                            Padding(
+                                padding: const EdgeInsets.only(top: 18),
+                                child: Text(
+                                  "Executive and Declarative",
+                                  style: TextStyle(
+                                      color: Theme.of(context).indicatorColor),
+                                ))
                           ],
                         ),
                       ),
@@ -173,41 +180,42 @@ class Screen1DaoType extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(18.0),
                     child: TextButton(
-                      onPressed: null,
-                      child: Tooltip(
-                        decoration:
-                            BoxDecoration(color: Theme.of(context).canvasColor),
-                        message: "Soon...",
-                        textStyle: const TextStyle(
-                          fontSize: 30,
-                          color: Color.fromARGB(255, 216, 216, 216),
+                      onPressed: () {
+                        daoConfig.daoType = 'debates';
+                        onNext();
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.all(12.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: const Color.fromARGB(255, 56, 56, 56)),
                         ),
-                        child: Container(
-                          margin: const EdgeInsets.all(12.0),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                                color: const Color.fromARGB(255, 56, 56, 56)),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: const [
-                              SizedBox(height: 38),
-                              Icon(Icons.forum, size: 40),
-                              SizedBox(height: 14),
-                              Text('Off-chain',
-                                  style: TextStyle(fontSize: 23.5)),
-                              SizedBox(height: 14),
-                              Padding(
-                                padding: EdgeInsets.only(
-                                    left: 13.0, right: 13, top: 10, bottom: 10),
-                                child: Text(
-                                  "Tokenized collective debates with fractal topology. \n\nDeclarative only.",
-                                  style: TextStyle(height: 1.4),
-                                  textAlign: TextAlign.center,
-                                ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 38),
+                            const Icon(Icons.forum, size: 40),
+                            const SizedBox(height: 14),
+                            const Text('Debates',
+                                style: TextStyle(fontSize: 23.5)),
+                            const SizedBox(height: 14),
+                            const Padding(
+                              padding: EdgeInsets.only(
+                                  left: 13.0, right: 13, top: 10, bottom: 10),
+                              child: Text(
+                                "Tokenized arguments with fractal topology.",
+                                style: TextStyle(height: 1.4),
+                                textAlign: TextAlign.center,
                               ),
-                            ],
-                          ),
+                            ),
+                            Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  "Declarative",
+                                  style: TextStyle(
+                                      color: Theme.of(context).indicatorColor),
+                                ))
+                          ],
                         ),
                       ),
                     ),
@@ -215,6 +223,7 @@ class Screen1DaoType extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 130)
           ],
         ),
       ),
@@ -398,10 +407,10 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
+                const SizedBox(
                   width: 300,
                   child: CheckboxListTile(
-                    title: const Text('Non-transferrable'),
+                    title: Text('Non-transferrable'),
                     value: true,
                     onChanged: null,
                   ),
@@ -480,8 +489,9 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
             Container(
               decoration: BoxDecoration(
                   border: Border.all(
-                      color: Color.fromARGB(255, 78, 78, 78), width: 0.4)),
-              padding: EdgeInsets.all(35),
+                      color: const Color.fromARGB(255, 78, 78, 78),
+                      width: 0.4)),
+              padding: const EdgeInsets.all(35),
               child: Column(
                 children: [
                   Text('Quorum', style: Theme.of(context).textTheme.headline5),
@@ -521,8 +531,9 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
             Container(
               decoration: BoxDecoration(
                   border: Border.all(
-                      color: Color.fromARGB(255, 78, 78, 78), width: 0.4)),
-              padding: EdgeInsets.all(35),
+                      color: const Color.fromARGB(255, 78, 78, 78),
+                      width: 0.4)),
+              padding: const EdgeInsets.all(35),
               child: SizedBox(
                 width: 500,
                 child: Column(
@@ -1673,7 +1684,7 @@ class Screen7Review extends StatelessWidget {
               Text('${daoConfig.daoName}',
                   style: Theme.of(context).textTheme.headline5),
               const SizedBox(height: 10),
-              Text('On-Chain Organization'),
+              const Text('On-Chain Organization'),
               const SizedBox(height: 20),
               Container(
                   constraints: const BoxConstraints(maxWidth: 430),
@@ -1692,7 +1703,7 @@ class Screen7Review extends StatelessWidget {
                   'Execution Delay: ${formatDuration(daoConfig.executionDelay)}'),
               const SizedBox(height: 30),
               Text('${daoConfig.members.length} Members',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               DataTable(
                 columns: const [
@@ -1729,10 +1740,10 @@ class Screen7Review extends StatelessWidget {
                     }
 
                     // Add dots row
-                    displayedRows.add(DataRow(cells: [
-                      const DataCell(Text('...')),
-                      const DataCell(Text('...')),
-                      const DataCell(Text('...')),
+                    displayedRows.add(const DataRow(cells: [
+                      DataCell(Text('...')),
+                      DataCell(Text('...')),
+                      DataCell(Text('...')),
                     ]));
 
                     // Add last 3 rows

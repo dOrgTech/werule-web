@@ -20,11 +20,8 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     int activeProposals = 0;
     int awaitingExecution = 0;
-    print("number of total proposals");
     for (Proposal p in widget.org.proposals) {
-      print("this one has the status " + p.status);
       if (p.status == "active") {
-        print("found an active proposal");
         activeProposals++;
       } else if (p.status == "executable") {
         awaitingExecution++;
@@ -65,7 +62,6 @@ class _HomeState extends State<Home> {
                                   color: Colors.grey,
                                 );
                               } else if (snapshot.hasData) {
-                                print("generating");
                                 return Image.memory(snapshot.data!);
                               } else {
                                 return Container(

@@ -7,6 +7,8 @@ class Token {
   });
 
   String? address;
+  int? tokenId;
+  String iconUrl = '';
   late String name;
   late String symbol;
   int? decimals;

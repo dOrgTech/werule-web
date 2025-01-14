@@ -2,272 +2,274 @@ import 'package:Homebase/entities/human.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../entities/token.dart';
-
-String add1 = "https://i.ibb.co/2WbL5nC/add1.png";
-String add2 = "https://i.ibb.co/6rmksXk/add2.png";
-List<String> userPics = [add1, add2];
+import 'eneftee.dart';
 
 class TokenAssets extends StatefulWidget {
-  Org org;
+  final Org org;
   int status = 0;
-  TokenAssets({super.key, required this.org});
+  TokenAssets({Key? key, required this.org}) : super(key: key);
 
   @override
   State<TokenAssets> createState() => _TokenAssetsState();
 }
 
 class _TokenAssetsState extends State<TokenAssets> {
-  List<TableRow> assets = [];
+  List<TableRow> fungibleAssets = [];
 
-  buildAssets() {
-    assets = [];
+  Future<void> buildAssets() async {
+    fungibleAssets.clear();
 
-    for (Token t in widget.org.treasury.keys) {
-      assets.add(asset(t, widget.org.treasury[t]!));
+    if (widget.org.native == null || widget.org.nativeBalance == null) {
+      debugPrint("Either native token or native balance is null");
+    } else {
+      debugPrint("Adding native token ${widget.org.native?.name}");
+      fungibleAssets.add(
+        asset(widget.org.native!, widget.org.nativeBalance!),
+      );
+    }
+
+    if (widget.org.erc20Tokens == null) {
+      debugPrint("widget.org.erc20Tokens is null");
+      return;
+    }
+
+    for (Token t in widget.org.erc20Tokens!) {
+      final bal = widget.org.treasury[t] ?? "0";
+      debugPrint("Adding ERC20 token: ${t.name}, balance: $bal");
+      fungibleAssets.add(asset(t, bal));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    assets = [];
-
     return FutureBuilder(
-        future: widget.org.populateTreasury(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.5,
-                  height: 100,
-                  child: const Center(
-                    child:
-                        SizedBox(height: 4, child: LinearProgressIndicator()),
-                  )),
-            );
-          }
-          buildAssets();
-          return Card(
-              child: Padding(
+      future: widget.org.populateTreasury(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              height: 100,
+              child: const Center(
+                child: SizedBox(height: 4, child: LinearProgressIndicator()),
+              ),
+            ),
+          );
+        }
+        debugPrint("populateTreasury() done, building assets...");
+        buildAssets(); // We can call this synchronously now that data is ready
+
+        return Card(
+          child: Padding(
             padding: const EdgeInsets.only(bottom: 28.0, left: 9, right: 9),
-            child: Column(children: [
-              SizedBox(
+            child: Column(
+              children: [
+                SizedBox(
                   height: 120,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Container(
-                        padding: EdgeInsets.only(left: 50),
+                        padding: const EdgeInsets.only(left: 50),
                         width: 500,
                         child: TextField(
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(width: 0.1),
+                              borderSide: const BorderSide(width: 0.1),
                             ),
-                            prefixIcon: Icon(Icons.search),
+                            prefixIcon: const Icon(Icons.search),
                             hintText: 'Find token by name or address',
-                            // other properties
                           ),
-                          // other properties
                         ),
                       ),
                       const Spacer(),
                       Container(
-                          padding: EdgeInsets.only(right: 50),
-                          height: 40,
-                          child: ToggleSwitch(
-                            initialLabelIndex: widget.status,
-                            totalSwitches: 2,
-                            minWidth: 120,
-                            borderWidth: 1.5,
-                            activeFgColor: Theme.of(context).indicatorColor,
-                            inactiveFgColor: Color.fromARGB(255, 189, 189, 189),
-                            activeBgColor: [Color.fromARGB(255, 77, 77, 77)],
-                            inactiveBgColor: Theme.of(context).cardColor,
-                            borderColor: [Theme.of(context).cardColor],
-                            labels: ['Tokens', 'NFTs'],
-                            onToggle: (index) {
-                              print('switched to: $index');
-                              setState(() {
-                                widget.status = index!;
-                              });
-                            },
-                          )),
+                        padding: const EdgeInsets.only(right: 50),
+                        height: 40,
+                        child: ToggleSwitch(
+                          initialLabelIndex: widget.status,
+                          totalSwitches: 2,
+                          minWidth: 120,
+                          borderWidth: 1.5,
+                          activeFgColor: Theme.of(context).indicatorColor,
+                          inactiveFgColor:
+                              const Color.fromARGB(255, 189, 189, 189),
+                          activeBgColor: const [
+                            Color.fromARGB(255, 77, 77, 77)
+                          ],
+                          inactiveBgColor: Theme.of(context).cardColor,
+                          borderColor: [Theme.of(context).cardColor],
+                          labels: const ['Tokens', 'NFTs'],
+                          onToggle: (index) {
+                            debugPrint('Switched to: $index');
+                            setState(() {
+                              widget.status = index ?? 0;
+                            });
+                          },
+                        ),
+                      ),
                     ],
-                  )),
-              SizedBox(height: 15),
-              Table(
-                border: TableBorder.all(
-                  color: Colors.transparent,
+                  ),
                 ),
-                columnWidths: const <int, TableColumnWidth>{
-                  0: FlexColumnWidth(1.8), // Left-most item stays as is
-                  1: FlexColumnWidth(
-                      0.3), // Slightly reduce column width for SYMBOL
-                  2: FlexColumnWidth(
-                      1.2), // Slightly reduce column width for AMOUNT
-                  3: FlexColumnWidth(
-                      1.4), // Slightly reduce column width for ADDRESS
-                  4: FixedColumnWidth(150), //// Extra space for the button
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: <TableRow>[
-                  // Header row
-                  TableRow(
-                    children: <Widget>[
-                      Container(
-                        height: 22,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: const Padding(
-                          padding: EdgeInsets.only(top: 4.0, left: 75),
-                          child: Text(
-                            "TOKEN NAME",
-                            style: TextStyle(fontWeight: FontWeight.w100),
+                const SizedBox(height: 15),
+                // Show table if status == 0, else show NFT
+                widget.status == 0
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Table(
+                            border: TableBorder.all(color: Colors.transparent),
+                            columnWidths: const {
+                              0: FlexColumnWidth(1.8),
+                              1: FlexColumnWidth(0.3),
+                              2: FlexColumnWidth(1.2),
+                              3: FlexColumnWidth(1.4),
+                              4: FixedColumnWidth(150),
+                            },
+                            children: [
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 4.0, left: 75),
+                                    child: const Text(
+                                      "TOKEN NAME",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w100),
+                                    ),
+                                  ),
+                                  const Center(child: Text("SYMBOL")),
+                                  const Center(child: Text("AMOUNT")),
+                                  const Center(child: Text("ADDRESS")),
+                                  const SizedBox(),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const Opacity(
+                            opacity: 0.5,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 29.0),
+                              child: Divider(),
+                            ),
+                          ),
+                          Table(
+                            border: TableBorder.all(color: Colors.transparent),
+                            columnWidths: const {
+                              0: FlexColumnWidth(1.8),
+                              1: FlexColumnWidth(0.3),
+                              2: FlexColumnWidth(1.2),
+                              3: FlexColumnWidth(1.4),
+                              4: FixedColumnWidth(150),
+                            },
+                            defaultVerticalAlignment:
+                                TableCellVerticalAlignment.middle,
+                            children: fungibleAssets,
+                          ),
+                        ],
+                      )
+                    : Center(
+                        child: Eneftee(
+                          nft: NFT(
+                            address: "0xdaf328d1720954612898u29d8h2398dh9238ds",
+                            tokenId: 1,
                           ),
                         ),
                       ),
-                      Container(
-                        height: 22,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: const Center(child: Text("SYMBOL")),
-                      ),
-                      Container(
-                        height: 22,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: const Center(child: Text("AMOUNT")),
-                      ),
-                      Container(
-                        height: 22,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: const Center(child: Text("ADDRESS")),
-                      ),
-                      // Empty header for button
-                      Container(
-                        height: 22,
-                        color: const Color.fromARGB(0, 76, 175, 79),
-                        child: const Center(child: Text("")),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const Opacity(
-                opacity: 0.5,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 29.0),
-                  child: Divider(),
-                ),
-              ),
-              Table(
-                  border: TableBorder.all(
-                    color: Colors.transparent,
-                  ),
-                  columnWidths: const <int, TableColumnWidth>{
-                    0: FlexColumnWidth(1.8), // Left-most item stays as is
-                    1: FlexColumnWidth(
-                        0.3), // Slightly reduce column width for SYMBOL
-                    2: FlexColumnWidth(
-                        1.2), // Slightly reduce column width for AMOUNT
-                    3: FlexColumnWidth(
-                        1.4), // Slightly reduce column width for ADDRESS
-                    4: FixedColumnWidth(
-                        150), // Extra space for the button with more padding
-                  },
-                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                  children: assets)
-            ]),
-          ));
-        });
-  }
-
-  TableRow asset(Token token, String value) {
-    return TableRow(
-      children: <Widget>[
-        Container(
-          height: 42,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 60.0),
-              child: Text(token.name),
-            ),
-          ),
-        ),
-        Container(
-          height: 42,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: Center(
-              child: Text(token.symbol,
-                  style: TextStyle(color: Theme.of(context).indicatorColor))),
-        ),
-        Container(
-          height: 42,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: Center(child: Text(displayTokenValue(value, token.decimals!))),
-        ),
-        Container(
-          height: 42,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // ClipRRect(
-                //         borderRadius: BorderRadius.circular(50),
-                //         child:
-                // Image.network(
-                //   genera,
-                //   height: 24,
-                // )),
-                // const SizedBox(width: 10),
-                Text(
-                  token.address! == 'native'
-                      ? "native token"
-                      : getShortAddress(token.address!),
-                  style: const TextStyle(fontSize: 13),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(width: 10),
-                TextButton(
-                  onPressed: () {},
-                  child: const Icon(Icons.copy),
-                ),
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  TableRow asset(Token token, String value) {
+    final decimals = token.decimals ?? 0;
+    debugPrint("Displaying token ${token.name} with decimals $decimals");
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0, bottom: 8, left: 75),
+          child: Text(
+            token.name,
+            style: const TextStyle(fontSize: 14),
+          ),
         ),
-        // ElevatedButton with more padding on the right
-        Container(
-          width: 60,
-          color: const Color.fromARGB(0, 76, 175, 79),
-          child: Padding(
-            padding: const EdgeInsets.only(right: 40), // Adding right padding
-            child: ElevatedButton(
-              onPressed: () {
-                Proposal p = Proposal(org: widget.org);
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Padding(
-                        padding: const EdgeInsets.only(left: 18.0),
-                        child: Text("Transfer Assets"),
-                      ),
-                      content: newProposalWidgets["Transfer Assets"]!(
-                          widget.org, p, this),
-                    );
-                  },
-                );
-                // Transfer logic
-              },
-              child: const Text("Transfer"),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Center(
+            child: Text(
+              token.symbol,
+              style: TextStyle(
+                  color: Theme.of(context).indicatorColor, fontSize: 14),
             ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Center(
+            child: Text(
+              displayTokenValue(value, decimals),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                token.address == 'native'
+                    ? "native token"
+                    : getShortAddress(token.address ?? ""),
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(width: 10),
+              TextButton(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: token.address));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Center(
+                          child: Text('Copied token address to clipboard')),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                child: const Icon(Icons.copy),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 20),
+          child: ElevatedButton(
+            onPressed: () {
+              Proposal p = Proposal(org: widget.org);
+              showDialog(
+                context: context,
+                builder: (_) {
+                  return AlertDialog(
+                    title: const Padding(
+                      padding: EdgeInsets.only(left: 18.0),
+                      child: Text("Transfer Assets"),
+                    ),
+                    content: newProposalWidgets["Transfer Assets"]!(
+                        widget.org, p, this),
+                  );
+                },
+              );
+            },
+            child: const Text("Transfer"),
           ),
         ),
       ],

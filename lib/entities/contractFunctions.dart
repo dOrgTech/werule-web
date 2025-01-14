@@ -1,6 +1,7 @@
 import 'dart:js_util';
 import 'package:Homebase/entities/abis.dart';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/entities/token.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:flutter_web3_provider/ethers.dart';
@@ -118,19 +119,22 @@ getBalance(who, Org org) async {
 }
 
 getProposalVotes(Proposal p) async {
+  print("getting proposal votes");
   var httpClient = Client();
+  print("made client");
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  print("got the user client");
   final dao = DeployedContract(
-    ContractAbi.fromJson(p.org.address!, 'state'),
+    ContractAbi.fromJson(daoAbiGlobal, 'proposalVotes'),
     EthereumAddress.fromHex(p.org.address!),
   );
-  var getRepToken = dao.function('state');
-  Uint8List encodedData = getRepToken.encodeCall([]);
+  print("got the contract");
+  var getRepToken = dao.function('proposalVotes');
   try {
     var counter = await ethClient.call(
       contract: dao,
       function: getRepToken,
-      params: [],
+      params: [BigInt.parse(p.id!)],
     );
     // Log the RPC response
     print('RPC Response STATE:');
@@ -141,6 +145,7 @@ getProposalVotes(Proposal p) async {
     print('$againstVotes ${againstVotes}');
     httpClient.close();
     ethClient.dispose();
+    print("+++++++++++++++++++++++++++++");
 
     return [
       parseNumber(againstVotes.toString(), p.org.decimals!),
@@ -208,6 +213,38 @@ getQueueTime(Proposal p) async {
     print('RPC Response Proposal STATE');
     print(counter.toString());
     int rezultat = int.parse(counter[0].toString()) as int;
+    print('$rezultat ${rezultat.runtimeType}');
+    httpClient.close();
+    ethClient.dispose();
+    return rezultat;
+  } catch (e) {
+    print('Error: $e');
+    // Log the full response body
+    print('Response Body:');
+    print(httpClient.toString());
+    rethrow;
+  }
+}
+
+getTokenUrl(Token t, int index) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractWrapper = DeployedContract(
+    ContractAbi.fromJson(nftApiGlobal, 'tokenURI'),
+    EthereumAddress.fromHex(Human().chain.wrapperContract),
+  );
+  var getRepToken = contractWrapper.function('tokenURI');
+  Uint8List encodedData = getRepToken.encodeCall([]);
+  try {
+    var counter = await ethClient.call(
+      contract: contractWrapper,
+      function: getRepToken,
+      params: [index],
+    );
+    // Log the RPC response
+    print('RPC Response for number of DAOs:');
+    print(counter.toString());
+    String rezultat = counter[0].toString();
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
     ethClient.dispose();

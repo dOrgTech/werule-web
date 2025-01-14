@@ -89,7 +89,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                   widget.m.votingWeight.toString()
               ? const Padding(
                   padding: EdgeInsets.only(bottom: 3.0),
-                  child: Text("Only voting your your behalf"),
+                  child: Text("Only voting on your behalf"),
                 )
               : RichText(
                   text: TextSpan(

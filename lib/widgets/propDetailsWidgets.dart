@@ -79,15 +79,15 @@ class TokenTransferListWidget extends StatelessWidget {
                 // Amount and Token Symbol
                 Text(
                   '${transfer.amount} ${transfer.token}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
 
                 // Arrow indicating "to"
-                Icon(Icons.arrow_forward, size: 20),
+                const Icon(Icons.arrow_forward, size: 20),
 
                 const SizedBox(width: 8),
 
@@ -96,7 +96,7 @@ class TokenTransferListWidget extends StatelessWidget {
                   future: generateAvatarAsync(transfer.hash),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return SizedBox(
+                      return const SizedBox(
                         width: 40,
                         height: 40,
                         child: CircularProgressIndicator(),
@@ -108,19 +108,19 @@ class TokenTransferListWidget extends StatelessWidget {
                         height: 40,
                       ); // Render the generated avatar
                     } else {
-                      return SizedBox(
+                      return const SizedBox(
                         width: 40,
                         height: 40,
                       ); // Placeholder if there's an error
                     }
                   },
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 // Address
                 Expanded(
                   child: Text(
                     transfer.address,
-                    style: TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -139,7 +139,7 @@ class ContractCall extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(left: 30, top: 16.0),
+      padding: const EdgeInsets.only(left: 30, top: 16.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Row(
           children: [
@@ -147,15 +147,15 @@ class ContractCall extends StatelessWidget {
                 width: 120,
                 child: Align(
                     alignment: Alignment.centerRight, child: Text("calling:"))),
-            SizedBox(width: 19),
+            const SizedBox(width: 19),
             Container(
-                padding: EdgeInsets.all(4),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                     border: Border.all(
                       color: Colors.grey,
                       width: 0.2,
                     ),
-                    color: Color.fromARGB(255, 28, 28, 28)),
+                    color: const Color.fromARGB(255, 28, 28, 28)),
                 child: Text(p.targets[0]))
           ],
         ),
@@ -167,26 +167,26 @@ class ContractCall extends StatelessWidget {
                 child: Align(
                     alignment: Alignment.centerRight,
                     child: Text("with callData:"))),
-            SizedBox(width: 19),
+            const SizedBox(width: 19),
             Text(
               "0x" + getShortAddress(p.callDatas[0].toString()),
               // "ndwq89hdp197hdqpo98shdp9q8723hp98qh9"),
-              style: TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14),
             ),
             TextButton(
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: p.targets[0]));
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       duration: Duration(seconds: 1),
                       content: SizedBox(
                           height: 40,
                           child: Center(
                               child: Text("Calldata copied to clipboard")))));
                 },
-                child: Icon(Icons.copy))
+                child: const Icon(Icons.copy))
           ],
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
       ]),
     );
   }
@@ -201,8 +201,8 @@ class DaoConfigurationDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     print("building the entire thing");
     return Container(
-      padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(
           // border: Border.all(color: Colors.grey, width: 0.3),
           ),
       child: Column(
@@ -210,17 +210,17 @@ class DaoConfigurationDetails extends StatelessWidget {
         children: [
           Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 120,
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: Text("Change"),
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 p.type!,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -228,7 +228,7 @@ class DaoConfigurationDetails extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildDetailsSection(context, p.type!.toLowerCase()),
         ],
       ),
@@ -248,7 +248,7 @@ class DaoConfigurationDetails extends StatelessWidget {
       case "proposal threshold":
         return _buildChangeProposalThresholdDetails(context);
       default:
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
     }
   }
 
@@ -300,16 +300,16 @@ class DaoConfigurationDetails extends StatelessWidget {
         _buildRow("Parameter:", "new proposal threshold (uint256)"),
         Row(
           children: [
-            SizedBox(
+            const SizedBox(
               width: 120,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text("Value:"),
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Container(
-              padding: EdgeInsets.all(4),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey, width: 0.2),
                 color: Colors.grey[900],
@@ -341,16 +341,16 @@ class DaoConfigurationDetails extends StatelessWidget {
               child: Text(label),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Container(
-            padding: EdgeInsets.all(4),
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey, width: 0.2),
               color: Colors.grey[900],
             ),
             child: Text(
               value,
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -429,13 +429,15 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
     List params = [];
     if (operationType == "Mint") {
       params = decodeFunctionParameters(mintGovTokensDef, p.callDatas[0]);
+    } else {
+      params = decodeFunctionParameters(burnGovTokensDef, p.callDatas[0]);
     }
     print("=======decoding params=========");
     print(params);
     String targetAddress = params[0];
     String amount = params[1];
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       // decoration: BoxDecoration(
       //   border: Border.all(color: Colors.grey, width: 0.3),
       //   color: Color.fromARGB(255, 28, 28, 28),
@@ -443,12 +445,12 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(operationType + " " + p.org.symbol! + " tokens"),
-          SizedBox(height: 30),
+          Text("$operationType ${p.org.symbol!} tokens"),
+          const SizedBox(height: 30),
           _buildDetailRow(
               operationType == "Mint" ? "To Address:" : "From Address",
               targetAddress),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _buildDetailRow("Amount:", amount),
         ],
       ),
@@ -468,17 +470,17 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
               child: Text(label),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(4),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey, width: 0.2),
                 color: Colors.grey[900],
               ),
               child: Text(
                 value,
-                style: TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ),
@@ -521,12 +523,12 @@ class RegistryProposalDetails extends StatelessWidget {
 
   Widget operation(values) {
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildDetailRow("Key:", values[0]),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _buildDetailRow("Value:", values[1]),
         ],
         // children: [Text("Key: ${p.callDatas[0].toString()}")],
@@ -559,17 +561,17 @@ class RegistryProposalDetails extends StatelessWidget {
               child: Text(label),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(4),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey, width: 0.2),
                 color: Colors.grey[900],
               ),
               child: Text(
                 " " + value,
-                style: TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ),
@@ -836,7 +838,7 @@ class _VotesModalState extends State<VotesModal> {
                           Text(getShortAddress(vote.voter!)),
                           const SizedBox(width: 8),
                           TextButton(
-                              child: Icon(Icons.copy),
+                              child: const Icon(Icons.copy),
                               onPressed: () {
                                 Clipboard.setData(
                                     ClipboardData(text: vote.voter!));
@@ -862,7 +864,7 @@ class _VotesModalState extends State<VotesModal> {
                         TextButton(
                             onPressed: () => launch(
                                 "${Human().chain.blockExplorer}/tx/${vote.hash}"),
-                            child: Icon(Icons
+                            child: const Icon(Icons
                                 .open_in_new)), // You can add onTap functionality here later
                       )
                     ]);

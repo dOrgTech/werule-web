@@ -78,13 +78,16 @@ class ProposalDetails extends StatefulWidget {
 
         for (var blob in blobArray) {
           if (blob is Blob) {
-            print(blob.bytes); // Prints the raw byte array
+            // Prints the raw byte array
             String hexString = blob.bytes
                 .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
                 .join();
             p.callDatas.add(hexString);
           }
         }
+        List<String> amounts = await getProposalVotes(p);
+        p.against = amounts[0];
+        p.inFavor = amounts[1];
 
         var statusHistoryMap = data['statusHistory'] as Map<String, dynamic>;
         p.statusHistory = statusHistoryMap.map((key, value) {
@@ -102,7 +105,7 @@ class ProposalDetails extends StatefulWidget {
         double ceva =
             turnoutbigInt.toDouble() / BigInt.from(10).pow(18).toDouble();
         p.turnout = ceva.toDouble();
-        print("TURNOOOOOOOOOOOOOOOUT " + p.turnout.toString());
+
         p.targets = List<String>.from(data['targets']);
         p.values = List<String>.from(data['values']);
         p.externalResource =
@@ -113,7 +116,7 @@ class ProposalDetails extends StatefulWidget {
         if (p.status == "executed") {
           p.executionHash = "0x${parseTransactionHash(data['executionHash'])}";
         }
-        print("this runs every time there's an update");
+
         yield snapshot.data() as Map<String, dynamic>?;
       } else {
         yield null;
@@ -129,17 +132,14 @@ class ProposalDetails extends StatefulWidget {
         votingStarts.add(Duration(minutes: p.org.votingDuration));
     if (p.status == "pending") {
       remainingSeconds = ((now.difference(votingStarts).inSeconds) + 4).abs();
-      print("PENDING and we are setting the remaining seconds: " +
-          remainingSeconds.toString());
+
       showCountdown = true;
     } else if (p.status == "active") {
       remainingSeconds = (now.difference(votingEnds).inSeconds + 4).abs();
-      print("ACTIVE and we are setting the remaining seconds: " +
-          remainingSeconds.toString());
+
       showCountdown = true;
       enabled = true;
     } else if (p.status == "queued") {
-      print("we've been queued");
       DateTime? executionAvailable;
       if (p.statusHistory["queued"] != null) {
         executionAvailable = p.statusHistory["queued"]!
@@ -150,8 +150,7 @@ class ProposalDetails extends StatefulWidget {
       }
       remainingSeconds =
           (executionAvailable.difference(now).inSeconds + 4).abs();
-      print("QUEUED and we are setting the remaining seconds: " +
-          remainingSeconds.toString());
+
       showCountdown = true;
     } else {
       enabled = false;
@@ -194,6 +193,15 @@ class ProposalDetailsState extends State<ProposalDetails> {
                     BorderSide(width: 0.2, color: Theme.of(context).hintColor),
               ),
               onPressed: () async {
+                if (Human().address == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Center(
+                          child: Text("Connect your wallet first.",
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color.fromARGB(255, 70, 11, 7))))));
+                  return;
+                }
                 setState(() {
                   widget.busy = true;
                 });
@@ -586,14 +594,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                       alignment: Alignment.topLeft,
                       child: TextButton(
                           onPressed: () {
-                            context.go("/" + widget.p.org.address!);
-                            // Navigator.push(
-                            //     context,
-                            //     MaterialPageRoute(
-                            //         builder: (context) => DAO(
-                            //               InitialTabIndex: 1,
-                            //               org: widget.p.org,
-                            //             )));
+                            // context.go("/" + widget.p.org.address!);
+                            Navigator.of(context).pop();
                           },
                           child: const Text("< Back"))),
                   const SizedBox(height: 10),

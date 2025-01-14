@@ -18,7 +18,7 @@ Color listTitleColor = const Color.fromARGB(255, 211, 211, 211);
 
 class Account extends StatefulWidget {
   Account({super.key, this.member, required this.org});
-  int status = 0;
+
   List<Widget> createdProposals = [];
   List<Widget> votedOnProposals = [];
   Member? member;
@@ -77,6 +77,17 @@ class AccountState extends State<Account> {
                   height: 140.0,
                   child: CircularProgressIndicator()),
             );
+          }
+          if (widget.member!.proposalsVoted == null) {
+            widget.votedOnProposals = [Text("this is awkward")];
+          } else {
+            for (Proposal p in widget.member!.proposalsVoted) {
+              print("adding one");
+              widget.votedOnProposals.add(ProposalCard(
+                proposal: p,
+                org: widget.org,
+              ));
+            }
           }
 
           return (BigInt.parse(widget.member!.personalBalance!) < BigInt.one)
@@ -277,146 +288,151 @@ class AccountState extends State<Account> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(38.0),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        "Activity history",
-                                        style: TextStyle(fontSize: 20),
-                                      ),
-                                      Container(
-                                          padding:
-                                              const EdgeInsets.only(right: 50),
-                                          height: 40,
-                                          child: ToggleSwitch(
-                                            initialLabelIndex: widget.status,
-                                            totalSwitches: 2,
-                                            minWidth: 186,
-                                            borderWidth: 1.5,
-                                            activeFgColor: Theme.of(context)
-                                                .indicatorColor,
-                                            inactiveFgColor:
-                                                const Color.fromARGB(
-                                                    255, 189, 189, 189),
-                                            activeBgColor: const [
-                                              Color.fromARGB(255, 77, 77, 77)
-                                            ],
-                                            inactiveBgColor:
-                                                Theme.of(context).cardColor,
-                                            borderColor: [
-                                              Theme.of(context).cardColor
-                                            ],
-                                            labels: [
-                                              'VOTING RECORD',
-                                              'PROPOSALS CREATED'
-                                            ],
-                                            customTextStyles: [
-                                              const TextStyle(fontSize: 14)
-                                            ],
-                                            onToggle: (index) {
-                                              print('switched to: $index');
-                                              setState(() {
-                                                widget.status = index!;
-                                              });
-                                            },
-                                          )),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 9),
-                            const Divider(),
-                            const SizedBox(height: 30),
-                            Container(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 1.0),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 15.0),
-                                      child: Container(
-                                          padding:
-                                              const EdgeInsets.only(left: 15),
-                                          width: 90,
-                                          child: Text(
-                                            "ID #",
-                                            style: TextStyle(
-                                                color: listTitleColor),
-                                          )),
-                                    ),
-                                    Expanded(
-                                      child: Container(
-                                          width: 230,
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 48.0),
-                                            child: Text(
-                                              "Title",
-                                              style: TextStyle(
-                                                  color: listTitleColor),
-                                            ),
-                                          )),
-                                    ),
-                                    Container(
-                                        width: 180,
-                                        child: Center(
-                                            child: Text(
-                                          "Voted    ",
-                                          style:
-                                              TextStyle(color: listTitleColor),
-                                        ))),
-                                    SizedBox(
-                                        width: 150,
-                                        child: Center(
-                                            child: Text(
-                                          "Posted",
-                                          style:
-                                              TextStyle(color: listTitleColor),
-                                        ))),
-                                    SizedBox(
-                                        width: 150,
-                                        child: Center(
-                                            child: Text(
-                                          "Type ",
-                                          style:
-                                              TextStyle(color: listTitleColor),
-                                        ))),
-                                    SizedBox(
-                                        width: 100,
-                                        child: Center(
-                                            child: Text(
-                                          "Status ",
-                                          style:
-                                              TextStyle(color: listTitleColor),
-                                        ))),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            ...widget.createdProposals
-                          ],
-                        ),
-                      ),
-                    ),
+                    ActivityHistory(
+                        votedProposals: widget.votedOnProposals,
+                        createdProposals: widget.createdProposals),
                     const SizedBox(height: 140),
                   ],
                 );
         });
+  }
+}
+
+class ActivityHistory extends StatefulWidget {
+  int status = 1;
+  List<Widget> createdProposals;
+  List<Widget> votedProposals;
+  ActivityHistory({
+    required this.createdProposals,
+    required this.votedProposals,
+    super.key,
+  });
+
+  @override
+  State<ActivityHistory> createState() => _ActivityHistoryState();
+}
+
+class _ActivityHistoryState extends State<ActivityHistory> {
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(38.0),
+        child: Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Activity history",
+                        style: TextStyle(fontSize: 20),
+                      ),
+                      Container(
+                          padding: const EdgeInsets.only(right: 50),
+                          height: 40,
+                          child: ToggleSwitch(
+                            initialLabelIndex: widget.status,
+                            totalSwitches: 2,
+                            minWidth: 186,
+                            borderWidth: 1.5,
+                            activeFgColor: Theme.of(context).indicatorColor,
+                            inactiveFgColor:
+                                const Color.fromARGB(255, 189, 189, 189),
+                            activeBgColor: const [
+                              Color.fromARGB(255, 77, 77, 77)
+                            ],
+                            inactiveBgColor: Theme.of(context).cardColor,
+                            borderColor: [Theme.of(context).cardColor],
+                            labels: ['VOTING RECORD', 'PROPOSALS CREATED'],
+                            customTextStyles: [const TextStyle(fontSize: 14)],
+                            onToggle: (index) {
+                              print('switched to: $index');
+                              setState(() {
+                                widget.status = index!;
+                              });
+                            },
+                          )),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 9),
+            const Divider(),
+            const SizedBox(height: 30),
+            Container(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 1.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 15.0),
+                      child: Container(
+                          padding: const EdgeInsets.only(left: 15),
+                          width: 90,
+                          child: Text(
+                            "ID #",
+                            style: TextStyle(color: listTitleColor),
+                          )),
+                    ),
+                    Expanded(
+                      child: Container(
+                          width: 230,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 48.0),
+                            child: Text(
+                              "Title",
+                              style: TextStyle(color: listTitleColor),
+                            ),
+                          )),
+                    ),
+                    Container(
+                        width: 180,
+                        child: Center(
+                            child: Text(
+                          "Voted    ",
+                          style: TextStyle(color: listTitleColor),
+                        ))),
+                    SizedBox(
+                        width: 150,
+                        child: Center(
+                            child: Text(
+                          "Posted",
+                          style: TextStyle(color: listTitleColor),
+                        ))),
+                    SizedBox(
+                        width: 150,
+                        child: Center(
+                            child: Text(
+                          "Type ",
+                          style: TextStyle(color: listTitleColor),
+                        ))),
+                    SizedBox(
+                        width: 100,
+                        child: Center(
+                            child: Text(
+                          "Status ",
+                          style: TextStyle(color: listTitleColor),
+                        ))),
+                  ],
+                ),
+              ),
+            ),
+            ListView(
+              shrinkWrap: true,
+              children: widget.status == 0
+                  ? widget.votedProposals
+                  : widget.createdProposals,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

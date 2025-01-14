@@ -1,20 +1,24 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:math';
+
 import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/entities/token.dart';
 import 'package:Homebase/widgets/configProposal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../debates/models/debate.dart';
 import '../widgets/executeLambda.dart';
+import '../widgets/newDebate.dart';
 import '../widgets/newProject.dart';
 import '../widgets/registryPropo.dart';
 import '../widgets/transfer.dart';
 import 'human.dart';
+
 import 'org.dart';
 
 var proposalTypes = {
-  "Off-Chain Debate": "Post a thesis and have tokenized arguments around it",
+  "Debate": "Post a thesis and have tokenized arguments around it",
   "Transfer Assets": "from the DAO Treasury\nto another account",
   "Edit Registry": "Change an entry\nor add a new one",
   "Contract Call": "Call any function\non any contract",
@@ -25,7 +29,15 @@ var proposalTypes = {
 var state;
 var newProposalWidgets = {
   "New Project (arbitrated)": (Org org) => NewProject(org: org),
-  "Offchain Poll": (Org org) => const NotImplemented(),
+  "Debate": (
+    Org org,
+    Proposal p,
+    State state,
+  ) =>
+      NewDebate(
+        org: org,
+        proposalsState: state,
+      ),
   "Transfer Assets": (Org org, Proposal p, State state) =>
       TransferWidget(org: org, p: p, proposalsState: state),
   "Edit Registry": (Org org, Proposal p, State state) =>
@@ -219,7 +231,7 @@ class Proposal {
     if (newStatus == "succeeded") {
       newStatus = "passed";
     }
-    print("new status baby " + newStatus);
+
     DateTime start = statusHistory["pending"]!;
     Duration votingDelay = Duration(minutes: org.votingDelay);
     Duration votingDuration = Duration(minutes: org.votingDuration);
@@ -287,17 +299,10 @@ class Proposal {
       statusHistory.addAll({"passed": votingEnd});
       statusHistory.addAll({"queued": queuedTime});
       if (queuedTimeExists && now.isAfter(queuedTime.add(executionDelay))) {
-        print("queued time exists and we are after execution delay");
-        print(now.toIso8601String());
-        print(queuedTime.add(executionDelay).toIso8601String());
-        print("execution delay is " + org.executionDelay.toString());
         statusHistory.addAll({"executable": queuedTime.add(executionDelay)});
         newStatus = "executable";
       }
     }
-
-    print("from another status getter we are returning status history:");
-    print(statusHistory.toString());
 
     status = newStatus;
     return newStatus;

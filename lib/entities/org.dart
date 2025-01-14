@@ -1,7 +1,10 @@
 // ignore_for_file: prefer_typing_uninitialized_variables
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../debates/models/argument.dart';
+import '../debates/models/debate.dart';
 import '../main.dart';
+import '../services/blockscout.dart';
 import '../widgets/transfer.dart';
 import 'human.dart';
 import 'proposal.dart';
@@ -9,6 +12,7 @@ import 'token.dart';
 import 'contractFunctions.dart';
 import '../screens/creator.dart';
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class Org {
   var pollsCollection;
@@ -17,12 +21,23 @@ class Org {
       {required this.name,
       this.govToken,
       this.description,
-      this.govTokenAddress});
+      this.govTokenAddress}) {
+    Debate d = Debate(
+        org: this,
+        title: "Should AI have the weekend off?",
+        rootArgument: Argument(
+            content: "Maybve bnut oaij doqij w content",
+            author: "0x83198dw712987d9821739812dws",
+            weight: 100));
+
+    debates.add(d);
+  }
   DateTime? creationDate;
   Map<String, Member> memberAddresses = {};
   Token? govToken;
   String? symbol;
   int? decimals;
+  bool debatesOnly = false;
   String? proposalThreshold;
   String? totalSupply;
   bool nonTransferrable = false;
@@ -30,6 +45,7 @@ class Org {
   String? treasuryAddress;
   String? registryAddress;
   List<Proposal> proposals = [];
+  List<Debate> debates = [];
   List<String>? proposalIDs = [];
   late String name;
   String? description;
@@ -43,27 +59,76 @@ class Org {
   int votingDuration = 0;
   String nativeBalance = "0";
   int executionDelay = 0;
-
+  List<Token> erc20Tokens = [];
+  List<Token> erc721Tokens = [];
+  Token native = Token(
+      type: "native", name: Human().chain.name, symbol: "XTZ", decimals: 18);
   populateTreasury() async {
-    treasury = {};
-    Token native = Token(
-        type: "native", name: Human().chain.name, symbol: "XTZ", decimals: 18);
     nativeBalance = await getNativeBalance(registryAddress!);
     native.address = "native";
+    print("populating treasury");
+    treasury = {};
     treasury.addAll({native: nativeBalance});
-    treasuryMap.forEach((address, value) {
-      Token? matchingToken = tokens.cast<Token?>().firstWhere(
-            (token) => token?.address == address,
-            orElse: () => null,
-          );
-      if (matchingToken != null) {
-        treasury[matchingToken] = value;
-      }
-    });
+    // treasuryMap.forEach((address, value) {
+    //   Token? matchingToken = tokens.cast<Token?>().firstWhere(
+    //         (token) => token?.address == address,
+    //         orElse: () => null,
+    //       );
+    //   if (matchingToken != null) {
+    //     treasury[matchingToken] = value;
+    //   }
+    // });
+    print("what is happening?");
+    try {
+      var balances = await getBalances(registryAddress);
+      processTokens(balances);
+    } catch (e) {
+      print("error getting balances" + e.toString());
+    }
+    print("done populating treasury");
   }
 
   populateRegistry() async {
     registry = {};
+  }
+
+  createDebate(Debate d) async {
+    Future.delayed(Duration(seconds: 1));
+
+    return d.hash;
+  }
+
+  void processTokens(List<dynamic> data) {
+    for (var item in data) {
+      var value = item['value'];
+      var tokenData = item['token'];
+      if (tokenData != null && tokenData['type'] != null) {
+        // Parse token properties with type checking
+        var name = tokenData['name'] ?? 'Unknown';
+        var symbol = tokenData['symbol'] ?? 'Unknown';
+        var decimals = tokenData['decimals'] != null
+            ? int.parse(tokenData['decimals'])
+            : 0;
+        var type = tokenData['type'] ?? 'Unknown';
+        var address = tokenData['address'] ?? 'Unknown';
+        // Create the Token object
+        var token = Token(
+          name: name,
+          symbol: symbol,
+          decimals: decimals,
+          type: type,
+        );
+        token.address = address;
+        // Add to the respective list based on type
+        if (type == 'ERC-20') {
+          erc20Tokens.add(token);
+          treasury.addAll({token: value.toString()});
+        } else if (type == 'ERC-721') {
+          print("adding NFT");
+          erc721Tokens.add(token);
+        }
+      }
+    }
   }
 
   getMembers() async {
@@ -87,6 +152,7 @@ class Org {
       m.proposalsVoted = proposals
           .where((proposal) => proposalsVotedHashes.contains(proposal.hash))
           .toList();
+
       m.lastSeen = doc.data()['lastSeen'] != null
           ? (doc.data()['lastSeen'] as Timestamp).toDate()
           : null;

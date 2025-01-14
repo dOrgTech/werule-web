@@ -14,6 +14,7 @@ import '../widgets/footer.dart';
 import '../widgets/membersList.dart';
 import '../widgets/menu.dart';
 import '../entities/org.dart';
+import 'debateDetails.dart';
 import 'home.dart';
 import 'members.dart';
 
@@ -37,18 +38,9 @@ class _DAOState extends State<DAO> {
     print(widget.proposalHash);
   }
 
-  Stream<void> customStream() async* {
-    // Perform some async operations
-    await Future.delayed(Duration(seconds: 1));
-    await Future.delayed(Duration(seconds: 2));
-    // Do not yield any values
-  }
-
   @override
   Widget build(BuildContext context) {
     widget.org.proposals = [];
-
-    // Wrap the original snapshots stream in an asyncMap to handle the async call
     final stream = FirebaseFirestore.instance
         .collection("idaos${Human().chain.name}")
         .doc(widget.org.address!)
@@ -79,10 +71,9 @@ class _DAOState extends State<DAO> {
       dao.quorum = data['quorum'];
       dao.decimals = data['decimals'];
       dao.holders = data['holders'];
-      dao.treasuryMap = Map<String, String>.from(data['treasury']);
+      // dao.treasuryMap = Map<String, String>.from(data['treasury']);
       dao.registry = Map<String, String>.from(data['registry']);
       dao.totalSupply = data['totalSupply'];
-
       // Perform the async task before yielding
       await dao.getProposals();
       dao.getMembers();
@@ -101,7 +92,7 @@ class _DAOState extends State<DAO> {
               return Text("Error: ${snapshot.error}");
             }
             if (!snapshot.hasData) {
-              return const Text("No updates yet");
+              return Center(child: const Text("No internet connection..."));
             }
 
             final dao = snapshot.data!;
@@ -112,14 +103,11 @@ class _DAOState extends State<DAO> {
                 initialIndex: widget.InitialTabIndex,
                 length: 5,
                 child: ListView(
-                  // Start of ListView
-                  shrinkWrap: true, // Set this property to true
+                  shrinkWrap: true,
                   children: [
                     SizedBox(height: 2),
                     Column(
-                      // Start of Column
-                      crossAxisAlignment: CrossAxisAlignment
-                          .center, // Set this property to center the items horizontally
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisSize: MainAxisSize
                           .min, // Set this property to make the column fit its children's size vertically
                       children: [
@@ -173,13 +161,38 @@ class _DAOState extends State<DAO> {
                                                         height: 100,
                                                         child:
                                                             CircularProgressIndicator()))
-                                                : ProposalDetails(
-                                                    p: widget.org.proposals
-                                                        .firstWhere(
-                                                    (proposal) =>
-                                                        proposal.id ==
-                                                        widget.proposalHash,
-                                                  ));
+                                                : widget.org.proposals.any(
+                                                        (proposal) =>
+                                                            proposal.id ==
+                                                            widget.proposalHash)
+                                                    ? ProposalDetails(
+                                                        p: widget.org.proposals
+                                                            .firstWhere(
+                                                          (proposal) =>
+                                                              proposal.id ==
+                                                              widget
+                                                                  .proposalHash,
+                                                        ),
+                                                      )
+                                                    : widget.org.debates.any(
+                                                            (debate) =>
+                                                                debate.hash ==
+                                                                widget
+                                                                    .proposalHash)
+                                                        ? DebateDetails(
+                                                            debate: widget
+                                                                .org.debates
+                                                                .firstWhere(
+                                                              (debate) =>
+                                                                  debate.hash ==
+                                                                  widget
+                                                                      .proposalHash,
+                                                            ),
+                                                          )
+                                                        : Center(
+                                                            child: Text(
+                                                                'No matching Proposal or Debate found'),
+                                                          );
                                           }),
                                     ),
                               // Center(child: Treasury()),

@@ -6,8 +6,10 @@ import 'package:Homebase/screens/account.dart';
 import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/landing.dart';
 import 'package:Homebase/screens/members.dart';
+import 'package:Homebase/services/blockscout.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/configProposal.dart';
+import 'package:Homebase/widgets/eneftee.dart';
 import 'package:Homebase/widgets/gameOfLife.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/pdetails.dart';
@@ -133,10 +135,14 @@ persist() async {
   }
 }
 
+List<Token> erc20Tokens = [];
+List<Token> erc721Tokens = [];
+
 void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
   if (Human().landing == false) {
     await persist();
+    // List<dynamic>
   }
 
   runApp(ChangeNotifierProvider<Human>(
@@ -187,10 +193,14 @@ final GoRouter router = GoRouter(
       ),
     ),
     GoRoute(
-      path: '/test',
+      path: '/nft',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: Scaffold(body: Center(child: TestomgTJomgs())),
+        child: Scaffold(
+            body: Center(
+                child: Eneftee(
+          nft: NFT(address: "0xdj9328djwq98u29d8h2398dh9238ds", tokenId: 1),
+        ))),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -272,10 +282,16 @@ final GoRouter router = GoRouter(
             final id = state.pathParameters['id']!;
             Org org = orgs.firstWhere((org) => org.address == id);
             final nestedId = state.pathParameters['nestedId']!;
-            final child = DAO(
-              org: org,
-              InitialTabIndex: 1,
-              proposalHash: nestedId,
+
+            final child = StreamBuilder<Object>(
+              stream: null,
+              builder: (context, snapshot) {
+                return DAO(
+                  org: org,
+                  InitialTabIndex: 1,
+                  proposalHash: nestedId,
+                );
+              },
             );
 
             return CustomTransitionPage(
