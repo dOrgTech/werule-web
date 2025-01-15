@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../debates/models/argument.dart';
 import '../debates/models/debate.dart';
 import 'debate_map_widget.dart';
+import 'full_debate_map.dart';
 
 class DebateHeader extends StatelessWidget {
   final Debate debate;
@@ -26,7 +27,7 @@ class DebateHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Debate Title + Score
+          // Debate Title + single "sentiment"
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -36,12 +37,12 @@ class DebateHeader extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Score: ${debate.debateScore.toStringAsFixed(0)}',
+                'Sentiment: ${debate.sentiment.toStringAsFixed(0)}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          // The vertical map
+          // The 3-layer map
           Padding(
             padding: const EdgeInsets.all(14.0),
             child: DebateMapWidget(
@@ -49,6 +50,16 @@ class DebateHeader extends StatelessWidget {
               currentArgument: currentArgument,
               onArgumentSelected: onArgumentSelected,
             ),
+          ),
+          // Button to show full map
+          TextButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => FullDebateMapPopup(debate: debate),
+              );
+            },
+            child: const Icon(Icons.map),
           ),
         ],
       ),

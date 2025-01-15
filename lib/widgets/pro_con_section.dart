@@ -10,12 +10,14 @@ class ProConSection extends StatefulWidget {
   final Debate debate;
   final Argument currentArgument;
   final Function(Argument) onArgumentSelected;
+  final VoidCallback? onDebateChanged;
 
   const ProConSection({
     Key? key,
     required this.debate,
     required this.currentArgument,
     required this.onArgumentSelected,
+    this.onDebateChanged,
   }) : super(key: key);
 
   @override
@@ -28,11 +30,10 @@ class _ProConSectionState extends State<ProConSection> {
       context: context,
       builder: (ctx) => AddArgumentDialog(
         onAdd: (content, weight) {
-          // Create the new child argument
+          // New child with random author
           final newArg = Argument(
-            author: "Anonymous", // or from user profile
-            weight: weight,
             content: content,
+            weight: weight,
             parent: widget.currentArgument,
           );
 
@@ -42,10 +43,10 @@ class _ProConSectionState extends State<ProConSection> {
             } else {
               widget.currentArgument.conArguments.add(newArg);
             }
-            // Now recompute the entire debate's score
-            widget.debate.debateScore =
-                Argument.computeScore(widget.debate.rootArgument);
+            widget.debate.recalc();
           });
+
+          widget.onDebateChanged?.call();
         },
       ),
     );
@@ -87,21 +88,17 @@ class _ProConSectionState extends State<ProConSection> {
                   ),
                 ),
                 const Divider(height: 1),
-                Expanded(
-                  child: proArgs.isEmpty
-                      ? const Center(
-                          child: Text('No Pro arguments yet.',
-                              style: TextStyle(color: Colors.white)),
-                        )
-                      : ListView.builder(
-                          itemCount: proArgs.length,
-                          itemBuilder: (ctx, i) {
-                            return ArgumentCard(
-                              argument: proArgs[i],
-                              onTap: widget.onArgumentSelected,
-                            );
-                          },
-                        ),
+                // Non-scrollable ListView, shrinkWrap
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: proArgs.length,
+                  itemBuilder: (ctx, i) {
+                    return ArgumentCard(
+                      argument: proArgs[i],
+                      onTap: widget.onArgumentSelected,
+                    );
+                  },
                 ),
               ],
             ),
@@ -135,21 +132,16 @@ class _ProConSectionState extends State<ProConSection> {
                   ),
                 ),
                 const Divider(height: 1),
-                Expanded(
-                  child: conArgs.isEmpty
-                      ? const Center(
-                          child: Text('No Con arguments yet.',
-                              style: TextStyle(color: Colors.white)),
-                        )
-                      : ListView.builder(
-                          itemCount: conArgs.length,
-                          itemBuilder: (ctx, i) {
-                            return ArgumentCard(
-                              argument: conArgs[i],
-                              onTap: widget.onArgumentSelected,
-                            );
-                          },
-                        ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: conArgs.length,
+                  itemBuilder: (ctx, i) {
+                    return ArgumentCard(
+                      argument: conArgs[i],
+                      onTap: widget.onArgumentSelected,
+                    );
+                  },
                 ),
               ],
             ),

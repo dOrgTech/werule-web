@@ -112,7 +112,7 @@ class Screen1DaoType extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 22),
                             FlashingIcon(),
                             const SizedBox(height: 14),
                             SizedBox(
@@ -193,17 +193,17 @@ class Screen1DaoType extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 38),
+                            const SizedBox(height: 28),
                             const Icon(Icons.forum, size: 40),
-                            const SizedBox(height: 14),
-                            const Text('Debates',
-                                style: TextStyle(fontSize: 23.5)),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 8),
+                            const Text('Fractal\nDebates',
+                                style: TextStyle(fontSize: 21)),
+                            const SizedBox(height: 2),
                             const Padding(
                               padding: EdgeInsets.only(
                                   left: 13.0, right: 13, top: 10, bottom: 10),
                               child: Text(
-                                "Tokenized arguments with fractal topology.",
+                                "Binary tree forests from tokenized arguments.",
                                 style: TextStyle(height: 1.4),
                                 textAlign: TextAlign.center,
                               ),

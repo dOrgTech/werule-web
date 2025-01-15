@@ -1,4 +1,4 @@
-// lib/debates/models/debate.dart
+// lib/debates/debate.dart
 
 import 'dart:convert';
 import 'package:Homebase/entities/org.dart';
@@ -11,25 +11,21 @@ class Debate {
   String title;
   Argument rootArgument;
 
-  double debateScore = 0;
+  double sentiment = 0; // Single metric for the entire debate
 
   Debate({
     required this.org,
     required this.title,
     required this.rootArgument,
   }) {
-    // Generate a hash for the debate
-    String input = title + rootArgument.content;
-    List<int> bytes = utf8.encode(input);
-    String sha256Hash = sha256.convert(bytes).toString();
-    hash = sha256Hash;
+    final input = title + rootArgument.content;
+    final bytes = utf8.encode(input);
+    hash = sha256.convert(bytes).toString();
 
-    // Initialize the debate score
-    debateScore = Argument.computeScore(rootArgument);
+    recalc();
   }
 
-  /// Convenience method to recalc the entire debate
-  void recalcScore() {
-    debateScore = Argument.computeScore(rootArgument);
+  void recalc() {
+    sentiment = Argument.computeScore(rootArgument);
   }
 }

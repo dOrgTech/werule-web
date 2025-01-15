@@ -27,22 +27,35 @@ class _DebateState extends State<NewDebate> {
   final _formKey = GlobalKey<FormState>();
   final _keyController = TextEditingController();
   final _valueController = TextEditingController();
+  final _numberController = TextEditingController();
+
+  bool _isSubmitEnabled = false;
 
   @override
   void dispose() {
     _keyController.dispose();
     _valueController.dispose();
+    _numberController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
-    widget.p = Debate(
-        org: widget.org,
-        title: "",
-        rootArgument: Argument(
-            content: "", author: '0xsoaidsjoaijdoie23', weight: 312139));
     super.initState();
+
+    _keyController.addListener(_updateSubmitButtonState);
+    _valueController.addListener(_updateSubmitButtonState);
+    _numberController.addListener(_updateSubmitButtonState);
+  }
+
+  void _updateSubmitButtonState() {
+    setState(() {
+      _isSubmitEnabled = _keyController.text.isNotEmpty &&
+          _valueController.text.length >= 2 &&
+          _numberController.text.isNotEmpty &&
+          int.tryParse(_numberController.text) != null &&
+          int.parse(_numberController.text) > 0;
+    });
   }
 
   void _submit() {
@@ -79,31 +92,95 @@ class _DebateState extends State<NewDebate> {
                           : null,
                     ),
                   ),
+                  const SizedBox(height: 30),
                   TextFormField(
                     maxLines: 26,
                     controller: _valueController,
-                    decoration: const InputDecoration(labelText: 'Main Thesis'),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText:
+                          'Write your main thesis here (markdown supported)',
+                    ),
                     validator: (value) => value == null || value.isEmpty
-                        ? 'support your positin with one or more arguments.'
+                        ? 'Support your position with one or more arguments.'
                         : null,
                   ),
-                  SubmitButton(
-                      submit: () async {
-                        List<String> params = [
-                          _keyController.text,
-                          _valueController.text
-                        ];
-
-                        widget.p.title = _keyController.text;
-                        setState(() {
-                          widget.stage = -1;
-                        });
-                        try {
-                          // String cevine = await propose(widget.p);
-                          String cevine = await widget.org.createDebate(
-                            widget.p,
-                          );
-                          if (cevine.contains("not ok")) {
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                        width: 180,
+                        child: TextFormField(
+                          controller: _numberController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            hintText: 'Weight',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Invalid weight';
+                            }
+                            final n = int.tryParse(value);
+                            if (n == null || n <= 0) {
+                              return 'Enter a positive number';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 40),
+                      SubmitButton(
+                        submit: () async {
+                          Argument root = Argument(
+                              content: _valueController.text,
+                              author: '0xsoaidsjoaijdoie23',
+                              weight: double.parse(_numberController.text));
+                          int.parse(_numberController.text);
+                          setState(() {
+                            widget.stage = -1;
+                          });
+                          try {
+                            // String cevine = await propose(widget.p);
+                            widget.p = Debate(
+                                org: widget.org,
+                                title: _keyController.text,
+                                rootArgument: root);
+                            String cevine = await widget.org.createDebate(
+                              widget.p,
+                            );
+                            if (cevine.contains("not ok")) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                      duration: Duration(seconds: 1),
+                                      content: Center(
+                                          child: SizedBox(
+                                              height: 70,
+                                              child: Center(
+                                                child: Text(
+                                                  "Error submitting debate",
+                                                  style: TextStyle(
+                                                      fontSize: 24,
+                                                      color: Colors.red),
+                                                ),
+                                              )))));
+                              Navigator.of(context).pop();
+                              return;
+                            }
+                            widget.org.debates.add(widget.p);
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(const SnackBar(
+                                    duration: Duration(seconds: 1),
+                                    content: Center(
+                                        child: SizedBox(
+                                            height: 70,
+                                            child: Center(
+                                              child: Text(
+                                                "Debate submitted",
+                                                style: TextStyle(fontSize: 24),
+                                              ),
+                                            )))));
+                          } catch (e) {
                             ScaffoldMessenger.of(context)
                                 .showSnackBar(const SnackBar(
                                     duration: Duration(seconds: 1),
@@ -118,46 +195,13 @@ class _DebateState extends State<NewDebate> {
                                                     color: Colors.red),
                                               ),
                                             )))));
-                            Navigator.of(context).pop();
-                            return;
                           }
-
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                                  duration: Duration(seconds: 1),
-                                  content: Center(
-                                      child: SizedBox(
-                                          height: 70,
-                                          child: Center(
-                                            child: Text(
-                                              "Debate submitted",
-                                              style: TextStyle(fontSize: 24),
-                                            ),
-                                          )))));
-                        } catch (e) {
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                                  duration: Duration(seconds: 1),
-                                  content: Center(
-                                      child: SizedBox(
-                                          height: 70,
-                                          child: Center(
-                                            child: Text(
-                                              "Error submitting debate",
-                                              style: TextStyle(
-                                                  fontSize: 24,
-                                                  color: Colors.red),
-                                            ),
-                                          )))));
-                        }
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => Scaffold(
-                                body:
-                                    //  DaoSetupWizard())
-                                    // Center(child: TransferWidget(org: orgs[0],)))
-                                    DAO(InitialTabIndex: 1, org: widget.org))));
-                      },
-                      isSubmitEnabled: true)
+                          Navigator.of(context).pop();
+                        },
+                        isSubmitEnabled: _isSubmitEnabled,
+                      ),
+                    ],
+                  )
                 ],
               ),
             ),

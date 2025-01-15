@@ -1,13 +1,24 @@
-// lib/debates/models/argument.dart
+// lib/debates/argument.dart
+
+import 'dart:math';
+
+// Generates a random 4-6 character username, e.g. "X9za0"
+String randomUsername() {
+  const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  final rand = Random();
+  final length = 4 + rand.nextInt(3);
+  return List.generate(length, (index) => chars[rand.nextInt(chars.length)])
+      .join();
+}
 
 class Argument {
   final String content;
   Argument? parent;
 
-  final String author;
-  final double weight; // The original voting power assigned by the user
-
-  double score = 0; // The net effect after factoring in children
+  final String author; // Either provided or auto-generated
+  final double weight; // Raw voting power assigned at creation
+  double score = 0; // Net effect after factoring children
 
   List<Argument> proArguments;
   List<Argument> conArguments;
@@ -15,34 +26,30 @@ class Argument {
   Argument({
     required this.content,
     this.parent,
-    required this.author,
+    String? author, // If null, we generate a random username
     required this.weight,
     List<Argument>? proArguments,
     List<Argument>? conArguments,
   })  : proArguments = proArguments ?? [],
-        conArguments = conArguments ?? [];
+        conArguments = conArguments ?? [],
+        author = author ?? randomUsername();
 
   int get proCount => proArguments.length;
   int get conCount => conArguments.length;
 
-  /// Recomputes the net score of this entire subtree:
-  ///    score = weight + sum(pro child scores > 0) - sum(con child scores > 0)
+  /// Recompute net score of entire subtree:
+  ///   score(arg) = arg.weight
+  ///     + sum( score(pro child) if > 0 )
+  ///     - sum( score(con child) if > 0 )
   static double computeScore(Argument arg) {
     double sum = arg.weight;
-    // Recurse into children
     for (var child in arg.proArguments) {
-      double childScore = computeScore(child);
-      // only add if childScore is strictly > 0
-      if (childScore > 0) {
-        sum += childScore;
-      }
+      final childScore = computeScore(child);
+      if (childScore > 0) sum += childScore;
     }
     for (var child in arg.conArguments) {
-      double childScore = computeScore(child);
-      // only subtract if childScore is strictly > 0
-      if (childScore > 0) {
-        sum -= childScore;
-      }
+      final childScore = computeScore(child);
+      if (childScore > 0) sum -= childScore;
     }
     arg.score = sum;
     return sum;
