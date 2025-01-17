@@ -249,7 +249,7 @@ class _TransferWidgetState extends State<TransferWidget> {
                     CircularProgressIndicator(),
                   ],
                 ))
-              : widget.stage == 0
+              : widget.stage == 1
                   ? setInfo()
                   : buildTransactionSet()),
     );

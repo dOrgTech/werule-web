@@ -222,7 +222,14 @@ class Proposal {
 //////////////////////////////////
 
   Future<String> anotherStageGetter() async {
-    int stateInContract = await getProposalState(this);
+    int stateInContract = 0;
+    try {
+      stateInContract = await getProposalState(this);
+    } catch (e) {
+      print("here is the fucking error:");
+      print(e);
+      print(e.toString());
+    }
     String newStatus = StateInContract.values[stateInContract]
         .toString()
         .split(".")
@@ -231,7 +238,7 @@ class Proposal {
     if (newStatus == "succeeded") {
       newStatus = "passed";
     }
-
+    // String newStatus = "passed";
     DateTime start = statusHistory["pending"]!;
     Duration votingDelay = Duration(minutes: org.votingDelay);
     Duration votingDuration = Duration(minutes: org.votingDuration);

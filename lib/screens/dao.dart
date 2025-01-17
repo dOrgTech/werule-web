@@ -76,7 +76,7 @@ class _DAOState extends State<DAO> {
       dao.totalSupply = data['totalSupply'];
       // Perform the async task before yielding
       await dao.getProposals();
-      dao.getMembers();
+      // dao.getMembers();
       return dao;
     });
 

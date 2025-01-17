@@ -19,6 +19,10 @@ class _NewProposalState extends State<NewProposal> {
     return setInfo();
   }
 
+  Widget everything() {
+    return Container();
+  }
+
   Widget setInfo() {
     return Container(
         padding: EdgeInsets.all(30),
