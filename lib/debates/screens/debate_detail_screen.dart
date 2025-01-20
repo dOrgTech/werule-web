@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+
 import '../../widgets/debate_header.dart';
 import '../../widgets/pro_con_section.dart';
 import '../models/debate.dart';
@@ -32,11 +33,10 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // We rely on our custom dark background from the dark theme
       body: SafeArea(
         child: Column(
           children: [
-            // Debate title + vertical map
+            /// DebateHeader with new layout
             DebateHeader(
               debate: widget.debate,
               currentArgument: currentArgument,
@@ -52,7 +52,6 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
                     child: MarkdownBody(
                       data: currentArgument.content,
                       shrinkWrap: true,
-                      // You could further style the markdown if you wish
                       styleSheet: MarkdownStyleSheet.fromTheme(
                         Theme.of(context),
                       ),
@@ -61,8 +60,7 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
                   Expanded(
                     child: ProConSection(
                       debate: widget.debate,
-                      key: ValueKey(
-                          currentArgument), // re-init if argument changes
+                      key: ValueKey(currentArgument), // re-init if arg changes
                       currentArgument: currentArgument,
                       onArgumentSelected: _navigateToArgument,
                     ),

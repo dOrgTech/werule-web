@@ -1,4 +1,4 @@
-// lib/debates/argument.dart
+// lib/debates/models/argument.dart
 
 import 'dart:math';
 
@@ -41,6 +41,9 @@ class Argument {
   ///   score(arg) = arg.weight
   ///     + sum( score(pro child) if > 0 )
   ///     - sum( score(con child) if > 0 )
+  ///
+  /// If an argument's computed score <= 0, it is considered "invalid" (or cancelled),
+  /// and it does not pass any of its weight up to its parent.
   static double computeScore(Argument arg) {
     double sum = arg.weight;
     for (var child in arg.proArguments) {

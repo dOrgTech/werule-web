@@ -1,3 +1,5 @@
+// lib/widgets/debate_map_widget.dart
+
 import 'package:flutter/material.dart';
 import '../debates/models/argument.dart';
 import '../debates/models/debate.dart';
@@ -45,10 +47,12 @@ class DebateMapWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(List<Argument> args,
-      {bool isAbove = false,
-      bool isBelow = false,
-      bool isCurrentLevel = false}) {
+  Widget _buildRow(
+    List<Argument> args, {
+    bool isAbove = false,
+    bool isBelow = false,
+    bool isCurrentLevel = false,
+  }) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 500),
       child: Row(
@@ -60,8 +64,8 @@ class DebateMapWidget extends StatelessWidget {
             onTap: () => onArgumentSelected(arg),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: 48, // smaller
-              height: 24, // smaller
+              width: 48,
+              height: 24,
               margin: const EdgeInsets.all(4.0),
               decoration: BoxDecoration(
                 color: _getBoxColor(arg),
@@ -71,8 +75,9 @@ class DebateMapWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4.0),
               ),
               child: Center(
+                // Display the argument's weight (not net score) in the map
                 child: Text(
-                  _formatScore(arg.score),
+                  _formatWeight(arg.weight),
                   style: const TextStyle(fontSize: 10, color: Colors.black),
                 ),
               ),
@@ -83,11 +88,19 @@ class DebateMapWidget extends StatelessWidget {
     );
   }
 
+  /// Box color logic:
+  ///  - Root argument: green if score > 0, otherwise red
+  ///  - Non-root argument:
+  ///       if score <= 0 => grey
+  ///       else if parent's pro => green
+  ///       else => red
   Color _getBoxColor(Argument arg) {
     if (arg.parent == null) {
-      // Root => green if >0 else red
+      // Root => green if net score > 0 else red
       return arg.score > 0 ? Colors.green : Colors.red;
     }
+
+    // Non-root
     if (arg.score <= 0) {
       return Colors.grey.shade700;
     }
@@ -98,13 +111,11 @@ class DebateMapWidget extends StatelessWidget {
     }
   }
 
-  String _formatScore(double score) {
-    if (score > 0) {
-      return '+${score.toStringAsFixed(0)}';
-    }
-    return score.toStringAsFixed(0);
+  String _formatWeight(double weight) {
+    return weight.toStringAsFixed(1);
   }
 
+  /// Count how many ancestors the current argument has.
   int _calculateDepth(Argument current) {
     int depth = 0;
     Argument? node = current;
@@ -115,6 +126,7 @@ class DebateMapWidget extends StatelessWidget {
     return depth;
   }
 
+  /// We compute "above", "current", and "below" rows for a 3-layer view.
   ThreeLevels _computeThreeLevels(Argument current) {
     final above = <Argument>[];
     final currentRow = <Argument>[];
@@ -149,5 +161,6 @@ class ThreeLevels {
   final List<Argument> above;
   final List<Argument> current;
   final List<Argument> below;
+
   ThreeLevels(this.above, this.current, this.below);
 }

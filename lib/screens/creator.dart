@@ -84,7 +84,7 @@ class Screen1DaoType extends StatelessWidget {
             const SizedBox(
                 width: 510,
                 child: Text(
-                    "For distributed management of collective assets, you will need to deploy a Full DAO. If you just want collective ideation and large-scale brainstorming, pick Debates. Another valid reason to pick Debates is if you're too chickenshit to start a Full DAO.\n\nThe Full DAO includes the Debates system.\n\nThe Debates instance can be upgraded to a Full DAO at a later time, should the need arise.",
+                    "For distributed management of collective assets, you will need to deploy a Full DAO. If you just want collective ideation and large-scale brainstorming, pick Debates. Another valid reason to pick Debates is if you're too chickenshit to start a Full DAO.\n\nThe Full DAO includes the Tokenized Debates system.\n\nThe Debates instance can be upgraded to a Full DAO at a later time, should the fear subside.",
                     style: TextStyle(
                         fontSize: 14,
                         color: Color.fromARGB(255, 194, 194, 194)))),
@@ -196,14 +196,15 @@ class Screen1DaoType extends StatelessWidget {
                             const SizedBox(height: 28),
                             const Icon(Icons.forum, size: 40),
                             const SizedBox(height: 8),
-                            const Text('Fractal\nDebates',
+                            const Text('Tokenized\nDebates',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 21)),
                             const SizedBox(height: 2),
                             const Padding(
                               padding: EdgeInsets.only(
                                   left: 13.0, right: 13, top: 10, bottom: 10),
                               child: Text(
-                                "Binary tree forests from tokenized arguments.",
+                                "Parse topics through binary trees of weighted arguments.",
                                 style: TextStyle(height: 1.4),
                                 textAlign: TextAlign.center,
                               ),

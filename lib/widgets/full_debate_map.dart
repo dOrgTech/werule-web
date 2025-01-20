@@ -6,8 +6,14 @@ import '../debates/models/debate.dart';
 
 class FullDebateMapPopup extends StatelessWidget {
   final Debate debate;
+  // Optional tap handler if we want to navigate upon tapping a node.
+  final Function(Argument)? onArgumentSelected;
 
-  const FullDebateMapPopup({Key? key, required this.debate}) : super(key: key);
+  const FullDebateMapPopup({
+    Key? key,
+    required this.debate,
+    this.onArgumentSelected,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,24 +29,28 @@ class FullDebateMapPopup extends StatelessWidget {
   ///  [ Row( all children side by side ) ]
   /// For each child, we call _buildFullMap again, effectively nesting columns.
   Widget _buildFullMap(Argument arg) {
-    // The box for this argument
-    final box = Container(
-      width: 72,
-      height: 32,
-      margin: const EdgeInsets.all(4.0),
-      decoration: BoxDecoration(
-        color: _getBoxColor(arg),
-        borderRadius: BorderRadius.circular(4.0),
-      ),
-      child: Center(
-        child: Text(
-          _formatScore(arg.score),
-          style: const TextStyle(fontSize: 12, color: Colors.black),
+    // Build a box displaying the argument's weight; tap to select if callback is provided
+    final box = GestureDetector(
+      onTap: onArgumentSelected != null ? () => onArgumentSelected!(arg) : null,
+      child: Container(
+        width: 72,
+        height: 32,
+        margin: const EdgeInsets.all(4.0),
+        decoration: BoxDecoration(
+          color: _getBoxColor(arg),
+          borderRadius: BorderRadius.circular(4.0),
+        ),
+        child: Center(
+          child: Text(
+            // Show weight in the box (not net score)
+            _formatWeight(arg.weight),
+            style: const TextStyle(fontSize: 12, color: Colors.black),
+          ),
         ),
       ),
     );
 
-    // Gather all children (pro + con) in one row
+    // Gather all children (pro + con) in one horizontal row
     final children = [...arg.proArguments, ...arg.conArguments];
     if (children.isEmpty) {
       // No children => just return the single box
@@ -49,13 +59,11 @@ class FullDebateMapPopup extends StatelessWidget {
       );
     }
 
-    // If we have children => nest them below
+    // If we have children => nest them below in a row
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // The parent box
         box,
-        // A row of children, each child is a recursive "full map" call
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -67,28 +75,25 @@ class FullDebateMapPopup extends StatelessWidget {
     );
   }
 
-  /// Same color logic:
-  /// Root: if > 0 => green, else => red
-  /// Non-root: if <=0 => grey, else if parent's pro => green, else => red
+  /// If score <= 0 => grey, else:
+  ///   root => green if >0 else red
+  ///   non-root => green if parent's pro, else red
   Color _getBoxColor(Argument arg) {
     if (arg.parent == null) {
-      // Root
+      // Root => green if net score > 0, else red
       return arg.score > 0 ? Colors.green : Colors.red;
     }
+    // Non-root
     if (arg.score <= 0) {
       return Colors.grey.shade700;
     }
     if (arg.parent!.proArguments.contains(arg)) {
       return Colors.green;
-    } else {
-      return Colors.red;
     }
+    return Colors.red;
   }
 
-  String _formatScore(double score) {
-    if (score > 0) {
-      return '+${score.toStringAsFixed(0)}';
-    }
-    return score.toStringAsFixed(0);
+  String _formatWeight(double weight) {
+    return weight.toStringAsFixed(1);
   }
 }

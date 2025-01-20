@@ -23,63 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Debate> _generateSampleDebates() {
-    // Build Debate 1
-    // var root1 = Argument(
-    //     author: "Vintilad31d",
-    //     weight: 320,
-    //     content: '**Online education** is the future');
-    // var pro1a = Argument(
-    //     author: "Vintilad31d",
-    //     content: 'Globally accessible',
-    //     parent: root1,
-    //     weight: 349);
-    // root1.proArguments.add(pro1a);
-    // var con1a = Argument(
-    //     content: 'Lack of social interaction',
-    //     author: "Vintilad31d",
-    //     weight: 320,
-    //     parent: root1);
-    // root1.conArguments.add(con1a);
-
-    // var debate1 = Debate(
-    //   title: 'Should online education replace traditional schools?',
-    //   rootArgument: root1,
-    // );
-
-    // // Build Debate 2
-    // var root2 = Argument(
-    //     content: 'AI might become uncontrollable',
-    //     author: "Vintilad31d",
-    //     weight: 320);
-    // var pro2a = Argument(
-    //     author: "Vintilad31d",
-    //     weight: 320,
-    //     content: 'It could surpass humans quickly',
-    //     parent: root2);
-    // root2.proArguments.add(pro2a);
-
-    // var debate2 = Debate(
-    //   title: 'Is AI an existential risk?',
-    //   rootArgument: root2,
-    // );
-
     return [];
   }
-
-  // void _addDebate() {
-  //   final title = _titleController.text.trim();
-  //   final rootText = _rootArgController.text.trim();
-  //   if (title.isEmpty || rootText.isEmpty) return;
-
-  //   var rootArg =
-  //       Argument(author: "Vintilad31d", weight: 320, content: rootText);
-  //   setState(() {
-  //     debates.add(Debate(title: title, rootArgument: rootArg));
-  //   });
-  //   Navigator.of(context).pop();
-  //   _titleController.clear();
-  //   _rootArgController.clear();
-  // }
 
   void _showAddDebateDialog() {
     showDialog(

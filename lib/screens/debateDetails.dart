@@ -37,6 +37,16 @@ class DebateDetailsState extends State<DebateDetails> {
     });
   }
 
+  /// Called by the "Navigate Up" button in the DebateHeader
+  void _navigateUpOneLevel() {
+    if (currentArgument.parent != null) {
+      setState(() {
+        currentArgument = currentArgument.parent!;
+      });
+    }
+    // If there's no parent, do nothing (already at the root).
+  }
+
   void _refreshDebate() {
     setState(() {
       // Rebuild to refresh map, etc.
