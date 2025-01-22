@@ -69,26 +69,11 @@ class NotImplemented extends StatelessWidget {
 }
 
 class Txaction {
-  Txaction(
-      {required this.recipient,
-      required this.value,
-      required this.tokenAddress,
-      this.callData = "0x"});
-  String hash = "none";
-  String recipient;
-  String tokenAddress;
-  bool isNative = false;
-  String value = "0";
-  String callData = "0x";
+  String target;
+  String value;
+  String calldata;
 
-  toJson() {
-    return {
-      'hash': hash,
-      'recipient': recipient,
-      'value': value,
-      'callData': callData
-    };
-  }
+  Txaction({required this.target, required this.value, required this.calldata});
 }
 
 enum StateInContract {
@@ -337,7 +322,6 @@ class Proposal {
       'votesFor': votesFor,
       'votesAgainst': votesAgainst,
       'externalResource': externalResource,
-      'transactions': transactions.map((tx) => tx.toJson()).toList(),
     };
   }
 

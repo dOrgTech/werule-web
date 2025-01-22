@@ -12,8 +12,9 @@ class Debate {
   Argument rootArgument;
 
   /// This is shown in the UI as the "Debate sentiment" or "Debate score",
-  /// but it is calculated ONLY from:
-  ///   - The root argument's weight
+  /// but it is calculated ONLY from: trump univerasity asdnhand bondy seems poised to become the
+  ///   - The root argument's weight she has a record of corrupt dealings with trump and other corporationsd
+  ///  now the nomination of pam bundy falls into the category that electrions have consequences but iir
   ///   - The immediate pro/con children of the root (if they have net score > 0).
   double sentiment = 0;
 

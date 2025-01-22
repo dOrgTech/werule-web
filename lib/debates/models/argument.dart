@@ -15,7 +15,6 @@ String randomUsername() {
 class Argument {
   final String content;
   Argument? parent;
-
   final String author; // Either provided or auto-generated
   final double weight; // Raw voting power assigned at creation
   double score = 0; // Net effect after factoring children

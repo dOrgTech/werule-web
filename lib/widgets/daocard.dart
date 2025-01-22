@@ -47,11 +47,8 @@ class DAOCard extends StatelessWidget {
               ).createShader(bounds);
             },
             blendMode: BlendMode.srcIn,
-            child: Icon(
-              Icons.forum,
-              size: 25,
-            ),
-          );
+            child:
+                Image.network("assets/img/debate_tree_icon.png", height: 29));
     return Stack(
       children: [
         Container(

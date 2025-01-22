@@ -193,7 +193,7 @@ class _HomeState extends State<Home> {
               context, awaitingExecution, "Proposals \nAwaiting \nExecution"),
         ]),
         const SizedBox(height: 25),
-        // TokenAssets(org: widget.org)
+        TokenAssets(org: widget.org)
       ],
     );
   }

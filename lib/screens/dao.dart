@@ -75,7 +75,7 @@ class _DAOState extends State<DAO> {
       dao.registry = Map<String, String>.from(data['registry']);
       dao.totalSupply = data['totalSupply'];
       // Perform the async task before yielding
-      await dao.getProposals();
+      // await dao.getProposals();
       // dao.getMembers();
       return dao;
     });

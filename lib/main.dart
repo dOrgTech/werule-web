@@ -1,61 +1,25 @@
-import 'dart:math';
 import 'dart:typed_data';
 import 'package:Homebase/chat/models.dart';
 import 'package:Homebase/entities/proposal.dart';
-import 'package:Homebase/screens/account.dart';
-import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/landing.dart';
-import 'package:Homebase/screens/members.dart';
-import 'package:Homebase/services/blockscout.dart';
+import 'package:Homebase/screens/proposals.dart';
 import 'package:Homebase/utils/reusable.dart';
-import 'package:Homebase/widgets/configProposal.dart';
 import 'package:Homebase/widgets/eneftee.dart';
-import 'package:Homebase/widgets/gameOfLife.dart';
-import 'package:Homebase/widgets/newProposal.dart';
-import 'package:Homebase/widgets/pdetails.dart';
-import 'package:Homebase/widgets/pleadingForLessDecimals.dart';
-import 'package:Homebase/widgets/propDetailsWidgets.dart';
-import 'package:Homebase/widgets/registryPropo.dart';
-import 'package:Homebase/widgets/release.dart';
-import 'package:Homebase/widgets/statemgmt.dart';
-import 'package:Homebase/widgets/testwidget.dart';
-import 'package:Homebase/widgets/tokenOps.dart';
-import 'package:Homebase/widgets/transfer.dart';
-import 'package:Homebase/widgets/waiting.dart';
+import 'package:Homebase/widgets/initiative.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:web3dart/contracts.dart';
-import 'entities/contractFunctions.dart';
 import 'entities/org.dart';
-import 'entities/project.dart';
 import 'entities/token.dart';
 import 'firebase_options.dart';
-import 'prelaunch.dart';
 import 'screens/dao.dart';
 import 'screens/explorer.dart';
-import 'utils/functions.dart';
 import 'utils/theme.dart';
-import 'widgets/voteConcentration.dart';
-import 'widgets/delegation.dart';
-import 'widgets/arbitrate.dart';
-import 'widgets/daocard.dart';
-import 'widgets/executeLambda.dart';
-import 'widgets/membersList.dart';
-import 'widgets/menu.dart';
-import 'widgets/newGenericProject.dart';
-import 'widgets/newProject.dart';
-import 'widgets/sendfunds.dart';
-import 'widgets/setParty.dart';
 import 'entities/human.dart';
-import 'utils/reusable.dart';
-import 'screens/proposalDetails.dart';
-import 'entities/proposal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:Homebase/utils/reusable.dart';
 
 String metamask = "https://i.ibb.co/HpmDHg0/metamask.png";
 List<User>? users;
@@ -72,14 +36,6 @@ var systemCollection = FirebaseFirestore.instance.collection('some');
 
 persist() async {
   print("persisting");
-  // var snaps = await systemCollection.doc("whatever").get();
-
-  // DateTime when = (snaps.data()!['what'] as Timestamp).toDate();
-  // print(when.toIso8601String());
-  // print(snaps.data());
-  // DateTime now = DateTime.now();
-  // Duration difference = now.difference(when);
-  // print("difference in seconds" + difference.inSeconds.toString());
 
   users = [];
   proposals = [];
@@ -198,9 +154,15 @@ final GoRouter router = GoRouter(
         key: state.pageKey,
         child: Scaffold(
             body: Center(
-                child: Eneftee(
-          nft: NFT(address: "0xdj9328djwq98u29d8h2398dh9238ds", tokenId: 1),
-        ))),
+                child: FutureBuilder(
+                    future: persist(),
+                    builder: (context, snapshot) {
+                      return snapshot.connectionState == ConnectionState.waiting
+                          ? const CircularProgressIndicator()
+                          : Initiative(
+                              org: orgs[0],
+                            );
+                    }))),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

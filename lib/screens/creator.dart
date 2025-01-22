@@ -161,7 +161,7 @@ class Screen1DaoType extends StatelessWidget {
                               ),
                             ),
                             Padding(
-                                padding: const EdgeInsets.only(top: 18),
+                                padding: const EdgeInsets.only(top: 25),
                                 child: Text(
                                   "Executive and Declarative",
                                   style: TextStyle(
@@ -194,15 +194,19 @@ class Screen1DaoType extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             const SizedBox(height: 28),
-                            const Icon(Icons.forum, size: 40),
+                            SizedBox(
+                                height: 43,
+                                child: Image.asset(
+                                    "assets/img/debate_tree_icon.png",
+                                    height: 43)),
                             const SizedBox(height: 8),
-                            const Text('Tokenized\nDebates',
+                            const Text('Debate\nForest',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 21)),
                             const SizedBox(height: 2),
                             const Padding(
                               padding: EdgeInsets.only(
-                                  left: 13.0, right: 13, top: 10, bottom: 10),
+                                  left: 13.0, right: 13, top: 12, bottom: 1),
                               child: Text(
                                 "Parse topics through binary trees of weighted arguments.",
                                 style: TextStyle(height: 1.4),
@@ -210,7 +214,7 @@ class Screen1DaoType extends StatelessWidget {
                               ),
                             ),
                             Padding(
-                                padding: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.only(top: 16),
                                 child: Text(
                                   "Declarative",
                                   style: TextStyle(
@@ -1098,7 +1102,7 @@ class _FlashingIconState extends State<FlashingIcon>
       animation: _colorAnimation,
       builder: (context, child) {
         return Icon(
-          Icons.security,
+          Icons.security_sharp,
           size: 44,
           color: _colorAnimation.value,
         );

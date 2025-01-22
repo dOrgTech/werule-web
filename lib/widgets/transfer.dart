@@ -3,6 +3,7 @@
 import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/utils/functions.dart';
+import 'package:Homebase/widgets/newDebate.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
@@ -230,28 +231,24 @@ class _TransferWidgetState extends State<TransferWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-          left: widget.stage == 1 ? 50.0 : 0), // Offset padding for alignment
-      child: SizedBox(
-          width: 600, // Restrict width
-          height: MediaQuery.of(context).size.height * 0.7, // Restrict height
-          child: widget.stage == -1
-              ? Center(
-                  child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      "Awaiting confirmation...",
-                      style: TextStyle(fontSize: 20),
-                    ),
-                    SizedBox(height: 200),
-                    CircularProgressIndicator(),
-                  ],
-                ))
-              : widget.stage == 1
-                  ? setInfo()
-                  : buildTransactionSet()),
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 500),
+      child: Padding(
+        padding: EdgeInsets.only(
+            left: widget.stage == 1 ? 50.0 : 0), // Offset padding for alignment
+        child: Container(
+            constraints: BoxConstraints(
+                minWidth: 600,
+                minHeight: MediaQuery.of(context).size.height * 0.7,
+                maxWidth: 1000,
+                maxHeight: MediaQuery.of(context).size.height * 0.9),
+            // Restrict height
+            child: widget.stage == -1
+                ? Center(child: AwaitingConfirmation())
+                : widget.stage == 0
+                    ? setInfo()
+                    : buildTransactionSet()),
+      ),
     );
   }
 

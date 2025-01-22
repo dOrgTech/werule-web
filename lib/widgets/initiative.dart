@@ -1,65 +1,73 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:toggle_switch/toggle_switch.dart';
-import '../entities/org.dart';
-import '../entities/proposal.dart';
+import "package:Homebase/debates/models/argument.dart";
+import "package:Homebase/screens/proposals.dart";
+import "package:flutter/material.dart";
+import "package:toggle_switch/toggle_switch.dart";
+import "../debates/models/debate.dart";
+import "../entities/org.dart";
+import "../entities/proposal.dart";
 
-class NewProposal extends StatefulWidget {
-  NewProposal({super.key, required this.p, required this.next});
-  Proposal p;
-  int stage = 0;
-  var next;
+class Initiative extends StatefulWidget {
+  Initiative({
+    required this.org,
+    super.key,
+  });
+  Org org;
+  late Debate d;
+  late Proposal p;
+  late Object thing;
+  Widget? proposalType;
+  int phase = 0;
   @override
-  State<NewProposal> createState() => _NewProposalState();
+  State<Initiative> createState() => InitiativeState();
 }
 
-class _NewProposalState extends State<NewProposal> {
+class InitiativeState extends State<Initiative> {
+  List<TxEntry> txEntries = [];
   final _formKey = GlobalKey<FormState>();
   final _keyController = TextEditingController();
   final _valueController = TextEditingController();
   final _numberController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _urlController = TextEditingController();
+  int _currentPage = 1;
   bool isProposalSelected = true; // Default selection
   bool _isSubmitEnabled = false;
+  static const int _entriesPerPage = 50;
 
-  @override
-  void dispose() {
-    _keyController.dispose();
-    _valueController.dispose();
-    _numberController.dispose();
-    super.dispose();
+  int get _totalPages =>
+      (txEntries.length / _entriesPerPage).ceil(); // Calculate total pages
+
+  List<TxEntry> get _paginatedEntries {
+    int startIndex = (_currentPage - 1) * _entriesPerPage;
+    int endIndex = (_currentPage * _entriesPerPage).clamp(0, txEntries.length);
+    return txEntries.sublist(startIndex, endIndex);
   }
 
   @override
   void initState() {
     super.initState();
-
-    _keyController.addListener(_updateSubmitButtonState);
-    _valueController.addListener(_updateSubmitButtonState);
-    _numberController.addListener(_updateSubmitButtonState);
-  }
-
-  void _updateSubmitButtonState() {
-    setState(() {
-      _isSubmitEnabled = _keyController.text.isNotEmpty &&
-          _valueController.text.length >= 2 &&
-          _numberController.text.isNotEmpty &&
-          int.tryParse(_numberController.text) != null &&
-          int.parse(_numberController.text) > 0;
-    });
-  }
-
-  void _submit() {
-    if (_formKey.currentState!.validate()) {}
-  }
-
-  finishSettingInfo() {
-    setState(() {});
+    widget.d = Debate(
+        org: widget.org,
+        rootArgument: Argument(content: _descriptionController.text, weight: 0),
+        title: _nameController.text);
+    widget.p = Proposal(
+      org: widget.org,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return setInfo();
+    switch (widget.phase) {
+      case 0:
+        return enterInfo();
+      case 1:
+        return selectProposalType();
+      case 2:
+        return review();
+      default:
+        return enterInfo();
+    }
   }
 
   void _handleToggle(int index) {
@@ -73,6 +81,7 @@ class _NewProposalState extends State<NewProposal> {
       SizedBox(
         width: 460, // Ensure consistent width
         child: TextField(
+          controller: _nameController,
           onChanged: (value) {
             widget.p.name = value;
           },
@@ -87,6 +96,7 @@ class _NewProposalState extends State<NewProposal> {
       SizedBox(
         width: 460, // Ensure consistent width
         child: TextField(
+          controller: _descriptionController,
           onChanged: (value) {
             widget.p.description = value;
           },
@@ -102,6 +112,7 @@ class _NewProposalState extends State<NewProposal> {
       SizedBox(
         width: 460, // Ensure consistent width
         child: TextField(
+          controller: _urlController,
           onChanged: (value) {
             widget.p.externalResource = value;
           },
@@ -124,6 +135,7 @@ class _NewProposalState extends State<NewProposal> {
           Container(
             constraints: const BoxConstraints(maxWidth: 400),
             child: TextField(
+              controller: _nameController,
               onChanged: (value) {
                 widget.p.name = value;
               },
@@ -147,8 +159,7 @@ class _NewProposalState extends State<NewProposal> {
                     });
                   },
                   child: Tooltip(
-                    message:
-                        "A debate with only Pro and Con arguments at the top level.",
+                    message: "Yields a \"Yes\" or \"No\" answer.",
                     textStyle: TextStyle(color: Colors.black87, fontSize: 18),
                     child: Text(
                       "Binary",
@@ -168,6 +179,7 @@ class _NewProposalState extends State<NewProposal> {
                   onChanged: (value) {
                     setState(() {
                       isBinary = !value;
+                      // widget.p
                     });
                   },
                   activeColor: Colors.grey,
@@ -180,8 +192,7 @@ class _NewProposalState extends State<NewProposal> {
                     });
                   },
                   child: Tooltip(
-                    message:
-                        "A debate with multiple proposals at the top level, each with Pro and Con arguments.",
+                    message: "Great for answering \"How?\" questions.",
                     textStyle: TextStyle(color: Colors.black87, fontSize: 18),
                     child: Text(
                       "Exploratory",
@@ -205,7 +216,7 @@ class _NewProposalState extends State<NewProposal> {
         width: 780, // Ensure consistent width
         child: TextFormField(
           maxLines: 19,
-          controller: _valueController,
+          controller: _descriptionController,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             hintText:
@@ -220,7 +231,7 @@ class _NewProposalState extends State<NewProposal> {
     ];
   }
 
-  Widget setInfo() {
+  Widget enterInfo() {
     return Container(
         constraints: BoxConstraints(
             minWidth: 600,
@@ -292,7 +303,11 @@ class _NewProposalState extends State<NewProposal> {
                     )
                   : Text(""),
               ElevatedButton(
-                  onPressed: widget.next,
+                  onPressed: () {
+                    setState(() {
+                      widget.phase = 1;
+                    });
+                  },
                   child: SizedBox(
                       width: 68,
                       height: 45,
@@ -309,5 +324,213 @@ class _NewProposalState extends State<NewProposal> {
             ],
           )
         ]));
+  }
+
+  Widget _buildMembersList() {
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black12,
+            border: Border.all(color: Colors.grey.shade700),
+          ),
+          height: 500, // Restrict height for scrollable area
+          child: ListView.builder(
+            itemCount: _paginatedEntries.length,
+            itemBuilder: (context, index) {
+              final memberEntry = _paginatedEntries[index];
+              return MemberEntryWidget(
+                key: ValueKey(index + ((_currentPage - 1) * _entriesPerPage)),
+                entry: memberEntry,
+                onRemove: () {}, // CSV mode has no remove functionality
+                onChanged: () {}, // CSV mode is read-only
+              );
+            },
+          ),
+        ),
+        _buildPaginationControls(),
+      ],
+    );
+  }
+
+  void _changePage(int page) {
+    setState(() {
+      _currentPage = page.clamp(1, _totalPages);
+    });
+  }
+
+  Widget _buildPaginationControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.first_page),
+          onPressed: _currentPage > 1 ? () => _changePage(1) : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.navigate_before),
+          onPressed:
+              _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
+        ),
+        Text('Page $_currentPage of $_totalPages'),
+        IconButton(
+          icon: const Icon(Icons.navigate_next),
+          onPressed: _currentPage < _totalPages
+              ? () => _changePage(_currentPage + 1)
+              : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.last_page),
+          onPressed: _currentPage < _totalPages
+              ? () => _changePage(_totalPages)
+              : null,
+        ),
+      ],
+    );
+  }
+
+  selectProposalType() {
+    return !(widget.proposalType == null)
+        ? Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              SizedBox(height: 560, child: widget.proposalType!),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          widget.proposalType = null;
+                        });
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.arrow_back),
+                          const SizedBox(width: 8),
+                          Text("Back"),
+                        ],
+                      ),
+                    ),
+                    Spacer(),
+                    ElevatedButton(
+                      onPressed: () {},
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("Next"),
+                          const SizedBox(width: 8),
+                          Icon(Icons.arrow_forward)
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          )
+        : Center(
+            child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ProposalList(org: widget.org, initiativeState: this),
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      widget.phase = 0;
+                    });
+                  },
+                  child: SizedBox(
+                      width: 68,
+                      height: 45,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Icon(Icons.arrow_back),
+                          const SizedBox(width: 8),
+                          Text("Back"),
+                          Spacer()
+                        ],
+                      ))),
+            ],
+          ));
+  }
+
+  review() {
+    return const Center(
+      child: Text(
+        "review",
+        style: TextStyle(fontSize: 30),
+      ),
+    );
+  }
+}
+
+class TxEntry {
+  TextEditingController addressController;
+  TextEditingController amountController;
+  ValueKey? key;
+  TxEntry(
+      {this.key,
+      required this.addressController,
+      required this.amountController});
+}
+
+class MemberEntryWidget extends StatelessWidget {
+  final TxEntry entry;
+  final VoidCallback onRemove;
+  final VoidCallback onChanged;
+  ValueKey? key;
+  MemberEntryWidget(
+      {this.key,
+      required this.entry,
+      required this.onRemove,
+      required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: 700,
+          child: Row(
+            children: [
+              // Member Address
+              Expanded(
+                flex: 7,
+                child: TextField(
+                  controller: entry.addressController,
+                  maxLength: 42,
+                  decoration: const InputDecoration(
+                    labelText: 'Member Address',
+                    counterText: '',
+                  ),
+                  onChanged: (value) => onChanged(),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Amount
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: entry.amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Amount'),
+                  onChanged: (value) => onChanged(),
+                ),
+              ),
+              // Remove Button
+              IconButton(
+                icon: const Icon(Icons.remove_circle),
+                onPressed: onRemove,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
   }
 }

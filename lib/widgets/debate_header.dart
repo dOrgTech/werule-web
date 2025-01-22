@@ -208,7 +208,6 @@ class _DebateHeaderState extends State<DebateHeader> {
   Widget _buildNode(Argument arg, Argument selectedArg) {
     final isSelected = (arg == selectedArg);
     final boxColor = _getBoxColor(arg);
-
     final box = GestureDetector(
       onTap: () => widget.onArgumentSelected(arg),
       child: Container(

@@ -12,7 +12,7 @@ class RegistryProposalWidget extends StatefulWidget {
   Org org;
   int stage = 0;
   State proposalsState;
-  bool isSetInfo = true;
+  bool isSetInfo = false;
   RegistryProposalWidget(
       {Key? key,
       required this.proposalsState,
@@ -67,7 +67,8 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                         child: TextFormField(
                           onChanged: (value) {},
                           controller: _keyController,
-                          decoration: const InputDecoration(labelText: 'Key'),
+                          decoration: const InputDecoration(
+                              labelText: 'Key to add or edit'),
                           validator: (value) => value == null || value.isEmpty
                               ? 'Please enter a key'
                               : null,
@@ -76,90 +77,91 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                       TextFormField(
                         maxLines: 6,
                         controller: _valueController,
-                        decoration: const InputDecoration(labelText: 'Value'),
+                        decoration:
+                            const InputDecoration(labelText: 'Assign a value'),
                         validator: (value) => value == null || value.isEmpty
                             ? 'Please enter a value'
                             : null,
                       ),
-                      SubmitButton(
-                          submit: () async {
-                            List<String> params = [
-                              _keyController.text,
-                              _valueController.text
-                            ];
+                      // SubmitButton(
+                      //     submit: () async {
+                      //       List<String> params = [
+                      //         _keyController.text,
+                      //         _valueController.text
+                      //       ];
 
-                            widget.p.callDatas = [];
-                            String calldata0 =
-                                getCalldata(editRegistryDef, params);
-                            widget.p.callDatas.add(calldata0);
-                            widget.p.targets = [widget.p.org.registryAddress!];
-                            widget.p.values = ["0"];
-                            widget.p.createdAt = DateTime.now();
-                            widget.p.statusHistory
-                                .addAll({"pending": DateTime.now()});
-                            setState(() {
-                              widget.stage = -1;
-                            });
-                            try {
-                              String cevine = await propose(widget.p);
-                              if (cevine.contains("not ok")) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                        duration: Duration(seconds: 1),
-                                        content: Center(
-                                            child: SizedBox(
-                                                height: 70,
-                                                child: Center(
-                                                  child: Text(
-                                                    "Error submitting proposal",
-                                                    style: TextStyle(
-                                                        fontSize: 24,
-                                                        color: Colors.red),
-                                                  ),
-                                                )))));
-                                Navigator.of(context).pop();
-                                return;
-                              }
-                              widget.p.status = "pending";
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                      duration: Duration(seconds: 1),
-                                      content: Center(
-                                          child: SizedBox(
-                                              height: 70,
-                                              child: Center(
-                                                child: Text(
-                                                  "Proposal submitted",
-                                                  style:
-                                                      TextStyle(fontSize: 24),
-                                                ),
-                                              )))));
-                            } catch (e) {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                      duration: Duration(seconds: 1),
-                                      content: Center(
-                                          child: SizedBox(
-                                              height: 70,
-                                              child: Center(
-                                                child: Text(
-                                                  "Error submitting proposal",
-                                                  style: TextStyle(
-                                                      fontSize: 24,
-                                                      color: Colors.red),
-                                                ),
-                                              )))));
-                            }
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => Scaffold(
-                                    body:
-                                        //  DaoSetupWizard())
-                                        // Center(child: TransferWidget(org: orgs[0],)))
-                                        DAO(
-                                            InitialTabIndex: 1,
-                                            org: widget.org))));
-                          },
-                          isSubmitEnabled: true)
+                      //       widget.p.callDatas = [];
+                      //       String calldata0 =
+                      //           getCalldata(editRegistryDef, params);
+                      //       widget.p.callDatas.add(calldata0);
+                      //       widget.p.targets = [widget.p.org.registryAddress!];
+                      //       widget.p.values = ["0"];
+                      //       widget.p.createdAt = DateTime.now();
+                      //       widget.p.statusHistory
+                      //           .addAll({"pending": DateTime.now()});
+                      //       setState(() {
+                      //         widget.stage = -1;
+                      //       });
+                      //       try {
+                      //         String cevine = await propose(widget.p);
+                      //         if (cevine.contains("not ok")) {
+                      //           ScaffoldMessenger.of(context)
+                      //               .showSnackBar(const SnackBar(
+                      //                   duration: Duration(seconds: 1),
+                      //                   content: Center(
+                      //                       child: SizedBox(
+                      //                           height: 70,
+                      //                           child: Center(
+                      //                             child: Text(
+                      //                               "Error submitting proposal",
+                      //                               style: TextStyle(
+                      //                                   fontSize: 24,
+                      //                                   color: Colors.red),
+                      //                             ),
+                      //                           )))));
+                      //           Navigator.of(context).pop();
+                      //           return;
+                      //         }
+                      //         widget.p.status = "pending";
+                      //         ScaffoldMessenger.of(context)
+                      //             .showSnackBar(const SnackBar(
+                      //                 duration: Duration(seconds: 1),
+                      //                 content: Center(
+                      //                     child: SizedBox(
+                      //                         height: 70,
+                      //                         child: Center(
+                      //                           child: Text(
+                      //                             "Proposal submitted",
+                      //                             style:
+                      //                                 TextStyle(fontSize: 24),
+                      //                           ),
+                      //                         )))));
+                      //       } catch (e) {
+                      //         ScaffoldMessenger.of(context)
+                      //             .showSnackBar(const SnackBar(
+                      //                 duration: Duration(seconds: 1),
+                      //                 content: Center(
+                      //                     child: SizedBox(
+                      //                         height: 70,
+                      //                         child: Center(
+                      //                           child: Text(
+                      //                             "Error submitting proposal",
+                      //                             style: TextStyle(
+                      //                                 fontSize: 24,
+                      //                                 color: Colors.red),
+                      //                           ),
+                      //                         )))));
+                      //       }
+                      //       Navigator.of(context).push(MaterialPageRoute(
+                      //           builder: (context) => Scaffold(
+                      //               body:
+                      //                   //  DaoSetupWizard())
+                      //                   // Center(child: TransferWidget(org: orgs[0],)))
+                      //                   DAO(
+                      //                       InitialTabIndex: 1,
+                      //                       org: widget.org))));
+                      //     },
+                      //     isSubmitEnabled: true)
                     ],
                   ),
                 ),

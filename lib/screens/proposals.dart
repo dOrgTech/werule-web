@@ -1,6 +1,7 @@
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/debate_card.dart';
+import 'package:Homebase/widgets/initiative.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,10 @@ import '../utils/theme.dart';
 import '../widgets/proposalCard.dart';
 import '../entities/org.dart';
 import '../widgets/transfer.dart';
+import 'dart:html' as html;
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class Proposals extends StatefulWidget {
   Proposals(
@@ -82,7 +87,7 @@ class _ProposalsState extends State<Proposals> {
       widget.proposalCards.add(DebateCard(org: widget.org, debate: d));
     }
     if (widget.proposalCards.isEmpty) {
-      widget.proposalCards.add(SizedBox(height: 200));
+      widget.proposalCards.add(const SizedBox(height: 200));
       widget.proposalCards
           .add(SizedBox(height: 400, child: Center(child: noProposals())));
     }
@@ -156,7 +161,7 @@ class _ProposalsState extends State<Proposals> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 30),
+                    const SizedBox(height: 30),
                     SizedBox(
                         child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -190,7 +195,8 @@ class _ProposalsState extends State<Proposals> {
                               value: value,
                               child: Container(
                                   height: 29,
-                                  padding: EdgeInsets.symmetric(vertical: 3),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 3),
                                   child: p.statusPill(value, context)),
                             );
                           }).toList(),
@@ -201,9 +207,9 @@ class _ProposalsState extends State<Proposals> {
                             });
                           },
                         ),
-                        Spacer(),
+                        const Spacer(),
                         Container(
-                            padding: EdgeInsets.only(right: 50),
+                            padding: const EdgeInsets.only(right: 50),
                             height: 40,
                             child: ElevatedButton(
                               child: Text(
@@ -230,23 +236,15 @@ class _ProposalsState extends State<Proposals> {
                                         context: context,
                                         builder: (BuildContext context) {
                                           return AlertDialog(
-                                            title: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 18.0),
-                                              child: Text(
-                                                  "Select a proposal type"),
-                                            ),
-                                            content: ProposalList(
-                                              org: widget.org,
-                                            ),
-                                          );
+                                              content:
+                                                  Initiative(org: widget.org));
                                         },
                                       );
                                     },
                             )),
                       ],
                     )),
-                    SizedBox(height: 40),
+                    const SizedBox(height: 40),
                     Container(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -256,28 +254,28 @@ class _ProposalsState extends State<Proposals> {
                             Padding(
                               padding: const EdgeInsets.only(left: 15.0),
                               child: Container(
-                                  padding: EdgeInsets.only(left: 15),
+                                  padding: const EdgeInsets.only(left: 15),
                                   width: 60,
-                                  child: Text("ID #")),
+                                  child: const Text("ID #")),
                             ),
                             Expanded(
                               child: Container(
                                   width: 230,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 48.0),
+                                  child: const Padding(
+                                    padding: EdgeInsets.only(left: 48.0),
                                     child: Text("Title"),
                                   )),
                             ),
                             Container(
                                 width: 230,
-                                child: Center(child: Text("Author"))),
-                            SizedBox(
+                                child: const Center(child: Text("Author"))),
+                            const SizedBox(
                                 width: 150,
                                 child: Center(child: Text("▼ Posted"))),
-                            SizedBox(
+                            const SizedBox(
                                 width: 150,
                                 child: Center(child: Text("Type "))),
-                            SizedBox(
+                            const SizedBox(
                                 width: 100,
                                 child: Center(child: Text("Status "))),
                           ],
@@ -297,7 +295,7 @@ class _ProposalsState extends State<Proposals> {
   }
 
   Widget noProposals() {
-    return Center(
+    return const Center(
       child: SizedBox(
           height: 400,
           child: Text("No proposals here",
@@ -309,24 +307,90 @@ class _ProposalsState extends State<Proposals> {
 class ProposalList extends StatefulWidget {
   final Org org;
   late Proposal p;
-
+  InitiativeState initiativeState;
+  bool showingCsv = false;
   late var typesOfProposals;
   late var nProposalWidgets;
 
-  ProposalList({
-    super.key,
-    required this.org,
-  });
+  ProposalList({super.key, required this.org, required this.initiativeState});
 
   @override
   State<ProposalList> createState() => ProposalListState();
 }
 
 class ProposalListState extends State<ProposalList> {
+  bool isCsvUploaded = false;
+  bool isParsingCsv = false;
+  callParent(element) {
+    widget.initiativeState.setState(() {
+      widget.initiativeState.widget.proposalType = element;
+    });
+  }
+
+  Future<void> _loadCsvFile() async {
+    html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+    uploadInput.accept = '.csv';
+    uploadInput.click();
+
+    uploadInput.onChange.listen((e) {
+      final files = uploadInput.files;
+      if (files != null && files.length == 1) {
+        final file = files[0];
+        final reader = html.FileReader();
+
+        reader.onLoadEnd.listen((e) async {
+          final contents = reader.result as String;
+          setState(() => isParsingCsv = true);
+
+          List<Txaction> entries = await _parseCsvInBackground(contents);
+
+          setState(() {
+            //DO SOMETHING WITH THE entries
+            isCsvUploaded = true;
+            isParsingCsv = false;
+          });
+        });
+
+        reader.readAsText(file);
+      }
+    });
+  }
+
+  Future<List<Txaction>> _parseCsvInBackground(String fileContent) async {
+    return compute(_processCsvData, fileContent);
+  }
+
+  static List<Txaction> _processCsvData(String fileContent) {
+    List<Txaction> entries = [];
+    List<String> lines = fileContent
+        .split(RegExp(r'\r?\n'))
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
+
+    if (lines.isNotEmpty) {
+      lines.removeAt(0); // Remove header line
+
+      for (var line in lines) {
+        List<String> values = line.split(',');
+        if (values.length >= 2) {
+          String asset = values[0].trim();
+          String amount = values[1].trim();
+          String recipient = values[2].trim();
+
+          entries.add(Txaction(
+            calldata: asset,
+            target: asset,
+            value: amount,
+          ));
+        }
+      }
+    }
+    return entries;
+  }
+
   @override
   Widget build(BuildContext context) {
     var pTypes = {
-      "Debate": "Post a thesis and have tokenized arguments around it",
       "Transfer Assets": "from the DAO Treasury\nto another account",
       "Edit Registry": "Change an entry\nor add a new one",
       "Contract Call": "Call any function\non any contract",
@@ -365,6 +429,7 @@ class ProposalListState extends State<ProposalList> {
     List<Widget> propuneri = [];
     for (String item in pTypes.keys) {
       propuneri.add(Card(
+        elevation: 2.4,
         child: Tooltip(
           decoration: BoxDecoration(color: Theme.of(context).canvasColor),
           message: "",
@@ -374,28 +439,13 @@ class ProposalListState extends State<ProposalList> {
           ),
           child: Container(
             color: Theme.of(context).hoverColor,
-            padding: EdgeInsets.all(3),
+            padding: const EdgeInsets.all(3),
             width: 300,
             height: 160,
             child: TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Padding(
-                        padding: const EdgeInsets.only(left: 18.0),
-                        child: Text(item.toString()),
-                      ),
-                      content: newProposalWidgets[item]!(
-                        widget.org,
-                        widget.p,
-                        this,
-                      ),
-                    );
-                  },
-                );
+                callParent(
+                    newProposalWidgets[item]!(widget.org, widget.p, this));
               },
               child: Center(
                 child: Padding(
@@ -409,7 +459,7 @@ class ProposalListState extends State<ProposalList> {
                           Icon(proposalIcons[item] ?? Icons.transform,
                               size: 30,
                               color: Theme.of(context).indicatorColor),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Text(
                             item,
                             textAlign: TextAlign.center,
@@ -432,55 +482,180 @@ class ProposalListState extends State<ProposalList> {
         ),
       ));
     }
+    propuneri.add(OrContainer(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 220,
+            child: ElevatedButton(
+                style: ButtonStyle(
+                  elevation: MaterialStatePropertyAll(12),
+                  backgroundColor:
+                      MaterialStateProperty.all(createMaterialColor(
+                    Color.fromARGB(255, 175, 215, 218),
+                  )),
+                ),
+                onPressed: () async {
+                  await _loadCsvFile();
+                  setState(() {
+                    widget.showingCsv = true;
+                  });
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.upload,
+                        color: Color.fromARGB(255, 37, 37, 37)),
+                    const Text(
+                      " Upload Executions",
+                      style: TextStyle(
+                          fontSize: 15, color: Color.fromARGB(255, 0, 0, 0)),
+                    ),
+                  ],
+                )),
+          ),
+          const SizedBox(height: 38),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Download ",
+                style: TextStyle(fontSize: 13),
+              ),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: const Text(
+                    "example CSV",
+                    style: TextStyle(
+                      fontSize: 13,
+                      decoration: TextDecoration.underline,
+                      color: Color.fromARGB(235, 168, 216, 255),
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ],
+      ),
+    ));
 
     var marime = MediaQuery.of(context).size;
-    return SizedBox(
-        width: MediaQuery.of(context).size.aspectRatio > 1
-            ? marime.width / 2
-            : marime.width * 0.9,
-        height: MediaQuery.of(context).size.aspectRatio > 1
-            ? marime.height / 1.4
-            : marime.height * 0.9,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 12.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Implementing OpenZeppelin's Governor framework. Learn more about it ",
-                        style: TextStyle(fontSize: 13),
+    return widget.showingCsv
+        ? SizedBox(child: Container())
+        : SizedBox(
+            width: MediaQuery.of(context).size.aspectRatio > 1
+                ? marime.width / 2
+                : marime.width * 0.9,
+            height: MediaQuery.of(context).size.height - 230,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Implementing OpenZeppelin's Governor framework. Learn more about it ",
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          OldSchoolLink(
+                              text: "here",
+                              url:
+                                  "https://docs.openzeppelin.com/contracts/5.x/api/governance",
+                              textStyle: TextStyle(
+                                  fontSize: 13,
+                                  color: Theme.of(context).indicatorColor)),
+                        ],
                       ),
-                      OldSchoolLink(
-                          text: "here",
-                          url:
-                              "https://docs.openzeppelin.com/contracts/5.x/api/governance",
-                          textStyle: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).indicatorColor)),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(
+                      height: 52,
+                    ),
+                    Center(
+                      child: Wrap(
+                        spacing: 20,
+                        runSpacing: 20,
+                        alignment: WrapAlignment.center,
+                        runAlignment: WrapAlignment.center,
+                        children: propuneri,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(
-                  height: 52,
-                ),
-                Center(
-                  child: Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
-                    alignment: WrapAlignment.center,
-                    runAlignment: WrapAlignment.center,
-                    children: propuneri,
-                  ),
-                ),
-              ],
+              ),
+            ));
+  }
+}
+
+class OrContainer extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets margin;
+  final double interruptionWidth;
+  final double interruptionHeight;
+
+  const OrContainer({
+    Key? key,
+    required this.child,
+    this.margin = const EdgeInsets.all(16.0),
+    this.interruptionWidth = 50.0,
+    this.interruptionHeight = 80.0,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Main container with fading background
+        Container(
+          height: 158,
+          margin: const EdgeInsets.only(left: 12, right: 12, top: 6),
+          width: 280,
+          decoration: BoxDecoration(
+            border: Border.fromBorderSide(
+              BorderSide(color: Color.fromARGB(183, 104, 104, 104), width: 0.5),
             ),
+            borderRadius: BorderRadius.circular(6.0),
           ),
-        ));
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6.0),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color.fromARGB(80, 70, 67, 67)],
+                )),
+            child: child,
+          ),
+        ),
+        // "OR" interruption
+        // Positioned(
+        //   top: margin.top - 14,
+        //   left: 3,
+        //   child: Container(
+        //     width: interruptionWidth,
+        //     height: 24,
+        //     alignment: Alignment.center,
+        //     color: Theme.of(context).canvasColor,
+        //     child: const Text(
+        //       "OR",
+        //       style: TextStyle(
+        //         color: Color.fromARGB(255, 255, 255, 255),
+        //         fontWeight: FontWeight.bold,
+        //       ),
+        //     ),
+        //   ),
+        // ),
+      ],
+    );
   }
 }
