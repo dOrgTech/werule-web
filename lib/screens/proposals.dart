@@ -8,9 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
+import 'package:web3dart/credentials.dart';
 import '../debates/models/debate.dart';
+import '../entities/contractFunctions.dart';
+import '../entities/definitions.dart';
 import '../entities/human.dart';
 import '../entities/proposal.dart';
+import '../entities/token.dart';
 import '../main.dart';
 import '../screens/proposalDetails.dart';
 import '../utils/theme.dart';
@@ -21,6 +25,10 @@ import 'dart:html' as html;
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'dart:html';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:csv/csv.dart';
 
 class Proposals extends StatefulWidget {
   Proposals(
@@ -308,6 +316,7 @@ class ProposalList extends StatefulWidget {
   final Org org;
   late Proposal p;
   InitiativeState initiativeState;
+  bool uploadingCsv = false;
   bool showingCsv = false;
   late var typesOfProposals;
   late var nProposalWidgets;
@@ -321,71 +330,217 @@ class ProposalList extends StatefulWidget {
 class ProposalListState extends State<ProposalList> {
   bool isCsvUploaded = false;
   bool isParsingCsv = false;
+  Map<String, Map<String, double>> assetData = {};
+  List<Map<String, dynamic>> transactions = [
+    {
+      'token': null,
+      'recipient': '',
+      'amount': '',
+      'recipientError': '',
+      'amountError': ''
+    }
+  ];
+  submitTransactions() {
+    widget.p.callDatas = [];
+    for (var tx in transactions) {
+      if (tx['recipientError'].isEmpty && tx['amountError'].isEmpty) {
+        List params = [];
+        if (tx['token'].address!.toString().contains("native")) {
+          print("we got so myuch native ${tx['amount']}");
+          double txamount = double.parse(tx['amount'].toString());
+          final BigInt weiAmount = BigInt.from(txamount * 1e18);
+          print("we createdbg");
+          params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
+          print("getting calldata");
+          widget.p.callDatas.add(getCalldata(transferNativeDef, params));
+          print("got it");
+        } else if (tx['token']
+            .address!
+            .toString()
+            .toLowerCase()
+            .contains("erc20")) {
+          params = [
+            (tx['token'] as Token).address!,
+            tx['recipient'],
+            tx['amount'],
+          ];
+          widget.p.callDatas.add(getCalldata(transferErc20Def, params));
+        } else {}
+        widget.p.targets.add(widget.org.registryAddress!);
+        widget.p.values.add("0");
+      }
+    }
+  }
+
   callParent(element) {
     widget.initiativeState.setState(() {
       widget.initiativeState.widget.proposalType = element;
     });
   }
 
-  Future<void> _loadCsvFile() async {
-    html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+  void _processFile(File file) {
+    final reader = FileReader();
+    reader.readAsText(file);
+
+    reader.onLoadEnd.listen((_) {
+      final content = reader.result as String;
+      List<List<dynamic>> rows = const CsvToListConverter().convert(content);
+
+      if (rows.isNotEmpty) {
+        setState(() {
+          assetData.clear();
+          for (int i = 1; i < rows.length; i++) {
+            final row = rows[i];
+            String asset = row[0].toString();
+            String recipient = row[1].toString();
+            double amount = double.tryParse(row[2].toString()) ?? 0.0;
+
+            assetData.putIfAbsent(asset, () => {});
+            assetData[asset]![recipient] =
+                (assetData[asset]![recipient] ?? 0) + amount;
+          }
+        });
+      }
+    });
+
+    widget.initiativeState.changeState(assetData);
+
+    // widget.initiativeState.changeState();
+  }
+
+  Future<void> _uploadFile() async {
+    FileUploadInputElement uploadInput = FileUploadInputElement();
     uploadInput.accept = '.csv';
     uploadInput.click();
 
     uploadInput.onChange.listen((e) {
       final files = uploadInput.files;
-      if (files != null && files.length == 1) {
-        final file = files[0];
-        final reader = html.FileReader();
-
-        reader.onLoadEnd.listen((e) async {
-          final contents = reader.result as String;
-          setState(() => isParsingCsv = true);
-
-          List<Txaction> entries = await _parseCsvInBackground(contents);
-
-          setState(() {
-            //DO SOMETHING WITH THE entries
-            isCsvUploaded = true;
-            isParsingCsv = false;
-          });
-        });
-
-        reader.readAsText(file);
+      if (files != null && files.isNotEmpty) {
+        _processFile(files.first);
       }
     });
   }
 
-  Future<List<Txaction>> _parseCsvInBackground(String fileContent) async {
-    return compute(_processCsvData, fileContent);
-  }
+  Widget txactions() {
+    return SizedBox(
+      width: 500,
+      height: 580,
+      child: ListView(
+        children: assetData.entries.map((entry) {
+          print("doing this once with " + entry.key.toString());
+          String asset = entry.key;
+          Map<String, double> recipients = entry.value;
 
-  static List<Txaction> _processCsvData(String fileContent) {
-    List<Txaction> entries = [];
-    List<String> lines = fileContent
-        .split(RegExp(r'\r?\n'))
-        .where((line) => line.trim().isNotEmpty)
-        .toList();
+          double totalAmount = recipients.values.fold(0.0, (a, b) => a + b);
 
-    if (lines.isNotEmpty) {
-      lines.removeAt(0); // Remove header line
+          return Container(
+            color: Color.fromARGB(139, 0, 0, 0),
+            margin: EdgeInsets.only(bottom: 16.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 1),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Total ${getShortAddress(asset)} to be transferred: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(' $totalAmount',
+                            style: TextStyle(
+                                color: Theme.of(context).indicatorColor))
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    '${recipients.length} transactions:', // Added transaction count
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (recipients.length <= 12)
+                        ...recipients.entries.map((recipientEntry) {
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 3),
+                            color: Colors.black38,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 1),
+                            child: Row(
+                              children: [
+                                Text(
+                                    '${getShortAddress(recipientEntry.key)} - '),
+                                Text(
+                                  '${recipientEntry.value}',
+                                  style: TextStyle(
+                                      color: Theme.of(context).indicatorColor),
+                                )
+                              ],
+                            ),
+                          );
+                        }).toList()
+                      else ...[
+                        // Display only the first 4 recipients
+                        for (int i = 0; i < 4; i++)
+                          Container(
+                              margin: EdgeInsets.only(bottom: 3),
+                              color: Colors.black38,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 30, vertical: 1),
+                              child: Row(
+                                children: [
+                                  Text(
+                                      '${recipients.entries.elementAt(i).key} -  '),
+                                  Text(
+                                    '${recipients.entries.elementAt(i).value}',
+                                    style: TextStyle(
+                                        color:
+                                            Theme.of(context).indicatorColor),
+                                  )
+                                ],
+                              )),
 
-      for (var line in lines) {
-        List<String> values = line.split(',');
-        if (values.length >= 2) {
-          String asset = values[0].trim();
-          String amount = values[1].trim();
-          String recipient = values[2].trim();
-
-          entries.add(Txaction(
-            calldata: asset,
-            target: asset,
-            value: amount,
-          ));
-        }
-      }
-    }
-    return entries;
+                        // Display an ellipsis if there are more recipients
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text('...'),
+                        ),
+                        // Display the last 4 recipients
+                        for (int i = recipients.length - 4;
+                            i < recipients.length;
+                            i++)
+                          Container(
+                              margin: EdgeInsets.only(bottom: 3),
+                              color: Colors.black38,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 30, vertical: 1),
+                              child: Row(
+                                children: [
+                                  Text(
+                                      '${recipients.entries.elementAt(i).key} -  '),
+                                  Text(
+                                    '${recipients.entries.elementAt(i).value}',
+                                    style: TextStyle(
+                                        color:
+                                            Theme.of(context).indicatorColor),
+                                  )
+                                ],
+                              )),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   @override
@@ -482,6 +637,7 @@ class ProposalListState extends State<ProposalList> {
         ),
       ));
     }
+
     propuneri.add(OrContainer(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -498,9 +654,9 @@ class ProposalListState extends State<ProposalList> {
                   )),
                 ),
                 onPressed: () async {
-                  await _loadCsvFile();
+                  await _uploadFile();
                   setState(() {
-                    widget.showingCsv = true;
+                    widget.uploadingCsv = true;
                   });
                 },
                 child: Row(
@@ -546,53 +702,252 @@ class ProposalListState extends State<ProposalList> {
 
     var marime = MediaQuery.of(context).size;
     return widget.showingCsv
-        ? SizedBox(child: Container())
-        : SizedBox(
-            width: MediaQuery.of(context).size.aspectRatio > 1
-                ? marime.width / 2
-                : marime.width * 0.9,
-            height: MediaQuery.of(context).size.height - 230,
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Implementing OpenZeppelin's Governor framework. Learn more about it ",
-                            style: TextStyle(fontSize: 13),
+        ? txactions()
+        : widget.uploadingCsv
+            ? SizedBox(
+                child: Container(
+                    width: 600,
+                    height: 500,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                              "Select the .CSV file to upload.\n\n\nUse this header: asset,recipient,amount "),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 28.0, right: 18, top: 13),
+                          child: RichText(
+                            text: TextSpan(
+                              style: DefaultTextStyle.of(context)
+                                  .style, // Use the default text style
+                              children: [
+                                TextSpan(
+                                  text: "...where ",
+                                ),
+                                TextSpan(
+                                  text: 'asset',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 157, 227,
+                                          255)), // Highlight `asset`
+                                ),
+                                TextSpan(
+                                  text:
+                                      " is the contract address if the token being transferred (leave empty for the XTZ), ",
+                                ),
+                                TextSpan(
+                                  text: 'recipient',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 157, 227,
+                                          255)), // Highlight `recipient`
+                                ),
+                                TextSpan(
+                                  text:
+                                      " is the address of the recipient, and ",
+                                ),
+                                TextSpan(
+                                  text: 'amount',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 157, 227,
+                                          255)), // Highlight `amount`
+                                ),
+                                TextSpan(
+                                  text:
+                                      " is the nominal value to be transferred (fractional values supported).",
+                                ),
+                              ],
+                            ),
                           ),
-                          OldSchoolLink(
-                              text: "here",
-                              url:
-                                  "https://docs.openzeppelin.com/contracts/5.x/api/governance",
-                              textStyle: TextStyle(
-                                  fontSize: 13,
-                                  color: Theme.of(context).indicatorColor)),
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: 100),
+                        SizedBox(
+                          height: 2,
+                          width: 280,
+                          child: LinearProgressIndicator(),
+                        ),
+                        SizedBox(height: 150),
+                      ],
+                    )))
+            : SizedBox(
+                width: MediaQuery.of(context).size.aspectRatio > 1
+                    ? marime.width / 2
+                    : marime.width * 0.9,
+                height: MediaQuery.of(context).size.height - 230,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Implementing OpenZeppelin's Governor framework. Learn more about it ",
+                                style: TextStyle(fontSize: 13),
+                              ),
+                              OldSchoolLink(
+                                  text: "here",
+                                  url:
+                                      "https://docs.openzeppelin.com/contracts/5.x/api/governance",
+                                  textStyle: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(context).indicatorColor)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 52,
+                        ),
+                        Center(
+                          child: Wrap(
+                            spacing: 20,
+                            runSpacing: 20,
+                            alignment: WrapAlignment.center,
+                            runAlignment: WrapAlignment.center,
+                            children: propuneri,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(
-                      height: 52,
+                  ),
+                ));
+  }
+}
+
+class CsvSummaryWidget extends StatefulWidget {
+  @override
+  _CsvSummaryWidgetState createState() => _CsvSummaryWidgetState();
+}
+
+class _CsvSummaryWidgetState extends State<CsvSummaryWidget> {
+  Map<String, Map<String, double>> assetData = {};
+
+  void _processFile(File file) async {
+    final reader = FileReader();
+    reader.readAsText(file);
+
+    reader.onLoadEnd.listen((_) {
+      final content = reader.result as String;
+      List<List<dynamic>> rows = const CsvToListConverter().convert(content);
+
+      if (rows.isNotEmpty) {
+        setState(() {
+          assetData.clear();
+          for (int i = 1; i < rows.length; i++) {
+            final row = rows[i];
+            String asset = row[0].toString();
+            String recipient = row[1].toString();
+            double amount = double.tryParse(row[2].toString()) ?? 0.0;
+
+            assetData.putIfAbsent(asset, () => {});
+            assetData[asset]![recipient] =
+                (assetData[asset]![recipient] ?? 0) + amount;
+          }
+        });
+      }
+    });
+  }
+
+  void _uploadFile() {
+    FileUploadInputElement uploadInput = FileUploadInputElement();
+    uploadInput.accept = '.csv';
+    uploadInput.click();
+
+    uploadInput.onChange.listen((e) {
+      final files = uploadInput.files;
+      if (files != null && files.isNotEmpty) {
+        _processFile(files.first);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('CSV Summary Viewer'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ElevatedButton(
+              onPressed: _uploadFile,
+              child: Text('Upload CSV File'),
+            ),
+            SizedBox(height: 20),
+            assetData.isEmpty
+                ? Text('No data uploaded yet.')
+                : Expanded(
+                    child: ListView(
+                      children: assetData.entries.map((entry) {
+                        String asset = entry.key;
+                        Map<String, double> recipients = entry.value;
+                        double totalAmount =
+                            recipients.values.fold(0.0, (a, b) => a + b);
+                        return Card(
+                          margin: EdgeInsets.only(bottom: 16.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total $asset transferring: $totalAmount',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  '${recipients.length} transactions', // Added transaction count
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (recipients.length <= 12)
+                                      ...recipients.entries
+                                          .map((recipientEntry) {
+                                        return Text(
+                                            '${recipientEntry.key} - ${recipientEntry.value}');
+                                      }).toList()
+                                    else ...[
+                                      // Display only the first 4 recipients
+                                      for (int i = 0; i < 4; i++)
+                                        Text(
+                                            '${recipients.entries.elementAt(i).key} - ${recipients.entries.elementAt(i).value}'),
+                                      // Display an ellipsis if there are more recipients
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text('...'),
+                                      ),
+                                      // Display the last 4 recipients
+                                      for (int i = recipients.length - 4;
+                                          i < recipients.length;
+                                          i++)
+                                        Text(
+                                            '${recipients.entries.elementAt(i).key} - ${recipients.entries.elementAt(i).value}'),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    Center(
-                      child: Wrap(
-                        spacing: 20,
-                        runSpacing: 20,
-                        alignment: WrapAlignment.center,
-                        runAlignment: WrapAlignment.center,
-                        children: propuneri,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ));
+                  ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

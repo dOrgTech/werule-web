@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:Homebase/chat/models.dart';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/landing.dart';
 import 'package:Homebase/screens/proposals.dart';
 import 'package:Homebase/utils/reusable.dart';
@@ -137,7 +138,7 @@ final GoRouter router = GoRouter(
       path: '/chat',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: Chat(),
+        child: Scaffold(body: DaoSetupWizard()),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,

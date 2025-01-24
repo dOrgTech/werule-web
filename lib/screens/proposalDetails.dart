@@ -1,31 +1,17 @@
-import 'dart:convert';
-import 'package:Homebase/main.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_web3/ethers.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart'; // For formatting the date
+// For formatting the date
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:flutter_circle_chart/flutter_circle_chart.dart';
-import 'package:syncfusion_flutter_charts/sparkcharts.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:math';
-import 'dart:math' as math;
 import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
-import '../main.dart';
 import '../utils/reusable.dart';
 import '../widgets/countdown.dart';
-import '../widgets/footer.dart';
-import '../widgets/menu.dart';
 import '../widgets/propDetailsWidgets.dart';
 import '../widgets/testwidget.dart';
-import 'dao.dart';
 import 'dart:async';
 
 const Color supportColor = Color.fromARGB(255, 20, 78, 49);
@@ -708,7 +694,13 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                   children: [
                                     const Text("Discussion: "),
                                     OldSchoolLink(
-                                        text: widget.p.externalResource!,
+                                        text:
+                                            widget.p.externalResource!.length <
+                                                    42
+                                                ? widget.p.externalResource!
+                                                : widget.p.externalResource!
+                                                        .substring(0, 42) +
+                                                    "...",
                                         url: widget.p.externalResource!)
                                   ],
                                 ),

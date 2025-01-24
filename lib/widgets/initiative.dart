@@ -1,10 +1,17 @@
 import "package:Homebase/debates/models/argument.dart";
 import "package:Homebase/screens/proposals.dart";
+import "package:Homebase/widgets/registryPropo.dart";
 import "package:flutter/material.dart";
 import "package:toggle_switch/toggle_switch.dart";
+import "package:web3dart/credentials.dart";
 import "../debates/models/debate.dart";
+import "../entities/contractFunctions.dart";
+import "../entities/definitions.dart";
 import "../entities/org.dart";
 import "../entities/proposal.dart";
+import "../entities/token.dart";
+import "../screens/dao.dart";
+import "../utils/reusable.dart";
 
 class Initiative extends StatefulWidget {
   Initiative({
@@ -17,12 +24,13 @@ class Initiative extends StatefulWidget {
   late Object thing;
   Widget? proposalType;
   int phase = 0;
+  Map<String, Map<String, double>> assetData = {};
+  bool review = false;
   @override
   State<Initiative> createState() => InitiativeState();
 }
 
 class InitiativeState extends State<Initiative> {
-  List<TxEntry> txEntries = [];
   final _formKey = GlobalKey<FormState>();
   final _keyController = TextEditingController();
   final _valueController = TextEditingController();
@@ -34,15 +42,6 @@ class InitiativeState extends State<Initiative> {
   bool isProposalSelected = true; // Default selection
   bool _isSubmitEnabled = false;
   static const int _entriesPerPage = 50;
-
-  int get _totalPages =>
-      (txEntries.length / _entriesPerPage).ceil(); // Calculate total pages
-
-  List<TxEntry> get _paginatedEntries {
-    int startIndex = (_currentPage - 1) * _entriesPerPage;
-    int endIndex = (_currentPage * _entriesPerPage).clamp(0, txEntries.length);
-    return txEntries.sublist(startIndex, endIndex);
-  }
 
   @override
   void initState() {
@@ -116,7 +115,7 @@ class InitiativeState extends State<Initiative> {
           onChanged: (value) {
             widget.p.externalResource = value;
           },
-          maxLength: 42,
+          maxLength: 262,
           style: const TextStyle(fontSize: 16),
           decoration: const InputDecoration(
             labelText: "Discussion URL",
@@ -326,67 +325,12 @@ class InitiativeState extends State<Initiative> {
         ]));
   }
 
-  Widget _buildMembersList() {
-    return Column(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black12,
-            border: Border.all(color: Colors.grey.shade700),
-          ),
-          height: 500, // Restrict height for scrollable area
-          child: ListView.builder(
-            itemCount: _paginatedEntries.length,
-            itemBuilder: (context, index) {
-              final memberEntry = _paginatedEntries[index];
-              return MemberEntryWidget(
-                key: ValueKey(index + ((_currentPage - 1) * _entriesPerPage)),
-                entry: memberEntry,
-                onRemove: () {}, // CSV mode has no remove functionality
-                onChanged: () {}, // CSV mode is read-only
-              );
-            },
-          ),
-        ),
-        _buildPaginationControls(),
-      ],
-    );
-  }
-
-  void _changePage(int page) {
+  changeState(Map<String, Map<String, double>> assetData) {
     setState(() {
-      _currentPage = page.clamp(1, _totalPages);
+      widget.assetData = assetData;
+      widget.review = true;
+      widget.phase = 2;
     });
-  }
-
-  Widget _buildPaginationControls() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.first_page),
-          onPressed: _currentPage > 1 ? () => _changePage(1) : null,
-        ),
-        IconButton(
-          icon: const Icon(Icons.navigate_before),
-          onPressed:
-              _currentPage > 1 ? () => _changePage(_currentPage - 1) : null,
-        ),
-        Text('Page $_currentPage of $_totalPages'),
-        IconButton(
-          icon: const Icon(Icons.navigate_next),
-          onPressed: _currentPage < _totalPages
-              ? () => _changePage(_currentPage + 1)
-              : null,
-        ),
-        IconButton(
-          icon: const Icon(Icons.last_page),
-          onPressed: _currentPage < _totalPages
-              ? () => _changePage(_totalPages)
-              : null,
-        ),
-      ],
-    );
   }
 
   selectProposalType() {
@@ -458,79 +402,327 @@ class InitiativeState extends State<Initiative> {
           ));
   }
 
-  review() {
-    return const Center(
-      child: Text(
-        "review",
-        style: TextStyle(fontSize: 30),
+  makeList() {
+    print("generating transactions now");
+    return SizedBox(
+      width: 600,
+      height: 400,
+      child: ListView(
+        scrollDirection: Axis.vertical,
+        children: widget.assetData.entries.map((entry) {
+          print("doing this once with " + entry.key.toString());
+          String asset = entry.key;
+          Map<String, double> recipients = entry.value;
+
+          double totalAmount = recipients.values.fold(0.0, (a, b) => a + b);
+
+          return Container(
+            decoration: BoxDecoration(
+                color: Color.fromARGB(117, 49, 49, 49),
+                border: Border.all(
+                    color: Color.fromARGB(172, 112, 112, 112), width: 0.7)),
+            margin: EdgeInsets.only(bottom: 16.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 1),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Total ${getShortAddress(asset)} to be transferred: ',
+                        ),
+                        Text(' $totalAmount',
+                            style: TextStyle(
+                                color: Theme.of(context).indicatorColor))
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    '${recipients.length} transactions:', // Added transaction count
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (recipients.length <= 12)
+                        ...recipients.entries.map((recipientEntry) {
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 3),
+                            color: Colors.black38,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 1),
+                            child: Row(
+                              children: [
+                                Text(
+                                    '${getShortAddress(recipientEntry.key)} - '),
+                                Text(
+                                  '${recipientEntry.value}',
+                                  style: TextStyle(
+                                      color: Theme.of(context).indicatorColor),
+                                )
+                              ],
+                            ),
+                          );
+                        }).toList()
+                      else ...[
+                        // Display only the first 4 recipients
+                        for (int i = 0; i < 4; i++)
+                          Container(
+                              margin: EdgeInsets.only(bottom: 3),
+                              color: Colors.black38,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 30, vertical: 1),
+                              child: Row(
+                                children: [
+                                  Text(
+                                      '${recipients.entries.elementAt(i).key} -  '),
+                                  Text(
+                                    '${recipients.entries.elementAt(i).value}',
+                                    style: TextStyle(
+                                        color:
+                                            Theme.of(context).indicatorColor),
+                                  )
+                                ],
+                              )),
+
+                        // Display an ellipsis if there are more recipients
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text('...'),
+                        ),
+                        // Display the last 4 recipients
+                        for (int i = recipients.length - 4;
+                            i < recipients.length;
+                            i++)
+                          Container(
+                              margin: EdgeInsets.only(bottom: 3),
+                              color: Colors.black38,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 30, vertical: 1),
+                              child: Row(
+                                children: [
+                                  Text(
+                                      '${recipients.entries.elementAt(i).key} -  '),
+                                  Text(
+                                    '${recipients.entries.elementAt(i).value}',
+                                    style: TextStyle(
+                                        color:
+                                            Theme.of(context).indicatorColor),
+                                  )
+                                ],
+                              )),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
-}
 
-class TxEntry {
-  TextEditingController addressController;
-  TextEditingController amountController;
-  ValueKey? key;
-  TxEntry(
-      {this.key,
-      required this.addressController,
-      required this.amountController});
-}
-
-class MemberEntryWidget extends StatelessWidget {
-  final TxEntry entry;
-  final VoidCallback onRemove;
-  final VoidCallback onChanged;
-  ValueKey? key;
-  MemberEntryWidget(
-      {this.key,
-      required this.entry,
-      required this.onRemove,
-      required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          width: 700,
-          child: Row(
-            children: [
-              // Member Address
-              Expanded(
-                flex: 7,
-                child: TextField(
-                  controller: entry.addressController,
-                  maxLength: 42,
-                  decoration: const InputDecoration(
-                    labelText: 'Member Address',
-                    counterText: '',
-                  ),
-                  onChanged: (value) => onChanged(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Amount
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: entry.amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Amount'),
-                  onChanged: (value) => onChanged(),
-                ),
-              ),
-              // Remove Button
-              IconButton(
-                icon: const Icon(Icons.remove_circle),
-                onPressed: onRemove,
-              ),
-            ],
+  review() {
+    return Container(
+      height: 700,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(height: 16),
+          Text(
+            widget.p.name ?? "No title",
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
-        ),
-        const SizedBox(height: 8),
-      ],
+          SizedBox(height: 26),
+          Center(
+            child: SizedBox(
+              width: 400,
+              child: Center(
+                  child: Text(widget.p.description!,
+                      style: TextStyle(fontSize: 14))),
+            ),
+          ),
+          SizedBox(height: 16),
+          SizedBox(
+            height: 30,
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Discussion: "),
+                  OldSchoolLink(
+                      text: widget.p.externalResource!.length < 42
+                          ? widget.p.externalResource!
+                          : widget.p.externalResource!.substring(0, 42) + "...",
+                      url: widget.p.externalResource!)
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 36),
+          SingleChildScrollView(
+            child: makeList(),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48.0),
+            child: Row(
+              children: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      widget.proposalType = null;
+                      widget.phase = 1;
+                    });
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.arrow_back),
+                      const SizedBox(width: 8),
+                      Text("Back"),
+                    ],
+                  ),
+                ),
+                Spacer(),
+                SubmitButton(
+                    submit: () {
+                      print("Let's do the transaction!!!");
+                    },
+                    isSubmitEnabled: true)
+              ],
+            ),
+          ),
+          SizedBox(height: 14),
+        ],
+      ),
     );
+  }
+
+  List<Map<String, dynamic>> transactions = [
+    {
+      'token': null,
+      'recipient': '',
+      'amount': '',
+      'recipientError': '',
+      'amountError': ''
+    }
+  ];
+
+  void submitTransactions() async {
+    widget.assetData.forEach((key, value) {
+      Token token = Token(
+        name: "TOKENTOKEN",
+        symbol: "SYM",
+        decimals: 2,
+        type: "erc20",
+      );
+      token.address = key;
+      value.forEach((key, value) {
+        transactions.add({
+          'token': token,
+          'recipient': key,
+          'amount': value,
+          'recipientError': '',
+          'amountError': ''
+        });
+      });
+    });
+    widget.p.values = [];
+    widget.p.targets = [];
+    widget.p.callDatas = [];
+    for (var tx in transactions) {
+      if (tx['recipientError'].isEmpty && tx['amountError'].isEmpty) {
+        List params = [];
+        if (tx['token'].address!.toString().contains("native")) {
+          print("we got so myuch native ${tx['amount']}");
+          double txamount = double.parse(tx['amount'].toString());
+          final BigInt weiAmount = BigInt.from(txamount * 1e18);
+          print("we createdbg");
+          params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
+          print("getting calldata");
+          widget.p.callDatas.add(getCalldata(transferNativeDef, params));
+          print("got it");
+        } else if (tx['token']
+            .address!
+            .toString()
+            .toLowerCase()
+            .contains("erc20")) {
+          params = [
+            (tx['token'] as Token).address!,
+            tx['recipient'],
+            tx['amount'],
+          ];
+          widget.p.callDatas.add(getCalldata(transferErc20Def, params));
+        } else {}
+        widget.p.targets.add(widget.org.registryAddress!);
+        widget.p.values.add("0");
+      }
+    }
+
+    widget.p.createdAt = DateTime.now();
+    widget.p.statusHistory.addAll({"pending": DateTime.now()});
+
+    setState(() {
+      widget.phase = -1;
+    });
+    try {
+      print("before sending the transaction");
+      String cevine = await propose(widget.p);
+      if (cevine.contains("not ok")) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            duration: Duration(seconds: 1),
+            content: Center(
+                child: SizedBox(
+                    height: 70,
+                    child: Center(
+                      child: Text(
+                        "Error submitting proposal",
+                        style: TextStyle(
+                            fontSize: 24,
+                            color: Color.fromARGB(255, 67, 18, 14)),
+                      ),
+                    )))));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            duration: Duration(seconds: 1),
+            content: Center(
+                child: SizedBox(
+                    height: 70,
+                    child: Center(
+                      child: Text(
+                        "Proposal submitted",
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    )))));
+      }
+    } catch (e) {
+      print("some error here " + e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          duration: Duration(seconds: 1),
+          content: Center(
+              child: SizedBox(
+                  height: 70,
+                  child: Center(
+                    child: Text(
+                      "Error submitting proposal",
+                      style: TextStyle(
+                          fontSize: 24, color: Color.fromARGB(255, 67, 18, 14)),
+                    ),
+                  )))));
+    }
+
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => Scaffold(
+            body:
+                //  DaoSetupWizard())
+                // Center(child: TransferWidget(org: orgs[0],)))
+                DAO(InitialTabIndex: 1, org: widget.org))));
   }
 }

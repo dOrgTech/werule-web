@@ -72,6 +72,148 @@ class Screen1DaoType extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> options = [
+      SizedBox(
+        width: 340,
+        height: 310,
+        child: Padding(
+          padding: const EdgeInsets.all(18.0),
+          child: TextButton(
+            onPressed: () {
+              daoConfig.daoType = 'Full DAO';
+              onNext();
+            },
+            child: Container(
+              margin: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: const Color.fromARGB(255, 56, 56, 56)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 34),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(width: 35),
+                      FlashingIcon(),
+                      SizedBox(width: 17),
+                      SizedBox(
+                          width: 150,
+                          height: 30,
+                          child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 489),
+                              child: AnimatedTextKit(
+                                onTap: () {},
+                                isRepeatingAnimation: false,
+                                repeatForever: false,
+                                animatedTexts: [
+                                  ColorizeAnimatedText('Full DAO',
+                                      textStyle: meniu,
+                                      textDirection: TextDirection.ltr,
+                                      speed: const Duration(milliseconds: 700),
+                                      colors: [
+                                        const Color.fromARGB(
+                                            255, 219, 219, 219),
+                                        const Color.fromARGB(
+                                            255, 251, 251, 251),
+                                        const Color.fromARGB(
+                                            255, 255, 180, 110),
+                                        Colors.yellow,
+                                        const Color.fromARGB(
+                                            255, 255, 169, 163),
+                                        const Color.fromARGB(
+                                            255, 255, 243, 139),
+                                        Colors.amber,
+                                        const Color(0xff343434)
+                                      ]),
+                                ],
+                              ))),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      'All important operations are secured by the will of the members through voting.',
+                      style: TextStyle(height: 1.3),
+                      textAlign: TextAlign.center,
+                      // textScaleFactor: 1.2,
+                    ),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 31),
+                      child: Text(
+                        "Executive and Declarative",
+                        style:
+                            TextStyle(color: Theme.of(context).indicatorColor),
+                      ))
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      // Option 2: Off-chain
+      SizedBox(
+        width: 340,
+        height: 310,
+        child: Padding(
+          padding: const EdgeInsets.all(18.0),
+          child: TextButton(
+            onPressed: () {
+              daoConfig.daoType = 'debates';
+              onNext();
+            },
+            child: Container(
+              margin: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: const Color.fromARGB(255, 56, 56, 56)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 33),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                          child: Image.asset("assets/img/debate_tree_icon.png",
+                              height: 65)),
+                      const SizedBox(width: 9),
+                      const Text('Tokenized\nDebates',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 21)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  const Padding(
+                    padding: EdgeInsets.only(
+                        left: 13.0, right: 13, top: 20, bottom: 1),
+                    child: Text(
+                      "Parse topics through binary trees of weighted arguments.",
+                      style: TextStyle(height: 1.4),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 38),
+                      child: Text(
+                        "Declarative",
+                        style:
+                            TextStyle(color: Theme.of(context).indicatorColor),
+                      ))
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+
     return SingleChildScrollView(
       // Ensure content can scroll
       child: Padding(
@@ -89,145 +231,15 @@ class Screen1DaoType extends StatelessWidget {
                         fontSize: 14,
                         color: Color.fromARGB(255, 194, 194, 194)))),
             const SizedBox(height: 21),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Option 1: On-chain
-                SizedBox(
-                  width: 340,
-                  height: 310,
-                  child: Padding(
-                    padding: const EdgeInsets.all(18.0),
-                    child: TextButton(
-                      onPressed: () {
-                        daoConfig.daoType = 'Full DAO';
-                        onNext();
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                              color: const Color.fromARGB(255, 56, 56, 56)),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 22),
-                            FlashingIcon(),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                                width: 150,
-                                height: 30,
-                                child: Center(
-                                    child: AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 489),
-                                        child: AnimatedTextKit(
-                                          onTap: () {},
-                                          isRepeatingAnimation: false,
-                                          repeatForever: false,
-                                          animatedTexts: [
-                                            ColorizeAnimatedText('Full DAO',
-                                                textStyle: meniu,
-                                                textDirection:
-                                                    TextDirection.ltr,
-                                                speed: const Duration(
-                                                    milliseconds: 700),
-                                                colors: [
-                                                  const Color.fromARGB(
-                                                      255, 219, 219, 219),
-                                                  const Color.fromARGB(
-                                                      255, 251, 251, 251),
-                                                  const Color.fromARGB(
-                                                      255, 255, 180, 110),
-                                                  Colors.yellow,
-                                                  const Color.fromARGB(
-                                                      255, 255, 169, 163),
-                                                  const Color.fromARGB(
-                                                      255, 255, 243, 139),
-                                                  Colors.amber,
-                                                  const Color(0xff343434)
-                                                ]),
-                                          ],
-                                        )))),
-                            const SizedBox(height: 10),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Text(
-                                'All important operations are secured by the will of the members through voting.',
-                                style: TextStyle(height: 1.3),
-                                textAlign: TextAlign.center,
-                                // textScaleFactor: 1.2,
-                              ),
-                            ),
-                            Padding(
-                                padding: const EdgeInsets.only(top: 25),
-                                child: Text(
-                                  "Executive and Declarative",
-                                  style: TextStyle(
-                                      color: Theme.of(context).indicatorColor),
-                                ))
-                          ],
-                        ),
-                      ),
-                    ),
+            MediaQuery.of(context).size.aspectRatio > 0.9
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: options,
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: options,
                   ),
-                ),
-                // Option 2: Off-chain
-                SizedBox(
-                  width: 340,
-                  height: 310,
-                  child: Padding(
-                    padding: const EdgeInsets.all(18.0),
-                    child: TextButton(
-                      onPressed: () {
-                        daoConfig.daoType = 'debates';
-                        onNext();
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                              color: const Color.fromARGB(255, 56, 56, 56)),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 28),
-                            SizedBox(
-                                height: 43,
-                                child: Image.asset(
-                                    "assets/img/debate_tree_icon.png",
-                                    height: 43)),
-                            const SizedBox(height: 8),
-                            const Text('Debate\nForest',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 21)),
-                            const SizedBox(height: 2),
-                            const Padding(
-                              padding: EdgeInsets.only(
-                                  left: 13.0, right: 13, top: 12, bottom: 1),
-                              child: Text(
-                                "Parse topics through binary trees of weighted arguments.",
-                                style: TextStyle(height: 1.4),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Padding(
-                                padding: const EdgeInsets.only(top: 16),
-                                child: Text(
-                                  "Declarative",
-                                  style: TextStyle(
-                                      color: Theme.of(context).indicatorColor),
-                                ))
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 130)
           ],
         ),
@@ -297,7 +309,8 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
     return SingleChildScrollView(
       // Ensure content can scroll
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 70),
+        padding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.aspectRatio > 0.9 ? 70 : 3),
         child: Form(
           key: _formKey,
           child: SizedBox(
@@ -487,7 +500,9 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
     return SingleChildScrollView(
       // Ensure content can scroll
       child: Padding(
-        padding: const EdgeInsets.only(left: 38.0, right: 38.0),
+        padding: EdgeInsets.only(
+            left: MediaQuery.of(context).size.aspectRatio > 0.9 ? 38.0 : 3,
+            right: MediaQuery.of(context).size.aspectRatio > 0.9 ? 38.0 : 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -496,7 +511,8 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                   border: Border.all(
                       color: const Color.fromARGB(255, 78, 78, 78),
                       width: 0.4)),
-              padding: const EdgeInsets.all(35),
+              padding: EdgeInsets.all(
+                  MediaQuery.of(context).size.aspectRatio > 0.9 ? 35 : 3),
               child: Column(
                 children: [
                   Text('Quorum', style: Theme.of(context).textTheme.headline5),
@@ -1101,11 +1117,7 @@ class _FlashingIconState extends State<FlashingIcon>
     return AnimatedBuilder(
       animation: _colorAnimation,
       builder: (context, child) {
-        return Icon(
-          Icons.security_sharp,
-          size: 44,
-          color: _colorAnimation.value,
-        );
+        return Image.asset("assets/img/daomic.png", height: 60);
       },
     );
   }
@@ -1358,95 +1370,13 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
               children: [
                 // Left side: Wizard steps overview
                 Container(
-                  padding: const EdgeInsets.only(left: 38.0),
-                  width: 270,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Wrap ListView in Material to provide Material context
-                      Material(
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: [
-                            ListTile(
-                              title: const Text('1. Type'),
-                              onTap: () => goToStep(0),
-                              selected: currentStep == 0,
-                              enabled: true,
-                              selectedColor: Colors.black,
-                              selectedTileColor:
-                                  const Color.fromARGB(255, 121, 133, 128),
-                            ),
-                            ListTile(
-                              title: const Text('2. Identity'),
-                              onTap: maxStepReached >= 1
-                                  ? () => goToStep(1)
-                                  : null,
-                              selected: currentStep == 1,
-                              enabled: maxStepReached >= 1,
-                              selectedColor: Colors.black,
-                              selectedTileColor:
-                                  const Color.fromARGB(255, 121, 133, 128),
-                            ),
-                            ListTile(
-                              title: const Text('3. Thresholds'),
-                              onTap: maxStepReached >= 2
-                                  ? () => goToStep(2)
-                                  : null,
-                              selected: currentStep == 2,
-                              enabled: maxStepReached >= 2,
-                              selectedColor: Colors.black,
-                              selectedTileColor:
-                                  const Color.fromARGB(255, 121, 133, 128),
-                            ),
-                            ListTile(
-                              title: const Text('4. Durations'),
-                              onTap: maxStepReached >= 3
-                                  ? () => goToStep(3)
-                                  : null,
-                              selected: currentStep == 3,
-                              enabled: maxStepReached >= 3,
-                              selectedColor: Colors.black,
-                              selectedTileColor:
-                                  const Color.fromARGB(255, 121, 133, 128),
-                            ),
-                            ListTile(
-                              title: const Text('5. Members'),
-                              onTap: maxStepReached >= 4
-                                  ? () => goToStep(4)
-                                  : null,
-                              selected: currentStep == 4,
-                              enabled: maxStepReached >= 4,
-                              selectedColor: Colors.black,
-                              selectedTileColor:
-                                  const Color.fromARGB(255, 121, 133, 128),
-                            ),
-                            ListTile(
-                              title: const Text('6. Registry'),
-                              onTap: maxStepReached >= 5
-                                  ? () => goToStep(5)
-                                  : null,
-                              selected: currentStep == 5,
-                              enabled: maxStepReached >= 5,
-                              selectedColor: Colors.black,
-                              selectedTileColor:
-                                  const Color.fromARGB(255, 121, 133, 128),
-                            ),
-                            ListTile(
-                              title: const Text('7. Review & Deploy'),
-                              onTap: maxStepReached >= 6
-                                  ? () => goToStep(6)
-                                  : null,
-                              selected: currentStep == 6,
-                              enabled: maxStepReached >= 6,
-                              selectedColor: Colors.black,
-                              selectedTileColor:
-                                  const Color.fromARGB(255, 121, 133, 128),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  width:
+                      MediaQuery.of(context).size.aspectRatio > 0.9 ? 300 : 60,
+                  height: 500,
+                  child: ResponsiveDrawer(
+                    currentStep: currentStep,
+                    maxStepReached: maxStepReached,
+                    goToStep: goToStep,
                   ),
                 ),
                 // Right side: Current screen
@@ -1458,6 +1388,96 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class ResponsiveDrawer extends StatefulWidget {
+  final int currentStep;
+  final int maxStepReached;
+  final Function(int) goToStep;
+
+  ResponsiveDrawer({
+    required this.currentStep,
+    required this.maxStepReached,
+    required this.goToStep,
+  });
+
+  @override
+  _ResponsiveDrawerState createState() => _ResponsiveDrawerState();
+}
+
+class _ResponsiveDrawerState extends State<ResponsiveDrawer> {
+  @override
+  Widget build(BuildContext context) {
+    final aspectRatio = MediaQuery.of(context).size.aspectRatio;
+
+    return Scaffold(
+      body: Row(
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.aspectRatio > 0.9 ? 300 : 60,
+            padding: EdgeInsets.only(
+                left:
+                    MediaQuery.of(context).size.aspectRatio > 0.9 ? 38.0 : 3.0),
+            child: aspectRatio < 0.9
+                ? ListView(
+                    padding: EdgeInsets.zero,
+                    children: _buildStepIconList(),
+                  )
+                : ListView(
+                    padding: EdgeInsets.zero,
+                    children: _buildStepList(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildStepList() {
+    return [
+      _buildStepTile('1. Type', 0),
+      _buildStepTile('2. Identity', 1),
+      _buildStepTile('3. Thresholds', 2),
+      _buildStepTile('4. Durations', 3),
+      _buildStepTile('5. Members', 4),
+      _buildStepTile('6. Registry', 5),
+      _buildStepTile('7. Review & Deploy', 6),
+    ];
+  }
+
+  List<Widget> _buildStepIconList() {
+    return [
+      _buildStepIconTile(Icons.label, 0),
+      _buildStepIconTile(Icons.person, 1),
+      _buildStepIconTile(Icons.adjust, 2),
+      _buildStepIconTile(Icons.timer, 3),
+      _buildStepIconTile(Icons.group, 4),
+      _buildStepIconTile(Icons.list, 5),
+      _buildStepIconTile(Icons.upload, 6),
+    ];
+  }
+
+  ListTile _buildStepTile(String title, int step) {
+    return ListTile(
+      title: Text(title),
+      onTap: widget.maxStepReached >= step ? () => widget.goToStep(step) : null,
+      selected: widget.currentStep == step,
+      enabled: widget.maxStepReached >= step,
+      selectedColor: Colors.black,
+      selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
+    );
+  }
+
+  ListTile _buildStepIconTile(IconData icon, int step) {
+    return ListTile(
+      leading: Icon(icon),
+      onTap: widget.maxStepReached >= step ? () => widget.goToStep(step) : null,
+      selected: widget.currentStep == step,
+      enabled: widget.maxStepReached >= step,
+      selectedColor: Colors.black,
+      selectedTileColor: const Color.fromARGB(255, 121, 133, 128),
     );
   }
 }
