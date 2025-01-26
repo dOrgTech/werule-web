@@ -52,6 +52,13 @@ class Explorer extends StatefulWidget {
         org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
         org.registry = Map<String, String>.from(doc.data()['registry']);
         org.totalSupply = doc.data()['totalSupply'];
+        if (org.name.contains("dOrg")) {
+          print("debates only " + org.name);
+          org.debatesOnly = true;
+        } else {
+          print("Full DAO  " + org.name);
+          org.debatesOnly = false;
+        }
         orgs.add(org);
       } catch (e) {
         print("could not go " + e.toString());

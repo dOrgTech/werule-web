@@ -99,8 +99,8 @@ class _MembersListState extends State<MembersList> {
   Widget _buildTable() {
     final allMembers = widget.org.memberAddresses.values.toList();
     // Sort by personalBalance descending, parsing from String to BigInt
-    allMembers.sort((a, b) => BigInt.parse(b.personalBalance!)
-        .compareTo(BigInt.parse(a.personalBalance!)));
+    // allMembers.sort((a, b) => BigInt.parse(b.personalBalance!)
+    //     .compareTo(BigInt.parse(a.personalBalance!)));
 
     final totalPages = (allMembers.length / _pageSize).ceil();
     final startIndex = (_currentPage - 1) * _pageSize;
@@ -290,6 +290,7 @@ class MemberTableRow extends TableRow {
               color: const Color.fromARGB(0, 76, 175, 79),
               child: Center(
                 child: Text(
+                    // "${member.votingWeight.toString()} " ??
                     "${BigInt.parse(member.votingWeight.toString()) ~/ BigInt.from(10).pow(decimals)}" ??
                         "N/A"),
               ),

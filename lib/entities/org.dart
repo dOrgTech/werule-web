@@ -38,7 +38,7 @@ I mean I think they should because of reasons and stuff.
   Token? govToken;
   String? symbol;
   int? decimals;
-  bool debatesOnly = false;
+  bool? debatesOnly;
   String? proposalThreshold;
   String? totalSupply;
   bool nonTransferrable = false;

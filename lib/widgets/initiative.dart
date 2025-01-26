@@ -1,6 +1,7 @@
 import "package:Homebase/debates/models/argument.dart";
 import "package:Homebase/screens/proposals.dart";
 import "package:Homebase/widgets/registryPropo.dart";
+import "package:Homebase/widgets/waiting.dart";
 import "package:flutter/material.dart";
 import "package:toggle_switch/toggle_switch.dart";
 import "package:web3dart/credentials.dart";
@@ -58,6 +59,8 @@ class InitiativeState extends State<Initiative> {
   @override
   Widget build(BuildContext context) {
     switch (widget.phase) {
+      case -1:
+        return WaitingOnChain();
       case 0:
         return enterInfo();
       case 1:
@@ -432,7 +435,7 @@ class InitiativeState extends State<Initiative> {
                     child: Row(
                       children: [
                         Text(
-                          'Total ${getShortAddress(asset)} to be transferred: ',
+                          'Total ${asset == 'native' ? 'XTZ' : getShortAddress(asset)} to be transferred: ',
                         ),
                         Text(' $totalAmount',
                             style: TextStyle(
@@ -480,7 +483,7 @@ class InitiativeState extends State<Initiative> {
                               child: Row(
                                 children: [
                                   Text(
-                                      '${recipients.entries.elementAt(i).key} -  '),
+                                      '${getShortAddress(recipients.entries.elementAt(i).key)} -  '),
                                   Text(
                                     '${recipients.entries.elementAt(i).value}',
                                     style: TextStyle(
@@ -507,7 +510,7 @@ class InitiativeState extends State<Initiative> {
                               child: Row(
                                 children: [
                                   Text(
-                                      '${recipients.entries.elementAt(i).key} -  '),
+                                      '${getShortAddress(recipients.entries.elementAt(i).key)} -  '),
                                   Text(
                                     '${recipients.entries.elementAt(i).value}',
                                     style: TextStyle(
@@ -593,7 +596,7 @@ class InitiativeState extends State<Initiative> {
                 Spacer(),
                 SubmitButton(
                     submit: () {
-                      print("Let's do the transaction!!!");
+                      submitTransactions();
                     },
                     isSubmitEnabled: true)
               ],
@@ -605,65 +608,53 @@ class InitiativeState extends State<Initiative> {
     );
   }
 
-  List<Map<String, dynamic>> transactions = [
-    {
-      'token': null,
-      'recipient': '',
-      'amount': '',
-      'recipientError': '',
-      'amountError': ''
-    }
-  ];
+  List<Map<String, dynamic>> transactions = [];
 
   void submitTransactions() async {
+    print("submitting transactions");
     widget.assetData.forEach((key, value) {
-      Token token = Token(
-        name: "TOKENTOKEN",
-        symbol: "SYM",
-        decimals: 2,
-        type: "erc20",
-      );
-      token.address = key;
+      print("adding token" + key);
+      String token_address = key;
       value.forEach((key, value) {
+        print("adding transaction " + key + " - " + value.toString());
         transactions.add({
-          'token': token,
+          'token': token_address,
           'recipient': key,
-          'amount': value,
-          'recipientError': '',
-          'amountError': ''
+          'amount': value.toString(),
+          'recipientError': [],
+          'amountError': []
         });
       });
     });
     widget.p.values = [];
     widget.p.targets = [];
     widget.p.callDatas = [];
+    widget.p.type = "transfer";
     for (var tx in transactions) {
-      if (tx['recipientError'].isEmpty && tx['amountError'].isEmpty) {
-        List params = [];
-        if (tx['token'].address!.toString().contains("native")) {
-          print("we got so myuch native ${tx['amount']}");
-          double txamount = double.parse(tx['amount'].toString());
-          final BigInt weiAmount = BigInt.from(txamount * 1e18);
-          print("we createdbg");
-          params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
-          print("getting calldata");
-          widget.p.callDatas.add(getCalldata(transferNativeDef, params));
-          print("got it");
-        } else if (tx['token']
-            .address!
-            .toString()
-            .toLowerCase()
-            .contains("erc20")) {
-          params = [
-            (tx['token'] as Token).address!,
-            tx['recipient'],
-            tx['amount'],
-          ];
-          widget.p.callDatas.add(getCalldata(transferErc20Def, params));
-        } else {}
-        widget.p.targets.add(widget.org.registryAddress!);
-        widget.p.values.add("0");
+      print("we're here");
+      print(tx);
+      List params = [];
+      print("tx['token'] is " + tx['token'].toString());
+      if (tx['token'].toString().contains("native")) {
+        print("we got so myuch native ${tx['amount']}");
+        double txamount = double.parse(tx['amount'].toString());
+        final BigInt weiAmount = BigInt.from(txamount);
+        print("we createdbg");
+        params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
+        print("getting calldata");
+        widget.p.callDatas.add(getCalldata(transferNativeDef, params));
+        print("got it");
+      } else {
+        print("we got so myuch erc20 ");
+        params = [
+          tx['token'],
+          tx['recipient'],
+          tx['amount'],
+        ];
+        widget.p.callDatas.add(getCalldata(transferErc20Def, params));
       }
+      widget.p.targets.add(widget.org.registryAddress!);
+      widget.p.values.add("0");
     }
 
     widget.p.createdAt = DateTime.now();

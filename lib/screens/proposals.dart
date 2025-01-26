@@ -4,10 +4,12 @@ import 'package:Homebase/widgets/debate_card.dart';
 import 'package:Homebase/widgets/initiative.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:web3dart/credentials.dart';
 import '../debates/models/debate.dart';
 import '../entities/contractFunctions.dart';
@@ -384,17 +386,37 @@ class ProposalListState extends State<ProposalList> {
 
     reader.onLoadEnd.listen((_) {
       final content = reader.result as String;
-      List<List<dynamic>> rows = const CsvToListConverter().convert(content);
+
+      // Preprocess the CSV content line by line
+      List<List<String>> rows = content
+          .split('\n') // Split by line
+          .where((line) => line.trim().isNotEmpty) // Ignore empty lines
+          .map((line) => line.split(',').map((field) {
+                field = field.trim();
+                // Ensure fields starting with "0x" are treated as strings
+                if (field.startsWith('0x')) {
+                  return field; // Leave it as is
+                }
+                return field; // Return the trimmed value
+              }).toList())
+          .toList();
 
       if (rows.isNotEmpty) {
         setState(() {
           assetData.clear();
           for (int i = 1; i < rows.length; i++) {
+            // Skip header row
             final row = rows[i];
-            String asset = row[0].toString();
-            String recipient = row[1].toString();
-            double amount = double.tryParse(row[2].toString()) ?? 0.0;
 
+            // Extract data
+            String asset = row[0];
+            String recipient = row[1];
+            String rawAmount = row[2];
+
+            // Parse amount safely
+            double amount = double.tryParse(rawAmount) ?? 0.0;
+
+            // Update assetData
             assetData.putIfAbsent(asset, () => {});
             assetData[asset]![recipient] =
                 (assetData[asset]![recipient] ?? 0) + amount;
@@ -404,8 +426,6 @@ class ProposalListState extends State<ProposalList> {
     });
 
     widget.initiativeState.changeState(assetData);
-
-    // widget.initiativeState.changeState();
   }
 
   Future<void> _uploadFile() async {
@@ -419,128 +439,6 @@ class ProposalListState extends State<ProposalList> {
         _processFile(files.first);
       }
     });
-  }
-
-  Widget txactions() {
-    return SizedBox(
-      width: 500,
-      height: 580,
-      child: ListView(
-        children: assetData.entries.map((entry) {
-          print("doing this once with " + entry.key.toString());
-          String asset = entry.key;
-          Map<String, double> recipients = entry.value;
-
-          double totalAmount = recipients.values.fold(0.0, (a, b) => a + b);
-
-          return Container(
-            color: Color.fromARGB(139, 0, 0, 0),
-            margin: EdgeInsets.only(bottom: 16.0),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 1),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Total ${getShortAddress(asset)} to be transferred: ',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(' $totalAmount',
-                            style: TextStyle(
-                                color: Theme.of(context).indicatorColor))
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    '${recipients.length} transactions:', // Added transaction count
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (recipients.length <= 12)
-                        ...recipients.entries.map((recipientEntry) {
-                          return Container(
-                            margin: EdgeInsets.only(bottom: 3),
-                            color: Colors.black38,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 30, vertical: 1),
-                            child: Row(
-                              children: [
-                                Text(
-                                    '${getShortAddress(recipientEntry.key)} - '),
-                                Text(
-                                  '${recipientEntry.value}',
-                                  style: TextStyle(
-                                      color: Theme.of(context).indicatorColor),
-                                )
-                              ],
-                            ),
-                          );
-                        }).toList()
-                      else ...[
-                        // Display only the first 4 recipients
-                        for (int i = 0; i < 4; i++)
-                          Container(
-                              margin: EdgeInsets.only(bottom: 3),
-                              color: Colors.black38,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 30, vertical: 1),
-                              child: Row(
-                                children: [
-                                  Text(
-                                      '${recipients.entries.elementAt(i).key} -  '),
-                                  Text(
-                                    '${recipients.entries.elementAt(i).value}',
-                                    style: TextStyle(
-                                        color:
-                                            Theme.of(context).indicatorColor),
-                                  )
-                                ],
-                              )),
-
-                        // Display an ellipsis if there are more recipients
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text('...'),
-                        ),
-                        // Display the last 4 recipients
-                        for (int i = recipients.length - 4;
-                            i < recipients.length;
-                            i++)
-                          Container(
-                              margin: EdgeInsets.only(bottom: 3),
-                              color: Colors.black38,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 30, vertical: 1),
-                              child: Row(
-                                children: [
-                                  Text(
-                                      '${recipients.entries.elementAt(i).key} -  '),
-                                  Text(
-                                    '${recipients.entries.elementAt(i).value}',
-                                    style: TextStyle(
-                                        color:
-                                            Theme.of(context).indicatorColor),
-                                  )
-                                ],
-                              )),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
   }
 
   @override
@@ -701,253 +599,135 @@ class ProposalListState extends State<ProposalList> {
     ));
 
     var marime = MediaQuery.of(context).size;
-    return widget.showingCsv
-        ? txactions()
-        : widget.uploadingCsv
-            ? SizedBox(
-                child: Container(
-                    width: 600,
-                    height: 500,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                              "Select the .CSV file to upload.\n\n\nUse this header: asset,recipient,amount "),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 28.0, right: 18, top: 13),
-                          child: RichText(
-                            text: TextSpan(
-                              style: DefaultTextStyle.of(context)
-                                  .style, // Use the default text style
-                              children: [
-                                TextSpan(
-                                  text: "...where ",
-                                ),
-                                TextSpan(
-                                  text: 'asset',
-                                  style: TextStyle(
-                                      color: Color.fromARGB(255, 157, 227,
-                                          255)), // Highlight `asset`
-                                ),
-                                TextSpan(
-                                  text:
-                                      " is the contract address if the token being transferred (leave empty for the XTZ), ",
-                                ),
-                                TextSpan(
-                                  text: 'recipient',
-                                  style: TextStyle(
-                                      color: Color.fromARGB(255, 157, 227,
-                                          255)), // Highlight `recipient`
-                                ),
-                                TextSpan(
-                                  text:
-                                      " is the address of the recipient, and ",
-                                ),
-                                TextSpan(
-                                  text: 'amount',
-                                  style: TextStyle(
-                                      color: Color.fromARGB(255, 157, 227,
-                                          255)), // Highlight `amount`
-                                ),
-                                TextSpan(
-                                  text:
-                                      " is the nominal value to be transferred (fractional values supported).",
-                                ),
-                              ],
+    return widget.uploadingCsv
+        ? SizedBox(
+            child: Container(
+                width: 600,
+                height: 500,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                          "Select the .CSV file to upload.\n\n\nUse this header: asset,recipient,amount "),
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(left: 28.0, right: 18, top: 13),
+                      child: RichText(
+                        text: TextSpan(
+                          style: DefaultTextStyle.of(context)
+                              .style, // Use the default text style
+                          children: [
+                            TextSpan(
+                              text: "...where ",
                             ),
-                          ),
+                            TextSpan(
+                              text: 'asset',
+                              style: TextStyle(
+                                  color: Color.fromARGB(
+                                      255, 157, 227, 255)), // Highlight `asset`
+                            ),
+                            TextSpan(
+                              text:
+                                  " is the contract address if the token being transferred (leave empty for the XTZ), ",
+                            ),
+                            TextSpan(
+                              text: 'recipient',
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 157, 227,
+                                      255)), // Highlight `recipient`
+                            ),
+                            TextSpan(
+                              text: " is the address of the recipient, and ",
+                            ),
+                            TextSpan(
+                              text: 'amount',
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 157, 227,
+                                      255)), // Highlight `amount`
+                            ),
+                            TextSpan(
+                              text:
+                                  " is the nominal value to be transferred (fractional values supported).",
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 100),
-                        SizedBox(
-                          height: 2,
-                          width: 280,
-                          child: LinearProgressIndicator(),
-                        ),
-                        SizedBox(height: 150),
-                      ],
-                    )))
-            : SizedBox(
-                width: MediaQuery.of(context).size.aspectRatio > 1
-                    ? marime.width / 2
-                    : marime.width * 0.9,
-                height: MediaQuery.of(context).size.height - 230,
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 12.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Implementing OpenZeppelin's Governor framework. Learn more about it ",
-                                style: TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    SizedBox(height: 100),
+                    SizedBox(
+                      height: 2,
+                      width: 280,
+                      child: LinearProgressIndicator(),
+                    ),
+                    SizedBox(height: 150),
+                  ],
+                )))
+        : SizedBox(
+            width: MediaQuery.of(context).size.aspectRatio > 1.4
+                ? marime.width / 1.8
+                : marime.width * 0.94,
+            height: MediaQuery.of(context).size.height - 230,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: Color.fromARGB(
+                                  255, 255, 255, 255)), // Default style
+                          children: [
+                            const TextSpan(
+                              text:
+                                  "Implementing OpenZeppelin's Governor framework. Learn more about it ",
+                            ),
+                            TextSpan(
+                              text: "here",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context).indicatorColor,
+                                decoration: TextDecoration
+                                    .underline, // Optional: underline for the link
                               ),
-                              OldSchoolLink(
-                                  text: "here",
-                                  url:
-                                      "https://docs.openzeppelin.com/contracts/5.x/api/governance",
-                                  textStyle: TextStyle(
-                                      fontSize: 13,
-                                      color: Theme.of(context).indicatorColor)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 52,
-                        ),
-                        Center(
-                          child: Wrap(
-                            spacing: 20,
-                            runSpacing: 20,
-                            alignment: WrapAlignment.center,
-                            runAlignment: WrapAlignment.center,
-                            children: propuneri,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ));
-  }
-}
-
-class CsvSummaryWidget extends StatefulWidget {
-  @override
-  _CsvSummaryWidgetState createState() => _CsvSummaryWidgetState();
-}
-
-class _CsvSummaryWidgetState extends State<CsvSummaryWidget> {
-  Map<String, Map<String, double>> assetData = {};
-
-  void _processFile(File file) async {
-    final reader = FileReader();
-    reader.readAsText(file);
-
-    reader.onLoadEnd.listen((_) {
-      final content = reader.result as String;
-      List<List<dynamic>> rows = const CsvToListConverter().convert(content);
-
-      if (rows.isNotEmpty) {
-        setState(() {
-          assetData.clear();
-          for (int i = 1; i < rows.length; i++) {
-            final row = rows[i];
-            String asset = row[0].toString();
-            String recipient = row[1].toString();
-            double amount = double.tryParse(row[2].toString()) ?? 0.0;
-
-            assetData.putIfAbsent(asset, () => {});
-            assetData[asset]![recipient] =
-                (assetData[asset]![recipient] ?? 0) + amount;
-          }
-        });
-      }
-    });
-  }
-
-  void _uploadFile() {
-    FileUploadInputElement uploadInput = FileUploadInputElement();
-    uploadInput.accept = '.csv';
-    uploadInput.click();
-
-    uploadInput.onChange.listen((e) {
-      final files = uploadInput.files;
-      if (files != null && files.isNotEmpty) {
-        _processFile(files.first);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('CSV Summary Viewer'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ElevatedButton(
-              onPressed: _uploadFile,
-              child: Text('Upload CSV File'),
-            ),
-            SizedBox(height: 20),
-            assetData.isEmpty
-                ? Text('No data uploaded yet.')
-                : Expanded(
-                    child: ListView(
-                      children: assetData.entries.map((entry) {
-                        String asset = entry.key;
-                        Map<String, double> recipients = entry.value;
-                        double totalAmount =
-                            recipients.values.fold(0.0, (a, b) => a + b);
-                        return Card(
-                          margin: EdgeInsets.only(bottom: 16.0),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total $asset transferring: $totalAmount',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  '${recipients.length} transactions', // Added transaction count
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                SizedBox(height: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (recipients.length <= 12)
-                                      ...recipients.entries
-                                          .map((recipientEntry) {
-                                        return Text(
-                                            '${recipientEntry.key} - ${recipientEntry.value}');
-                                      }).toList()
-                                    else ...[
-                                      // Display only the first 4 recipients
-                                      for (int i = 0; i < 4; i++)
-                                        Text(
-                                            '${recipients.entries.elementAt(i).key} - ${recipients.entries.elementAt(i).value}'),
-                                      // Display an ellipsis if there are more recipients
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text('...'),
-                                      ),
-                                      // Display the last 4 recipients
-                                      for (int i = recipients.length - 4;
-                                          i < recipients.length;
-                                          i++)
-                                        Text(
-                                            '${recipients.entries.elementAt(i).key} - ${recipients.entries.elementAt(i).value}'),
-                                    ],
-                                  ],
-                                ),
-                              ],
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Open the link
+                                  launchUrl(Uri.parse(
+                                    "https://docs.openzeppelin.com/contracts/5.x/api/governance",
+                                  ));
+                                },
                             ),
-                          ),
-                        );
-                      }).toList(),
+                          ],
+                        ),
+                        softWrap: true, // Ensures text wraps to the next line
+                        overflow: TextOverflow.visible, // Prevent clipping
+                      ),
                     ),
-                  ),
-          ],
-        ),
-      ),
-    );
+                    const SizedBox(
+                      height: 52,
+                    ),
+                    Center(
+                      child: Wrap(
+                        spacing: 20,
+                        runSpacing: 20,
+                        alignment: WrapAlignment.center,
+                        runAlignment: WrapAlignment.center,
+                        children: propuneri,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ));
   }
 }
 

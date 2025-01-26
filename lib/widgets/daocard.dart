@@ -17,7 +17,7 @@ class DAOCard extends StatelessWidget {
 
     // Generate a value with a roughly 70% chance of being "value1" and 30% chance of being "value2"
     var chance = random.nextDouble(); // Generates a value between 0.0 and 1.0
-    Widget copilas = chance < 0.7
+    Widget copilas = org.debatesOnly == false
         ? ShaderMask(
             shaderCallback: (Rect bounds) {
               return LinearGradient(

@@ -67,8 +67,12 @@ String bytesToHex(List<int> bytes) {
 class Screen1DaoType extends StatelessWidget {
   final DaoConfig daoConfig;
   final VoidCallback onNext;
+  _DaoSetupWizardState daoConfigState;
 
-  Screen1DaoType({required this.daoConfig, required this.onNext});
+  Screen1DaoType(
+      {required this.daoConfigState,
+      required this.daoConfig,
+      required this.onNext});
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +84,10 @@ class Screen1DaoType extends StatelessWidget {
           padding: const EdgeInsets.all(18.0),
           child: TextButton(
             onPressed: () {
+              daoConfig.daoType = 'debates';
+              daoConfigState.setState(() {
+                daoConfigState.widget.org.debatesOnly = false;
+              });
               daoConfig.daoType = 'Full DAO';
               onNext();
             },
@@ -164,6 +172,9 @@ class Screen1DaoType extends StatelessWidget {
           child: TextButton(
             onPressed: () {
               daoConfig.daoType = 'debates';
+              daoConfigState.setState(() {
+                daoConfigState.widget.org.debatesOnly = true;
+              });
               onNext();
             },
             child: Container(
@@ -1126,7 +1137,6 @@ class _FlashingIconState extends State<FlashingIcon>
 TextStyle meniu =
     const TextStyle(fontSize: 24, color: Color.fromARGB(255, 178, 178, 178));
 
-// Configuration classes to store user-provided values
 class DaoConfig {
   String? daoType;
   String? daoName;
@@ -1138,17 +1148,17 @@ class DaoConfig {
   int? proposalThreshold = 1;
   bool nonTransferrable = true;
   int quorumThreshold = 4;
-  double supermajority = 75.0; // Added supermajority field
+  double supermajority = 75.0;
   Duration? votingDuration;
   Duration? votingDelay;
-  Duration? executionDelay; // Added execution availability duration
+  Duration? executionDelay;
   List<Member> members = [];
   DaoConfig();
 }
 
-// Main wizard widget
 class DaoSetupWizard extends StatefulWidget {
   late Org org;
+
   @override
   _DaoSetupWizardState createState() => _DaoSetupWizardState();
 }
@@ -1156,7 +1166,174 @@ class DaoSetupWizard extends StatefulWidget {
 class _DaoSetupWizardState extends State<DaoSetupWizard> {
   int currentStep = 0;
   int maxStepReached = 0; // Track the furthest step reached
+
   DaoConfig daoConfig = DaoConfig();
+
+  // Instead of a switch, define two lists of screens. The “debates” version
+  // omits threshold/duration/registry steps.
+  List<Widget> get standardScreens => [
+        // 0
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen1DaoType(
+            daoConfigState: this,
+            daoConfig: daoConfig,
+            onNext: nextStep,
+          ),
+        ),
+        // 1
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen2BasicSetup(
+            daoConfig: daoConfig,
+            onNext: nextStep,
+            onBack: previousStep,
+          ),
+        ),
+        // 2
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen3Quorums(
+            daoConfig: daoConfig,
+            onNext: nextStep,
+            onBack: previousStep,
+          ),
+        ),
+        // 3
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen4Durations(
+            daoConfig: daoConfig,
+            onNext: nextStep,
+            onBack: previousStep,
+          ),
+        ),
+        // 4
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen5Members(
+            daoConfig: daoConfig,
+            onNext: nextStep,
+            onBack: previousStep,
+          ),
+        ),
+        // 5
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen6Registry(
+            daoConfig: daoConfig,
+            onNext: nextStep,
+            onBack: previousStep,
+          ),
+        ),
+        // 6
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen7Review(
+            daoConfig: daoConfig,
+            onBack: previousStep,
+            onFinish: finishWizard,
+          ),
+        ),
+        // 7: Deploying
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen8Deploying(
+            daoName: daoConfig.daoName ?? 'DAO',
+          ),
+        ),
+        // 8: Deployment Complete
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen9DeploymentComplete(
+            daoName: daoConfig.daoName ?? 'DAO',
+            onGoToDAO: () {
+              String checksumaddress = toChecksumAddress(widget.org.address!);
+              context.go("/$checksumaddress");
+            },
+          ),
+        ),
+      ];
+
+  // Debates version only has 4 user steps before Deploying:
+  // 0: Type
+  // 1: Basic Setup
+  // 2: Members
+  // 3: Review
+  // Then 4: Deploying, 5: Done
+  List<Widget> get debateScreens => [
+        // 0
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen1DaoType(
+            daoConfigState: this,
+            daoConfig: daoConfig,
+            onNext: nextStep,
+          ),
+        ),
+        // 1
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen2BasicSetup(
+            daoConfig: daoConfig,
+            onNext: nextStep,
+            onBack: previousStep,
+          ),
+        ),
+        // 2
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen5Members(
+            daoConfig: daoConfig,
+            onNext: nextStep,
+            onBack: previousStep,
+          ),
+        ),
+        // 3
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen7Review(
+            daoConfig: daoConfig,
+            onBack: previousStep,
+            onFinish: finishWizard,
+          ),
+        ),
+        // 4: Deploying
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen8Deploying(
+            daoName: daoConfig.daoName ?? 'DAO',
+          ),
+        ),
+        // 5: Done
+        Padding(
+          padding: const EdgeInsets.all(38.0),
+          child: Screen9DeploymentComplete(
+            daoName: daoConfig.daoName ?? 'DAO',
+            onGoToDAO: () {
+              String checksumaddress = toChecksumAddress(widget.org.address!);
+              context.go("/$checksumaddress");
+            },
+          ),
+        ),
+      ];
+
+  // Helper that picks the right screen list
+  List<Widget> get currentScreens =>
+      widget.org.debatesOnly! ? debateScreens : standardScreens;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.org = Org(
+      name: daoConfig.daoName ?? '',
+      govToken: null,
+      description: daoConfig.daoDescription,
+    );
+    // By default, we might set debatesOnly = false, but
+    // it will be switched to true in Screen1DaoType if user chooses Debates DAO
+    widget.org.debatesOnly = false;
+  }
 
   void goToStep(int step) {
     if (step <= maxStepReached) {
@@ -1167,8 +1344,9 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
   }
 
   void nextStep() {
-    if (currentStep < 7) {
-      // Updated to 7 to account for all steps
+    final screens = currentScreens;
+    // Only advance if we aren't already on the last screen
+    if (currentStep < screens.length - 1) {
       setState(() {
         currentStep++;
         if (currentStep > maxStepReached) {
@@ -1186,169 +1364,78 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
     }
   }
 
+  // “Finish” means jump to the Deploying screen, then eventually to the “complete” screen
   void finishWizard() {
+    final screens = currentScreens;
+    // The second‐to‐last screen is “Deploying”
+    // The last screen is “Complete”
     setState(() {
-      currentStep = 7; // Move to the Deploying screen
+      currentStep = screens.length - 2; // Jump to Deploying
     });
 
-    // Start the deployment asynchronously
+    // Start deployment asynchronously
     Future.delayed(Duration.zero, () async {
-      // Create Token and Org instances using collected data
-      Token token = Token(
-        type: "erc20",
-        name: daoConfig.daoName ?? '',
-        symbol: daoConfig.tokenSymbol ?? '',
-        decimals: daoConfig.numberOfDecimals ?? 0,
-      );
-
-      widget.org = Org(
-        name: daoConfig.daoName ?? '',
-        govToken: token,
-        description: daoConfig.daoDescription,
-      );
-      widget.org.quorum = daoConfig.quorumThreshold;
-      widget.org.votingDuration = daoConfig.votingDuration?.inMinutes ?? 0;
-      widget.org.votingDelay = daoConfig.votingDelay?.inMinutes ?? 0;
-      widget.org.executionDelay = daoConfig.executionDelay?.inSeconds ?? 0;
-      widget.org.holders = daoConfig.members.length;
-      widget.org.symbol = daoConfig.tokenSymbol;
-      widget.org.registry = daoConfig.registry;
-      widget.org.proposalThreshold =
-          daoConfig.proposalThreshold!.toStringAsFixed(0);
-      widget.org.nonTransferrable = true;
-      widget.org.creationDate = DateTime.now();
-      widget.org.decimals = daoConfig.numberOfDecimals;
-      widget.org.totalSupply = daoConfig.totalSupply.toString();
-
       try {
+        // Create token, populate org, etc. (unchanged)
+        Token token = Token(
+          type: "erc20",
+          name: daoConfig.daoName ?? '',
+          symbol: daoConfig.tokenSymbol ?? '',
+          decimals: daoConfig.numberOfDecimals ?? 0,
+        );
+        widget.org = Org(
+          name: daoConfig.daoName ?? '',
+          govToken: token,
+          description: daoConfig.daoDescription,
+        );
+        widget.org.quorum = daoConfig.quorumThreshold;
+        widget.org.votingDuration = daoConfig.votingDuration?.inMinutes ?? 0;
+        widget.org.votingDelay = daoConfig.votingDelay?.inMinutes ?? 0;
+        widget.org.executionDelay = daoConfig.executionDelay?.inSeconds ?? 0;
+        widget.org.holders = daoConfig.members.length;
+        widget.org.symbol = daoConfig.tokenSymbol;
+        widget.org.registry = daoConfig.registry;
+        widget.org.proposalThreshold =
+            daoConfig.proposalThreshold!.toStringAsFixed(0);
+        widget.org.nonTransferrable = true;
+        widget.org.creationDate = DateTime.now();
+        widget.org.decimals = daoConfig.numberOfDecimals;
+        widget.org.totalSupply = daoConfig.totalSupply.toString();
+
         for (Member member in daoConfig.members) {
           member.personalBalance =
               member.personalBalance.toString() + "0" * widget.org.decimals!;
           widget.org.memberAddresses[member.address] = member;
         }
+
         List<String> results = await createDAO(widget.org);
         widget.org.address = results[0];
         widget.org.govTokenAddress = results[1];
         widget.org.treasuryAddress = results[2];
         widget.org.registryAddress = results[3];
         widget.org.govToken = Token(
-            type: "erc20",
-            symbol: widget.org.symbol!,
-            decimals: widget.org.decimals,
-            name: widget.org.name);
+          type: "erc20",
+          symbol: widget.org.symbol!,
+          decimals: widget.org.decimals,
+          name: widget.org.name,
+        );
         orgs.add(widget.org);
-        print("we caught this back" + results.toString());
+
+        // Once DAO is created, we go to “Complete”
         setState(() {
-          currentStep = 8; // Move to the Deployment Complete screen
+          currentStep = screens.length - 1; // Move to the Deployment Complete
         });
       } catch (e) {
         print("Error creating DAO: $e");
-        // Optionally handle the error (e.g., show an error message)
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget content;
-    switch (currentStep) {
-      case 0:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen1DaoType(
-            daoConfig: daoConfig,
-            onNext: nextStep,
-          ),
-        );
-        break;
-      case 1:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen2BasicSetup(
-            daoConfig: daoConfig,
-            onNext: nextStep,
-            onBack: previousStep,
-          ),
-        );
-        break;
-      case 2:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen3Quorums(
-            daoConfig: daoConfig,
-            onNext: nextStep,
-            onBack: previousStep,
-          ),
-        );
-        break;
-      case 3:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen4Durations(
-            daoConfig: daoConfig,
-            onNext: nextStep,
-            onBack: previousStep,
-          ),
-        );
-        break;
-      case 4:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen5Members(
-            daoConfig: daoConfig,
-            onNext: nextStep,
-            onBack: previousStep,
-          ),
-        );
-        break;
-      case 5:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen6Registry(
-            daoConfig: daoConfig,
-            onNext: nextStep,
-            onBack: previousStep,
-          ),
-        );
-        break;
-      case 6:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen7Review(
-            daoConfig: daoConfig,
-            onBack: previousStep,
-            onFinish: finishWizard,
-          ),
-        );
-        break;
-      case 7:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen8Deploying(
-            daoName: daoConfig.daoName ?? 'DAO',
-          ),
-        );
-        break;
-      case 8:
-        content = Padding(
-          padding: const EdgeInsets.all(38.0),
-          child: Screen9DeploymentComplete(
-            daoName: daoConfig.daoName ?? 'DAO',
-            onGoToDAO: () {
-              String checksumaddress = toChecksumAddress(widget.org.address!);
-              context.go("/$checksumaddress");
-              // Navigator.of(context).push(MaterialPageRoute(
-              //     builder: (context) => DAO(
-              //         org: orgs.firstWhere(
-              //             (element) => element.address == widget.org.address),
-              //         InitialTabIndex: 0)));
-            },
-          ),
-        );
-        break;
-      default:
-        content = Container();
-    }
+    // Pick whichever screen is appropriate for the currentStep
+    final screenList = currentScreens;
+    Widget content = screenList[currentStep];
 
     return Container(
       child: Column(
@@ -1374,15 +1461,14 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                       MediaQuery.of(context).size.aspectRatio > 0.9 ? 300 : 60,
                   height: 500,
                   child: ResponsiveDrawer(
+                    org: widget.org,
                     currentStep: currentStep,
                     maxStepReached: maxStepReached,
                     goToStep: goToStep,
                   ),
                 ),
                 // Right side: Current screen
-                Expanded(
-                  child: content,
-                ),
+                Expanded(child: content),
               ],
             ),
           ),
@@ -1393,11 +1479,13 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
 }
 
 class ResponsiveDrawer extends StatefulWidget {
+  Org org;
   final int currentStep;
   final int maxStepReached;
   final Function(int) goToStep;
 
   ResponsiveDrawer({
+    required this.org,
     required this.currentStep,
     required this.maxStepReached,
     required this.goToStep,
@@ -1416,10 +1504,8 @@ class _ResponsiveDrawerState extends State<ResponsiveDrawer> {
       body: Row(
         children: [
           Container(
-            width: MediaQuery.of(context).size.aspectRatio > 0.9 ? 300 : 60,
-            padding: EdgeInsets.only(
-                left:
-                    MediaQuery.of(context).size.aspectRatio > 0.9 ? 38.0 : 3.0),
+            width: aspectRatio > 0.9 ? 300 : 60,
+            padding: EdgeInsets.only(left: aspectRatio > 0.9 ? 38.0 : 3.0),
             child: aspectRatio < 0.9
                 ? ListView(
                     padding: EdgeInsets.zero,
@@ -1435,28 +1521,52 @@ class _ResponsiveDrawerState extends State<ResponsiveDrawer> {
     );
   }
 
+  // We only show the “active” user steps in the side drawer.
+  // (We skip “Deploying” and “Complete” so they don’t appear clickable.)
   List<Widget> _buildStepList() {
-    return [
-      _buildStepTile('1. Type', 0),
-      _buildStepTile('2. Identity', 1),
-      _buildStepTile('3. Thresholds', 2),
-      _buildStepTile('4. Durations', 3),
-      _buildStepTile('5. Members', 4),
-      _buildStepTile('6. Registry', 5),
-      _buildStepTile('7. Review & Deploy', 6),
-    ];
+    if (widget.org.debatesOnly!) {
+      // Steps 0..3 for Debates
+      return [
+        _buildStepTile('Type', 0),
+        _buildStepTile('Identity', 1),
+        _buildStepTile('Members', 2),
+        _buildStepTile('Review & Deploy', 3),
+      ];
+    } else {
+      // Steps 0..6 for Standard
+      return [
+        _buildStepTile('Type', 0),
+        _buildStepTile('Identity', 1),
+        _buildStepTile('Thresholds', 2),
+        _buildStepTile('Durations', 3),
+        _buildStepTile('Members', 4),
+        _buildStepTile('Registry', 5),
+        _buildStepTile('Review & Deploy', 6),
+      ];
+    }
   }
 
   List<Widget> _buildStepIconList() {
-    return [
-      _buildStepIconTile(Icons.label, 0),
-      _buildStepIconTile(Icons.person, 1),
-      _buildStepIconTile(Icons.adjust, 2),
-      _buildStepIconTile(Icons.timer, 3),
-      _buildStepIconTile(Icons.group, 4),
-      _buildStepIconTile(Icons.list, 5),
-      _buildStepIconTile(Icons.upload, 6),
-    ];
+    if (widget.org.debatesOnly!) {
+      // 0..3
+      return [
+        _buildStepIconTile(Icons.label, 0),
+        _buildStepIconTile(Icons.person, 1),
+        _buildStepIconTile(Icons.group, 2),
+        _buildStepIconTile(Icons.upload, 3),
+      ];
+    } else {
+      // 0..6
+      return [
+        _buildStepIconTile(Icons.label, 0),
+        _buildStepIconTile(Icons.person, 1),
+        _buildStepIconTile(Icons.adjust, 2),
+        _buildStepIconTile(Icons.timer, 3),
+        _buildStepIconTile(Icons.group, 4),
+        _buildStepIconTile(Icons.list, 5),
+        _buildStepIconTile(Icons.upload, 6),
+      ];
+    }
   }
 
   ListTile _buildStepTile(String title, int step) {
