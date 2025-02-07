@@ -34,6 +34,8 @@ dependencies:
   shared_preferences: 
   # walletconnect_dart:
   flutter_web3: ^2.1.6
+  flutter_gif:
+  cached_network_image:
   flutter_web3_provider: ^1.0.6
   web3dart: ^2.0.0
   cloud_firestore: ^4.13.6

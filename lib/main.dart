@@ -21,6 +21,7 @@ import 'entities/human.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import '../widgets/gameOfLife.dart';
 
 String metamask = "https://i.ibb.co/HpmDHg0/metamask.png";
 List<User>? users;
@@ -145,7 +146,7 @@ final GoRouter router = GoRouter(
       path: '/chat',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: Scaffold(body: DaoSetupWizard()),
+        child: Scaffold(body: Opacity(opacity: 0.1, child: GameOfLife())),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -326,23 +327,39 @@ class MyApp extends StatelessWidget {
     //   p = orgs[0].proposals[0];
     // }
 
+    ThemeData temanormal = ThemeData(
+      fontFamily: 'CascadiaCode',
+      splashColor: const Color(0xff000000),
+      indicatorColor: const Color.fromARGB(255, 161, 215, 219),
+      dividerColor: createMaterialColor(const Color(0xffcfc099)),
+      brightness: Brightness.dark,
+      hintColor: Colors.white70,
+      primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
+      highlightColor: const Color(0xff6e6e6e),
+      // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
+      primarySwatch:
+          createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
+    );
+
+    ThemeData testare = ThemeData(
+      fontFamily: 'CascadiaCode',
+      splashColor: const Color(0xff000000),
+      indicatorColor: Color.fromARGB(255, 52, 68, 70),
+      dividerColor: createMaterialColor(const Color(0xffcfc099)),
+      brightness: Brightness.light,
+      hintColor: Colors.white70,
+      primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
+      highlightColor: const Color(0xff6e6e6e),
+      // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
+      primarySwatch:
+          createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
+    );
+
     return MaterialApp.router(
         //remove debug banner
         debugShowCheckedModeBanner: false,
         title: 'weRule',
-        theme: ThemeData(
-          fontFamily: 'CascadiaCode',
-          splashColor: const Color(0xff000000),
-          indicatorColor: const Color.fromARGB(255, 161, 215, 219),
-          dividerColor: createMaterialColor(const Color(0xffcfc099)),
-          brightness: Brightness.dark,
-          hintColor: Colors.white70,
-          primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
-          highlightColor: const Color(0xff6e6e6e),
-          // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
-          primarySwatch:
-              createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
-        ),
+        theme: temanormal,
         routerConfig: router);
   }
 }

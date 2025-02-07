@@ -13,6 +13,7 @@ import '../entities/org.dart';
 import '../entities/token.dart';
 import '../screens/dao.dart';
 import '../entities/contractFunctions.dart';
+import 'initiative.dart';
 
 String displayTokenValue(String tokenValueStr, int decimals) {
   double tokenValue = double.parse(tokenValueStr) / pow(10, decimals);
@@ -25,13 +26,17 @@ String displayTokenValue(String tokenValueStr, int decimals) {
 }
 
 class TransferWidget extends StatefulWidget {
-  int stage = 0;
+  int stage = 1;
+  InitiativeState initiativeState;
   Map<Token, String> treasury = {};
   Org org;
   State proposalsState;
   Proposal p;
   TransferWidget(
-      {required this.org, required this.p, required this.proposalsState}) {
+      {required this.initiativeState,
+      required this.org,
+      required this.p,
+      required this.proposalsState}) {
     this.treasury = this.org.treasury;
   }
 
@@ -40,11 +45,13 @@ class TransferWidget extends StatefulWidget {
 }
 
 class _TransferWidgetState extends State<TransferWidget> {
+  Map<String, Map<String, double>> assetData = {};
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     widget.p.type = "transfer";
+    widget.initiativeState.widget.p.type = "transfer";
   }
 
   bool isSubmitEnabled = false;
@@ -114,6 +121,7 @@ class _TransferWidgetState extends State<TransferWidget> {
     setState(() {
       isSubmitEnabled = isValid;
     });
+    submitTransactions();
   }
 
   // Add a new transaction set
@@ -138,10 +146,11 @@ class _TransferWidgetState extends State<TransferWidget> {
     });
   }
 
-  void submitTransactions() async {
+  void submitTransactions() {
     widget.p.callDatas = [];
     for (var tx in transactions) {
-      if (tx['recipientError'].isEmpty && tx['amountError'].isEmpty) {
+      try {
+        print("making these here transactions");
         List params = [];
         if (tx['token'].address!.toString().contains("native")) {
           print("we got so myuch native ${tx['amount']}");
@@ -151,6 +160,8 @@ class _TransferWidgetState extends State<TransferWidget> {
           params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
           print("getting calldata");
           widget.p.callDatas.add(getCalldata(transferNativeDef, params));
+          widget.initiativeState.widget.p.callDatas
+              .add(getCalldata(transferNativeDef, params));
           print("got it");
         } else if (tx['token']
             .address!
@@ -163,70 +174,80 @@ class _TransferWidgetState extends State<TransferWidget> {
             tx['amount'],
           ];
           widget.p.callDatas.add(getCalldata(transferErc20Def, params));
+          widget.initiativeState.widget.p.callDatas
+              .add(getCalldata(transferErc20Def, params));
         } else {}
         widget.p.targets.add(widget.org.registryAddress!);
+        widget.initiativeState.widget.p.targets
+            .add(widget.org.registryAddress!);
         widget.p.values.add("0");
+        widget.initiativeState.widget.p.values.add("0");
+      } catch (e) {
+        print("error here " + e.toString());
       }
     }
 
-    widget.p.createdAt = DateTime.now();
-    widget.p.statusHistory.addAll({"pending": DateTime.now()});
+    widget.initiativeState.widget.p.type = "transfer";
+    print("calldatas " + widget.p.callDatas.toString());
 
-    setState(() {
-      widget.stage = -1;
-    });
-    try {
-      print("before sending the transaction");
-      String cevine = await propose(widget.p);
-      if (cevine.contains("not ok")) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            duration: Duration(seconds: 1),
-            content: Center(
-                child: SizedBox(
-                    height: 70,
-                    child: Center(
-                      child: Text(
-                        "Error submitting proposal",
-                        style: TextStyle(
-                            fontSize: 24,
-                            color: Color.fromARGB(255, 67, 18, 14)),
-                      ),
-                    )))));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            duration: Duration(seconds: 1),
-            content: Center(
-                child: SizedBox(
-                    height: 70,
-                    child: Center(
-                      child: Text(
-                        "Proposal submitted",
-                        style: TextStyle(fontSize: 24),
-                      ),
-                    )))));
-      }
-    } catch (e) {
-      print("some error here " + e.toString());
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          duration: Duration(seconds: 1),
-          content: Center(
-              child: SizedBox(
-                  height: 70,
-                  child: Center(
-                    child: Text(
-                      "Error submitting proposal",
-                      style: TextStyle(
-                          fontSize: 24, color: Color.fromARGB(255, 67, 18, 14)),
-                    ),
-                  )))));
-    }
+    // widget.p.createdAt = DateTime.now();
+    // widget.p.statusHistory.addAll({"pending": DateTime.now()});
 
-    Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => Scaffold(
-            body:
-                //  DaoSetupWizard())
-                // Center(child: TransferWidget(org: orgs[0],)))
-                DAO(InitialTabIndex: 1, org: widget.org))));
+    //   setState(() {
+    //     widget.stage = -1;
+    //   });
+    //   try {
+    //     print("before sending the transaction");
+    //     String cevine = await propose(widget.p);
+    //     if (cevine.contains("not ok")) {
+    //       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    //           duration: Duration(seconds: 1),
+    //           content: Center(
+    //               child: SizedBox(
+    //                   height: 70,
+    //                   child: Center(
+    //                     child: Text(
+    //                       "Error submitting proposal",
+    //                       style: TextStyle(
+    //                           fontSize: 24,
+    //                           color: Color.fromARGB(255, 67, 18, 14)),
+    //                     ),
+    //                   )))));
+    //     } else {
+    //       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    //           duration: Duration(seconds: 1),
+    //           content: Center(
+    //               child: SizedBox(
+    //                   height: 70,
+    //                   child: Center(
+    //                     child: Text(
+    //                       "Proposal submitted",
+    //                       style: TextStyle(fontSize: 24),
+    //                     ),
+    //                   )))));
+    //     }
+    //   } catch (e) {
+    //     print("some error here " + e.toString());
+    //     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    //         duration: Duration(seconds: 1),
+    //         content: Center(
+    //             child: SizedBox(
+    //                 height: 70,
+    //                 child: Center(
+    //                   child: Text(
+    //                     "Error submitting proposal",
+    //                     style: TextStyle(
+    //                         fontSize: 24, color: Color.fromARGB(255, 67, 18, 14)),
+    //                   ),
+    //                 )))));
+    //   }
+
+    //   Navigator.of(context).push(MaterialPageRoute(
+    //       builder: (context) => Scaffold(
+    //           body:
+    //               //  DaoSetupWizard())
+    //               // Center(child: TransferWidget(org: orgs[0],)))
+    //               DAO(InitialTabIndex: 1, org: widget.org))));
   }
 
   @override
@@ -419,33 +440,33 @@ class _TransferWidgetState extends State<TransferWidget> {
                       },
                     ),
                     // Add transaction button with placeholder for alignment
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 460, // Ensure consistent width
-                          height: 40,
-                          child: TextButton(
-                            style: ButtonStyle(
-                              elevation: const MaterialStatePropertyAll(0.1),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.add),
-                                SizedBox(width: 20),
-                                Text("Add Transaction"),
-                              ],
-                            ),
-                            onPressed: addTransaction,
-                          ),
-                        ),
-                        const SizedBox(
-                            width:
-                                48), // Invisible space to align with close button
-                      ],
-                    ),
-                    const SizedBox(height: 30),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: [
+                    //     SizedBox(
+                    //       width: 460, // Ensure consistent width
+                    //       height: 40,
+                    //       child: TextButton(
+                    //         style: ButtonStyle(
+                    //           elevation: const MaterialStatePropertyAll(0.1),
+                    //         ),
+                    //         child: Row(
+                    //           mainAxisAlignment: MainAxisAlignment.center,
+                    //           children: const [
+                    //             Icon(Icons.add),
+                    //             SizedBox(width: 20),
+                    //             Text("Add Transaction"),
+                    //           ],
+                    //         ),
+                    //         onPressed: addTransaction,
+                    //       ),
+                    //     ),
+                    //     const SizedBox(
+                    //         width:
+                    //             48), // Invisible space to align with close button
+                    //   ],
+                    // ),
+                    // const SizedBox(height: 30),
                   ],
                 ),
               ),
@@ -453,53 +474,53 @@ class _TransferWidgetState extends State<TransferWidget> {
           ),
         ),
         // Submit button 50px above the bottom with placeholder for alignment
-        Positioned(
-          bottom: 30, // Submit button 30px above the bottom
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 40,
-                  width: 160, // Ensure consistent width
-                  child: TextButton(
-                    style: ButtonStyle(
-                      overlayColor: MaterialStateProperty.all<Color>(
-                          Theme.of(context).indicatorColor),
-                      backgroundColor: isSubmitEnabled
-                          ? MaterialStateProperty.all<Color>(
-                              Theme.of(context).indicatorColor)
-                          : MaterialStateProperty.all<Color>(
-                              Colors.grey), // Disabled color
-                      elevation: MaterialStateProperty.all(1.0),
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(7.0),
-                        ),
-                      ),
-                    ),
-                    onPressed: isSubmitEnabled
-                        ? submitTransactions
-                        : null, // Enable/disable based on validation
-                    child: const Center(
-                      child: Text(
-                        "SUBMIT",
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                    width: 48), // Invisible space to align with close button
-              ],
-            ),
-          ),
-        ),
+        // Positioned(
+        //   bottom: 30, // Submit button 30px above the bottom
+        //   left: 0,
+        //   right: 0,
+        //   child: Center(
+        //     child: Row(
+        //       mainAxisAlignment: MainAxisAlignment.center,
+        //       children: [
+        //         SizedBox(
+        //           height: 40,
+        //           width: 160, // Ensure consistent width
+        //           child: TextButton(
+        //             style: ButtonStyle(
+        //               overlayColor: MaterialStateProperty.all<Color>(
+        //                   Theme.of(context).indicatorColor),
+        //               backgroundColor: isSubmitEnabled
+        //                   ? MaterialStateProperty.all<Color>(
+        //                       Theme.of(context).indicatorColor)
+        //                   : MaterialStateProperty.all<Color>(
+        //                       Colors.grey), // Disabled color
+        //               elevation: MaterialStateProperty.all(1.0),
+        //               shape: MaterialStateProperty.all(
+        //                 RoundedRectangleBorder(
+        //                   borderRadius: BorderRadius.circular(7.0),
+        //                 ),
+        //               ),
+        //             ),
+        //             onPressed: isSubmitEnabled
+        //                 ? submitTransactions
+        //                 : null, // Enable/disable based on validation
+        //             child: const Center(
+        //               child: Text(
+        //                 "SUBMIT",
+        //                 style: TextStyle(
+        //                     fontSize: 16,
+        //                     fontWeight: FontWeight.bold,
+        //                     color: Colors.black),
+        //               ),
+        //             ),
+        //           ),
+        //         ),
+        //         const SizedBox(
+        //             width: 48), // Invisible space to align with close button
+        //       ],
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

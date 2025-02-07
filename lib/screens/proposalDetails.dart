@@ -942,7 +942,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                         constraints: const BoxConstraints(
                           maxWidth: 680,
                         ),
-                        height: widget.p.type == "transfer"
+                        height: widget.p.type!.contains("transfer")
                             ? widget.p.callDatas.length * 70
                             : 270,
                         // Set a fixed width for the first container

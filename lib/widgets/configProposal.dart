@@ -9,16 +9,23 @@ import 'package:flutter/services.dart';
 import '../entities/definitions.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
-import '../screens/creator.dart'; // Import for DurationInput widget
+import '../screens/creator.dart';
+import 'initiative.dart'; // Import for DurationInput widget
 
 class DaoConfigurationWidget extends StatefulWidget {
   Proposal p;
   Org org;
   State proposalsState;
-  bool isSetInfo = true;
+  InitiativeState initiativeState;
+  bool isSetInfo = false;
   bool isWaiting = false;
   DaoConfigurationWidget(
-      {required this.p, required this.org, required this.proposalsState});
+      {required this.initiativeState,
+      required this.p,
+      required this.org,
+      required this.proposalsState}) {
+    // p.type = "quorum";
+  }
 
   @override
   _DaoConfigurationWidgetState createState() => _DaoConfigurationWidgetState();
@@ -54,7 +61,9 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
 
     super.initState();
     widget.p.values = ["0"];
+    widget.initiativeState.widget.p.values = ["0"];
     widget.p.targets = [widget.org.address!];
+    widget.initiativeState.widget.p.targets = [widget.org.address!];
     _quorumValue = widget.org.quorum.toDouble().round().toDouble();
     votingDelay = Duration(minutes: widget.org.votingDelay);
     votingPeriod = Duration(minutes: widget.org.votingDuration);
@@ -64,6 +73,13 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
     _votingPeriodDaysController.text = votingPeriod!.inDays.toString();
     _votingPeriodHoursController.text = votingPeriod!.inHours.toString();
     _votingPeriodMinutesController.text = votingPeriod!.inMinutes.toString();
+    _votingDelayDaysController.addListener(_validateForm);
+    _votingDelayHoursController.addListener(_validateForm);
+    _votingDelayMinutesController.addListener(_validateForm);
+    _votingPeriodDaysController.addListener(_validateForm);
+    _votingPeriodHoursController.addListener(_validateForm);
+    _votingPeriodMinutesController.addListener(_validateForm);
+    _proposalThresholdController.addListener(_validateForm);
   }
 
   void _selectConfigType(String configType) {
@@ -89,6 +105,7 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
     setState(() {
       _isFormValid = isValid;
     });
+    runLogic();
   }
 
   Widget _buildConfigSelection() {
@@ -133,6 +150,7 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
   }
 
   Widget _buildQuorumConfig() {
+    widget.initiativeState.widget.p.type = "quorum";
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -166,6 +184,7 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
   }
 
   Widget _buildVotingDelayConfig() {
+    widget.initiativeState.widget.p.type = "voting delay";
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -195,7 +214,54 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
     );
   }
 
+  runLogic() {
+    switch (_selectedConfigType) {
+      case "Quorum":
+        widget.p.type = "quorum";
+        widget.initiativeState.widget.p.type = "quorum";
+        BigInt newQuorum = BigInt.from(_quorumValue!.round());
+        List params = [newQuorum];
+        String callData0 = getCalldata(changeQuorumDef, params);
+        widget.initiativeState.widget.p.callDatas = [callData0];
+        break;
+      case "Voting Delay":
+        widget.p.type = "voting delay";
+        widget.initiativeState.widget.p.type = "voting delay";
+        Duration newDelay = Duration(
+          days: int.parse(_votingDelayDaysController.text),
+          hours: int.parse(_votingDelayHoursController.text),
+          minutes: int.parse(_votingDelayMinutesController.text),
+        );
+        List params = [BigInt.parse(newDelay.inSeconds.toString())];
+        String callData1 = getCalldata(changeVotingDelayDef, params);
+        widget.initiativeState.widget.p.callDatas = [callData1];
+        break;
+      case "Voting Period":
+        widget.p.type = "voting period";
+        widget.initiativeState.widget.p.type = "voting period";
+        Duration newPeriod = Duration(
+          days: int.parse(_votingPeriodDaysController.text),
+          hours: int.parse(_votingPeriodHoursController.text),
+          minutes: int.parse(_votingPeriodMinutesController.text),
+        );
+        List params = [BigInt.parse(newPeriod.inSeconds.toString())];
+        String callData2 = getCalldata(changeVotingPeriodDef, params);
+        widget.initiativeState.widget.p.callDatas = [callData2];
+        break;
+      case "Proposal Threshold":
+        double newThreshold = double.parse(_proposalThresholdController.text);
+        widget.initiativeState.widget.p.type = "proposal threshold";
+        BigInt ramane =
+            BigInt.from(newThreshold * pow(10, widget.org.decimals!));
+        List params = [ramane];
+        String callData2 = getCalldata(changeProposalThresholdDef, params);
+        widget.initiativeState.widget.p.callDatas = [callData2];
+        break;
+    }
+  }
+
   Widget _buildVotingPeriodConfig() {
+    widget.initiativeState.widget.p.type = "voting period";
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -222,6 +288,7 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
   }
 
   Widget _buildProposalFeeConfig() {
+    widget.initiativeState.widget.p.type = "proposal threshold";
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -290,6 +357,8 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
   finishSettingInfo() {
     setState(() {
       widget.isSetInfo = false;
+      widget.p.type = "quorum";
+      widget.initiativeState.widget.p.type = "quorum";
     });
   }
 
@@ -300,8 +369,8 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
         : widget.isWaiting
             ? const AwaitingConfirmation()
             : Container(
-                decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey, width: 0.3)),
+                // decoration: BoxDecoration(
+                //     border: Border.all(color: Colors.grey, width: 0.3)),
                 width: 600,
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -313,18 +382,6 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
                           child: _buildConfigView(),
                         ),
                       ),
-                    ),
-                    Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      margin: const EdgeInsets.only(bottom: 50),
-                      child: _selectedConfigType != null
-                          ? Center(
-                              child: SubmitButton(
-                              isSubmitEnabled: _isFormValid,
-                              submit: submit,
-                            ))
-                          : null,
                     ),
                   ],
                 ),
@@ -372,9 +429,9 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
         widget.p.callDatas = [callData2];
         break;
     }
-    setState(() {
-      widget.isWaiting = true;
-    });
+    // setState(() {
+    //   widget.isWaiting = true;
+    // });
     try {
       String cevine = await propose(widget.p);
       if (cevine.contains("not ok")) {

@@ -189,6 +189,9 @@ I mean I think they should because of reasons and stuff.
   }
 
   getProposals() async {
+    if (debatesOnly ?? false) {
+      return;
+    }
     pollsCollection = FirebaseFirestore.instance
         .collection("idaos${Human().chain.name}")
         .doc(address)

@@ -75,8 +75,14 @@ class _DAOState extends State<DAO> {
       dao.registry = Map<String, String>.from(data['registry']);
       dao.totalSupply = data['totalSupply'];
       // Perform the async task before yielding
-      // await dao.getProposals();
+
       dao.getMembers();
+      if (dao.name.contains("Org")) {
+        dao.debatesOnly = true;
+      } else {
+        dao.debatesOnly = false;
+      }
+      await dao.getProposals();
       return dao;
     });
 
@@ -96,121 +102,219 @@ class _DAOState extends State<DAO> {
             }
 
             final dao = snapshot.data!;
-            return Container(
-              // ... rest of your widget
-              alignment: Alignment.topCenter,
-              child: DefaultTabController(
-                initialIndex: widget.InitialTabIndex,
-                length: 5,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    SizedBox(height: 2),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize
-                          .min, // Set this property to make the column fit its children's size vertically
-                      children: [
-                        // LinearProgressIndicator(
-                        //   color: Theme.of(context).indicatorColor.withOpacity(0.3),
-                        //   minHeight: 7,
-                        // ),
-                        Container(
-                          alignment: Alignment.topCenter,
-                          width: double.infinity,
-                          constraints: const BoxConstraints(maxWidth: 1200),
-                          height: 50,
-                          color: Theme.of(context).cardColor,
-                          child: TabBar(
-                            tabs: [
-                              menuItem(
-                                  MenuItem("Home", const Icon(Icons.home))),
-                              menuItem(MenuItem(
-                                  "Proposals", const Icon(Icons.front_hand))),
-                              // menuItem(MenuItem("Treasury",const Icon(Icons.money))),
-                              menuItem(
-                                  MenuItem("Registry", const Icon(Icons.list))),
-                              menuItem(MenuItem(
-                                  "Members", const Icon(Icons.people))),
-                              menuItem(MenuItem(
-                                  "Account", const Icon(Icons.person))),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          height: 1000,
-                          width: double.infinity,
-                          constraints: const BoxConstraints(maxWidth: 1200),
-                          // Expanded start
-                          child: TabBarView(
-                            // TabBarView start
-                            children: [
-                              Home(org: dao),
-                              widget.proposalHash == null
-                                  ? Center(
-                                      child: Proposals(which: "all", org: dao))
-                                  : Center(
-                                      child: FutureBuilder(
-                                          future: widget.org.getProposals(),
-                                          builder: (context, snapshot) {
-                                            return snapshot.connectionState ==
-                                                    ConnectionState.waiting
-                                                ? Center(
-                                                    child: SizedBox(
-                                                        width: 100,
-                                                        height: 100,
-                                                        child:
-                                                            CircularProgressIndicator()))
-                                                : widget.org.proposals.any(
-                                                        (proposal) =>
-                                                            proposal.id ==
-                                                            widget.proposalHash)
-                                                    ? ProposalDetails(
-                                                        p: widget.org.proposals
-                                                            .firstWhere(
-                                                          (proposal) =>
-                                                              proposal.id ==
-                                                              widget
-                                                                  .proposalHash,
-                                                        ),
-                                                      )
-                                                    : widget.org.debates.any(
-                                                            (debate) =>
-                                                                debate.hash ==
-                                                                widget
-                                                                    .proposalHash)
-                                                        ? DebateDetails(
-                                                            debate: widget
-                                                                .org.debates
-                                                                .firstWhere(
-                                                              (debate) =>
-                                                                  debate.hash ==
-                                                                  widget
-                                                                      .proposalHash,
-                                                            ),
-                                                          )
-                                                        : Center(
-                                                            child: Text(
-                                                                'No matching Proposal or Debate found'),
-                                                          );
-                                          }),
-                                    ),
-                              // Center(child: Treasury()),
-                              Center(child: Registry(org: dao)),
-                              Center(child: Members(org: dao)),
-                              Center(child: Account(org: dao)),
-                            ],
-                          ), // TabBarView end
-                        ),
-                      ],
-                    ), // End of Column
-
-                    Footer()
-                  ],
-                ),
-              ), // End of ListView
-            );
+            return dao.debatesOnly! ? debatesWide(dao) : fullWide(dao);
           }),
+    );
+  }
+
+  debatesWide(dao) {
+    return Container(
+      alignment: Alignment.topCenter,
+      child: DefaultTabController(
+        initialIndex: widget.InitialTabIndex,
+        length: 4,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            SizedBox(height: 2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize
+                  .min, // Set this property to make the column fit its children's size vertically
+              children: [
+                // LinearProgressIndicator(
+                //   color: Theme.of(context).indicatorColor.withOpacity(0.3),
+                //   minHeight: 7,
+                // ),
+                Container(
+                  alignment: Alignment.topCenter,
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  height: 50,
+                  color: Theme.of(context).cardColor,
+                  child: TabBar(
+                    tabs: [
+                      menuItem(MenuItem("Overview", Icon(Icons.dashboard))),
+                      menuItem(MenuItem("Debates", const Icon(Icons.forum))),
+                      // menuItem(MenuItem("Treasury",const Icon(Icons.money))),
+                      menuItem(MenuItem("Members", const Icon(Icons.people))),
+                      menuItem(MenuItem("Account", const Icon(Icons.person))),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 1000,
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  // Expanded start
+                  child: TabBarView(
+                    // TabBarView start
+                    children: [
+                      Home(org: dao),
+                      widget.proposalHash == null
+                          ? Center(child: Proposals(which: "all", org: dao))
+                          : Center(
+                              child: FutureBuilder(
+                                  future: widget.org.getProposals(),
+                                  builder: (context, snapshot) {
+                                    return snapshot.connectionState ==
+                                            ConnectionState.waiting
+                                        ? Center(
+                                            child: SizedBox(
+                                                width: 100,
+                                                height: 100,
+                                                child:
+                                                    CircularProgressIndicator()))
+                                        : widget.org.proposals.any((proposal) =>
+                                                proposal.id ==
+                                                widget.proposalHash)
+                                            ? ProposalDetails(
+                                                p: widget.org.proposals
+                                                    .firstWhere(
+                                                  (proposal) =>
+                                                      proposal.id ==
+                                                      widget.proposalHash,
+                                                ),
+                                              )
+                                            : widget.org.debates.any((debate) =>
+                                                    debate.hash ==
+                                                    widget.proposalHash)
+                                                ? DebateDetails(
+                                                    debate: widget.org.debates
+                                                        .firstWhere(
+                                                      (debate) =>
+                                                          debate.hash ==
+                                                          widget.proposalHash,
+                                                    ),
+                                                  )
+                                                : Center(
+                                                    child: Text(
+                                                        'No matching Proposal or Debate found'),
+                                                  );
+                                  }),
+                            ),
+                      Center(child: Members(org: dao)),
+                      Center(child: Account(org: dao)),
+                    ],
+                  ), // TabBarView end
+                ),
+              ],
+            ), // End of Column
+
+            Footer()
+          ],
+        ),
+      ), // End of ListView
+    );
+  }
+
+  fullWide(dao) {
+    return Container(
+      alignment: Alignment.topCenter,
+      child: DefaultTabController(
+        initialIndex: widget.InitialTabIndex,
+        length: 5,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            SizedBox(height: 2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize
+                  .min, // Set this property to make the column fit its children's size vertically
+              children: [
+                // LinearProgressIndicator(
+                //   color: Theme.of(context).indicatorColor.withOpacity(0.3),
+                //   minHeight: 7,
+                // ),
+                Container(
+                  alignment: Alignment.topCenter,
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  height: 50,
+                  color: Theme.of(context).cardColor,
+                  child: TabBar(
+                    tabs: [
+                      menuItem(MenuItem(
+                          "Overview",
+                          Icon(
+                            Icons.dashboard,
+                          ))),
+
+                      menuItem(
+                          MenuItem("Proposals", const Icon(Icons.front_hand))),
+                      // menuItem(MenuItem("Treasury",const Icon(Icons.money))),
+                      menuItem(MenuItem("Registry", const Icon(Icons.list))),
+                      menuItem(MenuItem("Members", const Icon(Icons.people))),
+                      menuItem(MenuItem("Account", const Icon(Icons.person))),
+                    ],
+                  ),
+                ),
+                Container(
+                  height: 1000,
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  // Expanded start
+                  child: TabBarView(
+                    // TabBarView start
+                    children: [
+                      Home(org: dao),
+                      widget.proposalHash == null
+                          ? Center(child: Proposals(which: "all", org: dao))
+                          : Center(
+                              child: FutureBuilder(
+                                  future: widget.org.getProposals(),
+                                  builder: (context, snapshot) {
+                                    return snapshot.connectionState ==
+                                            ConnectionState.waiting
+                                        ? Center(
+                                            child: SizedBox(
+                                                width: 100,
+                                                height: 100,
+                                                child:
+                                                    CircularProgressIndicator()))
+                                        : widget.org.proposals.any((proposal) =>
+                                                proposal.id ==
+                                                widget.proposalHash)
+                                            ? ProposalDetails(
+                                                p: widget.org.proposals
+                                                    .firstWhere(
+                                                  (proposal) =>
+                                                      proposal.id ==
+                                                      widget.proposalHash,
+                                                ),
+                                              )
+                                            : widget.org.debates.any((debate) =>
+                                                    debate.hash ==
+                                                    widget.proposalHash)
+                                                ? DebateDetails(
+                                                    debate: widget.org.debates
+                                                        .firstWhere(
+                                                      (debate) =>
+                                                          debate.hash ==
+                                                          widget.proposalHash,
+                                                    ),
+                                                  )
+                                                : Center(
+                                                    child: Text(
+                                                        'No matching Proposal or Debate found'),
+                                                  );
+                                  }),
+                            ),
+                      // Center(child: Treasury()),
+                      Center(child: Registry(org: dao)),
+                      Center(child: Members(org: dao)),
+                      Center(child: Account(org: dao)),
+                    ],
+                  ), // TabBarView end
+                ),
+              ],
+            ), // End of Column
+
+            Footer()
+          ],
+        ),
+      ), // End of ListView
     );
   }
 
@@ -231,7 +335,7 @@ class _DAOState extends State<DAO> {
 
 class MenuItem {
   String name;
-  Icon icon;
+  Widget icon;
   Widget? content;
   MenuItem(this.name, this.icon);
 }

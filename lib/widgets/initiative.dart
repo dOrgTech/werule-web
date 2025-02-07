@@ -1,6 +1,8 @@
 import "package:Homebase/debates/models/argument.dart";
 import "package:Homebase/screens/proposals.dart";
+import "package:Homebase/widgets/propDetailsWidgets.dart";
 import "package:Homebase/widgets/registryPropo.dart";
+import "package:Homebase/widgets/transfer.dart";
 import "package:Homebase/widgets/waiting.dart";
 import "package:flutter/material.dart";
 import "package:toggle_switch/toggle_switch.dart";
@@ -24,6 +26,7 @@ class Initiative extends StatefulWidget {
   late Proposal p;
   late Object thing;
   Widget? proposalType;
+  String? propType;
   int phase = 0;
   Map<String, Map<String, double>> assetData = {};
   bool review = false;
@@ -336,12 +339,20 @@ class InitiativeState extends State<Initiative> {
     });
   }
 
+  setReview(Proposal p) {
+    setState(() {
+      widget.p = p;
+      widget.review = true;
+      widget.phase = 2;
+    });
+  }
+
   selectProposalType() {
     return !(widget.proposalType == null)
         ? Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              SizedBox(height: 560, child: widget.proposalType!),
+              SizedBox(height: 650, child: widget.proposalType!),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 48.0),
                 child: Row(
@@ -363,7 +374,12 @@ class InitiativeState extends State<Initiative> {
                     ),
                     Spacer(),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        print("proposal type is " + widget.p.type!);
+                        setState(() {
+                          widget.phase = 2;
+                        });
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -382,7 +398,7 @@ class InitiativeState extends State<Initiative> {
             child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ProposalList(org: widget.org, initiativeState: this),
+              ProposalList(org: widget.org, initiativeState: this, p: widget.p),
               TextButton(
                   onPressed: () {
                     setState(() {
@@ -532,18 +548,29 @@ class InitiativeState extends State<Initiative> {
   }
 
   review() {
+    print("we're here now");
+    widget.propType = widget.p.type == null ? "null" : widget.p.type!;
+    print("proposal tyupe is" + widget.propType!);
     return Container(
       height: 700,
+      constraints: BoxConstraints(minWidth: 600),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+                color: Colors.black12,
+                border: Border.all(width: 0.5, color: Colors.white12)),
+            child: Text("${widget.p.type!} proposal"),
+          ),
           SizedBox(height: 16),
           Text(
             widget.p.name ?? "No title",
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 26),
+          SizedBox(height: 18),
           Center(
             child: SizedBox(
               width: 400,
@@ -559,7 +586,10 @@ class InitiativeState extends State<Initiative> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Discussion: "),
+                  const Text(
+                    "Discussion: ",
+                    style: TextStyle(fontSize: 14),
+                  ),
                   OldSchoolLink(
                       text: widget.p.externalResource!.length < 42
                           ? widget.p.externalResource!
@@ -571,8 +601,39 @@ class InitiativeState extends State<Initiative> {
           ),
           SizedBox(height: 36),
           SingleChildScrollView(
-            child: makeList(),
-          ),
+              child: widget.p.type == "batch transfer"
+                  // child: true
+                  ? makeList()
+                  : widget.p.type == "transfer"
+                      ? SizedBox(
+                          height: 400,
+                          width: 600,
+                          child: TokenTransferListWidget(p: widget.p))
+                      : widget.p.type == "registry"
+                          ? SizedBox(
+                              height: 400,
+                              width: 600,
+                              child: RegistryProposalDetails(p: widget.p))
+                          : widget.p.type == "contract call"
+                              ? ContractCall(p: widget.p)
+                              : widget.p.type!.toLowerCase().contains("mint") ||
+                                      widget.p.type!
+                                          .toLowerCase()
+                                          .contains("burn")
+                                  ? GovernanceTokenOperationDetails(
+                                      p: widget.p,
+                                    )
+                                  : widget.p.type!.contains("quorum") ||
+                                          widget.p.type!
+                                              .contains("voting delay") ||
+                                          widget.p.type!
+                                              .contains("voting period") ||
+                                          widget.p.type!.contains("threshold")
+                                      ? SizedBox(
+                                          child: DaoConfigurationDetails(
+                                              p: widget.p))
+                                      // DaoConfigurationDetails(p: widget.p)
+                                      : const Text("")),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 48.0),
             child: Row(

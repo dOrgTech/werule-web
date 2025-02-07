@@ -7,14 +7,18 @@ import '../entities/proposal.dart';
 import '../screens/dao.dart';
 import 'package:lottie/lottie.dart';
 
+import 'initiative.dart';
+
 class RegistryProposalWidget extends StatefulWidget {
   Proposal p;
   Org org;
   int stage = 0;
   State proposalsState;
+  InitiativeState initiativeState;
   bool isSetInfo = false;
   RegistryProposalWidget(
       {Key? key,
+      required this.initiativeState,
       required this.proposalsState,
       required this.p,
       required this.org})
@@ -30,22 +34,51 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
   final _formKey = GlobalKey<FormState>();
   final _keyController = TextEditingController();
   final _valueController = TextEditingController();
+  final FocusNode _keyFocusNode = FocusNode();
+  final FocusNode _valueFocusNode = FocusNode();
 
   @override
   void dispose() {
     _keyController.dispose();
     _valueController.dispose();
+    _keyFocusNode.dispose();
+    _valueFocusNode.dispose();
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {}
+  @override
+  void initState() {
+    super.initState();
+    widget.initiativeState.widget.p.type = "registry";
+
+    // Add focus listeners for the focus nodes
+    _keyFocusNode.addListener(() {
+      if (!_keyFocusNode.hasFocus) {
+        runLogic();
+      }
+    });
+
+    _valueFocusNode.addListener(() {
+      if (!_valueFocusNode.hasFocus) {
+        runLogic();
+      }
+    });
   }
 
   finishSettingInfo() {
     setState(() {
       widget.isSetInfo = false;
+      widget.p.type = "registry";
     });
+  }
+
+  runLogic() {
+    List<String> params = [_keyController.text, _valueController.text];
+    widget.initiativeState.widget.p.callDatas = [];
+    String calldata0 = getCalldata(editRegistryDef, params);
+    widget.initiativeState.widget.p.callDatas.add(calldata0);
+    widget.initiativeState.widget.p.targets = [widget.p.org.registryAddress!];
+    widget.initiativeState.widget.p.values = ["0"];
   }
 
   @override
@@ -65,6 +98,7 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 52.0),
                         child: TextFormField(
+                          focusNode: _keyFocusNode,
                           onChanged: (value) {},
                           controller: _keyController,
                           decoration: const InputDecoration(
@@ -75,6 +109,7 @@ class _RegistryProposalWidgetState extends State<RegistryProposalWidget> {
                         ),
                       ),
                       TextFormField(
+                        focusNode: _valueFocusNode,
                         maxLines: 6,
                         controller: _valueController,
                         decoration:

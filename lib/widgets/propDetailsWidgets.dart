@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'dart:typed_data';
 import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/utils/functions.dart';
-import 'package:Homebase/widgets/fundProject.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -90,7 +89,6 @@ class TokenTransferListWidget extends StatelessWidget {
                 const Icon(Icons.arrow_forward, size: 20),
 
                 const SizedBox(width: 8),
-
                 // Avatar image generated from address hash
                 FutureBuilder<Uint8List>(
                   future: generateAvatarAsync(transfer.hash),

@@ -1,36 +1,20 @@
 import 'package:Homebase/entities/proposal.dart';
-import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/debate_card.dart';
 import 'package:Homebase/widgets/initiative.dart';
 import 'package:Homebase/widgets/tokenOps.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:flutter/widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:web3dart/credentials.dart';
 import '../debates/models/debate.dart';
-import '../entities/contractFunctions.dart';
-import '../entities/definitions.dart';
 import '../entities/human.dart';
-import '../entities/proposal.dart';
-import '../entities/token.dart';
 import '../main.dart';
 import '../screens/proposalDetails.dart';
 import '../utils/theme.dart';
 import '../widgets/proposalCard.dart';
 import '../entities/org.dart';
-import '../widgets/transfer.dart';
-import 'dart:html' as html;
 import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'dart:html';
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:csv/csv.dart';
 
 class Proposals extends StatefulWidget {
   Proposals(
@@ -70,6 +54,7 @@ class _ProposalsState extends State<Proposals> {
     "pending",
     "rejected"
   ];
+
   @override
   void initState() {
     typesDropdown = [
@@ -88,18 +73,21 @@ class _ProposalsState extends State<Proposals> {
 
   void populateProposals() {
     widget.proposalCards = [];
-    widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
-    for (Proposal p in widget.org.proposals) {
-      widget.proposalCards.add(ProposalCard(org: widget.org, proposal: p));
-    }
     for (Debate d in widget.org.debates) {
       print("adding a debate to the list of proposals");
       widget.proposalCards.add(DebateCard(org: widget.org, debate: d));
+    }
+    if (widget.org.debatesOnly ?? false) {
+      return;
     }
     if (widget.proposalCards.isEmpty) {
       widget.proposalCards.add(const SizedBox(height: 200));
       widget.proposalCards
           .add(SizedBox(height: 400, child: Center(child: noProposals())));
+    }
+    widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+    for (Proposal p in widget.org.proposals) {
+      widget.proposalCards.add(ProposalCard(org: widget.org, proposal: p));
     }
   }
 
@@ -168,8 +156,8 @@ class _ProposalsState extends State<Proposals> {
               }
               populateProposals();
               return Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: ListView(
+                  // crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 30),
                     SizedBox(
@@ -316,14 +304,18 @@ class _ProposalsState extends State<Proposals> {
 
 class ProposalList extends StatefulWidget {
   final Org org;
-  late Proposal p;
+  Proposal p;
   InitiativeState initiativeState;
   bool uploadingCsv = false;
   bool showingCsv = false;
   late var typesOfProposals;
   late var nProposalWidgets;
 
-  ProposalList({super.key, required this.org, required this.initiativeState});
+  ProposalList(
+      {required this.p,
+      super.key,
+      required this.org,
+      required this.initiativeState});
 
   @override
   State<ProposalList> createState() => ProposalListState();
@@ -342,39 +334,8 @@ class ProposalListState extends State<ProposalList> {
       'amountError': ''
     }
   ];
-  submitTransactions() {
-    widget.p.callDatas = [];
-    for (var tx in transactions) {
-      if (tx['recipientError'].isEmpty && tx['amountError'].isEmpty) {
-        List params = [];
-        if (tx['token'].address!.toString().contains("native")) {
-          print("we got so myuch native ${tx['amount']}");
-          double txamount = double.parse(tx['amount'].toString());
-          final BigInt weiAmount = BigInt.from(txamount * 1e18);
-          print("we createdbg");
-          params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
-          print("getting calldata");
-          widget.p.callDatas.add(getCalldata(transferNativeDef, params));
-          print("got it");
-        } else if (tx['token']
-            .address!
-            .toString()
-            .toLowerCase()
-            .contains("erc20")) {
-          params = [
-            (tx['token'] as Token).address!,
-            tx['recipient'],
-            tx['amount'],
-          ];
-          widget.p.callDatas.add(getCalldata(transferErc20Def, params));
-        } else {}
-        widget.p.targets.add(widget.org.registryAddress!);
-        widget.p.values.add("0");
-      }
-    }
-  }
 
-  callParent(element) {
+  callParent(element, proposal) {
     widget.initiativeState.setState(() {
       widget.initiativeState.widget.proposalType = element;
     });
@@ -424,7 +385,7 @@ class ProposalListState extends State<ProposalList> {
         });
       }
     });
-
+    widget.initiativeState.widget.p.type = "batch transfer";
     widget.initiativeState.changeState(assetData);
   }
 
@@ -462,12 +423,14 @@ class ProposalListState extends State<ProposalList> {
     };
 
     newProposalWidgets.addAll({
-      '${widget.org.symbol} Operation': (Org org, Proposal p, State state) =>
-          GovernanceTokenOperationsWidget(
-            org: org,
-            p: p,
-            proposalsState: state,
-          )
+      '${widget.org.symbol} Operation':
+          (Org org, Proposal p, State state, InitiativeState state2) =>
+              GovernanceTokenOperationsWidget(
+                initiativeState: widget.initiativeState,
+                org: org,
+                p: p,
+                proposalsState: state,
+              )
     });
     pTypes.addAll({
       '${widget.org.symbol} Operation':
@@ -498,7 +461,9 @@ class ProposalListState extends State<ProposalList> {
             child: TextButton(
               onPressed: () {
                 callParent(
-                    newProposalWidgets[item]!(widget.org, widget.p, this));
+                    newProposalWidgets[item]!(
+                        widget.org, widget.p, this, widget.initiativeState),
+                    widget.p);
               },
               child: Center(
                 child: Padding(
@@ -575,7 +540,7 @@ class ProposalListState extends State<ProposalList> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                "Download ",
+                "View ",
                 style: TextStyle(fontSize: 13),
               ),
               MouseRegion(

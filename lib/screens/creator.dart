@@ -1388,20 +1388,24 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           govToken: token,
           description: daoConfig.daoDescription,
         );
-        widget.org.quorum = daoConfig.quorumThreshold;
-        widget.org.votingDuration = daoConfig.votingDuration?.inMinutes ?? 0;
-        widget.org.votingDelay = daoConfig.votingDelay?.inMinutes ?? 0;
-        widget.org.executionDelay = daoConfig.executionDelay?.inSeconds ?? 0;
+        widget.org.quorum =
+            !widget.org.debatesOnly! ? daoConfig.quorumThreshold : 4;
+        widget.org.votingDuration = daoConfig.votingDuration?.inMinutes ?? 5760;
+        widget.org.votingDelay = daoConfig.votingDelay?.inMinutes ?? 60;
+        widget.org.executionDelay = daoConfig.executionDelay?.inSeconds ?? 3600;
         widget.org.holders = daoConfig.members.length;
         widget.org.symbol = daoConfig.tokenSymbol;
         widget.org.registry = daoConfig.registry;
-        widget.org.proposalThreshold =
-            daoConfig.proposalThreshold!.toStringAsFixed(0);
+        widget.org.proposalThreshold = !widget.org.debatesOnly!
+            ? daoConfig.proposalThreshold!.toStringAsFixed(0)
+            : "1";
         widget.org.nonTransferrable = true;
         widget.org.creationDate = DateTime.now();
         widget.org.decimals = daoConfig.numberOfDecimals;
         widget.org.totalSupply = daoConfig.totalSupply.toString();
-
+        if (widget.org.debatesOnly ?? false) {
+          widget.org.registry = {"isDebatesOnly": "True"};
+        }
         for (Member member in daoConfig.members) {
           member.personalBalance =
               member.personalBalance.toString() + "0" * widget.org.decimals!;
@@ -1819,26 +1823,53 @@ class Screen7Review extends StatelessWidget {
               Text('${daoConfig.daoName}',
                   style: Theme.of(context).textTheme.headline5),
               const SizedBox(height: 10),
-              const Text('On-Chain Organization'),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                constraints: const BoxConstraints(maxWidth: 430),
+                decoration: BoxDecoration(
+                  color: Color.fromARGB(255, 56, 56, 56),
+                  border: Border.all(
+                    color: Color.fromARGB(255, 136, 136, 136),
+                    width: 0.6,
+                  ),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  '${daoConfig.daoType.toString()} instance',
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 202, 186, 186),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               Container(
                   constraints: const BoxConstraints(maxWidth: 430),
                   child: Text('${daoConfig.daoDescription}')),
               const SizedBox(height: 10),
-              Text('Ticker Symbol: ${daoConfig.tokenSymbol}'),
-              const SizedBox(height: 30),
-              Text('Quorum Threshold: ${daoConfig.quorumThreshold}%'),
-              const SizedBox(height: 30),
-              Text(
-                  'Voting Duration: ${formatDuration(daoConfig.votingDuration)}'),
-              const SizedBox(height: 10),
-              Text('Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
-              const SizedBox(height: 10),
-              Text(
-                  'Execution Delay: ${formatDuration(daoConfig.executionDelay)}'),
-              const SizedBox(height: 30),
-              Text('${daoConfig.members.length} Members',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              daoConfig.daoType == 'Debates'
+                  ? const SizedBox()
+                  : Column(
+                      children: [
+                        Text('Ticker Symbol: ${daoConfig.tokenSymbol}'),
+                        const SizedBox(height: 30),
+                        Text('Quorum Threshold: ${daoConfig.quorumThreshold}%'),
+                        const SizedBox(height: 30),
+                        Text(
+                            'Voting Duration: ${formatDuration(daoConfig.votingDuration)}'),
+                        const SizedBox(height: 10),
+                        Text(
+                            'Voting Delay: ${formatDuration(daoConfig.votingDelay)}'),
+                        const SizedBox(height: 10),
+                        Text(
+                            'Execution Delay: ${formatDuration(daoConfig.executionDelay)}'),
+                        const SizedBox(height: 30),
+                        Text('${daoConfig.members.length} Members',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
               const SizedBox(height: 10),
               DataTable(
                 columns: const [
@@ -1896,21 +1927,25 @@ class Screen7Review extends StatelessWidget {
                 })(),
               ),
               const SizedBox(height: 30),
-              const Text('Registry Entries:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              DataTable(
-                columns: const [
-                  DataColumn(label: Text('Key')),
-                  DataColumn(label: Text('Value')),
-                ],
-                rows: daoConfig.registry.entries.map((entry) {
-                  return DataRow(cells: [
-                    DataCell(Text(entry.key)),
-                    DataCell(Text(entry.value)),
-                  ]);
-                }).toList(),
-              ),
+              daoConfig.daoType == 'Debates'
+                  ? const SizedBox()
+                  : Column(children: [
+                      const Text('Registry Entries:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      DataTable(
+                        columns: const [
+                          DataColumn(label: Text('Key')),
+                          DataColumn(label: Text('Value')),
+                        ],
+                        rows: daoConfig.registry.entries.map((entry) {
+                          return DataRow(cells: [
+                            DataCell(Text(entry.key)),
+                            DataCell(Text(entry.value)),
+                          ]);
+                        }).toList(),
+                      ),
+                    ]),
               const SizedBox(height: 30),
               SizedBox(
                 width: 700,

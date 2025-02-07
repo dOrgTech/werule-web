@@ -398,13 +398,16 @@ createDAO(Org org) async {
     sourceContract = sourceContract.connect(Human().web3user!.getSigner());
     print("signed oki");
 
+    if (org.debatesOnly ?? false) {
+      org.registry = {"debatesOnly": "True"};
+    }
     final parameters = [
       org.name, // string
       org.symbol, // string
       org.description,
       org.decimals.toString(),
       org.executionDelay.toString(),
-      initialMembers, // array of strings (addresses)
+      initialMembers,
       amounts,
       org.registry.keys.toList(),
       org.registry.values.toList(),
@@ -414,6 +417,7 @@ createDAO(Org org) async {
       print('Parameter: $param, Type: ${param.runtimeType}');
     }
     final jsDaoParams = jsify(parameters);
+    print("is this also ok?");
     final transaction = await promiseToFuture(
         callMethod(sourceContract, "deployDAOwithToken", [jsDaoParams]));
     print("facuram tranzactia");

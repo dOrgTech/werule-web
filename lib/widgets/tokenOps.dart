@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:Homebase/entities/definitions.dart';
+import 'package:Homebase/widgets/initiative.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
@@ -12,11 +13,15 @@ import '../entities/proposal.dart';
 class GovernanceTokenOperationsWidget extends StatefulWidget {
   Org org;
   State proposalsState;
+  InitiativeState initiativeState;
   Proposal p;
-  bool isSetinfo = true;
+  bool isSetinfo = false;
   int stage = 0;
   GovernanceTokenOperationsWidget(
-      {required this.org, required this.p, required this.proposalsState});
+      {required this.initiativeState,
+      required this.org,
+      required this.p,
+      required this.proposalsState});
 
   @override
   _GovernanceTokenOperationsWidgetState createState() =>
@@ -36,8 +41,7 @@ class _GovernanceTokenOperationsWidgetState
     setState(() {
       _selectedOperation = operation;
       _isFormValid = false;
-      _addressController.clear();
-      _amountController.clear();
+      // _addressController.clear();
     });
   }
 
@@ -52,11 +56,12 @@ class _GovernanceTokenOperationsWidgetState
   }
 
   void _validateForm() {
-    setState(() {
-      _isFormValid = _isValidAddress(_addressController.text) &&
-          _amountController.text.isNotEmpty &&
-          double.tryParse(_amountController.text) != null;
-    });
+    // setState(() {
+    //   _isFormValid = _isValidAddress(_addressController.text) &&
+    //       _amountController.text.isNotEmpty &&
+    //       double.tryParse(_amountController.text) != null;
+    // });
+    runLogic();
   }
 
   Widget _buildOperationSelection() {
@@ -161,6 +166,45 @@ class _GovernanceTokenOperationsWidgetState
     }
   }
 
+  runLogic() async {
+    String address = _addressController.text ?? "";
+    EthereumAddress adresa = EthereumAddress.fromHex(address);
+    widget.p.values = ["0"];
+    widget.initiativeState.widget.p.values = ["0"];
+    widget.p.targets = [widget.p.org.govTokenAddress!];
+    widget.initiativeState.widget.p.targets = [widget.p.org.govTokenAddress!];
+    double amount = double.parse(_amountController.text);
+    BigInt number = BigInt.from(amount * pow(10, widget.p.org.decimals!));
+    List params = [adresa, number];
+    String calldata0;
+    if (_selectedOperation == "Mint") {
+      print("we selected mint");
+      widget.p.type = "Mint " + widget.p.org.symbol!;
+      widget.initiativeState.widget.p.type = "Mint " + widget.p.org.symbol!;
+      calldata0 = getCalldata(mintGovTokensDef, params);
+    } else {
+      print("we selected burn");
+      widget.p.type = "Burn " + widget.p.org.symbol!;
+      widget.initiativeState.widget.p.type = "Burn " + widget.p.org.symbol!;
+      calldata0 = getCalldata(burnGovTokensDef, params);
+    }
+    widget.p.callDatas = [calldata0];
+    widget.initiativeState.widget.p.callDatas = [calldata0];
+  }
+
+  @override
+  void initState() {
+    widget.initiativeState.widget.p.type = "mint";
+    widget.p.values = ["0"];
+    widget.initiativeState.widget.p.values = ["0"];
+    widget.p.targets = [widget.org.govTokenAddress!];
+    widget.initiativeState.widget.p.targets = [widget.org.govTokenAddress!];
+    _amountController.text = "0";
+    _addressController.addListener(_validateForm);
+    _amountController.addListener(_validateForm);
+    super.initState();
+  }
+
   void _resetToInitialView() {
     setState(() {
       _selectedOperation = null;
@@ -177,8 +221,6 @@ class _GovernanceTokenOperationsWidgetState
         : widget.isSetinfo
             ? NewProposal(p: widget.p, next: doneSettingInfo)
             : Container(
-                decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey, width: 0.3)),
                 width: 600,
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -191,114 +233,114 @@ class _GovernanceTokenOperationsWidgetState
                         ),
                       ),
                     ),
-                    Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      margin: const EdgeInsets.only(bottom: 50),
-                      child: _selectedOperation != null
-                          ? Center(
-                              child: SubmitButton(
-                                  submit: _isFormValid
-                                      ? () async {
-                                          String address =
-                                              _addressController.text;
-                                          EthereumAddress adresa =
-                                              EthereumAddress.fromHex(address);
-                                          widget.p.values = ["0"];
-                                          widget.p.targets = [
-                                            widget.p.org.govTokenAddress!
-                                          ];
-                                          double amount = double.parse(
-                                              _amountController.text);
-                                          BigInt number = BigInt.from(amount *
-                                              pow(10, widget.p.org.decimals!));
-                                          List params = [adresa, number];
-                                          String calldata0;
-                                          if (_selectedOperation == "Mint") {
-                                            print("we selected mint");
-                                            widget.p.type =
-                                                "Mint " + widget.p.org.symbol!;
-                                            calldata0 = getCalldata(
-                                                mintGovTokensDef, params);
-                                          } else {
-                                            print("we selected burn");
-                                            widget.p.type =
-                                                "Burn " + widget.p.org.symbol!;
-                                            calldata0 = getCalldata(
-                                                burnGovTokensDef, params);
-                                          }
-                                          widget.p.callDatas = [calldata0];
-                                          widget.p.statusHistory.addAll(
-                                              {"pending": DateTime.now()});
-                                          setState(() {
-                                            widget.stage = -1;
-                                          });
-                                          try {
-                                            String cevine =
-                                                await propose(widget.p);
-                                            if (cevine.contains("not ok")) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(const SnackBar(
-                                                      duration:
-                                                          Duration(seconds: 1),
-                                                      content: Center(
-                                                          child: SizedBox(
-                                                              height: 70,
-                                                              child: Center(
-                                                                child: Text(
-                                                                  "Error submitting proposal",
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          24,
-                                                                      color: Colors
-                                                                          .red),
-                                                                ),
-                                                              )))));
-                                              Navigator.of(context).pop();
-                                              return;
-                                            }
-                                            widget.p.status = "pending";
-                                            Navigator.of(context).pop();
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(const SnackBar(
-                                                    duration:
-                                                        Duration(seconds: 1),
-                                                    content: Center(
-                                                        child: SizedBox(
-                                                            height: 70,
-                                                            child: Center(
-                                                              child: Text(
-                                                                "Proposal submitted",
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        24),
-                                                              ),
-                                                            )))));
-                                          } catch (e) {
-                                            Navigator.of(context).pop();
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(const SnackBar(
-                                                    duration:
-                                                        Duration(seconds: 1),
-                                                    content: Center(
-                                                        child: SizedBox(
-                                                            height: 70,
-                                                            child: Center(
-                                                              child: Text(
-                                                                "Error submitting proposal",
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        24,
-                                                                    color: Colors
-                                                                        .red),
-                                                              ),
-                                                            )))));
-                                          }
-                                        }
-                                      : null,
-                                  isSubmitEnabled: _isFormValid))
-                          : null,
-                    ),
+                    // Container(
+                    //   height: 50,
+                    //   padding: const EdgeInsets.symmetric(horizontal: 16),
+                    //   margin: const EdgeInsets.only(bottom: 50),
+                    //   child: _selectedOperation != null
+                    //       ? Center(
+                    //           child: SubmitButton(
+                    //               submit: _isFormValid
+                    //                   ? () async {
+                    //                       String address =
+                    //                           _addressController.text;
+                    //                       EthereumAddress adresa =
+                    //                           EthereumAddress.fromHex(address);
+                    //                       widget.p.values = ["0"];
+                    //                       widget.p.targets = [
+                    //                         widget.p.org.govTokenAddress!
+                    //                       ];
+                    //                       double amount = double.parse(
+                    //                           _amountController.text);
+                    //                       BigInt number = BigInt.from(amount *
+                    //                           pow(10, widget.p.org.decimals!));
+                    //                       List params = [adresa, number];
+                    //                       String calldata0;
+                    //                       if (_selectedOperation == "Mint") {
+                    //                         print("we selected mint");
+                    //                         widget.p.type =
+                    //                             "Mint " + widget.p.org.symbol!;
+                    //                         calldata0 = getCalldata(
+                    //                             mintGovTokensDef, params);
+                    //                       } else {
+                    //                         print("we selected burn");
+                    //                         widget.p.type =
+                    //                             "Burn " + widget.p.org.symbol!;
+                    //                         calldata0 = getCalldata(
+                    //                             burnGovTokensDef, params);
+                    //                       }
+                    //                       widget.p.callDatas = [calldata0];
+                    //                       widget.p.statusHistory.addAll(
+                    //                           {"pending": DateTime.now()});
+                    //                       setState(() {
+                    //                         widget.stage = -1;
+                    //                       });
+                    //                       try {
+                    //                         String cevine =
+                    //                             await propose(widget.p);
+                    //                         if (cevine.contains("not ok")) {
+                    //                           ScaffoldMessenger.of(context)
+                    //                               .showSnackBar(const SnackBar(
+                    //                                   duration:
+                    //                                       Duration(seconds: 1),
+                    //                                   content: Center(
+                    //                                       child: SizedBox(
+                    //                                           height: 70,
+                    //                                           child: Center(
+                    //                                             child: Text(
+                    //                                               "Error submitting proposal",
+                    //                                               style: TextStyle(
+                    //                                                   fontSize:
+                    //                                                       24,
+                    //                                                   color: Colors
+                    //                                                       .red),
+                    //                                             ),
+                    //                                           )))));
+                    //                           Navigator.of(context).pop();
+                    //                           return;
+                    //                         }
+                    //                         widget.p.status = "pending";
+                    //                         Navigator.of(context).pop();
+                    //                         ScaffoldMessenger.of(context)
+                    //                             .showSnackBar(const SnackBar(
+                    //                                 duration:
+                    //                                     Duration(seconds: 1),
+                    //                                 content: Center(
+                    //                                     child: SizedBox(
+                    //                                         height: 70,
+                    //                                         child: Center(
+                    //                                           child: Text(
+                    //                                             "Proposal submitted",
+                    //                                             style: TextStyle(
+                    //                                                 fontSize:
+                    //                                                     24),
+                    //                                           ),
+                    //                                         )))));
+                    //                       } catch (e) {
+                    //                         Navigator.of(context).pop();
+                    //                         ScaffoldMessenger.of(context)
+                    //                             .showSnackBar(const SnackBar(
+                    //                                 duration:
+                    //                                     Duration(seconds: 1),
+                    //                                 content: Center(
+                    //                                     child: SizedBox(
+                    //                                         height: 70,
+                    //                                         child: Center(
+                    //                                           child: Text(
+                    //                                             "Error submitting proposal",
+                    //                                             style: TextStyle(
+                    //                                                 fontSize:
+                    //                                                     24,
+                    //                                                 color: Colors
+                    //                                                     .red),
+                    //                                           ),
+                    //                                         )))));
+                    //                       }
+                    //                     }
+                    //                   : null,
+                    //               isSubmitEnabled: _isFormValid))
+                    //       : null,
+                    // ),
                   ],
                 ),
               );

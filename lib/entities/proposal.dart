@@ -9,8 +9,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../debates/models/debate.dart';
 import '../widgets/executeLambda.dart';
+import '../widgets/initiative.dart';
 import '../widgets/newDebate.dart';
-import '../widgets/newProject.dart';
 import '../widgets/registryPropo.dart';
 import '../widgets/transfer.dart';
 import 'human.dart';
@@ -28,7 +28,6 @@ var proposalTypes = {
 
 var state;
 var newProposalWidgets = {
-  "New Project (arbitrated)": (Org org) => NewProject(org: org),
   "Debate": (
     Org org,
     Proposal p,
@@ -38,10 +37,17 @@ var newProposalWidgets = {
         org: org,
         proposalsState: state,
       ),
-  "Transfer Assets": (Org org, Proposal p, State state) =>
-      TransferWidget(org: org, p: p, proposalsState: state),
-  "Edit Registry": (Org org, Proposal p, State state) =>
-      RegistryProposalWidget(org: org, p: p, proposalsState: state),
+  "Transfer Assets":
+      (Org org, Proposal p, State state, InitiativeState state2) =>
+          TransferWidget(
+              org: org, p: p, proposalsState: state, initiativeState: state2),
+  "Edit Registry": (Org org, Proposal p, State state1, state2) =>
+      RegistryProposalWidget(
+        org: org,
+        p: p,
+        proposalsState: state1,
+        initiativeState: state2,
+      ),
   "Add Lambda": (Org org) => const NotImplemented(),
   "Remove Lambda": (Org org, State state) => const NotImplemented(),
   "Contract Call": (Org org, Proposal p, State state) => ACI(
@@ -49,8 +55,10 @@ var newProposalWidgets = {
         org: org,
         proposalsState: state,
       ),
-  "DAO Configuration": (Org org, Proposal p, State state) =>
-      DaoConfigurationWidget(org: org, p: p, proposalsState: state),
+  "DAO Configuration":
+      (Org org, Proposal p, State state, InitiativeState state2) =>
+          DaoConfigurationWidget(
+              initiativeState: state2, org: org, p: p, proposalsState: state),
   "Change Guardian": (Org org) => const NotImplemented(),
   "Change DAO Delegate": (Org org) => const NotImplemented()
 };
