@@ -77,7 +77,8 @@ class InitiativeState extends State<Initiative> {
 
   void _handleToggle(int index) {
     setState(() {
-      isProposalSelected = index == 0; // Set true if "Proposal" is selected
+      isProposalSelected = true;
+      // isProposalSelected = index == 0; // Set true if "Proposal" is selected
     });
   }
 
@@ -656,8 +657,13 @@ class InitiativeState extends State<Initiative> {
                 ),
                 Spacer(),
                 SubmitButton(
-                    submit: () {
-                      submitTransactions();
+                    submit: () async {
+                      print("sending proposal");
+                      print("proposal type is " + widget.p.type!);
+                      print("targets are " + widget.p.targets.toString());
+                      print("values are " + widget.p.values.toString());
+                      print("calldatas are " + widget.p.callDatas.toString());
+                      await sendProposal();
                     },
                     isSubmitEnabled: true)
               ],
@@ -671,61 +677,24 @@ class InitiativeState extends State<Initiative> {
 
   List<Map<String, dynamic>> transactions = [];
 
-  void submitTransactions() async {
-    print("submitting transactions");
-    widget.assetData.forEach((key, value) {
-      print("adding token" + key);
-      String token_address = key;
-      value.forEach((key, value) {
-        print("adding transaction " + key + " - " + value.toString());
-        transactions.add({
-          'token': token_address,
-          'recipient': key,
-          'amount': value.toString(),
-          'recipientError': [],
-          'amountError': []
-        });
-      });
-    });
-    widget.p.values = [];
-    widget.p.targets = [];
-    widget.p.callDatas = [];
-    widget.p.type = "transfer";
-    for (var tx in transactions) {
-      print("we're here");
-      print(tx);
-      List params = [];
-      print("tx['token'] is " + tx['token'].toString());
-      if (tx['token'].toString().contains("native")) {
-        print("we got so myuch native ${tx['amount']}");
-        double txamount = double.parse(tx['amount'].toString());
-        final BigInt weiAmount = BigInt.from(txamount);
-        print("we createdbg");
-        params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
-        print("getting calldata");
-        widget.p.callDatas.add(getCalldata(transferNativeDef, params));
-        print("got it");
-      } else {
-        print("we got so myuch erc20 ");
-        params = [
-          tx['token'],
-          tx['recipient'],
-          tx['amount'],
-        ];
-        widget.p.callDatas.add(getCalldata(transferErc20Def, params));
-      }
-      widget.p.targets.add(widget.org.registryAddress!);
-      widget.p.values.add("0");
+  sendProposal() async {
+    if (widget.p.type == "transfer" && widget.assetData.isNotEmpty) {
+      await submitTransactions();
     }
+    await submit();
+  }
 
+  submit() async {
+    print("now submitting");
     widget.p.createdAt = DateTime.now();
     widget.p.statusHistory.addAll({"pending": DateTime.now()});
 
     setState(() {
       widget.phase = -1;
     });
+    print("we set the state");
     try {
-      print("before sending the transaction");
+      print("getting ready for it");
       String cevine = await propose(widget.p);
       if (cevine.contains("not ok")) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -776,5 +745,53 @@ class InitiativeState extends State<Initiative> {
                 //  DaoSetupWizard())
                 // Center(child: TransferWidget(org: orgs[0],)))
                 DAO(InitialTabIndex: 1, org: widget.org))));
+  }
+
+  submitTransactions() async {
+    print("submitting transactions");
+    widget.assetData.forEach((key, value) {
+      print("adding token" + key);
+      String token_address = key;
+      value.forEach((key, value) {
+        print("adding transaction " + key + " - " + value.toString());
+        transactions.add({
+          'token': token_address,
+          'recipient': key,
+          'amount': value.toString(),
+          'recipientError': [],
+          'amountError': []
+        });
+      });
+    });
+    widget.p.values = [];
+    widget.p.targets = [];
+    widget.p.callDatas = [];
+    widget.p.type = "transfer";
+    for (var tx in transactions) {
+      print("we're here");
+      print(tx);
+      List params = [];
+      print("tx['token'] is " + tx['token'].toString());
+      if (tx['token'].toString().contains("native")) {
+        print("we got so myuch native ${tx['amount']}");
+        double txamount = double.parse(tx['amount'].toString());
+        final BigInt weiAmount = BigInt.from(txamount);
+        print("we createdbg");
+        params = [EthereumAddress.fromHex(tx['recipient']), weiAmount];
+        print("getting calldata");
+        widget.p.callDatas.add(getCalldata(transferNativeDef, params));
+        print("got it");
+      } else {
+        print("we got so myuch erc20 ");
+        params = [
+          tx['token'],
+          tx['recipient'],
+          tx['amount'],
+        ];
+        widget.p.callDatas.add(getCalldata(transferErc20Def, params));
+      }
+      widget.p.targets.add(widget.org.registryAddress!);
+      widget.p.values.add("0");
+    }
   }
 }

@@ -215,6 +215,8 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
   }
 
   runLogic() {
+    widget.p.targets = [widget.org.address!];
+    widget.initiativeState.widget.p.targets = [widget.org.address!];
     switch (_selectedConfigType) {
       case "Quorum":
         widget.p.type = "quorum";
@@ -244,8 +246,15 @@ class _DaoConfigurationWidgetState extends State<DaoConfigurationWidget> {
           hours: int.parse(_votingPeriodHoursController.text),
           minutes: int.parse(_votingPeriodMinutesController.text),
         );
+        BigInt newPeriodBigInt = BigInt.from(newPeriod.inSeconds);
+        print("the new voting period is $newPeriodBigInt");
+        // Ensure it fits within uint32
+        if (newPeriodBigInt > BigInt.from(0xFFFFFFFF)) {
+          throw Exception("Value exceeds uint32 limit");
+        }
         List params = [BigInt.parse(newPeriod.inSeconds.toString())];
         String callData2 = getCalldata(changeVotingPeriodDef, params);
+        print("the call data is $callData2");
         widget.initiativeState.widget.p.callDatas = [callData2];
         break;
       case "Proposal Threshold":

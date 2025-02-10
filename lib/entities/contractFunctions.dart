@@ -671,18 +671,10 @@ BigInt? extractProposalId(Map<String, dynamic> transactionResponse) {
     print("executing here 1");
     // Check if the first topic matches the ProposalCreated signature.
     if (log['topics'][0] == proposalCreatedSignature) {
-      // Step 3: Decode the `data` field to extract the `proposalId`.
-      print("executing here 2");
       final String data = log['data'];
-      print("executing here 3");
-
-      // Decode the hex string into bytes.
       final Uint8List dataBytes = hexToBytes(data);
       print("executing here 4");
-      // `proposalId` is the first 32 bytes of the `data`.
       final BigInt proposalId = bytesToBigInt(dataBytes.sublist(0, 32));
-
-      // Validate that `proposalId` is a valid uint256.
       if (proposalId.sign >= 0) {
         return proposalId;
       }

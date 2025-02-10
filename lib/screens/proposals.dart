@@ -546,7 +546,10 @@ class ProposalListState extends State<ProposalList> {
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    launch(
+                        "https://docs.google.com/spreadsheets/d/1v7q1c35RVW4rl6qwRBr1Wt-sbHrG7fjCDzcdk9ONArU/edit?usp=sharing");
+                  },
                   child: const Text(
                     "example CSV",
                     style: TextStyle(

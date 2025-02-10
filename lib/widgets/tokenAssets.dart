@@ -8,6 +8,7 @@ import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../entities/token.dart';
 import 'eneftee.dart';
+import 'initiative.dart';
 
 class TokenAssets extends StatefulWidget {
   final Org org;
@@ -192,7 +193,7 @@ class _TokenAssetsState extends State<TokenAssets> {
 
   TableRow asset(Token token, String value) {
     final decimals = token.decimals ?? 0;
-    debugPrint("Displaying token ${token.name} with decimals $decimals");
+
     return TableRow(
       children: [
         Padding(
@@ -253,23 +254,28 @@ class _TokenAssetsState extends State<TokenAssets> {
         Padding(
           padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 20),
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              shadowColor: Colors.white60,
+              elevation: 0.1,
+              backgroundColor: Theme.of(context).cardColor.withOpacity(0.9),
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Proposal p = Proposal(org: widget.org);
               showDialog(
                 context: context,
-                builder: (_) {
+                builder: (BuildContext context) {
                   return AlertDialog(
-                    title: const Padding(
-                      padding: EdgeInsets.only(left: 18.0),
-                      child: Text("Transfer Assets"),
-                    ),
-                    content: newProposalWidgets["Transfer Assets"]!(
-                        widget.org, p, this),
-                  );
+                      title: const Padding(
+                        padding: EdgeInsets.only(left: 18.0),
+                        child: Text("Transfer Assets"),
+                      ),
+                      content: Initiative(org: widget.org));
                 },
               );
             },
-            child: const Text("Transfer"),
+            child: Text("Transfer",
+                style: TextStyle(fontSize: 13, color: Colors.white)),
           ),
         ),
       ],

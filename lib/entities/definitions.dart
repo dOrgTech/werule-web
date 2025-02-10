@@ -63,14 +63,14 @@ const changeQuorumDef = ContractFunction(
 const changeVotingDelayDef = ContractFunction(
   "setVotingDelay",
   [
-    FunctionParameter("newVotingDelay", UintType()),
+    FunctionParameter("newVotingDelay", UintType(length: 48)),
   ],
 );
 
 const changeVotingPeriodDef = ContractFunction(
   "setVotingPeriod",
   [
-    FunctionParameter("newVotingPeriod", UintType()),
+    FunctionParameter("newVotingPeriod", UintType(length: 32)),
   ],
 );
 

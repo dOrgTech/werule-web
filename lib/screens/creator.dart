@@ -164,60 +164,71 @@ class Screen1DaoType extends StatelessWidget {
         ),
       ),
       // Option 2: Off-chain
-      SizedBox(
-        width: 340,
-        height: 310,
-        child: Padding(
-          padding: const EdgeInsets.all(18.0),
-          child: TextButton(
-            onPressed: () {
-              daoConfig.daoType = 'debates';
-              daoConfigState.setState(() {
-                daoConfigState.widget.org.debatesOnly = true;
-              });
-              onNext();
-            },
-            child: Container(
-              margin: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                border:
-                    Border.all(color: const Color.fromARGB(255, 56, 56, 56)),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 33),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+      MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Tooltip(
+          message: "Soon...",
+          textStyle: TextStyle(color: Colors.white, fontSize: 26),
+          decoration: BoxDecoration(
+              color: Colors.grey[800], borderRadius: BorderRadius.circular(4)),
+          child: SizedBox(
+            width: 340,
+            height: 310,
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: TextButton(
+                onPressed: null,
+                // () {
+                //   daoConfig.daoType = 'debates';
+                //   daoConfigState.setState(() {
+                //     daoConfigState.widget.org.debatesOnly = true;
+                //   });
+                //   onNext();
+                // },
+                child: Container(
+                  margin: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: const Color.fromARGB(255, 56, 56, 56)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      SizedBox(
-                          child: Image.asset("assets/img/debate_tree_icon.png",
-                              height: 65)),
-                      const SizedBox(width: 9),
-                      const Text('Tokenized\nDebates',
+                      const SizedBox(height: 33),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                              child: Image.asset(
+                                  "assets/img/debate_tree_icon.png",
+                                  height: 65)),
+                          const SizedBox(width: 9),
+                          const Text('Tokenized\nDebates',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 21)),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      const Padding(
+                        padding: EdgeInsets.only(
+                            left: 13.0, right: 13, top: 20, bottom: 1),
+                        child: Text(
+                          "Parse topics through binary trees of weighted arguments.",
+                          style: TextStyle(height: 1.4),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 21)),
+                        ),
+                      ),
+                      Padding(
+                          padding: const EdgeInsets.only(top: 38),
+                          child: Text(
+                            "Declarative",
+                            style: TextStyle(
+                                color: Theme.of(context).indicatorColor),
+                          ))
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  const Padding(
-                    padding: EdgeInsets.only(
-                        left: 13.0, right: 13, top: 20, bottom: 1),
-                    child: Text(
-                      "Parse topics through binary trees of weighted arguments.",
-                      style: TextStyle(height: 1.4),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Padding(
-                      padding: const EdgeInsets.only(top: 38),
-                      child: Text(
-                        "Declarative",
-                        style:
-                            TextStyle(color: Theme.of(context).indicatorColor),
-                      ))
-                ],
+                ),
               ),
             ),
           ),

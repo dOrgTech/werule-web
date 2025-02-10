@@ -62,6 +62,7 @@ persist() async {
     tokens.add(t);
   }
   orgs = [];
+
   for (var doc in daosSnapshot.docs) {
     print("we are doing this ");
     Org org = Org(

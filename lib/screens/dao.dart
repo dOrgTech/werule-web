@@ -42,7 +42,7 @@ class _DAOState extends State<DAO> {
   Widget build(BuildContext context) {
     widget.org.proposals = [];
     final stream = FirebaseFirestore.instance
-        .collection("idaos${Human().chain.name}")
+        .collection("idaosEtherlink-Testnet")
         .doc(widget.org.address!)
         .snapshots()
         .asyncMap((snapshot) async {
@@ -82,7 +82,7 @@ class _DAOState extends State<DAO> {
       } else {
         dao.debatesOnly = false;
       }
-      await dao.getProposals();
+      // await dao.getProposals();
       return dao;
     });
 

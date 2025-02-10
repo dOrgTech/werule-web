@@ -65,10 +65,10 @@ I mean I think they should because of reasons and stuff.
   Token native = Token(
       type: "native", name: Human().chain.name, symbol: "XTZ", decimals: 18);
   populateTreasury() async {
+    treasury = {};
     nativeBalance = await getNativeBalance(registryAddress!);
     native.address = "native";
     print("populating treasury");
-    treasury = {};
     treasury.addAll({native: nativeBalance});
     // treasuryMap.forEach((address, value) {
     //   Token? matchingToken = tokens.cast<Token?>().firstWhere(
@@ -100,6 +100,8 @@ I mean I think they should because of reasons and stuff.
   }
 
   void processTokens(List<dynamic> data) {
+    erc20Tokens = [];
+    erc721Tokens = [];
     for (var item in data) {
       var value = item['value'];
       var tokenData = item['token'];
@@ -135,7 +137,7 @@ I mean I think they should because of reasons and stuff.
   getMembers() async {
     print("getting members");
     var membersCollection = FirebaseFirestore.instance
-        .collection("idaos${Human().chain.name}")
+        .collection("idaosEtherlink-Testnet")
         .doc(address)
         .collection("members");
     var membersSnapshot = await membersCollection.get();
