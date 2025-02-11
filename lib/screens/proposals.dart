@@ -80,14 +80,15 @@ class _ProposalsState extends State<Proposals> {
     if (widget.org.debatesOnly ?? false) {
       return;
     }
+
+    widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+    for (Proposal p in widget.org.proposals) {
+      widget.proposalCards.add(ProposalCard(org: widget.org, proposal: p));
+    }
     if (widget.proposalCards.isEmpty) {
       widget.proposalCards.add(const SizedBox(height: 200));
       widget.proposalCards
           .add(SizedBox(height: 400, child: Center(child: noProposals())));
-    }
-    widget.org.proposals.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
-    for (Proposal p in widget.org.proposals) {
-      widget.proposalCards.add(ProposalCard(org: widget.org, proposal: p));
     }
   }
 

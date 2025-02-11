@@ -190,7 +190,7 @@ class _MembersListState extends State<MembersList> {
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: tableRows,
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 70),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

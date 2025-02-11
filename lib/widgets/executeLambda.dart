@@ -7,16 +7,19 @@ import '../entities/contractFunctions.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../screens/dao.dart';
+import 'initiative.dart';
 
 class ACI extends StatefulWidget {
   Proposal p;
   Org? org;
   int stage = 0;
   State proposalsState;
-  bool isSetInfo = true;
+  InitiativeState initiativeState;
+  bool isSetInfo = false;
   ACI({
     Key? key,
     required this.proposalsState,
+    required this.initiativeState,
     required this.p,
     required this.org,
   }) : super(key: key) {
@@ -64,8 +67,13 @@ class _ACIState extends State<ACI> {
 
   @override
   void initState() {
+    widget.p.type = "contract call";
+    widget.initiativeState.widget.p.type = "contract call";
     super.initState();
     _focusNode.addListener(_handleFocusChange);
+    _callDataController.addListener(() {
+      runLogic();
+    });
   }
 
   void _handleFocusChange() {
@@ -78,6 +86,19 @@ class _ACIState extends State<ACI> {
         _controller.clear();
       });
     }
+  }
+
+  runLogic() {
+    widget.p.callDatas = [];
+    widget.p.callData = _controller.text;
+    String calldata0 = _callDataController.text;
+    widget.p.callDatas.add(calldata0);
+    widget.p.targets = [_targetController.text];
+    widget.p.values = [_amountController.text];
+    widget.initiativeState.widget.p.callDatas = widget.p.callDatas;
+    widget.initiativeState.widget.p.callData = widget.p.callData;
+    widget.initiativeState.widget.p.targets = widget.p.targets;
+    widget.initiativeState.widget.p.values = widget.p.values;
   }
 
   @override
@@ -144,82 +165,82 @@ class _ACIState extends State<ACI> {
                               : null,
                         ),
                       ),
-                      SubmitButton(
-                          submit: () async {
-                            widget.p.callDatas = [];
-                            widget.p.callData = _controller.text;
-                            String calldata0 = _callDataController.text;
-                            widget.p.callDatas.add(calldata0);
-                            widget.p.targets = [_targetController.text];
-                            widget.p.values = [_amountController.text];
-                            widget.p.createdAt = DateTime.now();
-                            widget.p.statusHistory
-                                .addAll({"pending": DateTime.now()});
-                            setState(() {
-                              widget.stage = -1;
-                            });
-                            try {
-                              String cevine = "";
-                              await propose(widget.p);
-                              if (cevine.contains("not ok")) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                        duration: Duration(seconds: 1),
-                                        content: Center(
-                                            child: SizedBox(
-                                                height: 70,
-                                                child: Center(
-                                                  child: Text(
-                                                    "Error submitting proposal",
-                                                    style: TextStyle(
-                                                        fontSize: 24,
-                                                        color: Colors.red),
-                                                  ),
-                                                )))));
-                                Navigator.of(context).pop();
-                                return;
-                              }
-                              // widget.p.status = "pending";
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                      duration: Duration(seconds: 1),
-                                      content: Center(
-                                          child: SizedBox(
-                                              height: 70,
-                                              child: Center(
-                                                child: Text(
-                                                  "Proposal submitted",
-                                                  style:
-                                                      TextStyle(fontSize: 24),
-                                                ),
-                                              )))));
-                            } catch (e) {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                      duration: Duration(seconds: 1),
-                                      content: Center(
-                                          child: SizedBox(
-                                              height: 70,
-                                              child: Center(
-                                                child: Text(
-                                                  "Error submitting proposal",
-                                                  style: TextStyle(
-                                                      fontSize: 24,
-                                                      color: Colors.red),
-                                                ),
-                                              )))));
-                            }
+                      // SubmitButton(
+                      //     submit: () async {
+                      //       widget.p.callDatas = [];
+                      //       widget.p.callData = _controller.text;
+                      //       String calldata0 = _callDataController.text;
+                      //       widget.p.callDatas.add(calldata0);
+                      //       widget.p.targets = [_targetController.text];
+                      //       widget.p.values = [_amountController.text];
+                      //       widget.p.createdAt = DateTime.now();
+                      //       widget.p.statusHistory
+                      //           .addAll({"pending": DateTime.now()});
+                      //       setState(() {
+                      //         widget.stage = -1;
+                      //       });
+                      //       try {
+                      //         String cevine = "";
+                      //         await propose(widget.p);
+                      //         if (cevine.contains("not ok")) {
+                      //           ScaffoldMessenger.of(context)
+                      //               .showSnackBar(const SnackBar(
+                      //                   duration: Duration(seconds: 1),
+                      //                   content: Center(
+                      //                       child: SizedBox(
+                      //                           height: 70,
+                      //                           child: Center(
+                      //                             child: Text(
+                      //                               "Error submitting proposal",
+                      //                               style: TextStyle(
+                      //                                   fontSize: 24,
+                      //                                   color: Colors.red),
+                      //                             ),
+                      //                           )))));
+                      //           Navigator.of(context).pop();
+                      //           return;
+                      //         }
+                      //         // widget.p.status = "pending";
+                      //         ScaffoldMessenger.of(context)
+                      //             .showSnackBar(const SnackBar(
+                      //                 duration: Duration(seconds: 1),
+                      //                 content: Center(
+                      //                     child: SizedBox(
+                      //                         height: 70,
+                      //                         child: Center(
+                      //                           child: Text(
+                      //                             "Proposal submitted",
+                      //                             style:
+                      //                                 TextStyle(fontSize: 24),
+                      //                           ),
+                      //                         )))));
+                      //       } catch (e) {
+                      //         ScaffoldMessenger.of(context)
+                      //             .showSnackBar(const SnackBar(
+                      //                 duration: Duration(seconds: 1),
+                      //                 content: Center(
+                      //                     child: SizedBox(
+                      //                         height: 70,
+                      //                         child: Center(
+                      //                           child: Text(
+                      //                             "Error submitting proposal",
+                      //                             style: TextStyle(
+                      //                                 fontSize: 24,
+                      //                                 color: Colors.red),
+                      //                           ),
+                      //                         )))));
+                      //       }
 
-                            // Navigator.of(context).push(MaterialPageRoute(
-                            //     builder: (context) => Scaffold(
-                            //         body:
-                            //             //  DaoSetupWizard())
-                            //             // Center(child: TransferWidget(org: orgs[0],)))
-                            //             DAO(
-                            //                 InitialTabIndex: 1,
-                            //                 org: widget.org))));
-                          },
-                          isSubmitEnabled: true)
+                      //       // Navigator.of(context).push(MaterialPageRoute(
+                      //       //     builder: (context) => Scaffold(
+                      //       //         body:
+                      //       //             //  DaoSetupWizard())
+                      //       //             // Center(child: TransferWidget(org: orgs[0],)))
+                      //       //             DAO(
+                      //       //                 InitialTabIndex: 1,
+                      //       //                 org: widget.org))));
+                      //     },
+                      //     isSubmitEnabled: true)
                     ],
                   ),
                 ),

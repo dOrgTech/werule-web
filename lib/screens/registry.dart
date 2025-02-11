@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../entities/org.dart';
+import '../widgets/initiative.dart';
 import '../widgets/regitemCard.dart';
+import '../entities/proposal.dart';
 
 class Registry extends StatefulWidget {
   Org org;
@@ -59,7 +61,20 @@ class _RegistryState extends State<Registry> {
                     style: ButtonStyle(
                         backgroundColor: MaterialStatePropertyAll(
                             Theme.of(context).indicatorColor)),
-                    onPressed: () {},
+                    onPressed: () {
+                      Proposal p = Proposal(org: widget.org);
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                              title: const Padding(
+                                padding: EdgeInsets.only(left: 18.0),
+                                child: Text("Edit Registry"),
+                              ),
+                              content: Initiative(org: widget.org));
+                        },
+                      );
+                    },
                   ),
                 ),
               ],
@@ -85,7 +100,7 @@ class _RegistryState extends State<Registry> {
                       child: Text("Value"),
                     )),
               ),
-              SizedBox(width: 150, child: Center(child: Text("Last Updated"))),
+              SizedBox(width: 150, child: Center(child: Text(" "))),
               SizedBox(width: 150, child: Center(child: Text(""))),
             ],
           ),

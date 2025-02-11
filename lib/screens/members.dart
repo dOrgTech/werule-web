@@ -20,7 +20,7 @@ class _MembersState extends State<Members> {
       children: [
         SizedBox(height: 20),
         SizedBox(
-            height: 210,
+            height: 80,
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -40,8 +40,8 @@ class _MembersState extends State<Members> {
                       // other properties
                     ),
                   ),
-                  Transform.scale(
-                      scale: 0.82, child: VotingPowerWidget(org: widget.org))
+                  // Transform.scale(
+                  //     scale: 0.82, child: VotingPowerWidget(org: widget.org))
                 ])),
         const SizedBox(height: 30),
         MembersList(org: widget.org),

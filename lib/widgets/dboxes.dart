@@ -68,7 +68,8 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).indicatorColor,
               ),
-              onPressed: _setDelegate,
+              onPressed: null,
+              // _setDelegate,
               child: const Text('Set Delegate'),
             );
 
@@ -118,7 +119,8 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).indicatorColor,
               ),
-              onPressed: _setDelegate,
+              onPressed: null,
+              //  _setDelegate,
               child: const Text('Set Delegate'),
             );
     } else {

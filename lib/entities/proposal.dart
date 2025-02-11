@@ -50,11 +50,8 @@ var newProposalWidgets = {
       ),
   "Add Lambda": (Org org) => const NotImplemented(),
   "Remove Lambda": (Org org, State state) => const NotImplemented(),
-  "Contract Call": (Org org, Proposal p, State state) => ACI(
-        p: p,
-        org: org,
-        proposalsState: state,
-      ),
+  "Contract Call": (Org org, Proposal p, State state, InitiativeState state2) =>
+      ACI(p: p, org: org, proposalsState: state, initiativeState: state2),
   "DAO Configuration":
       (Org org, Proposal p, State state, InitiativeState state2) =>
           DaoConfigurationWidget(

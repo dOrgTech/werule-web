@@ -139,10 +139,6 @@ class Human extends ChangeNotifier {
 
   signIn() async {
     print("signing into the thing");
-    // address = "0xa9F8F9C0bf3188cEDdb9684ae28655187552bAE9";
-    // notifyListeners();
-    // refreshPage();
-    // return "ok";
     try {
       var accounts = await promiseToFuture(
         ethereum!.request(
@@ -154,8 +150,9 @@ class Human extends ChangeNotifier {
       print("chainid is " + chainaidi.toString());
       web3user = Web3Provider(ethereum!);
       print("web3user " + web3user.toString());
+
       if (!chains.keys.contains(chainaidi)) {
-        print("switching to nothing");
+        print("chain not found, requesting user to add it");
         wrongChain = true;
         chain = Chain(
             wrapperContract: "",
@@ -165,6 +162,32 @@ class Human extends ChangeNotifier {
             decimals: 0,
             rpcNode: '',
             blockExplorer: "");
+
+        // Request user to add the network
+        var chainInfo = {
+          "chainId": "0x1f47b", // Replace with your chain ID
+          "chainName": "Etherlink-Testnet",
+          "nativeCurrency": {"name": "Tezos", "symbol": "XTZ", "decimals": 18},
+          "rpcUrls": [this.chain.rpcNode], // Replace with your RPC URL
+          "blockExplorerUrls": [
+            "https://your.explorer.url"
+          ] // Replace with your block explorer URL
+        };
+
+        try {
+          await promiseToFuture(
+            ethereum!.request(
+              RequestParams(
+                method: 'wallet_addEthereumChain',
+                params: [chainInfo],
+              ),
+            ),
+          );
+        } catch (e) {
+          print("User rejected network addition: $e");
+          return "nogo";
+        }
+
         notifyListeners();
         return "nogo";
       } else {
@@ -172,21 +195,12 @@ class Human extends ChangeNotifier {
         wrongChain = false;
         chain = chains[chainaidi]!;
         if (!(chain == chains[prevChain])) {
-          // web3user = Web3Provider(ethereum!);
           await persist();
           refreshPage();
         }
       }
-
-      print("after getting the web3user it is of type " +
-          web3user.runtimeType.toString());
-      // address="0xa9f8f9c0bf3188ceddb9684ae28655187552bae9";
-      getUser();
-      notifyListeners(); // Notify listeners that signIn was successful
-      return "ok";
     } catch (e) {
-      print(e);
-      return "nogo";
+      print("Error signing in: $e");
     }
   }
 }

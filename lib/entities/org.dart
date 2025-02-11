@@ -29,9 +29,10 @@ class Org {
         rootArgument: Argument(content: """
 I mean I think they should because of reasons and stuff.
 """, author: "0x3dh3722d87wey7dyasiuy", weight: 100));
-
-    debates.add(debate);
-    debates.add(d);
+    if (name == "dOrg") {
+      debates.add(d);
+      debates.add(debate);
+    }
   }
   DateTime? creationDate;
   Map<String, Member> memberAddresses = {};
@@ -153,7 +154,7 @@ I mean I think they should because of reasons and stuff.
           .where((proposal) => proposalsCreatedHashes.contains(proposal.hash))
           .toList();
       m.proposalsVoted = proposals
-          .where((proposal) => proposalsVotedHashes.contains(proposal.hash))
+          .where((proposal) => proposalsVotedHashes.contains(proposal.id))
           .toList();
 
       m.lastSeen = doc.data()['lastSeen'] != null

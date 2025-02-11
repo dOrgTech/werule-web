@@ -605,36 +605,44 @@ class InitiativeState extends State<Initiative> {
               child: widget.p.type == "batch transfer"
                   // child: true
                   ? makeList()
-                  : widget.p.type == "transfer"
+                  : widget.p.type == "contract call"
                       ? SizedBox(
                           height: 400,
                           width: 600,
-                          child: TokenTransferListWidget(p: widget.p))
-                      : widget.p.type == "registry"
+                          child: ContractCall(p: widget.p))
+                      : widget.p.type == "transfer"
                           ? SizedBox(
                               height: 400,
                               width: 600,
-                              child: RegistryProposalDetails(p: widget.p))
-                          : widget.p.type == "contract call"
-                              ? ContractCall(p: widget.p)
-                              : widget.p.type!.toLowerCase().contains("mint") ||
-                                      widget.p.type!
-                                          .toLowerCase()
-                                          .contains("burn")
-                                  ? GovernanceTokenOperationDetails(
-                                      p: widget.p,
-                                    )
-                                  : widget.p.type!.contains("quorum") ||
+                              child: TokenTransferListWidget(p: widget.p))
+                          : widget.p.type == "registry"
+                              ? SizedBox(
+                                  height: 400,
+                                  width: 600,
+                                  child: RegistryProposalDetails(p: widget.p))
+                              : widget.p.type == "contract call"
+                                  ? ContractCall(p: widget.p)
+                                  : widget.p.type!
+                                              .toLowerCase()
+                                              .contains("mint") ||
                                           widget.p.type!
-                                              .contains("voting delay") ||
-                                          widget.p.type!
-                                              .contains("voting period") ||
-                                          widget.p.type!.contains("threshold")
-                                      ? SizedBox(
-                                          child: DaoConfigurationDetails(
-                                              p: widget.p))
-                                      // DaoConfigurationDetails(p: widget.p)
-                                      : const Text("")),
+                                              .toLowerCase()
+                                              .contains("burn")
+                                      ? GovernanceTokenOperationDetails(
+                                          p: widget.p,
+                                        )
+                                      : widget.p.type!.contains("quorum") ||
+                                              widget.p.type!
+                                                  .contains("voting delay") ||
+                                              widget.p.type!
+                                                  .contains("voting period") ||
+                                              widget.p.type!
+                                                  .contains("threshold")
+                                          ? SizedBox(
+                                              child: DaoConfigurationDetails(
+                                                  p: widget.p))
+                                          // DaoConfigurationDetails(p: widget.p)
+                                          : const Text("")),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 48.0),
             child: Row(

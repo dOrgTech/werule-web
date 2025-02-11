@@ -176,13 +176,19 @@ class _TokenAssetsState extends State<TokenAssets> {
                         ],
                       )
                     : Center(
-                        child: Eneftee(
-                          nft: NFT(
-                            address: "0xdaf328d1720954612898u29d8h2398dh9238ds",
-                            tokenId: 1,
-                          ),
+                        child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 58.0),
+                        child: Text("No NFTs here",
+                            style: TextStyle(fontSize: 20, color: Colors.grey)),
+                      )
+
+                        // Eneftee(
+                        //   nft: NFT(
+                        //     address: "0xdaf328d1720954612898u29d8h2398dh9238ds",
+                        //     tokenId: 1,
+                        //   ),
+                        // ),
                         ),
-                      ),
               ],
             ),
           ),
