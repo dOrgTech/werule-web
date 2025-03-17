@@ -13,6 +13,7 @@ import '../widgets/dboxes.dart';
 import '../widgets/membersList.dart';
 import '../widgets/proposalCard.dart';
 import '../widgets/voteConcentration.dart';
+import 'applefarm.dart';
 
 Color listTitleColor = const Color.fromARGB(255, 211, 211, 211);
 
@@ -254,6 +255,8 @@ class AccountState extends State<Account> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    CollapsibleRewardsDashboard(org: widget.org),
                     const SizedBox(height: 12),
                     Card(
                       child: Padding(

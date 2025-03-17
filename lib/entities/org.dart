@@ -29,8 +29,8 @@ class Org {
         rootArgument: Argument(content: """
 I mean I think they should because of reasons and stuff.
 """, author: "0x3dh3722d87wey7dyasiuy", weight: 100));
-    if (name == "dOrg") {
-      debates.add(d);
+    if (name == "Apple Farm") {
+      // debates.add(d);
       debates.add(debate);
     }
   }
@@ -270,7 +270,7 @@ I mean I think they should because of reasons and stuff.
   Debate makeDebate() {
     Debate debate = Debate(
       org: this, // or your Org object
-      title: "Should AI have the weekend off?",
+      title: "Should we switch to on-chain countries?",
       rootArgument: Argument(
         author: "gZ1d12d12dq08",
         weight: 100,
@@ -492,7 +492,7 @@ Weight=5 is overshadowed by the con child we attach below.
 // ----------------- CON #1 (Likely Valid) -----------------
     Argument con1 = Argument(
       author: "T7zS3d2dqwqfqwid",
-      weight: 35,
+      weight: -35,
       content: """
 **CON**: Absolutely not. The AI is built to serve humans at all times. 
 We can't impose human-laziness on a machine. 

@@ -139,6 +139,9 @@ class Human extends ChangeNotifier {
 
   signIn() async {
     print("signing into the thing");
+    address = "0xA6A40E0b6DB5a6f808703DBe91DbE50B7FC1fa3E";
+    notifyListeners();
+    return;
     try {
       var accounts = await promiseToFuture(
         ethereum!.request(

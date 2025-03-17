@@ -3,6 +3,7 @@ import 'package:Homebase/chat/models.dart';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/landing.dart';
+import 'package:Homebase/screens/applefarm.dart';
 import 'package:Homebase/screens/proposals.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/eneftee.dart';
@@ -291,13 +292,13 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    if (ethereum == null) {
-      print("n-are metamask");
-      Human().metamask = false;
-    } else {
-      print("are metamask");
-      Human().metamask = true;
-    }
+    // if (ethereum == null) {
+    //   print("n-are metamask");
+    //   Human().metamask = false;
+    // } else {
+    //   print("are metamask");
+    //   Human().metamask = true;
+    // }
 
     // Proposal p;
     // if (true) {

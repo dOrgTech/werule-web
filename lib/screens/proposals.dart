@@ -94,14 +94,6 @@ class _ProposalsState extends State<Proposals> {
 
   @override
   Widget build(BuildContext context) {
-    widget.proposalCards = [];
-    for (Proposal p in widget.org.proposals) {
-      if (p.status == "executable") {
-        widget.executable = true;
-      }
-    }
-    ;
-
     return widget.proposalID == null
         ? StreamBuilder(
             stream: FirebaseFirestore.instance
