@@ -401,6 +401,7 @@ createDAO(Org org) async {
     if (org.debatesOnly ?? false) {
       org.registry = {"debatesOnly": "True"};
     }
+    String transferrable = (!org.nonTransferrable).toString();
     final parameters = [
       org.name, // string
       org.symbol, // string
@@ -411,6 +412,7 @@ createDAO(Org org) async {
       amounts,
       org.registry.keys.toList(),
       org.registry.values.toList(),
+      transferrable,
     ];
     print("made params");
     for (var param in parameters) {

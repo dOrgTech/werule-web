@@ -492,7 +492,7 @@ Weight=5 is overshadowed by the con child we attach below.
 // ----------------- CON #1 (Likely Valid) -----------------
     Argument con1 = Argument(
       author: "T7zS3d2dqwqfqwid",
-      weight: -35,
+      weight: 35,
       content: """
 **CON**: Absolutely not. The AI is built to serve humans at all times. 
 We can't impose human-laziness on a machine. 

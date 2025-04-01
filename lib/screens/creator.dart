@@ -4,9 +4,11 @@ import 'package:Homebase/main.dart';
 import 'package:Homebase/utils/theme.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';
@@ -194,8 +196,7 @@ class Screen1DaoType extends StatelessWidget {
                               SizedBox(height: 38),
                               Icon(Icons.forum, size: 40),
                               SizedBox(height: 14),
-                              Text('Off-chain',
-                                  style: TextStyle(fontSize: 23.5)),
+                              Text('Debates', style: TextStyle(fontSize: 23.5)),
                               SizedBox(height: 14),
                               Padding(
                                 padding: EdgeInsets.only(
@@ -401,9 +402,100 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                 SizedBox(
                   width: 300,
                   child: CheckboxListTile(
-                    title: const Text('Non-transferrable'),
-                    value: true,
-                    onChanged: null,
+                    title: const Text('Non-transferable'),
+                    value: widget.daoConfig.nonTransferrable,
+                    activeColor: Theme.of(context).indicatorColor,
+                    checkColor: Colors.black,
+                    onChanged: (value) {
+                      if (widget.daoConfig.nonTransferrable == true) {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text('Be advised:'),
+                              content: Padding(
+                                padding: const EdgeInsets.all(28.0),
+                                child: SizedBox(
+                                  width: 450,
+                                  height: 270,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                          // introduce vertical spacing
+                                          'Using a transferable governance token is not compatible with the reputation-based logical architecture of the On-Chain Jurisdiction.\n\nThis action is non-reversible.',
+                                          style: TextStyle(height: 1.5)),
+                                      SizedBox(height: 64),
+                                      RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Color.fromARGB(255, 255,
+                                                  255, 255)), // Default style
+                                          children: [
+                                            const TextSpan(
+                                              text:
+                                                  "Learn more about the implications ",
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                            TextSpan(
+                                              text: "here",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Theme.of(context)
+                                                    .indicatorColor,
+                                                decoration: TextDecoration
+                                                    .underline, // Optional: underline for the link
+                                              ),
+                                              recognizer: TapGestureRecognizer()
+                                                ..onTap = () {
+                                                  // Open the link
+                                                  launchUrl(Uri.parse(
+                                                    "https://docs.openzeppelin.com/contracts/5.x/api/governance",
+                                                  ));
+                                                },
+                                            ),
+                                          ],
+                                        ),
+                                        softWrap:
+                                            true, // Ensures text wraps to the next line
+                                        overflow: TextOverflow
+                                            .visible, // Prevent clipping
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              actionsAlignment: MainAxisAlignment.center,
+                              actionsPadding: EdgeInsets.all(40),
+                              actions: [
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Text("< Back")),
+                                SizedBox(width: 180),
+                                ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        widget.daoConfig.nonTransferrable =
+                                            value!;
+                                      });
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('I understand')),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+                        setState(() {
+                          widget.daoConfig.nonTransferrable = value!;
+                        });
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(height: 56),
@@ -1187,7 +1279,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
       widget.org.registry = daoConfig.registry;
       widget.org.proposalThreshold =
           daoConfig.proposalThreshold!.toStringAsFixed(0);
-      widget.org.nonTransferrable = true;
+      widget.org.nonTransferrable = daoConfig.nonTransferrable;
       widget.org.creationDate = DateTime.now();
       widget.org.decimals = daoConfig.numberOfDecimals;
       widget.org.totalSupply = daoConfig.totalSupply.toString();
