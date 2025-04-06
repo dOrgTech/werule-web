@@ -42,7 +42,7 @@ class _DAOState extends State<DAO> {
   Widget build(BuildContext context) {
     widget.org.proposals = [];
     final stream = FirebaseFirestore.instance
-        .collection("idaosEtherlink-Testnet")
+        .collection("idaos" + Human().chain.name)
         .doc(widget.org.address!)
         .snapshots()
         .asyncMap((snapshot) async {
@@ -77,11 +77,7 @@ class _DAOState extends State<DAO> {
       // Perform the async task before yielding
 
       dao.getMembers();
-      if (dao.name.contains("Org")) {
-        dao.debatesOnly = true;
-      } else {
-        dao.debatesOnly = false;
-      }
+      dao.debatesOnly = false;
       // await dao.getProposals();
       return dao;
     });
@@ -95,13 +91,38 @@ class _DAOState extends State<DAO> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return Text("Error: ${snapshot.error}");
+              return Center(child: Text("Error: ${snapshot.error}"));
             }
             if (!snapshot.hasData) {
-              return Center(child: const Text("No internet connection..."));
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.warning, size: 48),
+                    SizedBox(height: 16),
+                    Text("No data received from the stream"),
+                  ],
+                ),
+              );
+            }
+            if (snapshot.data == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.cloud_off, size: 48),
+                    SizedBox(height: 16),
+                    Text("DAO not found or connection error"),
+                  ],
+                ),
+              );
             }
 
             final dao = snapshot.data!;
+            if (dao.debatesOnly == null) {
+              dao.debatesOnly = dao.name.contains("Org");
+            }
+
             return dao.debatesOnly! ? debatesWide(dao) : fullWide(dao);
           }),
     );
