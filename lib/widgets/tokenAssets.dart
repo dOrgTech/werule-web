@@ -243,7 +243,7 @@ class _TokenAssetsState extends State<TokenAssets> {
               const SizedBox(width: 10),
               TextButton(
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: token.address));
+                  Clipboard.setData(ClipboardData(text: token.address!));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Center(

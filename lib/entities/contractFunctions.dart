@@ -372,6 +372,9 @@ getRegistryAddress(position) async {
   return rezultat;
 }
 
+createDAOwithWrappedToken(
+    Org org, Map<String, dynamic> additionalParams) async {}
+
 createDAO(Org org) async {
   List<String> amounts = [];
   List<String> initialMembers = [];

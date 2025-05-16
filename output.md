@@ -317,12 +317,12 @@ class _ArbitrateState extends State<Arbitrate> {
         children: [
           Text(
             "Arbitrate",
-            style: Theme.of(context).textTheme.headline5!,
+            style: Theme.of(context).textTheme.headlineMedium!,
           ),
           SizedBox(height: 20),
           Text(
             "Amount in Escrow: ${widget.project.amountInEscrow!}",
-            style: Theme.of(context).textTheme.subtitle1!,
+            style: Theme.of(context).textTheme.bodySmall!,
           ),
           SizedBox(height: 20),
           Column(
@@ -383,12 +383,12 @@ class _ArbitrateState extends State<Arbitrate> {
                 children: [
                   Text(
                     "Award to Backers",
-                    style: Theme.of(context).textTheme.subtitle1!,
+                    style: Theme.of(context).textTheme.bodySmall!,
                   ),
                   SizedBox(height: 10),
                   Text(
                     "${awardToBackers.toStringAsFixed(2)}",
-                    style: Theme.of(context).textTheme.subtitle1!.copyWith(color: isNegative ? Colors.red : null),
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(color: isNegative ? Colors.red : null),
                   ),
                 ],
               ),
@@ -396,12 +396,12 @@ class _ArbitrateState extends State<Arbitrate> {
                 children: [
                   Text(
                     "Award to Contractor",
-                    style: Theme.of(context).textTheme.subtitle1!,
+                    style: Theme.of(context).textTheme.bodySmall!,
                   ),
                   SizedBox(height: 10),
                   Text(
                     "${awardToContractor.toStringAsFixed(2)}",
-                    style: Theme.of(context).textTheme.subtitle1!.copyWith(color: isNegative ? Colors.red : null),
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(color: isNegative ? Colors.red : null),
                   ),
                 ],
               ),

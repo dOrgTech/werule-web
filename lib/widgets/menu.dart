@@ -16,7 +16,7 @@ bool isConnected = false;
 String us3rAddress = generateWalletAddress();
 int status = 0;
 
-class TopMenu extends StatefulWidget with PreferredSizeWidget {
+class TopMenu extends StatefulWidget implements PreferredSizeWidget {
   const TopMenu({super.key});
 
   @override

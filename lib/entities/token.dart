@@ -4,6 +4,7 @@ class Token {
     required this.symbol,
     required this.decimals,
     required this.type,
+      this.address
   });
 
   String? address;

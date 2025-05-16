@@ -53,13 +53,18 @@ MaterialColor createMaterialColor(Color color) {
         canvasColor: Color(0xfff0f0f0), colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xff4d4d4d))).copyWith(secondary: Color(0xffe0deda)).copyWith(background: createMaterialColor(Color(0xeecacaca))));
 
         
-    ThemeData dark = ThemeData(
-      indicatorColor: Color.fromARGB(255, 109, 134, 210),
-      buttonColor: Color(0xff4d4d4d),
-      splashColor: Color(0xff000000),
-      dividerColor: createMaterialColor(Color(0xffcfc099)),
-      brightness: Brightness.dark,
-      hintColor: Colors.white70,
-      primaryColor: createMaterialColor(Color(0xff4d4d4d)),
-      highlightColor: Color(0xff6e6e6e), colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
-    );
+ThemeData dark = ThemeData(
+  splashColor: Color(0xff000000),
+  dividerColor: createMaterialColor(Color(0xffcfc099)),
+  brightness: Brightness.dark,
+  hintColor: Colors.white70,
+  primaryColor: createMaterialColor(Color(0xff4d4d4d)),
+  highlightColor: Color(0xff6e6e6e),
+  colorScheme: ColorScheme.fromSwatch(
+    primarySwatch: createMaterialColor(Color(0xffefefef)),
+    brightness: Brightness.dark,
+  ).copyWith(
+    primary: Color(0xff4d4d4d), // replaces buttonColor
+    secondary: createMaterialColor(Color(0xff383736)),
+  ),
+);

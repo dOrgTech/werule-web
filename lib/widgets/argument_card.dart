@@ -65,7 +65,7 @@ class ArgumentCard extends StatelessWidget {
               Text(
                 'Pro: ${argument.proCount} (${sumProWeights.toStringAsFixed(0)})  '
                 'Con: ${argument.conCount} (${sumConWeights.toStringAsFixed(0)})',
-                style: Theme.of(context).textTheme.caption,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
               // Markdown content with extra padding

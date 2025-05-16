@@ -2,7 +2,7 @@
 
 import 'dart:isolate';
 import 'dart:html' as html;
-import 'package:beamer/beamer.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../entities/token.dart';
 import 'package:riverpod/riverpod.dart';

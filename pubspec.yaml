@@ -1,85 +1,60 @@
 name: Homebase
 description: Professional DAO tooling.
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' 
+publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.19.0 <3.0.0'
-
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_svg: ^2.0.5
-  cupertino_icons: ^1.0.2
-  syncfusion_flutter_charts: ^22.2.9
-  flutter_riverpod:
-  hooks_riverpod:
-  flutter_circle_chart: ^1.0.0
-  beamer: 
-  intl:
-  riverpod:
-  image: ^3.0.2
-  qr_flutter:
+
+  flutter_svg: ^2.0.7
+  cupertino_icons: ^1.0.6
+  syncfusion_flutter_charts: ^24.1.41
+  flutter_riverpod: ^2.5.1
+  hooks_riverpod: ^2.5.1
+  riverpod: ^2.5.1
+  image: ^4.1.3
+  qr_flutter: ^4.1.0
   toggle_switch: ^2.1.0
-  url_launcher:
-  file_picker: ^5.2.2
-  csv: ^5.0.0
+  url_launcher: ^6.2.5
+  file_picker: ^6.1.1
+  csv: ^5.1.1
   graphite: ^0.3.0
-  # metamask: ^0.0.2
-  lottie:
-  shared_preferences: 
-  # walletconnect_dart:
+  lottie: ^3.0.0
+  shared_preferences: ^2.2.2
   flutter_web3: ^2.1.6
-  flutter_gif:
-  cached_network_image:
+  cached_network_image: ^3.3.1
   flutter_web3_provider: ^1.0.6
-  web3dart: ^2.0.0
-  cloud_firestore: ^4.13.6
-  provider:
-  flutter_markdown: ^0.6.10
+  web3dart: ^2.7.0               # requires http ≥1.1.0
+  cloud_firestore: ^4.15.5
+  provider: ^6.1.2
+  flutter_markdown: ^0.6.18
   emojis: ^0.9.9
-  animated_text_kit: ^4.1.1
-  http:
-  flutter_vector_icons: ^1.0.0
-  google_fonts: 
-  firebase_core: 
-  # firebase_firestore:
-  scrollable_positioned_list: ^0.2.2
-  universal_html: ^2.0.8
+  animated_text_kit: ^4.2.2
+  http: ^1.4.0                  # satisfies google_fonts & eip1559/http
+  flutter_vector_icons: ^2.0.0
+  google_fonts: ^6.1.0          # depends on http ≥1.0.0
+  firebase_core: ^2.28.0
+  scrollable_positioned_list: ^0.3.8
+  universal_html: ^2.2.4
   gojs: ^2.0.0
-  dio:
-  webviewx: ^0.2.1
-  ext_video_player: 
-  youtube_player_iframe: 
-  pointycastle:
-  go_router: ^12.1.1
+  dio: ^5.4.1
+  pointycastle: ^3.7.4
+  go_router: ^13.1.0
+  webview_flutter: ^4.1.4       # replaces webviewx
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^3.0.1
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^2.0.0
-
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
   assets:
     - assets/img/
     - assets/vectors/
@@ -92,5 +67,3 @@ flutter:
     - family: CascadiaMono
       fonts:
         - asset: fonts/CascadiaMono.ttf
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/custom-fonts/#from-packages

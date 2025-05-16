@@ -104,46 +104,47 @@ String formatTotalSupply(String totalSupply, int decimals) {
   }
 }
 
-Future<Uint8List> generateAvatarAsync(String hash,
-    {int size = 40, int pixelSize = 5}) async {
+Widget generateAvatar(String hash, {int size = 100, int pixelSize = 10}) {
   final random = Random(hash.hashCode);
-  final image = img.Image(size, size);
 
-  final colorPalette = List.generate(
-      5,
-      (_) => img.getColor(
-          random.nextInt(256), random.nextInt(256), random.nextInt(256)));
+  // 1) Create a blank Dart-image canvas
+  final avatar = img.Image(width: size, height: size);
 
+  // 2) Build a small palette of ARGB ints
+  final palette = List<int>.generate(5, (_) {
+    final r = random.nextInt(256);
+    final g = random.nextInt(256);
+    final b = random.nextInt(256);
+    return (255 << 24) | (r << 16) | (g << 8) | b;
+  });
+
+  // 3) Paint mirrored blocks, pixel-by-pixel
   for (var x = 0; x < size ~/ 2; x += pixelSize) {
     for (var y = 0; y < size; y += pixelSize) {
-      final color = colorPalette[random.nextInt(colorPalette.length)];
-      img.fillRect(image, x, y, x + pixelSize, y + pixelSize, color);
-      img.fillRect(
-          image, size - x - pixelSize, y, size - x, y + pixelSize, color);
+      final colorInt = palette[random.nextInt(palette.length)];
+      // extract channels
+      final r = (colorInt >> 16) & 0xFF;
+      final g = (colorInt >> 8) & 0xFF;
+      final b = colorInt & 0xFF;
+
+      for (var dx = 0; dx < pixelSize; dx++) {
+        for (var dy = 0; dy < pixelSize; dy++) {
+          avatar.getPixel(x + dx, y + dy).setRgb(r, g, b);
+          avatar.getPixel(size - x - pixelSize + dx, y + dy).setRgb(r, g, b);
+        }
+      }
     }
   }
 
-  final pngBytes = img.encodePng(image);
-  return Future.value(pngBytes as FutureOr<Uint8List>?);
+  // 4) Encode to PNG and hand off to Flutter
+  final pngBytes = img.encodePng(avatar);
+  return Image.memory(
+    Uint8List.fromList(pngBytes),
+    width: size.toDouble(),
+    height: size.toDouble(),
+  );
 }
 
-String getTimeAgo(DateTime dateTime) {
-  final Duration diff = DateTime.now().difference(dateTime);
-
-  if (diff.inMinutes < 1) {
-    return 'less than a min ago';
-  } else if (diff.inHours < 1) {
-    return '${diff.inMinutes} minutes ago';
-  } else if (diff.inDays < 1) {
-    final int hours = diff.inHours;
-    final int minutes = diff.inMinutes % 60;
-    return '$hours hours ago';
-  } else {
-    final int days = diff.inDays;
-    final int hours = diff.inHours % 24;
-    return '$days days ago';
-  }
-}
 
 String hashString(String input) {
   final bytes = utf8.encode(input);

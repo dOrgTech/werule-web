@@ -163,20 +163,20 @@ class _DebateHeaderState extends State<DebateHeader> {
         children: [
           Text(
             debate.title,
-            style: Theme.of(context).textTheme.headline6,
+            style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
             softWrap: true,
           ),
           const SizedBox(height: 12),
           Text(
             'Score: ${debate.sentiment.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.subtitle1,
+            style: Theme.of(context).textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
             'Depth: ${_calculateDepth(currentArg)}',
-            style: Theme.of(context).textTheme.subtitle2,
+            style: Theme.of(context).textTheme.titleSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 18),

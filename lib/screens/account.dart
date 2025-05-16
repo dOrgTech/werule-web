@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 // import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/members.dart';
+import 'package:Homebase/utils/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import '../entities/human.dart';

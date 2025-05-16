@@ -2,39 +2,44 @@ import 'dart:async';
 import "package:flutter/material.dart";
 import 'dart:math';
 import 'dart:convert';
-import 'package:image/image.dart' as img;
 import 'dart:ui';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
+import 'package:image/image.dart' as img;
 
-Widget generateAvatar(String hash, {int size = 100, int pixelSize = 10}) {
+Future<Uint8List> generateAvatarAsync(String hash,
+    {int size = 100, int pixelSize = 10}) async {
   final random = Random(hash.hashCode);
-  final image = img.Image(size, size);
+  final avatar = img.Image(width: size, height: size);
 
-  final colorPalette = List.generate(
-      5,
-      (_) => img.getColor(
-          random.nextInt(256), random.nextInt(256), random.nextInt(256)));
+  final palette = List<int>.generate(5, (_) {
+    final r = random.nextInt(256);
+    final g = random.nextInt(256);
+    final b = random.nextInt(256);
+    return (255 << 24) | (r << 16) | (g << 8) | b;
+  });
 
   for (var x = 0; x < size ~/ 2; x += pixelSize) {
     for (var y = 0; y < size; y += pixelSize) {
-      final color = colorPalette[random.nextInt(colorPalette.length)];
-      img.fillRect(image, x, y, x + pixelSize, y + pixelSize, color);
-      img.fillRect(
-          image, size - x - pixelSize, y, size - x, y + pixelSize, color);
+      final colorInt = palette[random.nextInt(palette.length)];
+      final r = (colorInt >> 16) & 0xFF;
+      final g = (colorInt >> 8) & 0xFF;
+      final b = colorInt & 0xFF;
+
+      for (var dx = 0; dx < pixelSize; dx++) {
+        for (var dy = 0; dy < pixelSize; dy++) {
+          avatar.getPixel(x + dx, y + dy).setRgb(r, g, b);
+          avatar.getPixel(size - x - pixelSize + dx, y + dy).setRgb(r, g, b);
+        }
+      }
     }
   }
 
-  final pngBytes = img.encodePng(image);
-  final byteData = pngBytes != null
-      ? ByteData.view(Uint8List.fromList(pngBytes).buffer)
-      : null;
-
-  return byteData != null
-      ? Image.memory(byteData.buffer.asUint8List())
-      : Container(
-          width: size.toDouble(), height: size.toDouble(), color: Colors.grey);
+  final pngBytes = img.encodePng(avatar);
+  return Uint8List.fromList(pngBytes);
 }
+
+
 
 String convertEthToWei(double ethValue) {
   BigInt weiValue = BigInt.from(ethValue * pow(10, 18));

@@ -652,7 +652,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                           TextButton(
                                               onPressed: () {
                                                 Clipboard.setData(ClipboardData(
-                                                    text: widget.p.author));
+                                                    text: widget.p.author!));
                                                 ScaffoldMessenger.of(context)
                                                     .showSnackBar(const SnackBar(
                                                         duration: Duration(

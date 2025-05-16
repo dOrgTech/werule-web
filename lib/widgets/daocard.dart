@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:Homebase/utils/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:go_router/go_router.dart';
@@ -10,20 +11,20 @@ import '../utils/reusable.dart';
 class DAOCard extends StatelessWidget {
   DAOCard({super.key, required this.org});
   Org org;
-
   @override
   Widget build(BuildContext context) {
     var random = Random();
-
-    // Generate a value with a roughly 70% chance of being "value1" and 30% chance of being "value2"
-    var chance = random.nextDouble(); // Generates a value between 0.0 and 1.0
+    var chance = random.nextDouble();
     Widget copilas = org.debatesOnly == false
         ? ShaderMask(
             shaderCallback: (Rect bounds) {
               return LinearGradient(
-                colors: [
-                  Color.fromARGB(255, 205, 176, 96), // Dominant color
-                  Color.fromARGB(255, 206, 206, 206), // Gradient to white
+                colors: 
+                  [
+                  Color.fromARGB(255, 205, 176, 96), 
+                  // Dominant color
+                  Color.fromARGB(255, 206, 206, 206), 
+                  // Gradient to white
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
@@ -57,6 +58,18 @@ class DAOCard extends StatelessWidget {
             color: Color.fromARGB(255, 73, 73, 73).withOpacity(0.6),
           ),
           child: TextButton(
+            style: ButtonStyle(
+              overlayColor: MaterialStateProperty.all<Color>(
+                  Theme.of(context).indicatorColor.withOpacity(0.1)),
+              backgroundColor: MaterialStateProperty.all<Color>(
+                  Theme.of(context).canvasColor.withOpacity(0.1)),
+              elevation: MaterialStateProperty.all(1.0),
+              shape: MaterialStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(7.0),
+                ),
+              ),
+            ),
             onPressed: () {
               context.go("/" + org.address!);
             },

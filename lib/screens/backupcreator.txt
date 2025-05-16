@@ -243,7 +243,7 @@ class Screen1DaoType extends StatelessWidget {
         child: Column(
           children: [
             Text('Will you be needing a treasury?',
-                style: Theme.of(context).textTheme.headline5),
+                style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 26),
             const SizedBox(
                 width: 510,
@@ -340,7 +340,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
             child: Column(
               children: [
                 Text("Organization identity",
-                    style: Theme.of(context).textTheme.headline5),
+                    style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 120),
                 SizedBox(
                   width: 500,
@@ -537,7 +537,7 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                   MediaQuery.of(context).size.aspectRatio > 0.9 ? 35 : 3),
               child: Column(
                 children: [
-                  Text('Quorum', style: Theme.of(context).textTheme.headline5),
+                  Text('Quorum', style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 26),
                   Text('${_quorumThreshold.toStringAsFixed(0)} %',
                       style: TextStyle(
@@ -582,7 +582,7 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                 child: Column(
                   children: [
                     Text('Proposal Threashold',
-                        style: Theme.of(context).textTheme.headline5),
+                        style: Theme.of(context).textTheme.headlineMedium),
                     const SizedBox(height: 26),
                     SizedBox(
                       width: 200,
@@ -727,7 +727,7 @@ class _Screen4DurationsState extends State<Screen4Durations> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text('Set the durations of proposal stages',
-                style: Theme.of(context).textTheme.headline5),
+                style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 86),
 
             // Voting Delay
@@ -961,7 +961,7 @@ class Screen6Review extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Review & Deploy',
-                  style: Theme.of(context).textTheme.headline5),
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 30),
               Text('${daoConfig.daoType} Organization'),
               const SizedBox(height: 10),
@@ -1075,7 +1075,7 @@ class Screen8DeploymentComplete extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text('Deployment Complete!',
-              style: Theme.of(context).textTheme.headline5),
+              style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 60),
           ElevatedButton(
             onPressed: onGoToDAO,
@@ -1688,7 +1688,7 @@ class _Screen6RegistryState extends State<Screen6Registry> {
         child: Column(
           children: [
             Text('Registry Entries',
-                style: Theme.of(context).textTheme.headline5),
+                style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 26),
             const Text('Add key-value pairs to initialize the DAO\'s registry.',
                 style: TextStyle(
@@ -1834,7 +1834,7 @@ class Screen7Review extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('${daoConfig.daoName}',
-                  style: Theme.of(context).textTheme.headline5),
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
@@ -2031,7 +2031,7 @@ class Screen9DeploymentComplete extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text('Deployment Complete!',
-              style: Theme.of(context).textTheme.headline5),
+              style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 60),
           ElevatedButton(
             onPressed: onGoToDAO,

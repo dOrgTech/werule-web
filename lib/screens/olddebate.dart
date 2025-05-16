@@ -90,7 +90,7 @@
 //         // Title: multiline, no ellipses
 //         Text(
 //           debate.title,
-//           style: Theme.of(context).textTheme.headline6,
+//           style: Theme.of(context).textTheme.headlineSmall,
 //           softWrap: true,
 //           overflow: TextOverflow.visible,
 //           textAlign: TextAlign.center,
@@ -100,7 +100,7 @@
 //         // Score
 //         Text(
 //           'Score: ${debate.sentiment.toStringAsFixed(2)}',
-//           style: Theme.of(context).textTheme.subtitle1,
+//           style: Theme.of(context).textTheme.bodySmall,
 //           textAlign: TextAlign.center,
 //         ),
 //         const SizedBox(height: 6),
@@ -108,7 +108,7 @@
 //         // Depth
 //         Text(
 //           'Depth: ${_calculateDepth(currentArg)}',
-//           style: Theme.of(context).textTheme.subtitle2,
+//           style: Theme.of(context).textTheme.titleSmall,
 //           textAlign: TextAlign.center,
 //         ),
 //         const SizedBox(height: 18),

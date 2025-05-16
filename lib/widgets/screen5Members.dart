@@ -323,7 +323,7 @@ class _Screen5MembersState extends State<Screen5Members> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('Initial members',
-                style: Theme.of(context).textTheme.headline5),
+                style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 26),
             RichText(
               text: TextSpan(

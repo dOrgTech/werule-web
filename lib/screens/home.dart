@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'package:Homebase/entities/human.dart';
 import 'package:Homebase/main.dart';
+import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/ad_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gif/flutter_gif.dart';
+
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../widgets/memearrow.dart';
@@ -80,13 +81,14 @@ class _HomeState extends State<Home> {
                                   width: 32.0,
                                   height: 32.0,
                                   color: const Color.fromARGB(
-                                      255, 116, 116, 116), // Error color
+                                    255, 116, 116, 116), // Error color
                                 );
                               }
                             },
                           ),
                         ),
                       ),
+  
                       Padding(
                         padding: const EdgeInsets.all(18.0),
                         child: Text(

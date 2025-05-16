@@ -5,6 +5,7 @@ import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/landing.dart';
 import 'package:Homebase/screens/applefarm.dart';
 import 'package:Homebase/screens/proposals.dart';
+import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/eneftee.dart';
 import 'package:Homebase/widgets/initiative.dart';
