@@ -339,6 +339,7 @@ class MyApp extends StatelessWidget {
       hintColor: Colors.white70,
       primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
       highlightColor: const Color(0xff6e6e6e),
+      useMaterial3: false,
       // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
       primarySwatch:
           createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
@@ -523,7 +524,11 @@ class _WalletBTNState extends State<WalletBTN> {
                           );
                         } else if (snapshot.hasData) {
                           print("generating");
-                          return Image.memory(snapshot.data!);
+                          return Image.memory(
+                            snapshot.data!,
+                            height: 40,
+                            // fit: BoxFit.contain,
+                          );
                         } else {
                           return Container(
                             width: 40.0,

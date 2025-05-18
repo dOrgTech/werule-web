@@ -2,6 +2,7 @@ import 'dart:js_util';
 import 'package:Homebase/entities/abis.dart';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/entities/token.dart';
+import 'package:Homebase/screens/creator/dao_config.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:flutter_web3_provider/ethers.dart';
@@ -372,8 +373,151 @@ getRegistryAddress(position) async {
   return rezultat;
 }
 
-createDAOwithWrappedToken(
-    Org org, Map<String, dynamic> additionalParams) async {}
+Future<List<String>> createDAOwithWrappedToken(Org org, DaoConfig daoConfig) async {
+  print("Attempting to deploy DAO with Wrapped Token (Dynamic Params)...");
+  
+  if (daoConfig.underlyingTokenAddress == null || daoConfig.underlyingTokenAddress!.isEmpty) {
+    print("Error: Underlying token address is missing in DaoConfig.");
+    return ["ERROR: Underlying token address not provided"];
+  }
+  if (daoConfig.wrappedTokenSymbol == null || daoConfig.wrappedTokenSymbol!.isEmpty) {
+    print("Error: Wrapped token symbol is missing in DaoConfig.");
+    return ["ERROR: Wrapped token symbol not provided"];
+  }
+
+  final String contractAddressToUse = Human().chain.wrapperContract_w ?? "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2"; 
+  print("Using wrapper contract address for wrapped token DAO: $contractAddressToUse");
+  if (Human().chain.wrapperContract_w == null) {
+      print("Warning: Human().chain.wrapperContract_w was null, using fallback address.");
+  }
+
+  if (Human().web3user == null) {
+    print("Error: Web3 provider (Human().web3user) is null.");
+    return ["ERROR: Web3 provider not initialized"];
+  }
+
+  var sourceContract = Contract(
+      contractAddressToUse, 
+      wrapperAbiStringGlobal,
+      Human().web3user
+  );
+  print("Contract object created with address: $contractAddressToUse");
+
+  try {
+    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+    print("Contract connected with signer.");
+
+    String executionDelayString = (org.executionDelay ?? 0).toString();
+    String votingDelayString = (org.votingDelay ?? 0).toString();
+    String votingPeriodString = (org.votingDuration ?? 0).toString();
+    String proposalThresholdString = org.proposalThreshold ?? "0";
+    String quorumFractionString = (org.quorum ?? 0).toString();
+
+    final List<dynamic> dynamicContractParams = [
+      org.name,
+      daoConfig.wrappedTokenSymbol!,
+      org.description ?? "",
+      executionDelayString,
+      daoConfig.underlyingTokenAddress!,
+      votingDelayString,
+      votingPeriodString,
+      proposalThresholdString,
+      quorumFractionString,
+      org.registry.keys.toList(),
+      org.registry.values.toList()
+    ];
+
+    print("Dynamic parameters for deployDAOwithWrappedToken: $dynamicContractParams");
+    final jsDaoParams = jsify(dynamicContractParams);
+    print("Parameters jsified.");
+
+    final transaction = await promiseToFuture(
+        callMethod(sourceContract, "deployDAOwithWrappedToken", [jsDaoParams]));
+    print("Transaction submitted.");
+
+    final receipt = json.decode(stringify(transaction));
+    final String hash = receipt["hash"];
+    print("Transaction hash: $hash");
+
+    final result = await promiseToFuture(
+        callMethod(Human().web3user!, 'waitForTransaction', [hash, 1]));
+    
+    final decodedResult = json.decode(stringify(result));
+    print("Transaction receipt status: ${decodedResult["status"]}");
+
+    if (decodedResult["status"] == 0) {
+      print("Error: Transaction failed for deployDAOwithWrappedToken.");
+      return ["ERROR: Transaction Reverted"];
+    } else {
+      print("Transaction successful for deployDAOwithWrappedToken.");
+      
+      // --- Handling DAO Count and Indexing ---
+      // This part now closely mirrors your working createDAO logic.
+      // It assumes getNumberOfDAOs() queries the correct factory (wrapperContract_w if DAOs are separate).
+      // If getNumberOfDAOs needs to be aware of the factory, that's a separate modification to getNumberOfDAOs.
+      // var daoCountFromGetter = await getNumberOfDAOs(); // This is your existing function
+      
+      // if (daoCountFromGetter == null) {
+      //     print("Error: getNumberOfDAOs() returned null. Cannot determine DAO index.");
+      //     return ["ERROR: Failed to get DAO count"];
+      // }
+      // // Ensure daoCountFromGetter is treated as BigInt for arithmetic
+      // BigInt currentDaoCount = daoCountFromGetter; // Assuming getNumberOfDAOs returns BigInt?
+
+      // print("Number of DAOs from getNumberOfDAOs(): $currentDaoCount, runtimeType: ${currentDaoCount.runtimeType}");
+
+      // if (currentDaoCount < BigInt.one) {
+      //     print("Error: DAO count is less than one ($currentDaoCount). Cannot determine valid index.");
+      //     return ["ERROR: Invalid DAO count post-deployment"];
+      // }
+
+      // // Calculate index as BigInt, consistent with helper function expectations
+      // BigInt newDaoIndex = currentDaoCount - BigInt.one; 
+      // print("Fetching info for DAO at index: $newDaoIndex using existing helper functions.");
+
+      // // Call existing helper functions with the BigInt index
+      // var daoAddress = await getDAOAddress(newDaoIndex);
+      // var tokenAddress = await getTokenAddress(newDaoIndex); 
+      // var treasuryAddress = await getTreasuryAddress(newDaoIndex);
+      // var registryAddress = await getRegistryAddress(newDaoIndex);
+      
+      // if (daoAddress == null || daoAddress.isEmpty ||
+      //     tokenAddress == null || tokenAddress.isEmpty ||
+      //     treasuryAddress == null || treasuryAddress.isEmpty ||
+      //     registryAddress == null || registryAddress.isEmpty) {
+      //     print("Error: One or more crucial addresses are null/empty after deployment.");
+      //     print("Verify that getDAOAddress, getTokenAddress etc. can retrieve info for DAOs from the factory at $contractAddressToUse, using index $newDaoIndex.");
+      //     return ["ERROR: Failed to retrieve all DAO component addresses post-deployment"];
+      // }
+      
+      // print("Deployed DAO Address: $daoAddress");
+      // print("Deployed Wrapped Token Address: $tokenAddress");
+      // print("Deployed Treasury Address: $treasuryAddress");
+      // print("Deployed Registry Address: $registryAddress");
+
+      // List<String> results = [
+      //   daoAddress.toString(),
+      //   tokenAddress.toString(),
+      //   treasuryAddress.toString(),
+      //   registryAddress.toString()
+      // ];
+      return ["","", "", ""]; // Placeholder for actual addresses
+    }
+  } catch (e) {
+    print("Exception during deployDAOwithWrappedToken: $e");
+    String errorString = e.toString();
+    // Check if the error message itself is the TypeError we are hunting
+    if (errorString.contains("_BigIntImpl") && errorString.contains("is not a subtype of type 'num'")) {
+        print("Specific TypeError encountered. This often happens if a BigInt is passed to a JS function expecting a Number, or vice-versa in a callback/return.");
+    }
+    if (errorString.length > 200) {
+        errorString = errorString.substring(0, 200) + "...";
+    }
+    return ["ERROR: Exception occurred - $errorString"];
+  }
+}
+
+
 
 createDAO(Org org) async {
   List<String> amounts = [];

@@ -3,16 +3,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../debates/models/argument.dart';
 import '../debates/models/debate.dart';
-import '../main.dart';
 import '../services/blockscout.dart';
-import '../widgets/transfer.dart';
 import 'human.dart';
 import 'proposal.dart';
 import 'token.dart';
 import 'contractFunctions.dart';
-import '../screens/creator.dart';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 
 class Org {
   var pollsCollection;

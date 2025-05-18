@@ -55,7 +55,7 @@ class DAOCard extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(7),
-            color: Color.fromARGB(255, 73, 73, 73).withOpacity(0.6),
+            color: Colors.grey.shade600.withOpacity(0.6),
           ),
           child: TextButton(
             style: ButtonStyle(
@@ -63,7 +63,7 @@ class DAOCard extends StatelessWidget {
                   Theme.of(context).indicatorColor.withOpacity(0.1)),
               backgroundColor: MaterialStateProperty.all<Color>(
                   Theme.of(context).canvasColor.withOpacity(0.1)),
-              elevation: MaterialStateProperty.all(1.0),
+              elevation: MaterialStateProperty.all(0.6),
               shape: MaterialStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(7.0),

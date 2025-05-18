@@ -1,5 +1,6 @@
 import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/screens/creator/dao_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -232,6 +233,66 @@ class _ExplorerState extends State<Explorer> {
                       ),
                     ),
                   ),
+                  // Assuming this TextButton is within a context where you can define these temporary objects
+// or have access to them (e.g., within a StatefulWidget's build method or a test function).
+
+TextButton(
+  child: Text("Try Deploy Wrapped DAO (Test)"),
+  onPressed: () async {
+    // 1. Create a temporary DaoConfig object with values similar to the hardcoded ones.
+    DaoConfig tempDaoConfig = DaoConfig();
+    tempDaoConfig.underlyingTokenAddress = "0xa9F8F9C0bf3188cEDdb9684ae28655187552bAE9";
+    tempDaoConfig.wrappedTokenSymbol = "RRR"; // Matches hardcoded wrappedTokenSymbol
+    tempDaoConfig.wrappedTokenName = "Madinga meranufh"; 
+    tempDaoConfig.daoName = "ma cheama luca"; // Matches hardcoded daoName
+    tempDaoConfig.daoDescription = "descrierea vine aici"; 
+    Org tempOrg = Org(
+      name: tempDaoConfig.daoName ?? "My DAO Name", // From DaoConfig or default
+      description: tempDaoConfig.daoDescription ?? "DAO Description",
+      govToken: Token(
+        name: tempDaoConfig.wrappedTokenName ?? "Wrapped Token",
+        symbol: tempDaoConfig.wrappedTokenSymbol ?? "WGT",
+        type: "wrappedErc20", // Example type
+        decimals: 18, // Placeholder: This should ideally come from the underlying token's actual decimals
+      ),
+    );
+
+    tempOrg.executionDelay = 600;                 // executionDelay (seconds)
+    tempOrg.votingDelay = 2;                      // minsVotingDelay (minutes)
+    tempOrg.votingDuration = 10;                  // minsVotingPeriod (minutes)
+    tempOrg.proposalThreshold = "1000000000000000000"; // proposalThreshold (string, full amount)
+    tempOrg.quorum = 4;                           // quorum (percentage, e.g., 4 for 4%)
+    tempOrg.registry = {"Key1": "Value1"};        // registry
+
+    print("Calling createDAOwithWrappedToken with dynamically constructed Org and DaoConfig (based on hardcoded values)...");
+    
+    // 3. Call the function.
+    List<String> results = await createDAOwithWrappedToken(
+      tempOrg,
+      tempDaoConfig,
+    );
+
+    // 4. Handle results (optional, for testing feedback).
+    if (results.isNotEmpty && !results[0].startsWith("ERROR")) {
+      print("Test call to createDAOwithWrappedToken SUCCEEDED!");
+      print("DAO Address: ${results[0]}");
+      print("Wrapped Token Address: ${results[1]}");
+      print("Treasury Address: ${results[2]}");
+      print("Registry Address: ${results[3]}");
+      // Example: Show a SnackBar (if context is available)
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text("Wrapped DAO Deployed: ${results[0]}"), backgroundColor: Colors.green),
+      // );
+    } else {
+      String errorMessage = results.isNotEmpty ? results[0] : "Unknown error from createDAOwithWrappedToken";
+      print("Test call to createDAOwithWrappedToken FAILED: $errorMessage");
+      // Example: Show a SnackBar (if context is available)
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text("Deployment Failed: $errorMessage"), backgroundColor: Colors.red),
+      // );
+    }
+  },
+),
                   Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: Row(

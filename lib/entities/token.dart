@@ -1,13 +1,13 @@
 class Token {
-  Token({
-    required this.name,
-    required this.symbol,
-    required this.decimals,
-    required this.type,
-      this.address
-  });
+  Token(
+      {required this.name,
+      required this.symbol,
+      required this.decimals,
+      required this.type,
+      this.address});
 
   String? address;
+  String? underlyingAddress;
   int? tokenId;
   String iconUrl = '';
   late String name;

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:Homebase/entities/contractFunctions.dart';
+import 'package:Homebase/screens/creator/creator_widgets.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/registryPropo.dart';

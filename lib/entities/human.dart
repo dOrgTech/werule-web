@@ -16,6 +16,7 @@ String simpleDAOAddress = "0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF";
 var chains = {
   "0xaa36a7": Chain(
       wrapperContract: "",
+      wrapperContract_w: "",
       id: 11155111,
       name: "Sepolia",
       nativeSymbol: "sETH",
@@ -23,7 +24,8 @@ var chains = {
       rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede",
       blockExplorer: "https://sepolia.etherscan.io"),
   "0x1f47b": Chain(
-      wrapperContract: "0x1e050e98F0215450bd41494F9B67bC3032c561D7",
+      wrapperContract: "0xe74f7F87F4002C6Df24684b2d95D3cDCFdE4c343",
+      wrapperContract_w: "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2",
       id: 128123,
       name: "Etherlink-Testnet",
       nativeSymbol: "XTZ",
@@ -32,6 +34,7 @@ var chains = {
       blockExplorer: "https://testnet.explorer.etherlink.com"),
   "0xa729": Chain(
       wrapperContract: "",
+      wrapperContract_w: "",
       id: 42793,
       name: "Etherlink",
       nativeSymbol: "XTZ",
@@ -111,6 +114,7 @@ class Human extends ChangeNotifier {
               id: 0,
               name: 'N/A',
               nativeSymbol: '',
+              wrapperContract_w: "",
               decimals: 0,
               rpcNode: '',
               blockExplorer: "");
@@ -153,13 +157,12 @@ class Human extends ChangeNotifier {
       print("chainid is " + chainaidi.toString());
       web3user = Web3Provider(ethereum!);
       print("web3user " + web3user.toString());
-
       if (!chains.keys.contains(chainaidi)) {
-        print("chain not found, requesting user to add it");
         wrongChain = true;
         chain = Chain(
             wrapperContract: "",
             id: 0,
+            wrapperContract_w: "",
             name: 'N/A',
             nativeSymbol: '',
             decimals: 0,
@@ -231,11 +234,13 @@ class Chain {
       required this.nativeSymbol,
       required this.decimals,
       required this.rpcNode,
+      required this.wrapperContract_w,
       required this.blockExplorer,
       required this.wrapperContract});
   int id;
   String name;
   String wrapperContract;
+  String wrapperContract_w;
   int decimals;
   String nativeSymbol;
   String blockExplorer;

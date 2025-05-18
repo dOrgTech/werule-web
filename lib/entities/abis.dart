@@ -110,6 +110,7 @@ List<String> timelockAbiString = [
 List<String> wrapperAbiStringGlobal = [
   'function deployDAO (address, address, string, uint48, uint32)',
   'function deployDAOwithToken((string name, string symbol, string description, uint8 decimals, uint256 executionDelay, address[] initialMembers, uint256[] initialAmounts, string[] keys, string[] values, bool transferrable) params)',
+  'function deployDAOwithWrappedToken((string daoName, string wrappedTokenSymbol, string description, uint256 executionDelay, address underlyingTokenAddress, uint48 minsVotingDelay, uint32 minsVotingPeriod, uint256 proposalThreshold, uint8 quorumFraction, string[] keys, string[] values) params)',
   'function deployedDAOs (uint256)',
   'function getNumberOfDAOs() returns (uint)'
 ];
