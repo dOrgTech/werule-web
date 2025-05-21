@@ -9,7 +9,7 @@ class Screen6Registry extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
 
-  Screen6Registry({
+  const Screen6Registry({super.key, 
     required this.daoConfig,
     required this.onNext,
     required this.onBack,
@@ -110,9 +110,9 @@ class _Screen6RegistryState extends State<Screen6Registry> {
                 width: 160,
                 child: TextButton(
                   onPressed: _addRegistryEntry,
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [Icon(Icons.add), Text(' Add Entry')],
+                    children: [Icon(Icons.add), Text(' Add Entry')],
                   ),
                 ),
               ),

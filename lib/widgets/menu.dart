@@ -46,9 +46,9 @@ class _TopMenuState extends State<TopMenu> {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SizedBox(width: 12),
-              Logo(),
-              Spacer(),
+              const SizedBox(width: 12),
+              const Logo(),
+              const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(left: 50, right: 24),
                 child: Row(
@@ -62,19 +62,19 @@ class _TopMenuState extends State<TopMenu> {
                           },
                           child: Image.network(
                             "https://i.ibb.co/Nr7Psjm/discord.png",
-                            color: Color.fromARGB(255, 196, 196, 196),
+                            color: const Color.fromARGB(255, 196, 196, 196),
                           ),
                         )),
                     SizedBox(
                       height: 38,
                       width: 38,
                       child:
-                          TextButton(child: Icon(Icons.info), onPressed: () {}),
+                          TextButton(child: const Icon(Icons.info), onPressed: () {}),
                     )
                   ],
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Container(
                   height: 49,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -127,7 +127,7 @@ class Logo extends StatelessWidget {
       child: InkWell(
         hoverColor: Colors.transparent,
         onTap: Human().landing ? null : () => context.go("/"),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic, // Ensures proper alignment
@@ -169,7 +169,7 @@ class Logo extends StatelessWidget {
 }
 
 class WalletButton extends StatefulWidget {
-  const WalletButton({Key? key}) : super(key: key);
+  const WalletButton({super.key});
 
   @override
   _WalletButtonState createState() => _WalletButtonState();
@@ -196,7 +196,7 @@ class _WalletButtonState extends State<WalletButton> {
   @override
   Widget build(BuildContext context) {
     if (_isConnecting) {
-      return SizedBox(
+      return const SizedBox(
         width: 180,
         child: LinearProgressIndicator(),
       );
@@ -207,7 +207,7 @@ class _WalletButtonState extends State<WalletButton> {
         width: 180,
         child: TextButton(
           onPressed: _connectWallet,
-          child: Text("Connect Wallet"),
+          child: const Text("Connect Wallet"),
         ),
       );
     }
@@ -219,7 +219,7 @@ class _WalletButtonState extends State<WalletButton> {
           focusColor: Colors.transparent,
           isExpanded: true,
           value: 'Connected',
-          icon: Icon(Icons.arrow_drop_down),
+          icon: const Icon(Icons.arrow_drop_down),
           hint: Text(shortenString(us3rAddress)),
           onChanged: (value) {
             // Implement actions based on dropdown selection
@@ -229,15 +229,15 @@ class _WalletButtonState extends State<WalletButton> {
               value: 'Connected',
               child: Text(shortenString(us3rAddress)),
             ),
-            DropdownMenuItem(
+            const DropdownMenuItem(
               value: 'Profile',
               child: Text('Profile'),
             ),
-            DropdownMenuItem(
+            const DropdownMenuItem(
               value: 'Switch Address',
               child: Text('Switch Address'),
             ),
-            DropdownMenuItem(
+            const DropdownMenuItem(
               value: 'Disconnect',
               child: Text('Disconnect'),
             ),

@@ -63,7 +63,7 @@ class UserCard extends StatelessWidget {
                 Container(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
-                child: Center(child: Text(
+                child: const Center(child: Text(
                "Replace this"
                   // DateFormat('MMM d, yyyy').format(human.lastActive!)
                   ))),

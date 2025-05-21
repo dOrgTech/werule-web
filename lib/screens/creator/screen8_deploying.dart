@@ -5,7 +5,7 @@ import '../../entities/human.dart'; // For Human().chain.name
 // Screen 8: Deploying
 class Screen8Deploying extends StatelessWidget {
   final String daoName;
-  Screen8Deploying({required this.daoName});
+  const Screen8Deploying({super.key, required this.daoName});
   @override
   Widget build(BuildContext context) {
     return Center(

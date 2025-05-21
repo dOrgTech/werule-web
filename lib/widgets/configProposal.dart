@@ -21,7 +21,7 @@ class DaoConfigurationWidget extends StatefulWidget {
   bool isSetInfo = false;
   bool isWaiting = false;
   DaoConfigurationWidget(
-      {required this.initiativeState,
+      {super.key, required this.initiativeState,
       required this.p,
       required this.org,
       required this.proposalsState}) {

@@ -203,17 +203,11 @@ class _ProposalsState extends State<Proposals> {
                             padding: const EdgeInsets.only(right: 50),
                             height: 40,
                             child: ElevatedButton(
-                              child: Text(
-                                "Create Proposal",
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    color: Theme.of(context).primaryColorDark),
-                              ),
                               style: ButtonStyle(
-                                elevation: const MaterialStatePropertyAll(0.0),
+                                elevation: const WidgetStatePropertyAll(0.0),
                                 backgroundColor:
-                                    MaterialStateProperty.resolveWith((states) {
-                                  if (states.contains(MaterialState.disabled)) {
+                                    WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.disabled)) {
                                     return Colors.grey;
                                   }
                                   return Theme.of(context).indicatorColor;
@@ -232,6 +226,12 @@ class _ProposalsState extends State<Proposals> {
                                         },
                                       );
                                     },
+                              child: Text(
+                                "Create Proposal",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    color: Theme.of(context).primaryColorDark),
+                              ),
                             )),
                       ],
                     )),
@@ -250,14 +250,14 @@ class _ProposalsState extends State<Proposals> {
                                   child: const Text("ID #")),
                             ),
                             Expanded(
-                              child: Container(
+                              child: SizedBox(
                                   width: 230,
                                   child: const Padding(
                                     padding: EdgeInsets.only(left: 48.0),
                                     child: Text("Title"),
                                   )),
                             ),
-                            Container(
+                            SizedBox(
                                 width: 230,
                                 child: const Center(child: Text("Author"))),
                             const SizedBox(
@@ -503,10 +503,10 @@ class ProposalListState extends State<ProposalList> {
             width: 220,
             child: ElevatedButton(
                 style: ButtonStyle(
-                  elevation: MaterialStatePropertyAll(12),
+                  elevation: WidgetStatePropertyAll(12),
                   backgroundColor:
-                      MaterialStateProperty.all(createMaterialColor(
-                    Color.fromARGB(255, 175, 215, 218),
+                      WidgetStateProperty.all(createMaterialColor(
+                    const Color.fromARGB(255, 175, 215, 218),
                   )),
                 ),
                 onPressed: () async {
@@ -515,12 +515,12 @@ class ProposalListState extends State<ProposalList> {
                     widget.uploadingCsv = true;
                   });
                 },
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.upload,
+                    Icon(Icons.upload,
                         color: Color.fromARGB(255, 37, 37, 37)),
-                    const Text(
+                    Text(
                       " Upload Executions",
                       style: TextStyle(
                           fontSize: 15, color: Color.fromARGB(255, 0, 0, 0)),
@@ -562,15 +562,15 @@ class ProposalListState extends State<ProposalList> {
     var marime = MediaQuery.of(context).size;
     return widget.uploadingCsv
         ? SizedBox(
-            child: Container(
+            child: SizedBox(
                 width: 600,
                 height: 500,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
                       child: Text(
                           "Select the .CSV file to upload.\n\n\nUse this header: asset,recipient,amount "),
                     ),
@@ -581,7 +581,7 @@ class ProposalListState extends State<ProposalList> {
                         text: TextSpan(
                           style: DefaultTextStyle.of(context)
                               .style, // Use the default text style
-                          children: [
+                          children: const [
                             TextSpan(
                               text: "...where ",
                             ),
@@ -618,13 +618,13 @@ class ProposalListState extends State<ProposalList> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 100),
-                    SizedBox(
+                    const SizedBox(height: 100),
+                    const SizedBox(
                       height: 2,
                       width: 280,
                       child: LinearProgressIndicator(),
                     ),
-                    SizedBox(height: 150),
+                    const SizedBox(height: 150),
                   ],
                 )))
         : SizedBox(
@@ -699,12 +699,12 @@ class OrContainer extends StatelessWidget {
   final double interruptionHeight;
 
   const OrContainer({
-    Key? key,
+    super.key,
     required this.child,
     this.margin = const EdgeInsets.all(16.0),
     this.interruptionWidth = 50.0,
     this.interruptionHeight = 80.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -717,7 +717,7 @@ class OrContainer extends StatelessWidget {
           margin: const EdgeInsets.only(left: 12, right: 12, top: 6),
           width: 280,
           decoration: BoxDecoration(
-            border: Border.fromBorderSide(
+            border: const Border.fromBorderSide(
               BorderSide(color: Color.fromARGB(183, 104, 104, 104), width: 0.5),
             ),
             borderRadius: BorderRadius.circular(6.0),
@@ -725,7 +725,7 @@ class OrContainer extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6.0),
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [Colors.transparent, Color.fromARGB(80, 70, 67, 67)],

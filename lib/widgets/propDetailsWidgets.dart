@@ -42,7 +42,7 @@ class TokenTransferListWidget extends StatelessWidget {
 
   List<TokenTransfer> tokenTransfers = [];
 
-  TokenTransferListWidget({
+  TokenTransferListWidget({super.key, 
     required this.p,
   });
 
@@ -167,7 +167,7 @@ class ContractCall extends StatelessWidget {
                     child: Text("with callData:"))),
             const SizedBox(width: 19),
             Text(
-              "0x" + getShortAddress(p.callDatas[0].toString()),
+              "0x${getShortAddress(p.callDatas[0].toString())}",
               // "ndwq89hdp197hdqpo98shdp9q8723hp98qh9"),
               style: const TextStyle(fontSize: 14),
             ),
@@ -193,7 +193,7 @@ class ContractCall extends StatelessWidget {
 class DaoConfigurationDetails extends StatelessWidget {
   final Proposal p;
 
-  DaoConfigurationDetails({required this.p});
+  const DaoConfigurationDetails({super.key, required this.p});
 
   @override
   Widget build(BuildContext context) {
@@ -417,7 +417,7 @@ List<dynamic> decodeFunctionParameters(
 class GovernanceTokenOperationDetails extends StatelessWidget {
   final Proposal p;
 
-  GovernanceTokenOperationDetails({required this.p});
+  const GovernanceTokenOperationDetails({super.key, required this.p});
   @override
   Widget build(BuildContext context) {
     String operationType = p.type!.split(" ").first;
@@ -491,7 +491,7 @@ class GovernanceTokenOperationDetails extends StatelessWidget {
 class RegistryProposalDetails extends StatelessWidget {
   Proposal p;
 
-  RegistryProposalDetails({required this.p});
+  RegistryProposalDetails({super.key, required this.p});
   decodeParams(hexString) {
     Uint8List dataBytes = hexToBytes(hexString);
     Uint8List dataWithoutSelector = dataBytes.sublist(4);
@@ -568,7 +568,7 @@ class RegistryProposalDetails extends StatelessWidget {
                 color: Colors.grey[900],
               ),
               child: Text(
-                " " + value,
+                " $value",
                 style: const TextStyle(color: Colors.white),
               ),
             ),
@@ -583,7 +583,7 @@ class ElectionResultBar extends StatefulWidget {
   final BigInt inFavor;
   final BigInt against;
 
-  const ElectionResultBar({
+  const ElectionResultBar({super.key, 
     required this.inFavor,
     required this.against,
   });
@@ -678,8 +678,7 @@ class ParticipationBar extends StatefulWidget {
   double turnout; // value between 0 and 100
   final double quorum; // value between 0 and 100
 
-  ParticipationBar({required this.turnout, required this.quorum, Key? key})
-      : super(key: key);
+  ParticipationBar({required this.turnout, required this.quorum, super.key});
 
   @override
   _ParticipationBarState createState() => _ParticipationBarState();
@@ -750,7 +749,7 @@ class _ParticipationBarState extends State<ParticipationBar> {
 
 class VotesModal extends StatefulWidget {
   final Proposal p;
-  VotesModal({required this.p, super.key});
+  const VotesModal({required this.p, super.key});
 
   @override
   State<VotesModal> createState() => _VotesModalState();
@@ -803,7 +802,7 @@ class _VotesModalState extends State<VotesModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.8,
       child: FutureBuilder<void>(
         future: _votesFuture,
@@ -833,13 +832,13 @@ class _VotesModalState extends State<VotesModal> {
                     return DataRow(cells: [
                       DataCell(Row(
                         children: [
-                          Text(getShortAddress(vote.voter!)),
+                          Text(getShortAddress(vote.voter)),
                           const SizedBox(width: 8),
                           TextButton(
                               child: const Icon(Icons.copy),
                               onPressed: () {
                                 Clipboard.setData(
-                                    ClipboardData(text: vote.voter!));
+                                    ClipboardData(text: vote.voter));
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         duration: Duration(seconds: 1),
@@ -879,7 +878,7 @@ class _VotesModalState extends State<VotesModal> {
 
 class ProposalLifeCycleWidget extends StatelessWidget {
   Proposal p;
-  ProposalLifeCycleWidget({required this.p});
+  ProposalLifeCycleWidget({super.key, required this.p});
   @override
   Widget build(BuildContext context) {
     return SizedBox(

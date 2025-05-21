@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class AddArgumentDialog extends StatefulWidget {
   final Function(String content, double weight) onAdd;
 
-  const AddArgumentDialog({Key? key, required this.onAdd}) : super(key: key);
+  const AddArgumentDialog({super.key, required this.onAdd});
 
   @override
   _AddArgumentDialogState createState() => _AddArgumentDialogState();
@@ -33,7 +33,7 @@ class _AddArgumentDialogState extends State<AddArgumentDialog> {
     return AlertDialog(
       title: const Text('Add Argument'),
       content: SingleChildScrollView(
-        child: Container(
+        child: SizedBox(
           width: 600,
           child: Column(
             children: [
@@ -57,7 +57,7 @@ class _AddArgumentDialogState extends State<AddArgumentDialog> {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.all(18.0),
                 child: SubmitButton(
@@ -65,7 +65,7 @@ class _AddArgumentDialogState extends State<AddArgumentDialog> {
                   submit: _submit,
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
             ],
           ),
         ),

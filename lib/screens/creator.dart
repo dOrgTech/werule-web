@@ -24,7 +24,7 @@ import 'creator/screen9_deployment_complete.dart';
 // Main wizard widget
 class DaoSetupWizard extends StatefulWidget {
   late Org org;
-  DaoSetupWizard({Key? key}) : super(key: key);
+  DaoSetupWizard({super.key});
 
   @override
   _DaoSetupWizardState createState() => _DaoSetupWizardState();
@@ -36,6 +36,10 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
   DaoConfig daoConfig = DaoConfig();
 
   void goToStep(int step) {
+    // Prevent navigating to the "Members" screen (step 4) if it should be skipped
+    if (step == 4 && daoConfig.tokenDeploymentMechanism == DaoTokenDeploymentMechanism.wrapExistingToken) {
+      return; 
+    }
     if (step <= maxStepReached) {
       setState(() {
         currentStep = step;
@@ -44,9 +48,19 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
   }
 
   void nextStep() {
-    if (currentStep < 8) {
+    // Max configurable step is 6 (Review). After that, it's deploying/complete.
+    if (currentStep < 6) { 
+      int potentialNextStep = currentStep + 1;
+      
+      // If currentStep is 3 (Durations) and next would be 4 (Members),
+      // and we are using a wrapped token, skip Members.
+      if (currentStep == 3 && potentialNextStep == 4 &&
+          daoConfig.tokenDeploymentMechanism == DaoTokenDeploymentMechanism.wrapExistingToken) {
+        potentialNextStep++; // Skip Members (4) -> go to Registry (5)
+      }
+
       setState(() {
-        currentStep++;
+        currentStep = potentialNextStep;
         if (currentStep > maxStepReached) {
           maxStepReached = currentStep;
         }
@@ -56,8 +70,16 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
 
   void previousStep() {
     if (currentStep > 0) {
+      int potentialPrevStep = currentStep - 1;
+
+      // If currentStep is 5 (Registry) and prev would be 4 (Members),
+      // and we are using a wrapped token, skip Members.
+      if (currentStep == 5 && potentialPrevStep == 4 &&
+          daoConfig.tokenDeploymentMechanism == DaoTokenDeploymentMechanism.wrapExistingToken) {
+        potentialPrevStep--; // Skip Members (4) -> go to Durations (3)
+      }
       setState(() {
-        currentStep--;
+        currentStep = potentialPrevStep;
       });
     }
   }
@@ -94,7 +116,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           widget.org.symbol = daoConfig.tokenSymbol ?? "TOK"; // From Screen2BasicSetup
           widget.org.decimals = daoConfig.numberOfDecimals ?? 0; // From Screen2BasicSetup
           widget.org.nonTransferrable = daoConfig.nonTransferrable; // From Screen2BasicSetup
-          widget.org.totalSupply = daoConfig.totalSupply ?? "0"; // From Screen5Members
+          widget.org.totalSupply = daoConfig.totalSupply ?? "0"; // From Screen5Members or Screen2
           widget.org.holders = daoConfig.members.length; // From Screen5Members
 
           widget.org.memberAddresses = {}; // Clear and re-populate
@@ -118,18 +140,15 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           // --- Path for Deploying DAO with Wrapped Token ---
           widget.org.symbol = daoConfig.wrappedTokenSymbol ?? "wTOK"; // From Screen2BasicSetup
 
-          // For the org.govToken Dart object representing the wrapped token:
-          // The actual on-chain wrapped token inherits decimals from its underlying token.
-          // Your Token class constructor requires 'decimals'. We'll use a common default (e.g., 18)
-          // or what might have been in daoConfig.numberOfDecimals (though it's usually nulled for wrapped path).
-          // This is for the Dart object only; the contract handles actual decimals.
           widget.org.decimals = daoConfig.numberOfDecimals ?? 18; // Default for Dart Token obj
+          // Note: daoConfig.numberOfDecimals should be null for wrapped if Screen2 logic is correct.
+          // This implies underlying token decimals will be used by contract, 18 is Dart obj placeholder.
 
           widget.org.nonTransferrable = false; // Wrapped tokens are generally transferable
-          widget.org.totalSupply = "0"; // Wrapped tokens start with 0 supply
+          widget.org.totalSupply = "0"; // Wrapped tokens start with 0 supply (handled also in Screen2)
           widget.org.holders = 0; // No initial holders via this deployment method
-          widget.org.memberAddresses = {}; // No members distributed at deployment for wrapped tokens
-
+          widget.org.memberAddresses = {}; // No members distributed at deployment for wrapped tokens (daoConfig.members should be empty)
+          
           widget.org.govToken = Token(
             type: "wrappedErc20", // A type to distinguish it
             name: daoConfig.wrappedTokenName ?? "Wrapped ${daoConfig.wrappedTokenSymbol ?? "Token"}", // From Screen2
@@ -138,7 +157,6 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
             // address will be set from results
           );
           
-          // Call the function to deploy DAO with a wrapped token
           results = await createDAOwithWrappedToken(widget.org, daoConfig);
         }
 
@@ -149,14 +167,12 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
           widget.org.treasuryAddress = results[2];
           widget.org.registryAddress = results[3];
 
-          // Update the govToken in widget.org with the deployed address
-          // and other details if they were placeholders
           widget.org.govToken = Token(
-              type: widget.org.govToken!.type, // Retain type
-              name: widget.org.govToken!.name, // Retain name
-              symbol: widget.org.symbol!, // Use symbol from Org as it's definitive
-              decimals: widget.org.decimals!, // Use decimals from Org
-              address: results[1] // Set deployed address
+              type: widget.org.govToken!.type, 
+              name: widget.org.govToken!.name, 
+              symbol: widget.org.symbol!, 
+              decimals: widget.org.decimals!, 
+              address: results[1] 
           );
 
           orgs.add(widget.org);
@@ -175,10 +191,10 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
       } catch (e) {
         print("Error in finishWizard during contract call: $e");
         String errorString = e.toString();
-        if (errorString.length > 150) errorString = errorString.substring(0,150) + "...";
+        if (errorString.length > 150) errorString = "${errorString.substring(0,150)}...";
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('DAO Deployment Exception: $errorString'), backgroundColor: Colors.red, duration: Duration(seconds: 5)),
+            SnackBar(content: Text('DAO Deployment Exception: $errorString'), backgroundColor: Colors.red, duration: const Duration(seconds: 5)),
           );
         }
       }
@@ -220,6 +236,8 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
         break;
       case 4:
         // Screen5Members handles its own padding or can be wrapped if needed
+        // This case should ideally not be reached if it's a wrapped token type.
+        // The navigation logic in nextStep/previousStep/goToStep should prevent this.
         content = Screen5Members( 
             daoConfig: daoConfig, onNext: nextStep, onBack: previousStep);
         break;
@@ -264,8 +282,10 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                 }));
         break;
       default:
-        content = Container(child: Center(child: Text("Error: Unknown Step")));
+        content = Container(child: const Center(child: Text("Error: Unknown Step")));
     }
+
+    bool isMembersStepEnabled = daoConfig.tokenDeploymentMechanism == DaoTokenDeploymentMechanism.deployNewStandardToken;
 
     return Container(
       child: Column(
@@ -296,63 +316,59 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                         child: ListView(
                           shrinkWrap: true,
                           children: [
-                            ListTile(
+                            ListTile( // Step 0
                                 title: const Text('1. Type'),
                                 onTap: () => goToStep(0),
                                 selected: currentStep == 0,
-                                enabled: true, // Always enabled
+                                enabled: true, // Always enabled and tappable
                                 selectedColor: Colors.black,
                                 selectedTileColor:
                                     const Color.fromARGB(255, 121, 133, 128)),
-                            ListTile(
+                            ListTile( // Step 1
                                 title: const Text('2. Identity'),
                                 onTap: maxStepReached >= 1 ? () => goToStep(1) : null,
                                 selected: currentStep == 1,
-                                enabled: maxStepReached >= 0, // Step 1 should always be accessible from step 0
+                                enabled: maxStepReached >= 1, 
                                 selectedColor: Colors.black,
                                 selectedTileColor:
                                     const Color.fromARGB(255, 121, 133, 128)),
-                            ListTile(
+                            ListTile( // Step 2
                                 title: const Text('3. Thresholds'),
                                 onTap: maxStepReached >= 2 ? () => goToStep(2) : null,
                                 selected: currentStep == 2,
-                                enabled: maxStepReached >= 1, // Enable if prev step (Identity) is reached/done
+                                enabled: maxStepReached >= 2, 
                                 selectedColor: Colors.black,
                                 selectedTileColor:
                                     const Color.fromARGB(255, 121, 133, 128)),
-                            ListTile(
+                            ListTile( // Step 3
                                 title: const Text('4. Durations'),
                                 onTap: maxStepReached >= 3 ? () => goToStep(3) : null,
                                 selected: currentStep == 3,
-                                enabled: maxStepReached >= 2,
+                                enabled: maxStepReached >= 3,
                                 selectedColor: Colors.black,
                                 selectedTileColor:
                                     const Color.fromARGB(255, 121, 133, 128)),
-                            ListTile(
+                            ListTile( // Step 4: Members
                                 title: const Text('5. Members'),
-                                onTap: maxStepReached >= 4 ? () => goToStep(4) : null,
+                                onTap: (maxStepReached >= 4 && isMembersStepEnabled) ? () => goToStep(4) : null,
                                 selected: currentStep == 4,
-                                // Members screen might be disabled for wrapped tokens if not applicable.
-                                // This depends on UI flow decisions. For now, enabled by maxStepReached.
-                                enabled: maxStepReached >= 3 && 
-                                         (daoConfig.tokenDeploymentMechanism == DaoTokenDeploymentMechanism.deployNewStandardToken ||
-                                          /* allow access for wrapped if UI shows it, even if non-functional */ true), 
+                                enabled: (maxStepReached >= 4 && isMembersStepEnabled), 
                                 selectedColor: Colors.black,
                                 selectedTileColor:
                                     const Color.fromARGB(255, 121, 133, 128)),
-                            ListTile(
+                            ListTile( // Step 5: Registry
                                 title: const Text('6. Registry'),
                                 onTap: maxStepReached >= 5 ? () => goToStep(5) : null,
                                 selected: currentStep == 5,
-                                enabled: maxStepReached >= 4,
+                                enabled: maxStepReached >= 5,
                                 selectedColor: Colors.black,
                                 selectedTileColor:
                                     const Color.fromARGB(255, 121, 133, 128)),
-                            ListTile(
+                            ListTile( // Step 6: Review
                                 title: const Text('7. Review & Deploy'),
                                 onTap: maxStepReached >= 6 ? () => goToStep(6) : null,
                                 selected: currentStep == 6,
-                                enabled: maxStepReached >= 5,
+                                enabled: maxStepReached >= 6,
                                 selectedColor: Colors.black,
                                 selectedTileColor:
                                     const Color.fromARGB(255, 121, 133, 128)),

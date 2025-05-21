@@ -6,9 +6,9 @@ class PlaylistWidget extends StatefulWidget {
   final Map<String, int> playlist;
 
   const PlaylistWidget({
-    Key? key,
+    super.key,
     required this.playlist,
-  }) : super(key: key);
+  });
 
   @override
   State<PlaylistWidget> createState() => _PlaylistWidgetState();
@@ -23,7 +23,7 @@ class _PlaylistWidgetState extends State<PlaylistWidget> {
   void initState() {
     super.initState();
     // Add the default component to the playlist
-    _items = [MapEntry('default', 6000), ...widget.playlist.entries];
+    _items = [const MapEntry('default', 6000), ...widget.playlist.entries];
     _startTimer();
   }
 
@@ -54,7 +54,7 @@ class _PlaylistWidgetState extends State<PlaylistWidget> {
               onHover: null,
               onPressed: () {},
               style: ButtonStyle(
-                elevation: MaterialStateProperty.all(0),
+                elevation: WidgetStateProperty.all(0),
               ),
               child: Image.network(
                 currentItem.key,

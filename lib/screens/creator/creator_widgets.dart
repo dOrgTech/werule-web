@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 // FlashingIcon and meniu TextStyle
 class FlashingIcon extends StatefulWidget {
+  const FlashingIcon({super.key});
+
   @override
   _FlashingIconState createState() => _FlashingIconState();
 }
@@ -60,7 +62,7 @@ class DurationInput extends StatelessWidget {
   final TextEditingController hoursController;
   final TextEditingController minutesController;
 
-  DurationInput({
+  const DurationInput({super.key, 
     required this.title,
     required this.description,
     required this.daysController,
@@ -138,12 +140,13 @@ class MemberEntryWidget extends StatelessWidget {
   final MemberEntry entry;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
-  ValueKey? key;
-  MemberEntryWidget(
-      {this.key,
-      required this.entry,
-      required this.onRemove,
-      required this.onChanged});
+
+  MemberEntryWidget({
+    super.key,
+    required this.entry,
+    required this.onRemove,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +206,7 @@ class RegistryEntryWidget extends StatelessWidget {
   final RegistryEntry entry;
   final VoidCallback onRemove;
 
-  RegistryEntryWidget({required this.entry, required this.onRemove});
+  const RegistryEntryWidget({super.key, required this.entry, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {

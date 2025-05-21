@@ -3,6 +3,7 @@ import 'package:Homebase/utils/reusable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 // import '../screens/creator.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';
@@ -13,7 +14,7 @@ String add2 = "https://i.ibb.co/6rmksXk/add2.png";
 List<String> userPics = [add1, add2];
 
 class MembersList extends StatefulWidget {
-  MembersList({super.key, required this.org});
+  const MembersList({super.key, required this.org});
   final Org org;
 
   @override
@@ -88,8 +89,21 @@ class _MembersListState extends State<MembersList> {
         }
 
         if (widget.org.memberAddresses.isEmpty) {
-          return const Text(
-              "Members are being indexed. Check back later or use Remix to interact with the DAO.");
+          return Column(
+            children: [
+              const Text(
+                  "No members found.\n\n\nTo wrap the underlying token, use this tool. "),
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                context.go( "/${widget.org.address}/bridge");
+                },
+                child:  Text("Bridge "+ widget.org.symbol!),
+              ),
+
+           
+            ],
+          );
         }
 
         return _buildTable();
@@ -171,10 +185,10 @@ class _MembersListState extends State<MembersList> {
           ),
         ],
       ),
-      Opacity(
+      const Opacity(
         opacity: 0.5,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 29.0),
+          padding: EdgeInsets.symmetric(horizontal: 29.0),
           child: Divider(),
         ),
       ),
@@ -275,7 +289,7 @@ class MemberTableRow extends TableRow {
                     TextButton(
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: member.address));
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             duration: Duration(seconds: 1),
                             content: Center(
                                 child: Text("Address copied to clipboard"))));

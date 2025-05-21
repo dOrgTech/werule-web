@@ -79,21 +79,21 @@ String parseNumber(String numberString, int decimalPlaces) {
   }
 
   // Return the combined result
-  return quotient.toString() + "." + fractionStr;
+  return "$quotient.$fractionStr";
 }
 
 String shortenString(String input) {
   if (input.length <= 8) {
     return input;
   } else {
-    return input.substring(0, 5) + "..." + input.substring(input.length - 5);
+    return "${input.substring(0, 5)}...${input.substring(input.length - 5)}";
   }
 }
 
 String generateWalletAddress() {
   final random = Random();
-  final characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  final prefix = 'tz1';
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const prefix = 'tz1';
   final length = 36 - prefix.length;
   final randomString = String.fromCharCodes(Iterable.generate(
       length, (_) => characters.codeUnitAt(random.nextInt(characters.length))));
@@ -102,8 +102,8 @@ String generateWalletAddress() {
 
 String generateContractAddress() {
   final random = Random();
-  final characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  final prefix = 'KT1';
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const prefix = 'KT1';
   final length = 36 - prefix.length;
   final randomString = String.fromCharCodes(Iterable.generate(
       length, (_) => characters.codeUnitAt(random.nextInt(characters.length))));

@@ -42,9 +42,9 @@ class InitiativeState extends State<Initiative> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _urlController = TextEditingController();
-  int _currentPage = 1;
+  final int _currentPage = 1;
   bool isProposalSelected = true; // Default selection
-  bool _isSubmitEnabled = false;
+  final bool _isSubmitEnabled = false;
   static const int _entriesPerPage = 50;
 
   @override
@@ -93,7 +93,7 @@ class InitiativeState extends State<Initiative> {
           },
           maxLength: 42,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: "Proposal Title",
           ),
         ),
@@ -109,7 +109,7 @@ class InitiativeState extends State<Initiative> {
           maxLength: 200,
           maxLines: 5,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: "Proposal Description",
           ),
         ),
@@ -147,7 +147,7 @@ class InitiativeState extends State<Initiative> {
               },
               maxLength: 62,
               style: const TextStyle(fontSize: 16),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: "Debate Title",
               ),
             ),
@@ -166,13 +166,13 @@ class InitiativeState extends State<Initiative> {
                   },
                   child: Tooltip(
                     message: "Yields a \"Yes\" or \"No\" answer.",
-                    textStyle: TextStyle(color: Colors.black87, fontSize: 18),
+                    textStyle: const TextStyle(color: Colors.black87, fontSize: 18),
                     child: Text(
                       "Binary",
                       style: TextStyle(
                         color: isBinary
-                            ? Color.fromARGB(255, 255, 255, 255)
-                            : Color.fromARGB(
+                            ? const Color.fromARGB(255, 255, 255, 255)
+                            : const Color.fromARGB(
                                 255, 138, 138, 138), // Active = white
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -199,13 +199,13 @@ class InitiativeState extends State<Initiative> {
                   },
                   child: Tooltip(
                     message: "Great for answering \"How?\" questions.",
-                    textStyle: TextStyle(color: Colors.black87, fontSize: 18),
+                    textStyle: const TextStyle(color: Colors.black87, fontSize: 18),
                     child: Text(
                       "Exploratory",
                       style: TextStyle(
                         color: isBinary
-                            ? Color.fromARGB(255, 138, 138, 138)
-                            : Color.fromARGB(255, 255, 255, 255),
+                            ? const Color.fromARGB(255, 138, 138, 138)
+                            : const Color.fromARGB(255, 255, 255, 255),
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -217,7 +217,7 @@ class InitiativeState extends State<Initiative> {
           )
         ],
       ),
-      SizedBox(height: 30),
+      const SizedBox(height: 30),
       SizedBox(
         width: 780, // Ensure consistent width
         child: TextFormField(
@@ -244,21 +244,21 @@ class InitiativeState extends State<Initiative> {
             minHeight: 500,
             maxWidth: 1000,
             maxHeight: MediaQuery.of(context).size.height * 0.9),
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          SizedBox(height: 56),
+          const SizedBox(height: 56),
           ToggleSwitch(
             initialLabelIndex: isProposalSelected ? 0 : 1,
             totalSwitches: 2,
-            labels: ['Proposal', 'Debate'],
+            labels: const ['Proposal', 'Debate'],
             activeBgColor: [
-              Color.fromARGB(255, 43, 43, 43).withOpacity(0.3)
+              const Color.fromARGB(255, 43, 43, 43).withOpacity(0.3)
             ], // Light blue for active state
             inactiveBgColor:
                 Theme.of(context).cardColor, // Light grey for inactive state
             activeFgColor: Colors.white,
-            inactiveFgColor: Color.fromARGB(255, 105, 105, 105),
-            borderColor: [
+            inactiveFgColor: const Color.fromARGB(255, 105, 105, 105),
+            borderColor: const [
               Colors.transparent
             ], // Add white border for better visibility
             borderWidth: 1.0, // Border width
@@ -267,20 +267,20 @@ class InitiativeState extends State<Initiative> {
             onToggle: (index) {
               _handleToggle(index!);
             },
-            customTextStyles: [
+            customTextStyles: const [
               TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ],
           ),
-          Spacer(),
+          const Spacer(),
           isProposalSelected
               ? Column(children: proposal())
               : Column(children: debate()),
-          Spacer(),
+          const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Spacer(),
+              const Spacer(),
               isProposalSelected == false && isBinary == true
                   ? Padding(
                       padding: const EdgeInsets.only(right: 16.0),
@@ -307,14 +307,14 @@ class InitiativeState extends State<Initiative> {
                         ),
                       ),
                     )
-                  : Text(""),
+                  : const Text(""),
               ElevatedButton(
                   onPressed: () {
                     setState(() {
                       widget.phase = 1;
                     });
                   },
-                  child: SizedBox(
+                  child: const SizedBox(
                       width: 68,
                       height: 45,
                       child: Center(
@@ -322,11 +322,11 @@ class InitiativeState extends State<Initiative> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text("Next"),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Icon(Icons.arrow_forward)
                         ],
                       )))),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
             ],
           )
         ]));
@@ -364,28 +364,28 @@ class InitiativeState extends State<Initiative> {
                           widget.proposalType = null;
                         });
                       },
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.arrow_back),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text("Back"),
                         ],
                       ),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     ElevatedButton(
                       onPressed: () {
-                        print("proposal type is " + widget.p.type!);
+                        print("proposal type is ${widget.p.type!}");
                         setState(() {
                           widget.phase = 2;
                         });
                       },
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text("Next"),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Icon(Icons.arrow_forward)
                         ],
                       ),
@@ -406,14 +406,14 @@ class InitiativeState extends State<Initiative> {
                       widget.phase = 0;
                     });
                   },
-                  child: SizedBox(
+                  child: const SizedBox(
                       width: 68,
                       height: 45,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Icon(Icons.arrow_back),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text("Back"),
                           Spacer()
                         ],
@@ -430,7 +430,7 @@ class InitiativeState extends State<Initiative> {
       child: ListView(
         scrollDirection: Axis.vertical,
         children: widget.assetData.entries.map((entry) {
-          print("doing this once with " + entry.key.toString());
+          print("doing this once with ${entry.key}");
           String asset = entry.key;
           Map<String, double> recipients = entry.value;
 
@@ -438,17 +438,17 @@ class InitiativeState extends State<Initiative> {
 
           return Container(
             decoration: BoxDecoration(
-                color: Color.fromARGB(117, 49, 49, 49),
+                color: const Color.fromARGB(117, 49, 49, 49),
                 border: Border.all(
-                    color: Color.fromARGB(172, 112, 112, 112), width: 0.7)),
-            margin: EdgeInsets.only(bottom: 16.0),
+                    color: const Color.fromARGB(172, 112, 112, 112), width: 0.7)),
+            margin: const EdgeInsets.only(bottom: 16.0),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 1),
                     child: Row(
                       children: [
                         Text(
@@ -460,21 +460,21 @@ class InitiativeState extends State<Initiative> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Text(
                     '${recipients.length} transactions:', // Added transaction count
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (recipients.length <= 12)
                         ...recipients.entries.map((recipientEntry) {
                           return Container(
-                            margin: EdgeInsets.only(bottom: 3),
+                            margin: const EdgeInsets.only(bottom: 3),
                             color: Colors.black38,
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                                 horizontal: 30, vertical: 1),
                             child: Row(
                               children: [
@@ -488,14 +488,14 @@ class InitiativeState extends State<Initiative> {
                               ],
                             ),
                           );
-                        }).toList()
+                        })
                       else ...[
                         // Display only the first 4 recipients
                         for (int i = 0; i < 4; i++)
                           Container(
-                              margin: EdgeInsets.only(bottom: 3),
+                              margin: const EdgeInsets.only(bottom: 3),
                               color: Colors.black38,
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                   horizontal: 30, vertical: 1),
                               child: Row(
                                 children: [
@@ -511,8 +511,8 @@ class InitiativeState extends State<Initiative> {
                               )),
 
                         // Display an ellipsis if there are more recipients
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
                           child: Text('...'),
                         ),
                         // Display the last 4 recipients
@@ -520,9 +520,9 @@ class InitiativeState extends State<Initiative> {
                             i < recipients.length;
                             i++)
                           Container(
-                              margin: EdgeInsets.only(bottom: 3),
+                              margin: const EdgeInsets.only(bottom: 3),
                               color: Colors.black38,
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                   horizontal: 30, vertical: 1),
                               child: Row(
                                 children: [
@@ -551,10 +551,10 @@ class InitiativeState extends State<Initiative> {
   review() {
     print("we're here now");
     widget.propType = widget.p.type == null ? "null" : widget.p.type!;
-    print("proposal tyupe is" + widget.propType!);
+    print("proposal tyupe is${widget.propType!}");
     return Container(
       height: 700,
-      constraints: BoxConstraints(minWidth: 600),
+      constraints: const BoxConstraints(minWidth: 600),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -566,21 +566,21 @@ class InitiativeState extends State<Initiative> {
                 border: Border.all(width: 0.5, color: Colors.white12)),
             child: Text("${widget.p.type!} proposal"),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             widget.p.name ?? "No title",
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
           Center(
             child: SizedBox(
               width: 400,
               child: Center(
                   child: Text(widget.p.description!,
-                      style: TextStyle(fontSize: 14))),
+                      style: const TextStyle(fontSize: 14))),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           SizedBox(
             height: 30,
             child: Center(
@@ -594,13 +594,13 @@ class InitiativeState extends State<Initiative> {
                   OldSchoolLink(
                       text: widget.p.externalResource!.length < 42
                           ? widget.p.externalResource!
-                          : widget.p.externalResource!.substring(0, 42) + "...",
+                          : "${widget.p.externalResource!.substring(0, 42)}...",
                       url: widget.p.externalResource!)
                 ],
               ),
             ),
           ),
-          SizedBox(height: 36),
+          const SizedBox(height: 36),
           SingleChildScrollView(
               child: widget.p.type == "batch transfer"
                   // child: true
@@ -654,30 +654,30 @@ class InitiativeState extends State<Initiative> {
                       widget.phase = 1;
                     });
                   },
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.arrow_back),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text("Back"),
                     ],
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
                 SubmitButton(
                     submit: () async {
                       print("sending proposal");
-                      print("proposal type is " + widget.p.type!);
-                      print("targets are " + widget.p.targets.toString());
-                      print("values are " + widget.p.values.toString());
-                      print("calldatas are " + widget.p.callDatas.toString());
+                      print("proposal type is ${widget.p.type!}");
+                      print("targets are ${widget.p.targets}");
+                      print("values are ${widget.p.values}");
+                      print("calldatas are ${widget.p.callDatas}");
                       await sendProposal();
                     },
                     isSubmitEnabled: true)
               ],
             ),
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
         ],
       ),
     );
@@ -732,7 +732,7 @@ class InitiativeState extends State<Initiative> {
                     )))));
       }
     } catch (e) {
-      print("some error here " + e.toString());
+      print("some error here $e");
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           duration: Duration(seconds: 1),
           content: Center(
@@ -758,12 +758,12 @@ class InitiativeState extends State<Initiative> {
   submitTransactions() async {
     print("submitting transactions");
     widget.assetData.forEach((key, value) {
-      print("adding token" + key);
-      String token_address = key;
+      print("adding token$key");
+      String tokenAddress = key;
       value.forEach((key, value) {
-        print("adding transaction " + key + " - " + value.toString());
+        print("adding transaction $key - $value");
         transactions.add({
-          'token': token_address,
+          'token': tokenAddress,
           'recipient': key,
           'amount': value.toString(),
           'recipientError': [],
@@ -779,7 +779,7 @@ class InitiativeState extends State<Initiative> {
       print("we're here");
       print(tx);
       List params = [];
-      print("tx['token'] is " + tx['token'].toString());
+      print("tx['token'] is ${tx['token']}");
       if (tx['token'].toString().contains("native")) {
         print("we got so myuch native ${tx['amount']}");
         double txamount = double.parse(tx['amount'].toString());

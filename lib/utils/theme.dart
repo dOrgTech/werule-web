@@ -28,7 +28,7 @@ MaterialColor createMaterialColor(Color color) {
 
 
   ThemeData light = ThemeData(
-      textTheme: TextTheme(
+      textTheme: const TextTheme(
         //all text is white
         bodyLarge: TextStyle(color: Colors.black),
         displayLarge: TextStyle(color: Color(0xff363636)),
@@ -45,26 +45,26 @@ MaterialColor createMaterialColor(Color color) {
         
       ),
         brightness: Brightness.light,
-        dividerColor: createMaterialColor(Color(0xff4454238)),
+        dividerColor: createMaterialColor(const Color(0xff4454238)),
         hintColor: Colors.black87,
-        primaryColor: createMaterialColor(Color(0xffffffff)),
-        highlightColor: Color(0xff6e6e6e),
-        splashColor: Color(0xffffffff),
-        canvasColor: Color(0xfff0f0f0), colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xff4d4d4d))).copyWith(secondary: Color(0xffe0deda)).copyWith(background: createMaterialColor(Color(0xeecacaca))));
+        primaryColor: createMaterialColor(const Color(0xffffffff)),
+        highlightColor: const Color(0xff6e6e6e),
+        splashColor: const Color(0xffffffff),
+        canvasColor: const Color(0xfff0f0f0), colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(const Color(0xff4d4d4d))).copyWith(secondary: const Color(0xffe0deda)).copyWith(surface: createMaterialColor(const Color(0xeecacaca))));
 
         
 ThemeData dark = ThemeData(
-  splashColor: Color(0xff000000),
-  dividerColor: createMaterialColor(Color(0xffcfc099)),
+  splashColor: const Color(0xff000000),
+  dividerColor: createMaterialColor(const Color(0xffcfc099)),
   brightness: Brightness.dark,
   hintColor: Colors.white70,
-  primaryColor: createMaterialColor(Color(0xff4d4d4d)),
-  highlightColor: Color(0xff6e6e6e),
+  primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
+  highlightColor: const Color(0xff6e6e6e),
   colorScheme: ColorScheme.fromSwatch(
-    primarySwatch: createMaterialColor(Color(0xffefefef)),
+    primarySwatch: createMaterialColor(const Color(0xffefefef)),
     brightness: Brightness.dark,
   ).copyWith(
-    primary: Color(0xff4d4d4d), // replaces buttonColor
-    secondary: createMaterialColor(Color(0xff383736)),
+    primary: const Color(0xff4d4d4d), // replaces buttonColor
+    secondary: createMaterialColor(const Color(0xff383736)),
   ),
 );

@@ -5,8 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 getBalances(address) async {
-  var url = Uri.parse(Human().chain.blockExplorer +
-      '/api/v2/addresses/$address/token-balances');
+  var url = Uri.parse('${Human().chain.blockExplorer}/api/v2/addresses/$address/token-balances');
   var headers = {
     'accept': 'application/json',
   };

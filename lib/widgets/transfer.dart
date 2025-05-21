@@ -33,11 +33,11 @@ class TransferWidget extends StatefulWidget {
   State proposalsState;
   Proposal p;
   TransferWidget(
-      {required this.initiativeState,
+      {super.key, required this.initiativeState,
       required this.org,
       required this.p,
       required this.proposalsState}) {
-    this.treasury = this.org.treasury;
+    treasury = org.treasury;
   }
 
   @override
@@ -65,7 +65,7 @@ class _TransferWidgetState extends State<TransferWidget> {
     }
   ];
 
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   // Function to validate the recipient address
   bool isValidEvmAddress(String address) {
@@ -183,12 +183,12 @@ class _TransferWidgetState extends State<TransferWidget> {
         widget.p.values.add("0");
         widget.initiativeState.widget.p.values.add("0");
       } catch (e) {
-        print("error here " + e.toString());
+        print("error here $e");
       }
     }
 
     widget.initiativeState.widget.p.type = "transfer";
-    print("calldatas " + widget.p.callDatas.toString());
+    print("calldatas ${widget.p.callDatas}");
 
     // widget.p.createdAt = DateTime.now();
     // widget.p.statusHistory.addAll({"pending": DateTime.now()});
@@ -253,7 +253,7 @@ class _TransferWidgetState extends State<TransferWidget> {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       child: Padding(
         padding: EdgeInsets.only(
             left: widget.stage == 1 ? 50.0 : 0), // Offset padding for alignment
@@ -265,7 +265,7 @@ class _TransferWidgetState extends State<TransferWidget> {
                 maxHeight: MediaQuery.of(context).size.height * 0.9),
             // Restrict height
             child: widget.stage == -1
-                ? Center(child: AwaitingConfirmation())
+                ? const Center(child: AwaitingConfirmation())
                 : widget.stage == 0
                     ? setInfo()
                     : buildTransactionSet()),

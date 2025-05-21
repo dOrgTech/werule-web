@@ -16,19 +16,19 @@ class NFT {
 class Eneftee extends StatelessWidget {
   final NFT nft;
 
-  Eneftee({super.key, required this.nft});
+  const Eneftee({super.key, required this.nft});
 
   @override
   Widget build(BuildContext context) {
     List<Color> colors = [
-      Color.fromARGB(255, 41, 28, 28),
-      Color.fromARGB(255, 37, 28, 41),
-      Color.fromARGB(255, 32, 28, 41),
-      Color.fromARGB(255, 28, 30, 41),
-      Color.fromARGB(255, 28, 40, 41),
-      Color.fromARGB(255, 30, 41, 28),
-      Color.fromARGB(255, 30, 33, 23),
-      Color.fromARGB(255, 41, 32, 28),
+      const Color.fromARGB(255, 41, 28, 28),
+      const Color.fromARGB(255, 37, 28, 41),
+      const Color.fromARGB(255, 32, 28, 41),
+      const Color.fromARGB(255, 28, 30, 41),
+      const Color.fromARGB(255, 28, 40, 41),
+      const Color.fromARGB(255, 30, 41, 28),
+      const Color.fromARGB(255, 30, 33, 23),
+      const Color.fromARGB(255, 41, 32, 28),
     ];
     String imageUrl =
         "https://media.istockphoto.com/id/1365200314/ro/fotografie/muzeul-virtual-crypto.jpg?s=1024x1024&w=is&k=20&c=Mh4TiCSM-r5H5YiLOAVv_53CI4G0V0GzlWjeqwmURNI=";
@@ -56,7 +56,7 @@ class Eneftee extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               GestureDetector(
                 onTap: () async {
                   if (await canLaunch(imageUrl)) {
@@ -68,7 +68,7 @@ class Eneftee extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(10.0)),
-                  child: Container(
+                  child: SizedBox(
                     width: 340.0,
                     height: 340.0,
                     child: Image.network(
@@ -104,11 +104,11 @@ class Eneftee extends StatelessWidget {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 14),
+                    const SizedBox(height: 14),
                     Center(
                       child: ElevatedButton(
                           onPressed: () {},
-                          child: SizedBox(
+                          child: const SizedBox(
                             width: 116,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,

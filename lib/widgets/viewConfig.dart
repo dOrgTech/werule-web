@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 class ViewConfig extends StatelessWidget {
   final Org org;
 
-  ViewConfig({required this.org});
+  const ViewConfig({super.key, required this.org});
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +28,12 @@ class ViewConfig extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("DAO configuration", style: TextStyle(fontSize: 20)),
-              SizedBox(height: 30),
+              const Text("DAO configuration", style: TextStyle(fontSize: 20)),
+              const SizedBox(height: 30),
               Row(
                 children: [
                   Text(
-                      'DAO Contract Address: ' + getShortAddress(org.address!)),
+                      'DAO Contract Address: ${getShortAddress(org.address!)}'),
                   TextButton(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: org.address!));
@@ -42,15 +42,14 @@ class ViewConfig extends StatelessWidget {
                           content: Center(
                               child: Text('Address copied to clipboard'))));
                     },
-                    child: Icon(Icons.copy),
+                    child: const Icon(Icons.copy),
                   )
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Text('Treasury Contract Address: ' +
-                      getShortAddress(org.registryAddress!)),
+                  Text('Treasury Contract Address: ${getShortAddress(org.registryAddress!)}'),
                   TextButton(
                     onPressed: () {
                       Clipboard.setData(
@@ -60,15 +59,14 @@ class ViewConfig extends StatelessWidget {
                           content: Center(
                               child: Text('Address copied to clipboard'))));
                     },
-                    child: Icon(Icons.copy),
+                    child: const Icon(Icons.copy),
                   )
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Text('Token Contract Address: ' +
-                      getShortAddress(org.govTokenAddress!)),
+                  Text('Token Contract Address: ${getShortAddress(org.govTokenAddress!)}'),
                   TextButton(
                     onPressed: () {
                       Clipboard.setData(
@@ -78,22 +76,22 @@ class ViewConfig extends StatelessWidget {
                           content: Center(
                               child: Text('Address copied to clipboard'))));
                     },
-                    child: Icon(Icons.copy),
+                    child: const Icon(Icons.copy),
                   )
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text('Quorum : ${org.quorum}%'),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text(
                   'Proposal Threshold: ${org.proposalThreshold} ${org.symbol}'),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Text('Voting Duration (minutes): ${org.votingDuration}'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('Voting Delay (minutes): ${org.votingDelay}'),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text('Execution Delay (minutes): ${org.executionDelay / 60}'),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
             ],
           ),
         ),

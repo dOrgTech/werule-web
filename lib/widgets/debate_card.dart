@@ -32,8 +32,8 @@ import '../utils/reusable.dart';
 // }
 
 List<Color> debateColors = [
-  Color.fromARGB(255, 220, 205, 255),
-  Color.fromARGB(255, 150, 187, 196),
+  const Color.fromARGB(255, 220, 205, 255),
+  const Color.fromARGB(255, 150, 187, 196),
 ];
 
 class DebateCard extends StatelessWidget {
@@ -67,7 +67,7 @@ class DebateCard extends StatelessWidget {
               children: [
                 Padding(
                     padding: const EdgeInsets.only(left: 25.0, right: 40),
-                    child: Container(
+                    child: SizedBox(
                         width: 40,
                         child: TextButton(
                             onPressed: () {
@@ -80,21 +80,21 @@ class DebateCard extends StatelessWidget {
                                           child: Text(
                                               'Debate ID copied to clipboard'))));
                             },
-                            child: Icon(Icons.copy)))),
+                            child: const Icon(Icons.copy)))),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(debate.title),
                   ),
                 ),
-                Container(
+                SizedBox(
                     width: 230,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           getShortAddress(debate.rootArgument.author),
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: Color.fromARGB(255, 235, 235, 235)),
                         ),
                       ],
@@ -104,11 +104,11 @@ class DebateCard extends StatelessWidget {
                     child: Center(
                         child: Text(
                       DateFormat('M/d/yyyy HH:mm').format(DateTime.now()),
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 14,
                           color: Color.fromARGB(255, 235, 235, 235)),
                     ))),
-                SizedBox(
+                const SizedBox(
                     width: 120,
                     child: Center(
                         child: Text(
@@ -116,9 +116,9 @@ class DebateCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13),
                     ))),
-                SizedBox(width: 30),
+                const SizedBox(width: 30),
                 Container(
-                    padding: EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.only(right: 10),
                     height: 22,
                     width: 80,
                     child: Center(

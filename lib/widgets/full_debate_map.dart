@@ -10,10 +10,10 @@ class FullDebateMapPopup extends StatelessWidget {
   final Function(Argument)? onArgumentSelected;
 
   const FullDebateMapPopup({
-    Key? key,
+    super.key,
     required this.debate,
     this.onArgumentSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,7 +6,7 @@ import '../screens/proposalDetails.dart';
 class ActionLabel extends StatefulWidget {
   final String status;
 
-  ActionLabel({
+  const ActionLabel({super.key, 
     required this.status,
   });
 

@@ -26,7 +26,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 800),
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -76,7 +76,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
             child: SizedBox(
               width: 600,
               child: widget.loading
-                  ? SizedBox(
+                  ? const SizedBox(
                       height: 100,
                       width: 100,
                       child: CircularProgressIndicator(
@@ -95,15 +95,15 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
                               opacity: _opacityAnimation.value,
                               child: Transform.scale(
                                 scale: _scaleAnimation.value,
-                                child: MediaQuery(
-                                  data: MediaQueryData(textScaleFactor: 2.0),
+                                child: const MediaQuery(
+                                  data: MediaQueryData(textScaler: TextScaler.linear(2.0)),
                                   child: Logo(),
                                 ),
                               ),
                             );
                           },
                         ),
-                        SizedBox(height: 80),
+                        const SizedBox(height: 80),
                         AnimatedBuilder(
                           animation: _controller,
                           builder: (context, child) {
@@ -111,7 +111,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
                               opacity: _opacityAnimation.value,
                               child: Transform.scale(
                                 scale: _scaleAnimation.value,
-                                child: Text(
+                                child: const Text(
                                   "Decentralized Governance ",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(fontSize: 25),
@@ -120,7 +120,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
                             );
                           },
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         AnimatedBuilder(
                           animation: _controller,
                           builder: (context, child) {
@@ -128,7 +128,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
                               opacity: _opacityAnimation.value,
                               child: Transform.scale(
                                 scale: _scaleAnimation.value,
-                                child: Text(
+                                child: const Text(
                                   "for Humans and Machines",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(fontSize: 18),
@@ -137,7 +137,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
                             );
                           },
                         ),
-                        SizedBox(height: 250),
+                        const SizedBox(height: 250),
                         AnimatedBuilder(
                           animation: _controller,
                           builder: (context, child) {
@@ -148,7 +148,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
                                 child: SizedBox(
                                   width: 200,
                                   child: TextField(
-                                    decoration: InputDecoration(
+                                    decoration: const InputDecoration(
                                       hintText: "Got a code?",
                                     ),
                                     onChanged: _handleCodeEntered,
@@ -158,7 +158,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
                             );
                           },
                         ),
-                        SizedBox(height: 100),
+                        const SizedBox(height: 100),
                       ],
                     ),
             ),

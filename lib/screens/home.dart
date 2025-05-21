@@ -60,7 +60,7 @@ class _HomeState extends State<Home> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(15),
-                        child: Container(
+                        child: SizedBox(
                           height: 50,
                           width: 50,
                           child: FutureBuilder<Uint8List>(
@@ -174,7 +174,7 @@ class _HomeState extends State<Home> {
         ]),
         const SizedBox(height: 25),
         // MemeArrowWidget()
-        SizedBox(
+        const SizedBox(
           width: 1200,
           height: 300,
           child: PlaylistWidget(playlist:
@@ -221,7 +221,7 @@ class _HomeState extends State<Home> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(15),
-                        child: Container(
+                        child: SizedBox(
                           height: 50,
                           width: 50,
                           child: FutureBuilder<Uint8List>(

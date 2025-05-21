@@ -9,7 +9,7 @@ class Screen1DaoType extends StatelessWidget {
   final DaoConfig daoConfig;
   final VoidCallback onNext;
 
-  Screen1DaoType({required this.daoConfig, required this.onNext});
+  const Screen1DaoType({super.key, required this.daoConfig, required this.onNext});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,7 @@ class Screen1DaoType extends StatelessWidget {
                                           isRepeatingAnimation: false,
                                           repeatForever: false,
                                           animatedTexts: [
-                                            ColorizeAnimatedText('On-chain',
+                                            ColorizeAnimatedText('Full DAO',
                                                 textStyle: meniu,
                                                 textDirection:
                                                     TextDirection.ltr,
@@ -125,9 +125,9 @@ class Screen1DaoType extends StatelessWidget {
                             border: Border.all(
                                 color: const Color.fromARGB(255, 56, 56, 56)),
                           ),
-                          child: Column(
+                          child: const Column(
                             mainAxisAlignment: MainAxisAlignment.start,
-                            children: const [
+                            children: [
                               SizedBox(height: 38),
                               Icon(Icons.forum, size: 40),
                               SizedBox(height: 14),

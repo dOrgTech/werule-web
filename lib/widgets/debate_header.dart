@@ -15,11 +15,11 @@ class DebateHeader extends StatefulWidget {
   final Function(Argument) onArgumentSelected;
 
   const DebateHeader({
-    Key? key,
+    super.key,
     required this.debate,
     required this.currentArgument,
     required this.onArgumentSelected,
-  }) : super(key: key);
+  });
 
   @override
   _DebateHeaderState createState() => _DebateHeaderState();
@@ -64,7 +64,7 @@ class _DebateHeaderState extends State<DebateHeader> {
               child: Stack(
                 children: [
                   // 1) Our fade-gradient background
-                  Positioned.fill(
+                  const Positioned.fill(
                     child: _FadeGradientBackground(),
                   ),
 
@@ -129,7 +129,7 @@ class _DebateHeaderState extends State<DebateHeader> {
 
     // The subtree is forcibly "centered" at (1000, 1000) in the 2000x2000 canvas,
     // so its bounding box center is effectively (1000, 1000).
-    final contentCenterAbsolute = const Offset(1000, 1000);
+    const contentCenterAbsolute = Offset(1000, 1000);
 
     // The viewport center is half its width/height
     final centerOfViewport =
@@ -216,7 +216,7 @@ class _DebateHeaderState extends State<DebateHeader> {
         decoration: BoxDecoration(
           color: boxColor,
           border: isSelected
-              ? Border.all(color: Color.fromARGB(255, 255, 239, 254), width: 2)
+              ? Border.all(color: const Color.fromARGB(255, 255, 239, 254), width: 2)
               : null,
           borderRadius: BorderRadius.circular(4.0),
         ),
@@ -274,7 +274,7 @@ class _DebateHeaderState extends State<DebateHeader> {
 /// A dark gradient background that fades ~50px from the edges
 /// to transparent, using a radial gradient mask.
 class _FadeGradientBackground extends StatelessWidget {
-  const _FadeGradientBackground({Key? key}) : super(key: key);
+  const _FadeGradientBackground({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +311,7 @@ class _FadeGradientBackground extends StatelessWidget {
             return RadialGradient(
               center: Alignment.center,
               radius: 2.0, // cover entire area
-              colors: [
+              colors: const [
                 Colors.white,
                 Colors.white,
                 Colors.transparent,

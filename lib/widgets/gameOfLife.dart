@@ -7,6 +7,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class GameOfLife extends StatefulWidget {
+  const GameOfLife({super.key});
+
   @override
   _GameOfLifeState createState() => _GameOfLifeState();
 }
@@ -45,7 +47,7 @@ class _GameOfLifeState extends State<GameOfLife> {
             rows, (_) => Random().nextDouble() < initialProbability ? 1 : 0));
 
     timer =
-        Timer.periodic(Duration(milliseconds: 120), (Timer t) => _updateGrid());
+        Timer.periodic(const Duration(milliseconds: 120), (Timer t) => _updateGrid());
   }
 
   void _updateGrid() {
@@ -98,10 +100,6 @@ class _GameOfLifeState extends State<GameOfLife> {
   @override
   Widget build(BuildContext context) {
     // Ensure grid is initialized before building the widget
-    if (grid == null) {
-      return Center(child: CircularProgressIndicator());
-    }
-
     return Scaffold(
       body: CustomPaint(
         painter: GameOfLifePainter(grid, resolution),
@@ -122,9 +120,9 @@ class GameOfLifePainter extends CustomPainter {
   final Paint borderPaint;
 
   GameOfLifePainter(this.grid, this.resolution)
-      : cellPaint = Paint()..color = Color.fromARGB(255, 109, 109, 109),
+      : cellPaint = Paint()..color = const Color.fromARGB(255, 109, 109, 109),
         borderPaint = Paint()
-          ..color = Color.fromARGB(255, 190, 190, 190); // Border color
+          ..color = const Color.fromARGB(255, 190, 190, 190); // Border color
 
   @override
   void paint(Canvas canvas, Size size) {

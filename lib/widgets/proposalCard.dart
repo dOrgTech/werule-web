@@ -42,7 +42,7 @@ class _ProposalCardState extends State<ProposalCard> {
   }
 
   void _startAutoUpdate() {
-    _timer = Timer.periodic(Duration(seconds: 5), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       setState(() {}); // Triggers a rebuild to reflect the updated status
     });
   }
@@ -72,17 +72,14 @@ class _ProposalCardState extends State<ProposalCard> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6),
       child: Container(
         decoration: BoxDecoration(
-            color: Color.fromARGB(255, 78, 78, 78),
+            color: const Color.fromARGB(255, 78, 78, 78),
             borderRadius: BorderRadius.circular(8),
             border:
-                Border.all(width: 0.2, color: Color.fromARGB(255, 43, 43, 43))),
+                Border.all(width: 0.2, color: const Color.fromARGB(255, 43, 43, 43))),
         child: InkWell(
           onTap: () {
             print("tapped on proposalCard");
-            context.go("/" +
-                widget.org.address! +
-                "/" +
-                widget.proposal.id.toString());
+            context.go("/${widget.org.address!}/${widget.proposal.id}");
           },
           child: SizedBox(
             height: 44,
@@ -91,7 +88,7 @@ class _ProposalCardState extends State<ProposalCard> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 25.0),
-                  child: Container(
+                  child: SizedBox(
                       width: 90, child: Text(widget.proposal.id.toString())),
                 ),
                 Expanded(
@@ -99,16 +96,16 @@ class _ProposalCardState extends State<ProposalCard> {
                     padding: const EdgeInsets.only(left: 1.0),
                     child: Text(
                       widget.proposal.name!,
-                      style: TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
                 ),
-                Container(
+                SizedBox(
                     width: 180,
                     child: widget.option == 0
-                        ? Icon(Icons.thumb_down,
+                        ? const Icon(Icons.thumb_down,
                             color: Color.fromARGB(255, 238, 129, 121))
-                        : Icon(Icons.thumb_up_sharp,
+                        : const Icon(Icons.thumb_up_sharp,
                             color: Color.fromARGB(255, 93, 223, 162))),
                 SizedBox(
                     width: 150,
@@ -116,17 +113,17 @@ class _ProposalCardState extends State<ProposalCard> {
                         child: Text(
                       DateFormat('M/1d/yyyy HH:mm')
                           .format(widget.proposal.createdAt!),
-                      style: TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14),
                     ))),
                 SizedBox(
                     width: 120,
                     child: Center(
                         child: Text(
                       widget.proposal.type!,
-                      style: TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 12),
                     ))),
                 Container(
-                    padding: EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.only(right: 10),
                     height: 20,
                     width: 110,
                     child: Center(
@@ -146,10 +143,7 @@ class _ProposalCardState extends State<ProposalCard> {
         elevation: 3,
         child: InkWell(
           onTap: () {
-            context.go("/" +
-                widget.org.address! +
-                "/" +
-                widget.proposal.id.toString());
+            context.go("/${widget.org.address!}/${widget.proposal.id}");
           },
           child: SizedBox(
             height: 44,
@@ -158,7 +152,7 @@ class _ProposalCardState extends State<ProposalCard> {
               children: [
                 Padding(
                     padding: const EdgeInsets.only(left: 25.0, right: 40),
-                    child: Container(
+                    child: SizedBox(
                         width: 40,
                         child: TextButton(
                             onPressed: () {
@@ -171,21 +165,21 @@ class _ProposalCardState extends State<ProposalCard> {
                                           child: Text(
                                               'Proposal ID copied to clipboard'))));
                             },
-                            child: Icon(Icons.copy)))),
+                            child: const Icon(Icons.copy)))),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(widget.proposal.name!),
                   ),
                 ),
-                Container(
+                SizedBox(
                     width: 230,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           getShortAddress(widget.proposal.author!),
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: Color.fromARGB(255, 235, 235, 235)),
                         ),
                       ],
@@ -196,7 +190,7 @@ class _ProposalCardState extends State<ProposalCard> {
                         child: Text(
                       DateFormat('M/d/yyyy HH:mm')
                           .format(widget.proposal.createdAt!),
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 14,
                           color: Color.fromARGB(255, 235, 235, 235)),
                     ))),
@@ -206,10 +200,10 @@ class _ProposalCardState extends State<ProposalCard> {
                         child: Text(
                       widget.proposal.type!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13),
+                      style: const TextStyle(fontSize: 13),
                     ))),
                 Container(
-                    padding: EdgeInsets.only(right: 10),
+                    padding: const EdgeInsets.only(right: 10),
                     height: 20,
                     width: 110,
                     child: Center(

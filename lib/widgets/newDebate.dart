@@ -16,8 +16,7 @@ class NewDebate extends StatefulWidget {
   int stage = 0;
   State proposalsState;
   bool isSetInfo = true;
-  NewDebate({Key? key, required this.proposalsState, required this.org})
-      : super(key: key);
+  NewDebate({super.key, required this.proposalsState, required this.org});
 
   @override
   State<NewDebate> createState() => _DebateState();
@@ -129,7 +128,7 @@ class _DebateState extends State<NewDebate> {
                           },
                         ),
                       ),
-                      SizedBox(width: 40),
+                      const SizedBox(width: 40),
                       SubmitButton(
                         submit: () async {
                           Argument root = Argument(
@@ -226,14 +225,14 @@ class _SubmitButtonState extends State<SubmitButton> {
       width: 160, // Ensure consistent width
       child: TextButton(
         style: ButtonStyle(
-          overlayColor: MaterialStateProperty.all<Color>(
+          overlayColor: WidgetStateProperty.all<Color>(
               Theme.of(context).indicatorColor),
           backgroundColor: widget.isSubmitEnabled
-              ? MaterialStateProperty.all<Color>(
+              ? WidgetStateProperty.all<Color>(
                   Theme.of(context).indicatorColor)
-              : MaterialStateProperty.all<Color>(Colors.grey), // Disabled color
-          elevation: MaterialStateProperty.all(1.0),
-          shape: MaterialStateProperty.all(
+              : WidgetStateProperty.all<Color>(Colors.grey), // Disabled color
+          elevation: WidgetStateProperty.all(1.0),
+          shape: WidgetStateProperty.all(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(7.0),
             ),
@@ -260,7 +259,7 @@ class AwaitingConfirmation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 500,
         height: 500,
         child: Column(
@@ -271,8 +270,8 @@ class AwaitingConfirmation extends StatelessWidget {
               "Transaction pending...",
               style: TextStyle(fontSize: 26),
             ),
-            SizedBox(height: 20),
-            SizedBox(height: 50),
+            const SizedBox(height: 20),
+            const SizedBox(height: 50),
             SizedBox(
               height: 250,
               width: 250,

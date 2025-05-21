@@ -20,7 +20,7 @@ class Project{
     int random = Random().nextInt(331) + 90;
     amountInEscrow = random * 100;
     creationDate=DateTime.now();
-    expiresAt=creationDate!.add(Duration(days: 30));
+    expiresAt=creationDate!.add(const Duration(days: 30));
     acceptedTokens=[
 
     

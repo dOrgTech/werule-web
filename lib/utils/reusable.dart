@@ -17,11 +17,11 @@ class OldSchoolLink extends StatelessWidget {
   final TextStyle? textStyle;
 
   const OldSchoolLink({
-    Key? key,
+    super.key,
     required this.text,
     required this.url,
     this.textStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +37,7 @@ class OldSchoolLink extends StatelessWidget {
         child: Text(
           displayText,
           style: textStyle ??
-              TextStyle(
+              const TextStyle(
                 fontSize: 12,
                 decoration: TextDecoration.underline,
                 color: Color.fromARGB(255, 168, 216, 255),
@@ -84,23 +84,23 @@ String formatTotalSupply(String totalSupply, int decimals) {
   } else if (value < 1000000) {
     double result = value / 1000;
     return result == result.floor()
-        ? result.toStringAsFixed(0) + 'K'
-        : result.toStringAsFixed(1) + 'K';
+        ? '${result.toStringAsFixed(0)}K'
+        : '${result.toStringAsFixed(1)}K';
   } else if (value < 1000000000) {
     double result = value / 1000000;
     return result == result.floor()
-        ? result.toStringAsFixed(0) + 'M'
-        : result.toStringAsFixed(1) + 'M';
+        ? '${result.toStringAsFixed(0)}M'
+        : '${result.toStringAsFixed(1)}M';
   } else if (value < 1000000000000) {
     double result = value / 1000000000;
     return result == result.floor()
-        ? result.toStringAsFixed(0) + 'B'
-        : result.toStringAsFixed(1) + 'B';
+        ? '${result.toStringAsFixed(0)}B'
+        : '${result.toStringAsFixed(1)}B';
   } else {
     double result = value / 1000000000000;
     return result == result.floor()
-        ? result.toStringAsFixed(0) + 'T'
-        : result.toStringAsFixed(1) + 'T';
+        ? '${result.toStringAsFixed(0)}T'
+        : '${result.toStringAsFixed(1)}T';
   }
 }
 
@@ -156,14 +156,14 @@ String shortenString(String input) {
   if (input.length <= 8) {
     return input;
   } else {
-    return input.substring(0, 5) + "..." + input.substring(input.length - 5);
+    return "${input.substring(0, 5)}...${input.substring(input.length - 5)}";
   }
 }
 
 String generateWalletAddress() {
   final random = Random();
-  final characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  final prefix = 'tz1';
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const prefix = 'tz1';
   final length = 36 - prefix.length;
   final randomString = String.fromCharCodes(Iterable.generate(
       length, (_) => characters.codeUnitAt(random.nextInt(characters.length))));
@@ -172,8 +172,8 @@ String generateWalletAddress() {
 
 String generateContractAddress() {
   final random = Random();
-  final characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  final prefix = 'KT1';
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const prefix = 'KT1';
   final length = 36 - prefix.length;
   final randomString = String.fromCharCodes(Iterable.generate(
       length, (_) => characters.codeUnitAt(random.nextInt(characters.length))));

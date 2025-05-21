@@ -42,7 +42,7 @@ class _DAOState extends State<DAO> {
   Widget build(BuildContext context) {
     widget.org.proposals = [];
     final stream = FirebaseFirestore.instance
-        .collection("idaos" + Human().chain.name)
+        .collection("idaos${Human().chain.name}")
         .doc(widget.org.address!)
         .snapshots()
         .asyncMap((snapshot) async {
@@ -94,7 +94,7 @@ class _DAOState extends State<DAO> {
               return Center(child: Text("Error: ${snapshot.error}"));
             }
             if (!snapshot.hasData) {
-              return Center(
+              return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -106,7 +106,7 @@ class _DAOState extends State<DAO> {
               );
             }
             if (snapshot.data == null) {
-              return Center(
+              return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -119,9 +119,7 @@ class _DAOState extends State<DAO> {
             }
 
             final dao = snapshot.data!;
-            if (dao.debatesOnly == null) {
-              dao.debatesOnly = dao.name.contains("Org");
-            }
+            dao.debatesOnly ??= dao.name.contains("Org");
 
             return dao.debatesOnly! ? debatesWide(dao) : fullWide(dao);
           }),
@@ -137,7 +135,7 @@ class _DAOState extends State<DAO> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize
@@ -155,7 +153,7 @@ class _DAOState extends State<DAO> {
                   color: Theme.of(context).cardColor,
                   child: TabBar(
                     tabs: [
-                      menuItem(MenuItem("Overview", Icon(Icons.dashboard))),
+                      menuItem(MenuItem("Overview", const Icon(Icons.dashboard))),
                       menuItem(MenuItem("Debates", const Icon(Icons.forum))),
                       // menuItem(MenuItem("Treasury",const Icon(Icons.money))),
                       menuItem(MenuItem("Members", const Icon(Icons.people))),
@@ -180,7 +178,7 @@ class _DAOState extends State<DAO> {
                                   builder: (context, snapshot) {
                                     return snapshot.connectionState ==
                                             ConnectionState.waiting
-                                        ? Center(
+                                        ? const Center(
                                             child: SizedBox(
                                                 width: 100,
                                                 height: 100,
@@ -208,7 +206,7 @@ class _DAOState extends State<DAO> {
                                                           widget.proposalHash,
                                                     ),
                                                   )
-                                                : Center(
+                                                : const Center(
                                                     child: Text(
                                                         'No matching Proposal or Debate found'),
                                                   );
@@ -238,7 +236,7 @@ class _DAOState extends State<DAO> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize
@@ -258,7 +256,7 @@ class _DAOState extends State<DAO> {
                     tabs: [
                       menuItem(MenuItem(
                           "Overview",
-                          Icon(
+                          const Icon(
                             Icons.dashboard,
                           ))),
 
@@ -288,7 +286,7 @@ class _DAOState extends State<DAO> {
                                   builder: (context, snapshot) {
                                     return snapshot.connectionState ==
                                             ConnectionState.waiting
-                                        ? Center(
+                                        ? const Center(
                                             child: SizedBox(
                                                 width: 100,
                                                 height: 100,
@@ -316,7 +314,7 @@ class _DAOState extends State<DAO> {
                                                           widget.proposalHash,
                                                     ),
                                                   )
-                                                : Center(
+                                                : const Center(
                                                     child: Text(
                                                         'No matching Proposal or Debate found'),
                                                   );

@@ -18,22 +18,22 @@ class _MembersState extends State<Members> {
     return ListView(
       // mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         SizedBox(
             height: 80,
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: EdgeInsets.only(left: 50),
+                    padding: const EdgeInsets.only(left: 50),
                     width: 500,
                     child: TextField(
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(width: 0.1),
+                          borderSide: const BorderSide(width: 0.1),
                         ),
-                        prefixIcon: Icon(Icons.search),
+                        prefixIcon: const Icon(Icons.search),
                         hintText: 'Find user by address',
                         // other properties
                       ),

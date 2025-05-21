@@ -17,12 +17,12 @@ class ACI extends StatefulWidget {
   InitiativeState initiativeState;
   bool isSetInfo = false;
   ACI({
-    Key? key,
+    super.key,
     required this.proposalsState,
     required this.initiativeState,
     required this.p,
     required this.org,
-  }) : super(key: key) {
+  }) {
     p.type = "contract call";
   }
 
@@ -250,7 +250,7 @@ class _ACIState extends State<ACI> {
 
 class ContractInteractionWidget extends StatefulWidget {
   Proposal p;
-  ContractInteractionWidget({required this.p});
+  ContractInteractionWidget({super.key, required this.p});
   @override
   _ContractInteractionWidgetState createState() =>
       _ContractInteractionWidgetState();
@@ -308,7 +308,7 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
     setState(() {
       _isLoading = true;
     });
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     setState(() {
       _isLoading = false;
       _isFirstStep = false;
@@ -360,10 +360,10 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
         controller: _paramControllers[index],
         decoration: InputDecoration(
           labelText: '$name ($type)',
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
         ),
         keyboardType: type == 'number'
-            ? TextInputType.numberWithOptions(decimal: true)
+            ? const TextInputType.numberWithOptions(decimal: true)
             : TextInputType.text,
         inputFormatters: type == 'number'
             ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
@@ -380,7 +380,7 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
       children: [
         TextFormField(
           controller: _contractController,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Destination Contract Address',
             border: OutlineInputBorder(),
           ),
@@ -389,20 +389,20 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
             FilteringTextInputFormatter.allow(RegExp(r'[a-fA-F0-9x]')),
           ],
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _valueController,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Attached Value',
             border: OutlineInputBorder(),
           ),
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
           ],
           onChanged: (_) => _validateForm(),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -413,25 +413,25 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
         TextFormField(
           controller: _contractController,
           enabled: false,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Destination Contract Address (Locked)',
             border: OutlineInputBorder(),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         TextFormField(
           controller: _valueController,
           enabled: false,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Attached Value (Locked)',
             border: OutlineInputBorder(),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         _isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : DropdownButtonFormField<String>(
-                hint: Text('Select Function'),
+                hint: const Text('Select Function'),
                 value: _selectedFunction,
                 items: _functionParameters.keys
                     .map((function) => DropdownMenuItem(
@@ -453,7 +453,7 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
               .entries
               .map((entry) => _buildParameterInput(
                   entry.value['name']!, entry.value['type']!, entry.key))
-              .toList(),
+              ,
       ],
     );
   }
@@ -479,7 +479,7 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: _isLoading
-                          ? Center(child: CircularProgressIndicator())
+                          ? const Center(child: CircularProgressIndicator())
                           : _isFirstStep
                               ? _buildFirstStep()
                               : _buildSecondStep(),
@@ -495,16 +495,16 @@ class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
                     children: isSetInfo
                         ? []
                         : [
-                            if (_isFirstStep) Spacer(),
+                            if (_isFirstStep) const Spacer(),
                             _isFirstStep
                                 ? ElevatedButton(
                                     onPressed:
                                         _isFormValid ? _goToNextStep : null,
-                                    child: Text('Next'),
+                                    child: const Text('Next'),
                                   )
                                 : TextButton(
                                     onPressed: _goBack,
-                                    child: Text('< Back'),
+                                    child: const Text('< Back'),
                                   ),
                             if (!_isFirstStep)
                               SubmitButton(

@@ -17,12 +17,11 @@ class RegistryProposalWidget extends StatefulWidget {
   InitiativeState initiativeState;
   bool isSetInfo = false;
   RegistryProposalWidget(
-      {Key? key,
+      {super.key,
       required this.initiativeState,
       required this.proposalsState,
       required this.p,
-      required this.org})
-      : super(key: key) {
+      required this.org}) {
     p.type = "registry";
   }
 
@@ -221,14 +220,14 @@ class _SubmitButtonState extends State<SubmitButton> {
       width: 160, // Ensure consistent width
       child: TextButton(
         style: ButtonStyle(
-          overlayColor: MaterialStateProperty.all<Color>(
+          overlayColor: WidgetStateProperty.all<Color>(
               Theme.of(context).indicatorColor),
           backgroundColor: widget.isSubmitEnabled
-              ? MaterialStateProperty.all<Color>(
+              ? WidgetStateProperty.all<Color>(
                   Theme.of(context).indicatorColor)
-              : MaterialStateProperty.all<Color>(Colors.grey), // Disabled color
-          elevation: MaterialStateProperty.all(1.0),
-          shape: MaterialStateProperty.all(
+              : WidgetStateProperty.all<Color>(Colors.grey), // Disabled color
+          elevation: WidgetStateProperty.all(1.0),
+          shape: WidgetStateProperty.all(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(7.0),
             ),
@@ -255,7 +254,7 @@ class AwaitingConfirmation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 500,
         height: 500,
         child: Column(
@@ -266,8 +265,8 @@ class AwaitingConfirmation extends StatelessWidget {
               "Transaction pending...",
               style: TextStyle(fontSize: 26),
             ),
-            SizedBox(height: 20),
-            SizedBox(height: 50),
+            const SizedBox(height: 20),
+            const SizedBox(height: 50),
             SizedBox(
               height: 250,
               width: 250,

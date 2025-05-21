@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class Screen9DeploymentComplete extends StatelessWidget {
   final String daoName;
   final VoidCallback onGoToDAO;
-  Screen9DeploymentComplete({required this.daoName, required this.onGoToDAO});
+  const Screen9DeploymentComplete({super.key, required this.daoName, required this.onGoToDAO});
   @override
   Widget build(BuildContext context) {
     return Center(

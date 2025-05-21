@@ -10,7 +10,7 @@ class WaitingOnChain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 500,
         height: 500,
         child: Column(
@@ -21,8 +21,8 @@ class WaitingOnChain extends StatelessWidget {
               "Transaction pending...",
               style: TextStyle(fontSize: 26),
             ),
-            SizedBox(height: 20),
-            SizedBox(height: 50),
+            const SizedBox(height: 20),
+            const SizedBox(height: 50),
             Opacity(
               opacity: 0.7,
               child: SizedBox(

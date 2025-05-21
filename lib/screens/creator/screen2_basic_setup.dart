@@ -16,11 +16,11 @@ class Screen2BasicSetup extends StatefulWidget {
   bool memeNotShown = true;
 
   Screen2BasicSetup({
-    Key? key,
+    super.key,
     required this.daoConfig,
     required this.onNext,
     required this.onBack,
-  }) : super(key: key);
+  });
 
   @override
   _Screen2BasicSetupState createState() => _Screen2BasicSetupState();
@@ -88,19 +88,28 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
             int.tryParse(_numberOfDecimalsController.text);
         widget.daoConfig.nonTransferrable = _nonTransferrable;
         
+        // Clear wrapped token fields if switching back to standard
         widget.daoConfig.underlyingTokenAddress = null;
         widget.daoConfig.wrappedTokenSymbol = null;
         widget.daoConfig.wrappedTokenName = null;
+        // Note: totalSupply and members for standard token are handled in Screen5
 
-      } else { 
+      } else { // DaoTokenDeploymentMechanism.wrapExistingToken
         widget.daoConfig.underlyingTokenAddress =
             _underlyingTokenAddressController.text;
         widget.daoConfig.wrappedTokenSymbol =
             _wrappedTokenSymbolController.text.toUpperCase();
         widget.daoConfig.wrappedTokenName = "Wrapped ${widget.daoConfig.wrappedTokenSymbol ?? "Token"}";
 
+        // Clear standard token specific fields
         widget.daoConfig.tokenSymbol = null;
-        widget.daoConfig.numberOfDecimals = null;
+        widget.daoConfig.numberOfDecimals = null; // For wrapped, decimals are from underlying.
+                                                 // A default might be used for the Org's Token object display.
+
+        // Crucially, clear members and set total supply for wrapped token type
+        widget.daoConfig.members = []; 
+        widget.daoConfig.totalSupply = "0"; // Wrapped tokens typically start with 0 supply.
+                                           // The actual total supply depends on wrapped amounts.
       }
       widget.onNext();
     }
@@ -113,17 +122,15 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
         padding: const EdgeInsets.symmetric(horizontal: 70),
         child: Form(
           key: _formKey,
-          // The main Column is wrapped in a SizedBox to control its overall width and centering.
-          child: Center( // Added Center to ensure the SizedBox itself is centered if screen is wider.
+          child: Center( 
             child: SizedBox(
               width: 500, 
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center, // Center children like Text, RadioListTile group
+                crossAxisAlignment: CrossAxisAlignment.center, 
                 children: [
                   Text("Organization identity",
                       style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 30),
-                  // DAO Name and Description take full width of the 500px SizedBox
                   TextFormField(
                     controller: _daoNameController,
                     maxLength: 38,
@@ -148,9 +155,8 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 10),
                   
-                  // Radio buttons are best centered using their own SizedBox or by Column's crossAxisAlignment
                   SizedBox( 
-                    width: 380, // Or adjust to desired width for radio buttons
+                    width: 380, 
                     child: Column(
                       children: [
                         RadioListTile<DaoTokenDeploymentMechanism>(
@@ -179,19 +185,14 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Conditional UI for token inputs
-                  // This Row should define its own width or be constrained appropriately,
-                  // not necessarily the full 500px.
-                  // We can let the Row be as wide as its children, and center the Row itself.
                   if (_selectedMechanism ==
                       DaoTokenDeploymentMechanism.deployNewStandardToken) ...[
-                    // UI for Deploy New Standard Token
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center, // Center the Row's content
+                      mainAxisAlignment: MainAxisAlignment.center, 
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox( // Constrain width of the Ticker Symbol field
-                          width: 150, // Example width
+                        SizedBox( 
+                          width: 150, 
                           child: TextFormField( 
                             inputFormatters: [
                               FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
@@ -204,15 +205,15 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                             validator: (value) { 
                               if (_selectedMechanism == DaoTokenDeploymentMechanism.deployNewStandardToken &&
                                   (value == null || value.isEmpty)) {
-                                return 'Ticker required';
+                                return 'Ticker required'; 
                               }
                               return null;
                             },
                           ),
                         ),
                         const SizedBox(width: 20),
-                        SizedBox( // Constrain width of the Decimals field
-                          width: 150, // Example width
+                        SizedBox( 
+                          width: 150, 
                           child: TextFormField( 
                             onChanged: (value) {
                               int? decimals = int.tryParse(value);
@@ -260,7 +261,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text('Using a transferable governance token is not compatible with the reputation-based logical architecture of the On-Chain Jurisdiction.\n\nThis action is non-reversible.', style: TextStyle(height: 1.5)),
-                                    SizedBox(height: 64),
+                                    const SizedBox(height: 64),
                                     RichText(text: TextSpan(
                                       style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 255, 255, 255)),
                                       children: [
@@ -276,10 +277,10 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                                 )),
                               ),
                               actionsAlignment: MainAxisAlignment.center,
-                              actionsPadding: EdgeInsets.all(40),
+                              actionsPadding: const EdgeInsets.all(40),
                               actions: [
-                                TextButton(onPressed: () => Navigator.of(context).pop(), child: Text("< Back")),
-                                SizedBox(width: 180),
+                                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text("< Back")),
+                                const SizedBox(width: 180),
                                 ElevatedButton(onPressed: () { setState(() { _nonTransferrable = value!; }); Navigator.of(context).pop(); }, child: const Text('I understand')),
                               ],
                             ));
@@ -290,15 +291,14 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                       ),
                     ),
                   ] else if (_selectedMechanism == DaoTokenDeploymentMechanism.wrapExistingToken) ...[
-                    // UI for Wrap Existing Token
                     SizedBox(
                       height: 115,
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center, // Center the Row's content
+                        mainAxisAlignment: MainAxisAlignment.center, 
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox( // Constrain width of the Address field
-                            width: 380, // Adjusted to be similar to Ticker Symbol field width
+                          SizedBox( 
+                            width: 380, 
                             child: TextFormField(
                               controller: _underlyingTokenAddressController,
                               maxLength: 42,
@@ -315,8 +315,8 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                             ),
                           ),
                           const SizedBox(width: 20),
-                          SizedBox( // Constrain width of the Wrapped Symbol field
-                            width: 100, // Adjusted to be similar to Decimals field width
+                          SizedBox( 
+                            width: 100, 
                             child: TextFormField(
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
@@ -342,7 +342,6 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   ],
                  
                   const SizedBox(height: 56),
-                  // This Row for buttons can take the full 500px width (or rather, its parent SizedBox sets this)
                   Row( 
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -356,7 +355,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                       ),
                     ],
                   ),
-                  if (_selectedMechanism == DaoTokenDeploymentMechanism.wrapExistingToken && false)
+                  if (_selectedMechanism == DaoTokenDeploymentMechanism.wrapExistingToken && false) // This condition is always false, can be removed if not for future use
                     Padding(
                       padding: const EdgeInsets.only(top: 12.0),
                       child: Text(

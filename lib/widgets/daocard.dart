@@ -18,7 +18,7 @@ class DAOCard extends StatelessWidget {
     Widget copilas = org.debatesOnly == false
         ? ShaderMask(
             shaderCallback: (Rect bounds) {
-              return LinearGradient(
+              return const LinearGradient(
                 colors: 
                   [
                   Color.fromARGB(255, 205, 176, 96), 
@@ -31,14 +31,14 @@ class DAOCard extends StatelessWidget {
               ).createShader(bounds);
             },
             blendMode: BlendMode.srcIn,
-            child: Icon(
+            child: const Icon(
               Icons.security,
               size: 25,
             ),
           )
         : ShaderMask(
             shaderCallback: (Rect bounds) {
-              return LinearGradient(
+              return const LinearGradient(
                 colors: [
                   Color.fromARGB(255, 156, 214, 229), // Dominant color
                   Color.fromARGB(255, 206, 206, 206), // Gradient to white
@@ -59,19 +59,19 @@ class DAOCard extends StatelessWidget {
           ),
           child: TextButton(
             style: ButtonStyle(
-              overlayColor: MaterialStateProperty.all<Color>(
+              overlayColor: WidgetStateProperty.all<Color>(
                   Theme.of(context).indicatorColor.withOpacity(0.1)),
-              backgroundColor: MaterialStateProperty.all<Color>(
+              backgroundColor: WidgetStateProperty.all<Color>(
                   Theme.of(context).canvasColor.withOpacity(0.1)),
-              elevation: MaterialStateProperty.all(0.6),
-              shape: MaterialStateProperty.all(
+              elevation: WidgetStateProperty.all(0.6),
+              shape: WidgetStateProperty.all(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(7.0),
                 ),
               ),
             ),
             onPressed: () {
-              context.go("/" + org.address!);
+              context.go("/${org.address!}");
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 14.0),
@@ -85,7 +85,7 @@ class DAOCard extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 8.0, top: 4),
                       child: Column(
                         children: [
-                          Container(
+                          SizedBox(
                             height: 32,
                             width: 32,
                             child: FutureBuilder<Uint8List>(
@@ -120,11 +120,11 @@ class DAOCard extends StatelessWidget {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 20)),
                           ),
-                          SizedBox(height: 25),
+                          const SizedBox(height: 25),
                           Text(org.holders.toString(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 20)),
-                          Text(
+                          const Text(
                             "Members",
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -152,10 +152,9 @@ class DAOCard extends StatelessWidget {
                                     child: Text(
                                         org.description!.length < 140
                                             ? org.description!
-                                            : org.description!
-                                                    .substring(0, 140) +
-                                                "...",
-                                        style: TextStyle(fontSize: 13)))),
+                                            : "${org.description!
+                                                    .substring(0, 140)}...",
+                                        style: const TextStyle(fontSize: 13)))),
                           ),
                           const Spacer(),
                           Text(getShortAddress(org.address!),

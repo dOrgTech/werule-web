@@ -9,7 +9,7 @@ import '../models/argument.dart';
 class DebateDetailScreen extends StatefulWidget {
   final Debate debate;
 
-  const DebateDetailScreen({Key? key, required this.debate}) : super(key: key);
+  const DebateDetailScreen({super.key, required this.debate});
 
   @override
   _DebateDetailScreenState createState() => _DebateDetailScreenState();

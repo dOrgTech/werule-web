@@ -9,6 +9,8 @@ import '../main.dart';
 import '../screens/account.dart';
 
 class Wait extends StatelessWidget {
+  const Wait({super.key});
+
   @override
   build(BuildContext context) {
     return const Center(
@@ -131,7 +133,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Text(
-                  '$delegateAddress',
+                  delegateAddress,
                   style: const TextStyle(fontSize: 16),
                 ),
                 ElevatedButton(
@@ -281,7 +283,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                   text: "Download CSV", url: "https://something.com")
             ],
           ),
-          content: Container(
+          content: SizedBox(
               width: 700,
               height: 500,
               child: ListView(

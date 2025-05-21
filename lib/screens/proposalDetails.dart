@@ -103,7 +103,7 @@ class ProposalDetails extends StatefulWidget {
           p.executionHash = "0x${parseTransactionHash(data['executionHash'])}";
         }
 
-        yield snapshot.data() as Map<String, dynamic>?;
+        yield snapshot.data();
       } else {
         yield null;
       }
@@ -111,7 +111,7 @@ class ProposalDetails extends StatefulWidget {
   }
 
   void _setRemainingTime() {
-    DateTime now = DateTime.now().subtract(Duration(seconds: 10));
+    DateTime now = DateTime.now().subtract(const Duration(seconds: 10));
     DateTime votingStarts =
         p.statusHistory["pending"]!.add(Duration(minutes: p.org.votingDelay));
     DateTime votingEnds =
@@ -276,7 +276,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
         ),
       );
     } else if (widget.p.status == "queued") {
-      return SizedBox();
+      return const SizedBox();
     }
     return Padding(
       padding: const EdgeInsets.only(left: 48.0),
@@ -287,8 +287,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
           children: [
             ElevatedButton(
                 style: ButtonStyle(
-                    elevation: const MaterialStatePropertyAll(0.0),
-                    backgroundColor: MaterialStatePropertyAll(widget.enabled
+                    elevation: const WidgetStatePropertyAll(0.0),
+                    backgroundColor: WidgetStatePropertyAll(widget.enabled
                         ? const Color.fromARGB(255, 141, 255, 244)
                         : const Color.fromARGB(255, 77, 77, 77))),
                 onPressed: widget.enabled
@@ -478,7 +478,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                               )));
                               print("vote added");
                             } catch (e) {
-                              print("some error " + e.toString());
+                              print("some error $e");
                             }
                           } else {
                             ScaffoldMessenger.of(context)
@@ -507,8 +507,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                       }
                     : null,
                 style: ButtonStyle(
-                    elevation: const MaterialStatePropertyAll(0.0),
-                    backgroundColor: MaterialStatePropertyAll(widget.enabled
+                    elevation: const WidgetStatePropertyAll(0.0),
+                    backgroundColor: WidgetStatePropertyAll(widget.enabled
                         ? const Color.fromARGB(255, 255, 135, 135)
                         : const Color.fromARGB(255, 77, 77, 77))),
                 child: SizedBox(
@@ -558,7 +558,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
           stream: widget.getProposalFromFirestore(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
+              return const Center(
                   child:
                       CircularProgressIndicator()); // Show a loading indicator
             }
@@ -698,9 +698,8 @@ class ProposalDetailsState extends State<ProposalDetails> {
                                             widget.p.externalResource!.length <
                                                     42
                                                 ? widget.p.externalResource!
-                                                : widget.p.externalResource!
-                                                        .substring(0, 42) +
-                                                    "...",
+                                                : "${widget.p.externalResource!
+                                                        .substring(0, 42)}...",
                                         url: widget.p.externalResource!)
                                   ],
                                 ),

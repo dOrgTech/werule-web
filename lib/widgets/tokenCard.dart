@@ -32,17 +32,17 @@ class TokenCard extends StatelessWidget {
                 TextButton(onPressed: (){}, child: const Icon(Icons.copy)),
               ],),
 
-              SizedBox(height: 31),
-              Text("Balance:"),
-              SizedBox(height: 11),
-              Text("259856478.13", style: TextStyle(fontSize: 19)),
+              const SizedBox(height: 31),
+              const Text("Balance:"),
+              const SizedBox(height: 11),
+              const Text("259856478.13", style: TextStyle(fontSize: 19)),
                 ],
               ),
             ),
             
             Center(
               child: ElevatedButton(
-                onPressed: (){}, child: Text("Transfer")),
+                onPressed: (){}, child: const Text("Transfer")),
             )
           ],
         ),

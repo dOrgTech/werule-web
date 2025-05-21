@@ -1,8 +1,0 @@
-lib/debates/models/argument.dart
-lib/debates/models/debate.dart
-lib/debates/screens/debate_detail_screen.dart
-lib/widgets/arbitrate.dart
-lib/widgets/add_argument_dialog.dart
-lib/widgets/debate_map_widget.dart
-lib/widgets/full_debate_map.dart
-lib/widgets/pro_con_section.dart

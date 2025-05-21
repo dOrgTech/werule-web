@@ -82,7 +82,7 @@ getVotes(who, Org org) async {
 
 String getCalldata(ContractFunction functionAbi, List<dynamic> parameters) {
   final calldata = functionAbi.encodeCall(parameters);
-  return "0x" + bytesToHex(calldata).toString();
+  return "0x${bytesToHex(calldata)}";
 }
 
 getBalance(who, Org org) async {
@@ -140,10 +140,10 @@ getProposalVotes(Proposal p) async {
     // Log the RPC response
     print('RPC Response STATE:');
     print(counter.toString());
-    int againstVotes = int.parse(counter[0].toString()) as int;
-    int forVotes = int.parse(counter[1].toString()) as int;
-    int abstainVotes = int.parse(counter[2].toString()) as int;
-    print('$againstVotes ${againstVotes}');
+    int againstVotes = int.parse(counter[0].toString());
+    int forVotes = int.parse(counter[1].toString());
+    int abstainVotes = int.parse(counter[2].toString());
+    print('$againstVotes $againstVotes');
     httpClient.close();
     ethClient.dispose();
     print("+++++++++++++++++++++++++++++");
@@ -181,7 +181,7 @@ getProposalState(Proposal p) async {
     // Log the RPC response
     print('RPC Response Proposal STATE');
     print(counter.toString());
-    int rezultat = int.parse(counter[0].toString()) as int;
+    int rezultat = int.parse(counter[0].toString());
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
     ethClient.dispose();
@@ -213,7 +213,7 @@ getQueueTime(Proposal p) async {
     // Log the RPC response
     print('RPC Response Proposal STATE');
     print(counter.toString());
-    int rezultat = int.parse(counter[0].toString()) as int;
+    int rezultat = int.parse(counter[0].toString());
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
     ethClient.dispose();
@@ -277,7 +277,7 @@ getNumberOfDAOs() async {
     // Log the RPC response
     print('RPC Response for number of DAOs:');
     print(counter.toString());
-    int rezultat = int.parse(counter[0].toString()) as int;
+    int rezultat = int.parse(counter[0].toString());
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
     ethClient.dispose();
@@ -292,7 +292,7 @@ getNumberOfDAOs() async {
 }
 
 getDAOAddress(position) async {
-  print("getting dao address at position ${position}");
+  print("getting dao address at position $position");
   var httpClient = Client();
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
   final contractSursa = DeployedContract(
@@ -312,7 +312,7 @@ getDAOAddress(position) async {
 }
 
 getTokenAddress(position) async {
-  print("getting dao address at position ${position}");
+  print("getting dao address at position $position");
   var httpClient = Client();
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
   final contractSursa = DeployedContract(
@@ -332,7 +332,7 @@ getTokenAddress(position) async {
 }
 
 getTreasuryAddress(position) async {
-  print("getting dao address at position ${position}");
+  print("getting dao address at position $position");
   var httpClient = Client();
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
   final contractSursa = DeployedContract(
@@ -353,7 +353,7 @@ getTreasuryAddress(position) async {
 }
 
 getRegistryAddress(position) async {
-  print("getting dao address at position ${position}");
+  print("getting dao address at position $position");
   var httpClient = Client();
   var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
   final contractSursa = DeployedContract(
@@ -387,9 +387,6 @@ Future<List<String>> createDAOwithWrappedToken(Org org, DaoConfig daoConfig) asy
 
   final String contractAddressToUse = Human().chain.wrapperContract_w ?? "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2"; 
   print("Using wrapper contract address for wrapped token DAO: $contractAddressToUse");
-  if (Human().chain.wrapperContract_w == null) {
-      print("Warning: Human().chain.wrapperContract_w was null, using fallback address.");
-  }
 
   if (Human().web3user == null) {
     print("Error: Web3 provider (Human().web3user) is null.");
@@ -511,7 +508,7 @@ Future<List<String>> createDAOwithWrappedToken(Org org, DaoConfig daoConfig) asy
         print("Specific TypeError encountered. This often happens if a BigInt is passed to a JS function expecting a Number, or vice-versa in a callback/return.");
     }
     if (errorString.length > 200) {
-        errorString = errorString.substring(0, 200) + "...";
+        errorString = "${errorString.substring(0, 200)}...";
     }
     return ["ERROR: Exception occurred - $errorString"];
   }
@@ -679,11 +676,11 @@ queueProposal(Proposal p) async {
     print("signed ok");
     List<String> calldatas = [];
     for (String c in p.callDatas) {
-      calldatas.add("0x" + c);
+      calldatas.add("0x$c");
     }
     print("targets: ${p.targets}");
     print("values: ${p.values}");
-    print("calldatas: ${calldatas}");
+    print("calldatas: $calldatas");
     print("hashHex: $hashHex");
     final transaction = await promiseToFuture(callMethod(
         sourceContract, "queue", [p.targets, p.values, calldatas, hashHex]));
@@ -725,7 +722,7 @@ execute(Proposal p) async {
     print("signed okkkkk");
     List<String> calldatas = [];
     for (String c in p.callDatas) {
-      calldatas.add("0x" + c);
+      calldatas.add("0x$c");
     }
     print("targets: ${p.targets}");
     print("values: ${p.values}");
@@ -788,7 +785,7 @@ String? extractTransactionHash(String transactionResponse) {
     final Map<String, dynamic> response = jsonDecode(transactionResponse);
 
     // Check if the transactionHash key exists and return it.
-    return response['transactionHash'] ?? null;
+    return response['transactionHash'];
   } catch (e) {
     // Return null if parsing or extraction fails.
     print("Error extracting transactionHash: $e");

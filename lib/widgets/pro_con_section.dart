@@ -13,12 +13,12 @@ class ProConSection extends StatefulWidget {
   final VoidCallback? onDebateChanged;
 
   const ProConSection({
-    Key? key,
+    super.key,
     required this.debate,
     required this.currentArgument,
     required this.onArgumentSelected,
     this.onDebateChanged,
-  }) : super(key: key);
+  });
 
   @override
   _ProConSectionState createState() => _ProConSectionState();

@@ -9,7 +9,7 @@ import '../screens/creator.dart';
 /// A large fixed-size 1200×250 widget with comedic lines from edges
 /// to a central square-cornered button, using strict 90° segments.
 class MemeArrowWidget extends StatefulWidget {
-  const MemeArrowWidget({Key? key}) : super(key: key);
+  const MemeArrowWidget({super.key});
 
   @override
   State<MemeArrowWidget> createState() => _MemeArrowWidgetState();
@@ -134,8 +134,8 @@ class _MemeArrowWidgetState extends State<MemeArrowWidget>
   /// returns offset + arrow direction (up/down/left/right).
   _ButtonSideResult _randomButtonSide(Offset current) {
     // The button bounding box
-    final bxLeft = (containerW - buttonW) / 2;
-    final bxTop = (containerH - buttonH) / 2;
+    const bxLeft = (containerW - buttonW) / 2;
+    const bxTop = (containerH - buttonH) / 2;
     final r = Rect.fromLTWH(bxLeft, bxTop, buttonW, buttonH);
 
     final side = _rand.nextInt(4);
@@ -233,7 +233,7 @@ class _MemeArrowWidgetState extends State<MemeArrowWidget>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Transform.scale(scale: 0.6, child: FlashingIcon()),
-                          SizedBox(width: 17),
+                          const SizedBox(width: 17),
                           AnimatedContainer(
                               duration: const Duration(milliseconds: 489),
                               child: AnimatedTextKit(
@@ -242,7 +242,7 @@ class _MemeArrowWidgetState extends State<MemeArrowWidget>
                                 repeatForever: false,
                                 animatedTexts: [
                                   ColorizeAnimatedText('Upgrade to Full DAO',
-                                      textStyle: TextStyle(
+                                      textStyle: const TextStyle(
                                           fontSize: 16,
                                           color: Color.fromARGB(
                                               255, 178, 178, 178)),

@@ -9,8 +9,8 @@ class Screen3Quorums extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
 
-  Screen3Quorums(
-      {required this.daoConfig, required this.onNext, required this.onBack});
+  const Screen3Quorums(
+      {super.key, required this.daoConfig, required this.onNext, required this.onBack});
 
   @override
   _Screen3QuorumsState createState() => _Screen3QuorumsState();
@@ -59,8 +59,8 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
             Container(
               decoration: BoxDecoration(
                   border: Border.all(
-                      color: Color.fromARGB(255, 78, 78, 78), width: 0.4)),
-              padding: EdgeInsets.all(35),
+                      color: const Color.fromARGB(255, 78, 78, 78), width: 0.4)),
+              padding: const EdgeInsets.all(35),
               child: Column(
                 children: [
                   Text('Quorum',
@@ -82,7 +82,7 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                             max: 99,
                             divisions: 99,
                             value: _quorumThreshold,
-                            label: _quorumThreshold.round().toString() + '%',
+                            label: '${_quorumThreshold.round()}%',
                             onChanged: (value) {
                               setState(() {
                                 _quorumThreshold = value;
@@ -101,8 +101,8 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
             Container(
               decoration: BoxDecoration(
                   border: Border.all(
-                      color: Color.fromARGB(255, 78, 78, 78), width: 0.4)),
-              padding: EdgeInsets.all(35),
+                      color: const Color.fromARGB(255, 78, 78, 78), width: 0.4)),
+              padding: const EdgeInsets.all(35),
               child: SizedBox(
                 width: 500,
                 child: Column(
@@ -118,7 +118,7 @@ class _Screen3QuorumsState extends State<Screen3Quorums> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           labelText:
-                              '${_effectiveTokenSymbolForProposalThreshold} amount',
+                              '$_effectiveTokenSymbolForProposalThreshold amount',
                           counterText: '',
                         ),
                       ),

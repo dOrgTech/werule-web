@@ -9,10 +9,10 @@ class ArgumentCard extends StatelessWidget {
   final Function(Argument) onTap;
 
   const ArgumentCard({
-    Key? key,
+    super.key,
     required this.argument,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,7 @@ class ArgumentCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    "by " + argument.author,
+                    "by ${argument.author}",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
@@ -42,11 +42,11 @@ class ArgumentCard extends StatelessWidget {
                   Text.rich(
                     TextSpan(
                       children: [
-                        TextSpan(
+                        const TextSpan(
                           text: 'S: ',
                         ),
                         TextSpan(
-                          text: '${argument.score.toStringAsFixed(0)}',
+                          text: argument.score.toStringAsFixed(0),
                           style: TextStyle(
                             color:
                                 argument.score < 0 ? Colors.red : Colors.green,

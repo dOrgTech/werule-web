@@ -78,7 +78,7 @@ class _NewProposalState extends State<NewProposal> {
           },
           maxLength: 42,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: "Proposal Title",
           ),
         ),
@@ -93,7 +93,7 @@ class _NewProposalState extends State<NewProposal> {
           maxLength: 200,
           maxLines: 5,
           style: const TextStyle(fontSize: 16),
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: "Proposal Description",
           ),
         ),
@@ -129,7 +129,7 @@ class _NewProposalState extends State<NewProposal> {
               },
               maxLength: 62,
               style: const TextStyle(fontSize: 16),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: "Debate Title",
               ),
             ),
@@ -149,13 +149,13 @@ class _NewProposalState extends State<NewProposal> {
                   child: Tooltip(
                     message:
                         "A debate with only Pro and Con arguments at the top level.",
-                    textStyle: TextStyle(color: Colors.black87, fontSize: 18),
+                    textStyle: const TextStyle(color: Colors.black87, fontSize: 18),
                     child: Text(
                       "Binary",
                       style: TextStyle(
                         color: isBinary
-                            ? Color.fromARGB(255, 255, 255, 255)
-                            : Color.fromARGB(
+                            ? const Color.fromARGB(255, 255, 255, 255)
+                            : const Color.fromARGB(
                                 255, 138, 138, 138), // Active = white
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -182,13 +182,13 @@ class _NewProposalState extends State<NewProposal> {
                   child: Tooltip(
                     message:
                         "A debate with multiple proposals at the top level, each with Pro and Con arguments.",
-                    textStyle: TextStyle(color: Colors.black87, fontSize: 18),
+                    textStyle: const TextStyle(color: Colors.black87, fontSize: 18),
                     child: Text(
                       "Exploratory",
                       style: TextStyle(
                         color: isBinary
-                            ? Color.fromARGB(255, 138, 138, 138)
-                            : Color.fromARGB(255, 255, 255, 255),
+                            ? const Color.fromARGB(255, 138, 138, 138)
+                            : const Color.fromARGB(255, 255, 255, 255),
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -200,7 +200,7 @@ class _NewProposalState extends State<NewProposal> {
           )
         ],
       ),
-      SizedBox(height: 30),
+      const SizedBox(height: 30),
       SizedBox(
         width: 780, // Ensure consistent width
         child: TextFormField(
@@ -227,21 +227,21 @@ class _NewProposalState extends State<NewProposal> {
             minHeight: 500,
             maxWidth: 1000,
             maxHeight: MediaQuery.of(context).size.height * 0.9),
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          SizedBox(height: 56),
+          const SizedBox(height: 56),
           ToggleSwitch(
             initialLabelIndex: isProposalSelected ? 0 : 1,
             totalSwitches: 2,
-            labels: ['Proposal', 'Debate'],
+            labels: const ['Proposal', 'Debate'],
             activeBgColor: [
-              Color.fromARGB(255, 43, 43, 43).withOpacity(0.3)
+              const Color.fromARGB(255, 43, 43, 43).withOpacity(0.3)
             ], // Light blue for active state
             inactiveBgColor:
                 Theme.of(context).cardColor, // Light grey for inactive state
             activeFgColor: Colors.white,
-            inactiveFgColor: Color.fromARGB(255, 105, 105, 105),
-            borderColor: [
+            inactiveFgColor: const Color.fromARGB(255, 105, 105, 105),
+            borderColor: const [
               Colors.transparent
             ], // Add white border for better visibility
             borderWidth: 1.0, // Border width
@@ -250,20 +250,20 @@ class _NewProposalState extends State<NewProposal> {
             onToggle: (index) {
               _handleToggle(index!);
             },
-            customTextStyles: [
+            customTextStyles: const [
               TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ],
           ),
-          Spacer(),
+          const Spacer(),
           isProposalSelected
               ? Column(children: proposal())
               : Column(children: debate()),
-          Spacer(),
+          const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Spacer(),
+              const Spacer(),
               isProposalSelected == false && isBinary == true
                   ? Padding(
                       padding: const EdgeInsets.only(right: 16.0),
@@ -290,10 +290,10 @@ class _NewProposalState extends State<NewProposal> {
                         ),
                       ),
                     )
-                  : Text(""),
+                  : const Text(""),
               ElevatedButton(
                   onPressed: widget.next,
-                  child: SizedBox(
+                  child: const SizedBox(
                       width: 68,
                       height: 45,
                       child: Center(
@@ -301,11 +301,11 @@ class _NewProposalState extends State<NewProposal> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text("Next"),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Icon(Icons.arrow_forward)
                         ],
                       )))),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
             ],
           )
         ]));

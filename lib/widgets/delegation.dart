@@ -3,6 +3,8 @@ import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/utils/theme.dart';
 
 class DelegationWidget extends StatefulWidget {
+  const DelegationWidget({super.key});
+
   @override
   _DelegationWidgetState createState() => _DelegationWidgetState();
 }
@@ -12,7 +14,7 @@ class _DelegationWidgetState extends State<DelegationWidget> {
   String _initialDelegationStatus = 'Set delegate';
   String _initialAddress = '0x548f66A1063A79E4F291Ebeb721C718DCc7965c5';
 
-  TextEditingController _controller = TextEditingController(
+  final TextEditingController _controller = TextEditingController(
       text: '0x548f66A1063A79E4F291Ebeb721C718DCc7965c5');
   final _formKey = GlobalKey<FormState>();
 
@@ -62,8 +64,8 @@ class _DelegationWidgetState extends State<DelegationWidget> {
         padding: const EdgeInsets.all(38.0),
         child: Column(
           children: [
-            Text('Delegation Status', style: TextStyle(fontSize: 21)),
-            SizedBox(height: 50),
+            const Text('Delegation Status', style: TextStyle(fontSize: 21)),
+            const SizedBox(height: 50),
             ListTile(
               title: const Text('Not delegating'),
               leading: Radio<String>(
@@ -83,7 +85,7 @@ class _DelegationWidgetState extends State<DelegationWidget> {
             TextFormField(
               controller: _controller,
               enabled: _isDelegateSelected,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Delegate Address',
               ),
               style: TextStyle(
@@ -100,12 +102,12 @@ class _DelegationWidgetState extends State<DelegationWidget> {
                 return null;
               },
             ),
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             ElevatedButton(
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                    if (states.contains(MaterialState.disabled)) {
+                backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) {
+                    if (states.contains(WidgetState.disabled)) {
                       return Colors.grey; // Disabled color
                     }
                     return createMaterialColor(Theme.of(context).indicatorColor);
@@ -131,7 +133,7 @@ class _DelegationWidgetState extends State<DelegationWidget> {
                       }
                     }
                   : null, // Disable button if no changes
-              child: SizedBox(
+              child: const SizedBox(
                 height: 40,
                 width: 100,
                 child: Center(

@@ -54,12 +54,8 @@ class _RegistryState extends State<Registry> {
                   padding: const EdgeInsets.only(right: 50),
                   height: 40,
                   child: ElevatedButton(
-                    child: Text(
-                      "Add/Edit Item",
-                      style: TextStyle(fontSize: 16, color: Colors.black87),
-                    ),
                     style: ButtonStyle(
-                        backgroundColor: MaterialStatePropertyAll(
+                        backgroundColor: WidgetStatePropertyAll(
                             Theme.of(context).indicatorColor)),
                     onPressed: () {
                       Proposal p = Proposal(org: widget.org);
@@ -75,11 +71,15 @@ class _RegistryState extends State<Registry> {
                         },
                       );
                     },
+                    child: Text(
+                      "Add/Edit Item",
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
                   ),
                 ),
               ],
             )),
-        SizedBox(height: 40),
+        const SizedBox(height: 40),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 48.0),
           child: Row(
@@ -88,24 +88,24 @@ class _RegistryState extends State<Registry> {
               Padding(
                 padding: const EdgeInsets.only(left: 15.0),
                 child: Container(
-                    padding: EdgeInsets.only(left: 15),
+                    padding: const EdgeInsets.only(left: 15),
                     width: 140,
-                    child: Text("Key")),
+                    child: const Text("Key")),
               ),
               Expanded(
-                child: Container(
+                child: SizedBox(
                     width: 230,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 48.0),
+                    child: const Padding(
+                      padding: EdgeInsets.only(left: 48.0),
                       child: Text("Value"),
                     )),
               ),
-              SizedBox(width: 150, child: Center(child: Text(" "))),
-              SizedBox(width: 150, child: Center(child: Text(""))),
+              const SizedBox(width: 150, child: Center(child: Text(" "))),
+              const SizedBox(width: 150, child: Center(child: Text(""))),
             ],
           ),
         ),
-        Divider(),
+        const Divider(),
         ...items
       ],
     );

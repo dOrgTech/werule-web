@@ -16,12 +16,12 @@ class Screen5Members extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onNext;
 
-  Screen5Members({
+  const Screen5Members({
     required this.daoConfig,
     required this.onBack,
     required this.onNext,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _Screen5MembersState createState() => _Screen5MembersState();
@@ -195,7 +195,7 @@ class _Screen5MembersState extends State<Screen5Members> {
   }
 
   Widget _buildPaginationControls() {
-    if (_totalPages <= 1) return SizedBox.shrink();
+    if (_totalPages <= 1) return const SizedBox.shrink();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -243,12 +243,12 @@ class _Screen5MembersState extends State<Screen5Members> {
                 }
               });
             },
-            child: SizedBox(
+            child: const SizedBox(
               height: 130,
               width: 170,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.group_add, size: 35),
                   SizedBox(height: 25),
                   Text(
@@ -262,12 +262,12 @@ class _Screen5MembersState extends State<Screen5Members> {
           const SizedBox(width: 20),
           TextButton(
             onPressed: _loadCsvFile,
-            child: SizedBox(
+            child: const SizedBox(
               height: 130,
               width: 170,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
                     Icons.upload_file,
                     size: 35,
@@ -330,7 +330,7 @@ class _Screen5MembersState extends State<Screen5Members> {
           ),
           height: 300, // Restrict height for scrollable area
           child: _paginatedEntries.isEmpty
-              ? Center(
+              ? const Center(
                   child: Text("No members found in CSV or CSV not loaded."))
               : ListView.builder(
                   itemCount: _paginatedEntries.length,
@@ -362,7 +362,7 @@ class _Screen5MembersState extends State<Screen5Members> {
                               readOnly: true, // CSV data is read-only here
                             ),
                           ),
-                          SizedBox(
+                          const SizedBox(
                               width: 48), // Placeholder for remove button space
                         ],
                       ),
@@ -397,7 +397,7 @@ class _Screen5MembersState extends State<Screen5Members> {
             const SizedBox(height: 26),
             RichText(
               textAlign: TextAlign.center,
-              text: TextSpan(
+              text: const TextSpan(
                 style: TextStyle(
                   fontSize: 14,
                   color: Color.fromARGB(255, 194, 194, 194),

@@ -74,24 +74,20 @@ class AccountState extends State<Account> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: Container(
+              child: SizedBox(
                   width: 140.0,
                   height: 140.0,
-                  child: CircularProgressIndicator()),
+                  child: const CircularProgressIndicator()),
             );
           }
-          if (widget.member!.proposalsVoted == null) {
-            widget.votedOnProposals = [Text("this is awkward")];
-          } else {
-            for (Proposal p in widget.member!.proposalsVoted) {
-              print("adding one");
-              widget.votedOnProposals.add(ProposalCard(
-                proposal: p,
-                org: widget.org,
-              ));
-            }
+          for (Proposal p in widget.member!.proposalsVoted) {
+            print("adding one");
+            widget.votedOnProposals.add(ProposalCard(
+              proposal: p,
+              org: widget.org,
+            ));
           }
-
+        
           return (BigInt.parse(widget.member!.personalBalance!) < BigInt.one)
               ? notAMember()
               : ListView(
@@ -192,7 +188,7 @@ class AccountState extends State<Account> {
                                     children: [
                                       Text(
                                         "Personal ${widget.org.symbol} Balance",
-                                        style: TextStyle(fontSize: 16),
+                                        style: const TextStyle(fontSize: 16),
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -264,11 +260,11 @@ class AccountState extends State<Account> {
                         padding: const EdgeInsets.all(38.0),
                         child: Column(
                           children: [
-                            SizedBox(
+                            const SizedBox(
                               width: double.infinity,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text(
                                     "Delegation settings",
                                     style: TextStyle(fontSize: 20),
@@ -352,8 +348,8 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                             ],
                             inactiveBgColor: Theme.of(context).cardColor,
                             borderColor: [Theme.of(context).cardColor],
-                            labels: ['VOTING RECORD', 'PROPOSALS CREATED'],
-                            customTextStyles: [const TextStyle(fontSize: 14)],
+                            labels: const ['VOTING RECORD', 'PROPOSALS CREATED'],
+                            customTextStyles: const [TextStyle(fontSize: 14)],
                             onToggle: (index) {
                               print('switched to: $index');
                               setState(() {
@@ -386,7 +382,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                           )),
                     ),
                     Expanded(
-                      child: Container(
+                      child: SizedBox(
                           width: 230,
                           child: Padding(
                             padding: const EdgeInsets.only(left: 48.0),
@@ -396,7 +392,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                             ),
                           )),
                     ),
-                    Container(
+                    SizedBox(
                         width: 180,
                         child: Center(
                             child: Text(

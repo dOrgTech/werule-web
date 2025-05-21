@@ -110,7 +110,7 @@ Future<EthereumAddress> deployContract({
   );
 
   // Set a higher gas limit to ensure it is sufficient
-  final maxGasLimit = 8000000;
+  const maxGasLimit = 8000000;
 
   final deployTx = Transaction(
     to: null,
@@ -156,7 +156,7 @@ Future<EthereumAddress?> waitForReceipt(Web3Client client, String txHash) async 
         return receipt.contractAddress;
       }
     }
-    await Future.delayed(Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 5));
     print('Retrying for transaction receipt: $txHash');
   }
   return null; // Return null if no receipt is found after retries

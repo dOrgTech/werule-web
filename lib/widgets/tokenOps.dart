@@ -18,7 +18,7 @@ class GovernanceTokenOperationsWidget extends StatefulWidget {
   bool isSetinfo = false;
   int stage = 0;
   GovernanceTokenOperationsWidget(
-      {required this.initiativeState,
+      {super.key, required this.initiativeState,
       required this.org,
       required this.p,
       required this.proposalsState});
@@ -179,13 +179,13 @@ class _GovernanceTokenOperationsWidgetState
     String calldata0;
     if (_selectedOperation == "Mint") {
       print("we selected mint");
-      widget.p.type = "Mint " + widget.p.org.symbol!;
-      widget.initiativeState.widget.p.type = "Mint " + widget.p.org.symbol!;
+      widget.p.type = "Mint ${widget.p.org.symbol!}";
+      widget.initiativeState.widget.p.type = "Mint ${widget.p.org.symbol!}";
       calldata0 = getCalldata(mintGovTokensDef, params);
     } else {
       print("we selected burn");
-      widget.p.type = "Burn " + widget.p.org.symbol!;
-      widget.initiativeState.widget.p.type = "Burn " + widget.p.org.symbol!;
+      widget.p.type = "Burn ${widget.p.org.symbol!}";
+      widget.initiativeState.widget.p.type = "Burn ${widget.p.org.symbol!}";
       calldata0 = getCalldata(burnGovTokensDef, params);
     }
     widget.p.callDatas = [calldata0];

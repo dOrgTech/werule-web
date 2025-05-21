@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class CountdownWidget extends StatelessWidget {
   final int remainingSeconds;
 
-  CountdownWidget({Key? key, required this.remainingSeconds}) : super(key: key);
+  const CountdownWidget({super.key, required this.remainingSeconds});
 
   String _formatTime(int value) => value.toString().padLeft(2, '0');
 
@@ -33,12 +33,12 @@ class CountdownWidget extends StatelessWidget {
           children: [
             Text(
               entry.key,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               entry.value,
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
             ),
           ],
         );
@@ -48,6 +48,8 @@ class CountdownWidget extends StatelessWidget {
 }
 
 class PDetails extends StatefulWidget {
+  const PDetails({super.key});
+
   @override
   State<PDetails> createState() => _PDetailsState();
 }
@@ -61,7 +63,7 @@ class _PDetailsState extends State<PDetails> {
     super.initState();
 
     // Initialize and start the timer
-    _statusCheckTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
         setState(() {
           _remainingSeconds--;
@@ -81,13 +83,13 @@ class _PDetailsState extends State<PDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Proposal Details")),
+      appBar: AppBar(title: const Text("Proposal Details")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Countdown Timer", style: TextStyle(fontSize: 20)),
-            SizedBox(height: 10),
+            const Text("Countdown Timer", style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 10),
             CountdownWidget(
                 remainingSeconds:
                     _remainingSeconds), // Pass the updated remainingSeconds

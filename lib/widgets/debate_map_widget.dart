@@ -10,11 +10,11 @@ class DebateMapWidget extends StatelessWidget {
   final Function(Argument) onArgumentSelected;
 
   const DebateMapWidget({
-    Key? key,
+    super.key,
     required this.debate,
     required this.currentArgument,
     required this.onArgumentSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

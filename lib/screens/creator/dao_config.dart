@@ -1,7 +1,7 @@
 // lib/screens/creator/dao_config.dart
 import 'package:Homebase/entities/org.dart';
 
-import '../../entities/proposal.dart'; // Assuming Member is defined here
+// Assuming Member is defined here
 import 'creator_utils.dart'; // For DaoTokenDeploymentMechanism
 
 class DaoConfig {

@@ -13,7 +13,7 @@ import 'initiative.dart';
 class TokenAssets extends StatefulWidget {
   final Org org;
   int status = 0;
-  TokenAssets({Key? key, required this.org}) : super(key: key);
+  TokenAssets({super.key, required this.org});
 
   @override
   State<TokenAssets> createState() => _TokenAssetsState();
@@ -25,21 +25,16 @@ class _TokenAssetsState extends State<TokenAssets> {
   Future<void> buildAssets() async {
     fungibleAssets.clear();
 
-    if (widget.org.native == null || widget.org.nativeBalance == null) {
+    if (widget.org.nativeBalance == null) {
       debugPrint("Either native token or native balance is null");
     } else {
-      debugPrint("Adding native token ${widget.org.native?.name}");
+      debugPrint("Adding native token ${widget.org.native.name}");
       fungibleAssets.add(
-        asset(widget.org.native!, widget.org.nativeBalance!),
+        asset(widget.org.native, widget.org.nativeBalance),
       );
     }
 
-    if (widget.org.erc20Tokens == null) {
-      debugPrint("widget.org.erc20Tokens is null");
-      return;
-    }
-
-    for (Token t in widget.org.erc20Tokens!) {
+    for (Token t in widget.org.erc20Tokens) {
       final bal = widget.org.treasury[t] ?? "0";
       debugPrint("Adding ERC20 token: ${t.name}, balance: $bal");
       fungibleAssets.add(asset(t, bal));
@@ -133,22 +128,22 @@ class _TokenAssetsState extends State<TokenAssets> {
                               3: FlexColumnWidth(1.4),
                               4: FixedColumnWidth(150),
                             },
-                            children: [
+                            children: const [
                               TableRow(
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.only(
+                                    padding: EdgeInsets.only(
                                         top: 4.0, left: 75),
-                                    child: const Text(
+                                    child: Text(
                                       "TOKEN NAME",
                                       style: TextStyle(
                                           fontWeight: FontWeight.w100),
                                     ),
                                   ),
-                                  const Center(child: Text("SYMBOL")),
-                                  const Center(child: Text("AMOUNT")),
-                                  const Center(child: Text("ADDRESS")),
-                                  const SizedBox(),
+                                  Center(child: Text("SYMBOL")),
+                                  Center(child: Text("AMOUNT")),
+                                  Center(child: Text("ADDRESS")),
+                                  SizedBox(),
                                 ],
                               ),
                             ],
@@ -175,9 +170,9 @@ class _TokenAssetsState extends State<TokenAssets> {
                           ),
                         ],
                       )
-                    : Center(
+                    : const Center(
                         child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 58.0),
+                        padding: EdgeInsets.symmetric(vertical: 58.0),
                         child: Text("No NFTs here",
                             style: TextStyle(fontSize: 20, color: Colors.grey)),
                       )
@@ -280,7 +275,7 @@ class _TokenAssetsState extends State<TokenAssets> {
                 },
               );
             },
-            child: Text("Transfer",
+            child: const Text("Transfer",
                 style: TextStyle(fontSize: 13, color: Colors.white)),
           ),
         ),

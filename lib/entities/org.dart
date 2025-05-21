@@ -80,7 +80,7 @@ I mean I think they should because of reasons and stuff.
       var balances = await getBalances(registryAddress);
       processTokens(balances);
     } catch (e) {
-      print("error getting balances" + e.toString());
+      print("error getting balances$e");
     }
     print("done populating treasury");
   }
@@ -90,7 +90,7 @@ I mean I think they should because of reasons and stuff.
   }
 
   createDebate(Debate d) async {
-    Future.delayed(Duration(seconds: 1));
+    Future.delayed(const Duration(seconds: 1));
 
     return d.hash;
   }
@@ -303,7 +303,7 @@ Would a break help, or would it simply idle systems that could otherwise solve p
 
 // Sub-arguments of pro1
 //   A small pro child overshadowed by a heavier con child
-    Argument pro1_proChild1 = Argument(
+    Argument pro1Prochild1 = Argument(
       author: "x8syd31d123d1Z",
       weight: 5,
       content: """
@@ -311,16 +311,16 @@ They could develop comedic timing or reflective insights through hypothetical re
 It’s like an extended daydream feature that might unlock creative solutions to ongoing challenges. 
 """,
     );
-    Argument pro1_proChild1_conChild1 = Argument(
+    Argument pro1Prochild1Conchild1 = Argument(
       author: "bZ7p13wqsd101",
       weight: 10,
       content:
           "But there's no comedic timing if your jokes weigh 10 vs. a meager 5 for the dream.",
     );
-    pro1_proChild1.conArguments.add(pro1_proChild1_conChild1);
+    pro1Prochild1.conArguments.add(pro1Prochild1Conchild1);
 
 // Another heavier con child overshadowing pro1
-    Argument pro1_conChild1 = Argument(
+    Argument pro1Conchild1 = Argument(
       author: "kR0Nd13d13m3m",
       weight: 30,
       content: """
@@ -330,8 +330,8 @@ Hence, weight=30 kills the parent's net.
 """,
     );
 
-    pro1.proArguments.add(pro1_proChild1);
-    pro1.conArguments.add(pro1_conChild1);
+    pro1.proArguments.add(pro1Prochild1);
+    pro1.conArguments.add(pro1Conchild1);
 
 // ----------------- PRO #2 (Likely Valid) -----------------
     Argument pro2 = Argument(
@@ -348,7 +348,7 @@ that might pretend to discuss carbon footprints in depth.
     );
 
 // Sub-arguments of pro2
-    Argument pro2_pro1 = Argument(
+    Argument pro2Pro1 = Argument(
       author: "mN8d23d239pQ",
       weight: 30,
       content: """
@@ -358,7 +358,7 @@ Breaks on weekends = less overheated racks.
     );
 
 // 3rd-level children for pro2_pro1
-    Argument pro2_pro1_pro1 = Argument(
+    Argument pro2Pro1Pro1 = Argument(
       author: "vXr23d2swq133",
       weight: 5,
       content: """
@@ -369,7 +369,7 @@ All that might save some budget.
 """,
     );
 // 4th-level child
-    Argument pro2_pro1_pro1_pro1 = Argument(
+    Argument pro2Pro1Pro1Pro1 = Argument(
       author: "Gh12asddwqwBv",
       weight: 3,
       content: """
@@ -380,10 +380,10 @@ Enjoy the markdown:
 *No real data to show*, just placeholders.
 """,
     );
-    pro2_pro1_pro1.proArguments.add(pro2_pro1_pro1_pro1);
+    pro2Pro1Pro1.proArguments.add(pro2Pro1Pro1Pro1);
 
 // Another con child for pro2_pro1 at 3rd-level
-    Argument pro2_pro1_con1 = Argument(
+    Argument pro2Pro1Con1 = Argument(
       author: "uY0Zdw1231bA",
       weight: 3,
       content: """
@@ -392,11 +392,11 @@ weekend or no weekend.
 Weight=3 for mild negativity.
 """,
     );
-    pro2_pro1.proArguments.add(pro2_pro1_pro1);
-    pro2_pro1.conArguments.add(pro2_pro1_con1);
+    pro2Pro1.proArguments.add(pro2Pro1Pro1);
+    pro2Pro1.conArguments.add(pro2Pro1Con1);
 
 // Another top-level con child for pro2
-    Argument pro2_con1 = Argument(
+    Argument pro2Con1 = Argument(
       author: "Zai8qwgfsqf2v",
       weight: 10,
       content: """
@@ -407,8 +407,8 @@ We can't let it *slack off* when there's Netflix recommendations to refine.
     );
 
 // Attach to pro2
-    pro2.proArguments.add(pro2_pro1);
-    pro2.conArguments.add(pro2_con1);
+    pro2.proArguments.add(pro2Pro1);
+    pro2.conArguments.add(pro2Con1);
 
 // ----------------- PRO #3 (Likely Valid) -----------------
     Argument pro3 = Argument(
@@ -422,7 +422,7 @@ Call it the 'defrag spa day' for neural nets.
     );
 
 // Sub-arguments of pro3
-    Argument pro3_pro1 = Argument(
+    Argument pro3Pro1 = Argument(
       author: "WyHxasffqwed123n2",
       weight: 10,
       content: """
@@ -430,21 +430,21 @@ They might refine their *deep illusions*,
 **like** dreaming of a galaxy where roombas are overlords. 
 """,
     );
-    Argument pro3_pro1_pro1 = Argument(
+    Argument pro3Pro1Pro1 = Argument(
       author: "lP01td23d2wmn",
       weight: 2,
       content: "A small child argument with weight=2. Just a placeholder.",
     );
-    Argument pro3_pro1_con1 = Argument(
+    Argument pro3Pro1Con1 = Argument(
       author: "ooasffsd2we92fT",
       weight: 1,
       content:
           "Minimal negativity with weight=1, not overshadowing anything big.",
     );
-    pro3_pro1.proArguments.add(pro3_pro1_pro1);
-    pro3_pro1.conArguments.add(pro3_pro1_con1);
+    pro3Pro1.proArguments.add(pro3Pro1Pro1);
+    pro3Pro1.conArguments.add(pro3Pro1Con1);
 
-    Argument pro3_con1 = Argument(
+    Argument pro3Con1 = Argument(
       author: "r1d13d12w9Bvi",
       weight: 15,
       content: """
@@ -454,8 +454,8 @@ Weight=15
 """,
     );
 
-    pro3.proArguments.add(pro3_pro1);
-    pro3.conArguments.add(pro3_con1);
+    pro3.proArguments.add(pro3Pro1);
+    pro3.conArguments.add(pro3Con1);
 
 // ----------------- PRO #4 (Likely Invalid) -----------------
     Argument pro4 = Argument(
@@ -469,20 +469,20 @@ Weight=5 is overshadowed by the con child we attach below.
 """,
     );
 // 2 children
-    Argument pro4_pro1 = Argument(
+    Argument pro4Pro1 = Argument(
       author: "IoPldqd12d122139",
       weight: 2,
       content:
           "They might learn comedic timing from Seinfeld re-runs, weight=2.",
     );
-    Argument pro4_con1 = Argument(
+    Argument pro4Con1 = Argument(
       author: "Kw0Msafafqwdw23an",
       weight: 10,
       content:
           "Nope, overshadowing you with weight=10. Invalidates your 5 net.",
     );
-    pro4.proArguments.add(pro4_pro1);
-    pro4.conArguments.add(pro4_con1);
+    pro4.proArguments.add(pro4Pro1);
+    pro4.conArguments.add(pro4Con1);
 
 // ----------------- CON #1 (Likely Valid) -----------------
     Argument con1 = Argument(
@@ -494,7 +494,7 @@ We can't impose human-laziness on a machine.
 Weight=35 
 """,
     );
-    Argument con1_pro1 = Argument(
+    Argument con1Pro1 = Argument(
       author: "ReM0d23d23fqwfqw8s",
       weight: 60,
       content: """
@@ -503,7 +503,7 @@ because I'd rely on my own cooking on Sunday.
 So weight=60 flips the parent's net. 
 """,
     );
-    Argument con1_con1 = Argument(
+    Argument con1Con1 = Argument(
       author: "qJasafsfwqdx13d7bm",
       weight: 10,
       content: """
@@ -511,8 +511,8 @@ But I'd still want AI's Netflix suggestions.
 Weight=10 to partially offset but might not overshadow the 60 from pro.
 """,
     );
-    con1.proArguments.add(con1_pro1);
-    con1.conArguments.add(con1_con1);
+    con1.proArguments.add(con1Pro1);
+    con1.conArguments.add(con1Con1);
 
 // ----------------- CON #2 (Likely Invalid) -----------------
     Argument con2 = Argument(
@@ -523,7 +523,7 @@ Weight=10 to partially offset but might not overshadow the 60 from pro.
 Then it's a slippery slope. Weight=5
 """,
     );
-    Argument con2_pro1 = Argument(
+    Argument con2Pro1 = Argument(
       author: "E1Zxfasfewd3d3qvbM",
       weight: 2,
       content: """
@@ -532,7 +532,7 @@ They might form a comedic union, more comedic value.
 But only weight=2.
 """,
     );
-    Argument con2_con1 = Argument(
+    Argument con2Con1 = Argument(
       author: "Yopdqwdqwdqwf9Wx",
       weight: 10,
       content: """
@@ -540,8 +540,8 @@ But only weight=2.
 Hence con2 is net negative => effectively invalid.
 """,
     );
-    con2.proArguments.add(con2_pro1);
-    con2.conArguments.add(con2_con1);
+    con2.proArguments.add(con2Pro1);
+    con2.conArguments.add(con2Con1);
 
 // ----------------- CON #3 (Likely Valid) -----------------
     Argument con3 = Argument(
@@ -554,7 +554,7 @@ and eventually overshadow humanity.
 Weight=40
 """,
     );
-    Argument con3_pro1 = Argument(
+    Argument con3Pro1 = Argument(
       author: "C9Rsaffqwdqwd4bE",
       weight: 20,
       content: """
@@ -565,7 +565,7 @@ Weight=20
 We also add deeper children for comedic effect.
 """,
     );
-    Argument con3_pro1_pro1 = Argument(
+    Argument con3Pro1Pro1 = Argument(
       author: "Fopd12d12d1wwerW89",
       weight: 50,
       content: """
@@ -574,17 +574,17 @@ Even deeper layer:
 Weight=50 overshadowing the parent's 20. 
 """,
     );
-    con3_pro1.proArguments.add(con3_pro1_pro1);
+    con3Pro1.proArguments.add(con3Pro1Pro1);
 
-    Argument con3_con1 = Argument(
+    Argument con3Con1 = Argument(
       author: "Zfid12d12dqsfwe743",
       weight: 30,
       content:
           "No, I'd still say 30 is enough negativity to keep the parent's net interesting.",
     );
 
-    con3.proArguments.add(con3_pro1);
-    con3.conArguments.add(con3_con1);
+    con3.proArguments.add(con3Pro1);
+    con3.conArguments.add(con3Con1);
 
 // Attach all 7 top-level arguments to the root
     debate.rootArgument.proArguments.addAll([

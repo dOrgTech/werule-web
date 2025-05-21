@@ -34,22 +34,22 @@ class ChatController extends ChangeNotifier {
 class UserMessageBubble extends StatelessWidget {
   final String text;
 
-  UserMessageBubble(this.text);
+  const UserMessageBubble(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
       child: Container(
-        padding: EdgeInsets.all(12),
-        margin: EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: Colors.blue,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           text,
-          style: TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white),
         ),
       ),
     );
@@ -60,7 +60,7 @@ class UserMessageBubble extends StatelessWidget {
 class AssistantMessageBubble extends StatelessWidget {
   final String text;
 
-  AssistantMessageBubble(this.text);
+  const AssistantMessageBubble(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -71,23 +71,23 @@ class AssistantMessageBubble extends StatelessWidget {
           Container(
             width: 24,
             height: 24,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.grey,
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(12),
-              margin: EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 text,
-                style: TextStyle(fontSize: 16.0, color: Colors.white),
+                style: const TextStyle(fontSize: 16.0, color: Colors.white),
               ),
             ),
           ),
@@ -101,13 +101,13 @@ class AssistantMessageBubble extends StatelessWidget {
 class ChatView extends StatelessWidget {
   final ChatController controller;
 
-  ChatView(this.controller);
+  const ChatView(this.controller, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        constraints: BoxConstraints(maxWidth: 900),
+        constraints: const BoxConstraints(maxWidth: 900),
         child: ChangeNotifierProvider.value(
           value: controller,
           child: Consumer<ChatController>(
@@ -133,13 +133,15 @@ class Chat extends StatelessWidget {
   final ChatController _controller = ChatController();
   final TextEditingController _textController = TextEditingController();
 
+  Chat({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Chat Widget')),
+      appBar: AppBar(title: const Text('Chat Widget')),
       body: Center(
         child: Container(
-          constraints: BoxConstraints(maxWidth: 900),
+          constraints: const BoxConstraints(maxWidth: 900),
           child: Column(
             children: [
               Expanded(child: ChatView(_controller)),
@@ -150,14 +152,14 @@ class Chat extends StatelessWidget {
                     Expanded(
                       child: TextField(
                         controller: _textController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           hintText: 'Type a message...',
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.send),
+                      icon: const Icon(Icons.send),
                       onPressed: () {
                         final text = _textController.text;
                         if (text.isNotEmpty) {

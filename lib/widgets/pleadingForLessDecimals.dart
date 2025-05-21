@@ -9,7 +9,7 @@ class AnimatedMemeWidget extends StatefulWidget {
     "You'll never need more than 6 decimal places."
   ];
 
-  AnimatedMemeWidget({Key? key}) : super(key: key);
+  AnimatedMemeWidget({super.key});
 
   @override
   State<AnimatedMemeWidget> createState() => _AnimatedMemeWidgetState();
@@ -31,7 +31,7 @@ class _AnimatedMemeWidgetState extends State<AnimatedMemeWidget>
 
     // Preload the image
     _christImage = Image.network("https://i.ibb.co/M1gQRt4/brother.png");
-    _christImage.image.resolve(ImageConfiguration()).addListener(
+    _christImage.image.resolve(const ImageConfiguration()).addListener(
       ImageStreamListener(
         (info, _) {
           setState(() {

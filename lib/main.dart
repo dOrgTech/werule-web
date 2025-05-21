@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 import 'package:Homebase/chat/models.dart';
 import 'package:Homebase/entities/proposal.dart';
+import 'package:Homebase/screens/bridge.dart';
 import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/landing.dart';
 import 'package:Homebase/screens/applefarm.dart';
 import 'package:Homebase/screens/proposals.dart';
+import 'package:Homebase/screens/uni_bridge.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/eneftee.dart';
@@ -93,10 +95,10 @@ persist() async {
     org.registry = Map<String, String>.from(doc.data()['registry']);
     org.totalSupply = doc.data()['totalSupply'];
     if (org.name.contains("dOrg")) {
-      print("debates only " + org.name);
+      print("debates only ${org.name}");
       org.debatesOnly = true;
     } else {
-      print("Full DAO  " + org.name);
+      print("Full DAO  ${org.name}");
       org.debatesOnly = false;
     }
     orgs.add(org);
@@ -185,8 +187,25 @@ final GoRouter router = GoRouter(
             const Duration(milliseconds: 800), // Increase fade time
       ),
     ),
+    GoRoute( // New route for /bridge
+      path: '/bridge',
+      pageBuilder: (context, state) {
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: TokenWrapperUI(), // Assuming Bridge() widget is defined elsewhere
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration:
+              const Duration(milliseconds: 800),
+        );
+      },
+    ),
     GoRoute(
-      path: '/:id',
+      path: '/:id', // This 'id' is the <dao address>
       pageBuilder: (context, state) {
         final id = state.pathParameters['id']!;
         Org? org;
@@ -200,40 +219,14 @@ final GoRouter router = GoRouter(
             ? FutureBuilder(
                 future: persist(),
                 builder: (context, snapshot) {
-                  context.go("/");
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (ModalRoute.of(context)?.isCurrent ?? false) {
+                      context.go("/");
+                    }
+                  });
                   return Explorer();
                 },
               )
-            // ? Scaffold(
-            //     body: SizedBox(
-            //       width: MediaQuery.of(context).size.width,
-            //       height: MediaQuery.of(context).size.height,
-            //       child: Stack(
-            //         children: [
-            //           Opacity(opacity: 0.01, child: GameOfLife()),
-            //           Center(
-            //             child: Column(
-            //               mainAxisAlignment: MainAxisAlignment.center,
-            //               children: const [
-            //                 Text(
-            //                   "Can't find DAO",
-            //                   style: TextStyle(fontSize: 40),
-            //                 ),
-            //                 SizedBox(height: 100),
-            //                 SizedBox(
-            //                   width: 350,
-            //                   child: Text(
-            //                     "Before concluding that you have the wrong address, refresh the page once.",
-            //                     style: TextStyle(fontSize: 15),
-            //                   ),
-            //                 ),
-            //               ],
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //     ),
-            //   )
             : DAO(org: org, InitialTabIndex: 0);
 
         return CustomTransitionPage(
@@ -246,31 +239,41 @@ final GoRouter router = GoRouter(
             );
           },
           transitionDuration:
-              const Duration(milliseconds: 800), // Increase fade time
+              const Duration(milliseconds: 800),
         );
       },
       routes: [
         GoRoute(
-          path: ':nestedId',
+          path: ':nestedId', // This 'nestedId' can be 'bridge' or a proposal ID
           pageBuilder: (context, state) {
-            final id = state.pathParameters['id']!;
-            Org org = orgs.firstWhere((org) => org.address == id);
-            final nestedId = state.pathParameters['nestedId']!;
+            final daoAddress = state.pathParameters['id']!;
+            final nestedSegment = state.pathParameters['nestedId']!;
 
-            final child = StreamBuilder<Object>(
-              stream: null,
-              builder: (context, snapshot) {
-                return DAO(
-                  org: org,
-                  InitialTabIndex: 1,
-                  proposalHash: nestedId,
-                );
-              },
-            );
+            Org org = orgs.firstWhere((org) => org.address == daoAddress,
+                orElse: () {
+                  throw Exception("DAO not found for address: $daoAddress while accessing $nestedSegment");
+                });
+
+            Widget pageContent;
+
+            if (nestedSegment.toLowerCase() == 'bridge') {
+              pageContent = Bridge(org: org);
+            } else {
+              pageContent = StreamBuilder<Object>(
+                stream: null,
+                builder: (context, snapshot) {
+                  return DAO(
+                    org: org,
+                    InitialTabIndex: 1,
+                    proposalHash: nestedSegment,
+                  );
+                },
+              );
+            }
 
             return CustomTransitionPage(
               key: state.pageKey,
-              child: child,
+              child: pageContent,
               transitionsBuilder:
                   (context, animation, secondaryAnimation, child) {
                 return FadeTransition(
@@ -279,7 +282,7 @@ final GoRouter router = GoRouter(
                 );
               },
               transitionDuration:
-                  const Duration(milliseconds: 800), // Increase fade time
+                  const Duration(milliseconds: 800),
             );
           },
         ),
@@ -348,7 +351,7 @@ class MyApp extends StatelessWidget {
     ThemeData testare = ThemeData(
       fontFamily: 'CascadiaCode',
       splashColor: const Color(0xff000000),
-      indicatorColor: Color.fromARGB(255, 52, 68, 70),
+      indicatorColor: const Color.fromARGB(255, 52, 68, 70),
       dividerColor: createMaterialColor(const Color(0xffcfc099)),
       brightness: Brightness.light,
       hintColor: Colors.white70,
@@ -403,7 +406,8 @@ class WalletBTN extends StatefulWidget {
 }
 
 class _WalletBTNState extends State<WalletBTN> {
-  bool _isConnecting = false;
+  final bool _isConnecting = false;
+  @override
   void initState() {
     super.initState();
     // Load existing address

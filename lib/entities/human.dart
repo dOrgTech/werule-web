@@ -154,9 +154,9 @@ class Human extends ChangeNotifier {
       );
       address = ethereum?.selectedAddress.toString();
       var chainaidi = ethereum?.chainId;
-      print("chainid is " + chainaidi.toString());
+      print("chainid is $chainaidi");
       web3user = Web3Provider(ethereum!);
-      print("web3user " + web3user.toString());
+      print("web3user $web3user");
       if (!chains.keys.contains(chainaidi)) {
         wrongChain = true;
         chain = Chain(
@@ -174,7 +174,7 @@ class Human extends ChangeNotifier {
           "chainId": "0x1f47b", // Replace with your chain ID
           "chainName": "Etherlink-Testnet",
           "nativeCurrency": {"name": "Tezos", "symbol": "XTZ", "decimals": 18},
-          "rpcUrls": [this.chain.rpcNode], // Replace with your RPC URL
+          "rpcUrls": [chain.rpcNode], // Replace with your RPC URL
           "blockExplorerUrls": [
             "https://your.explorer.url"
           ] // Replace with your block explorer URL

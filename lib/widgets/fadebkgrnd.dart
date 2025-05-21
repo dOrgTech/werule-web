@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 /// A dark gradient background that fades to transparent over a ~50px border.
 class _FadeGradientBackground extends StatelessWidget {
-  const _FadeGradientBackground({Key? key}) : super(key: key);
+  const _FadeGradientBackground({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class _FadeGradientBackground extends StatelessWidget {
         // so it covers corners. Then the fade starts ~50px from the edge.
         // So we compute the fraction at which we move from opaque -> transparent.
         // e.g. if minDim/2 = 100, and fade is 50 => the fade ratio is 50/100 = 0.5
-        final fadeDistance = 50.0;
+        const fadeDistance = 50.0;
         final half = minDim / 2;
         // the fraction of the radius at which to start fading
         // clamp to [0,1] in case half < fadeDistance
@@ -47,7 +47,7 @@ class _FadeGradientBackground extends StatelessWidget {
             return RadialGradient(
               center: Alignment.center,
               radius: 2.0, // covers entire box
-              colors: [
+              colors: const [
                 Colors.white, // fully opaque
                 Colors.white, // remain white from center -> fadeStart
                 Colors.transparent, // fade to transparent after fadeStart -> 1

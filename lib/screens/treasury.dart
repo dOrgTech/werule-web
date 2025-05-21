@@ -20,22 +20,22 @@ class _TreasuryState extends State<Treasury> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Container(
-                  padding: EdgeInsets.only(left: 50),
+                  padding: const EdgeInsets.only(left: 50),
                   width: 500,
                   child: TextField(
                       decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(width: 0.1),
+                              borderSide: const BorderSide(width: 0.1),
                           ),
-                        prefixIcon: Icon(Icons.search),
+                        prefixIcon: const Icon(Icons.search),
                         hintText: 'Search by Token Symbol',
                         // other properties
                       ),
                       // other properties
                     ),
                 ),
-              Spacer(),
+              const Spacer(),
             SizedBox(
               height: 32,
               child: ToggleSwitch(
@@ -45,7 +45,7 @@ class _TreasuryState extends State<Treasury> {
                 activeBgColor: [Theme.of(context).cardColor],
                 inactiveBgColor: Theme.of(context).canvasColor,
                 borderColor: [Theme.of(context).cardColor],
-                labels: ['All', 'Tokens', 'NFTs'],
+                labels: const ['All', 'Tokens', 'NFTs'],
                 onToggle: (index) {
                   print('switched to: $index');
               },
@@ -53,20 +53,20 @@ class _TreasuryState extends State<Treasury> {
             ),
              const Spacer(),
                Container(
-                      padding: EdgeInsets.only(right: 50),
+                      padding: const EdgeInsets.only(right: 50),
                       height: 40,
                       child: ElevatedButton(
+                        style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Theme.of(context).indicatorColor)),
+                        onPressed: (){},
                         child: Text("Propose Transfer",
                         style: TextStyle(fontSize: 16),
-                        ),
-                        style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).indicatorColor)),
-                        onPressed: (){},),
+                        ),),
                     ),
             ],
           )
         ),
        const SizedBox(height: 31),
-        Wrap(
+        const Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [

@@ -9,8 +9,8 @@ class Screen4Durations extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
 
-  Screen4Durations(
-      {required this.daoConfig, required this.onNext, required this.onBack});
+  const Screen4Durations(
+      {super.key, required this.daoConfig, required this.onNext, required this.onBack});
 
   @override
   _Screen4DurationsState createState() => _Screen4DurationsState();

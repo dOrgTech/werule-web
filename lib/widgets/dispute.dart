@@ -34,7 +34,7 @@ class DisputeState extends State<Dispute> {
   Widget build(BuildContext context) {
     List<String> paymentTokens=[];
     for (Token t in widget.project.acceptedTokens!){
-      paymentTokens.add(t.symbol +" ("+t.name+")");}
+      paymentTokens.add("${t.symbol} (${t.name})");}
     return
     Container(
       width: 650,
@@ -67,10 +67,10 @@ class DisputeState extends State<Dispute> {
                 width: 130,
                 child: TextButton(
                   style: ButtonStyle(
-                    overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                    backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                    elevation: MaterialStateProperty.all(1.0),
-                    shape: MaterialStateProperty.all(
+                    overlayColor: WidgetStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                    backgroundColor: WidgetStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                    elevation: WidgetStateProperty.all(1.0),
+                    shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(7.0),
                       ),

@@ -12,7 +12,7 @@ class RegItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 2),
+      margin: const EdgeInsets.symmetric(vertical: 2),
       color: Theme.of(context).cardColor,
       padding:
           const EdgeInsets.only(left: 48.0, right: 48, top: 10, bottom: 10),
@@ -22,12 +22,12 @@ class RegItemCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 15.0),
             child: Container(
-                padding: EdgeInsets.only(left: 15),
+                padding: const EdgeInsets.only(left: 15),
                 width: 140,
                 child: Text(itemKey)),
           ),
           Expanded(
-            child: Container(
+            child: SizedBox(
                 width: 230,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 48.0),
@@ -40,7 +40,7 @@ class RegItemCard extends StatelessWidget {
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: itemValue));
                           },
-                          child: Icon(Icons.copy))
+                          child: const Icon(Icons.copy))
                     ],
                   ),
                 )),

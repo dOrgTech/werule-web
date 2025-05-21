@@ -5,7 +5,7 @@ import '../entities/proposal.dart'; // Import your Proposal class
 class PDetails extends StatefulWidget {
   final Proposal p;
 
-  PDetails({super.key, required this.p});
+  const PDetails({super.key, required this.p});
 
   @override
   State<PDetails> createState() => _PDetailsState();
@@ -20,7 +20,7 @@ class _PDetailsState extends State<PDetails> {
     super.initState();
 
     // Start the countdown timer
-    _statusCheckTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _statusCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
         setState(() {
           _remainingSeconds--;
@@ -68,12 +68,12 @@ class _PDetailsState extends State<PDetails> {
           children: [
             Text(
               entry.key,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               _formatTime(entry.value),
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
             ),
           ],
         );
@@ -88,7 +88,7 @@ class _PDetailsState extends State<PDetails> {
       stage = "no quorum";
     }
     return Scaffold(
-      appBar: AppBar(title: Text("Proposal Details")),
+      appBar: AppBar(title: const Text("Proposal Details")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -96,36 +96,36 @@ class _PDetailsState extends State<PDetails> {
           children: [
             Text(
               widget.p.name ?? 'No Name',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               widget.p.description ?? 'No Description',
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               "Created At: ${widget.p.createdAt?.toString() ?? 'No Date'}",
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               "Type: ${widget.p.type ?? 'No Type'}",
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               "Status: ${widget.p.statusHistory.toString()}",
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             widget.p.statusPill(stage, context),
-            SizedBox(height: 20),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               "Countdown Timer",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildCountdownDisplay(), // Display countdown here
           ],
         ),

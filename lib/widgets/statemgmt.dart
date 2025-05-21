@@ -21,8 +21,9 @@ class Elephant {
     final now = DateTime.now();
     if (now.isBefore(startTime)) return ElephantStatus.pending;
     if (now.isBefore(startTime.add(votingPeriod))) return ElephantStatus.voting;
-    if (now.isBefore(startTime.add(votingPeriod).add(executionDelay)))
+    if (now.isBefore(startTime.add(votingPeriod).add(executionDelay))) {
       return ElephantStatus.executionPending;
+    }
     return ElephantStatus.executed;
   }
 }
@@ -30,7 +31,7 @@ class Elephant {
 class ElephantStatusWidget extends StatefulWidget {
   final Elephant elephant; // Accept an Elephant instance
 
-  ElephantStatusWidget({required this.elephant});
+  const ElephantStatusWidget({super.key, required this.elephant});
 
   @override
   _ElephantStatusWidgetState createState() => _ElephantStatusWidgetState();
@@ -46,7 +47,7 @@ class _ElephantStatusWidgetState extends State<ElephantStatusWidget> {
   }
 
   void _startAutoUpdate() {
-    _timer = Timer.periodic(Duration(seconds: 10), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
       setState(() {}); // Triggers a rebuild to reflect the updated status
     });
   }
@@ -63,7 +64,7 @@ class _ElephantStatusWidgetState extends State<ElephantStatusWidget> {
 
     return Text(
       'Proposal Status: ${status.toString().split('.').last}',
-      style: TextStyle(fontSize: 24),
+      style: const TextStyle(fontSize: 24),
     );
   }
 }

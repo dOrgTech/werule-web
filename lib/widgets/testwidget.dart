@@ -83,7 +83,7 @@ class _ParentState extends State<Parent> {
 }
 
 class CNTDN extends StatefulWidget {
-  CNTDN(
+  const CNTDN(
       {super.key,
       required this.remainingSeconds,
       required this.onCountdownComplete});

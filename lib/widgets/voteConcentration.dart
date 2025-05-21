@@ -6,7 +6,7 @@ import '../entities/org.dart';
 
 class VotingPowerWidget extends StatefulWidget {
   Org org;
-  VotingPowerWidget({required this.org});
+  VotingPowerWidget({super.key, required this.org});
 
   @override
   _VotingPowerWidgetState createState() => _VotingPowerWidgetState();
@@ -63,8 +63,8 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
         children: [
           Container(
             height: 30,
-            constraints: BoxConstraints(minWidth: 520),
-            color: Color.fromARGB(255, 224, 224, 224),
+            constraints: const BoxConstraints(minWidth: 520),
+            color: const Color.fromARGB(255, 224, 224, 224),
             child: Center(
                 child: Row(
               children: [
@@ -97,7 +97,7 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
                       selectedWidgetFeature = value;
                     });
                   },
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.black), // Selected item text color
                   iconEnabledColor: Colors.black, // Dropdown arrow color
                 ),
@@ -105,15 +105,15 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
             )),
           ),
           Container(
-            constraints: BoxConstraints(minWidth: 520),
+            constraints: const BoxConstraints(minWidth: 520),
             decoration: BoxDecoration(
-              color: Color.fromARGB(255, 63, 63, 63),
+              color: const Color.fromARGB(255, 63, 63, 63),
               border: Border.all(
-                  color: Color.fromARGB(255, 224, 224, 224), width: 0.6),
+                  color: const Color.fromARGB(255, 224, 224, 224), width: 0.6),
             ),
             height: 180,
             // width: MediaQuery.of(context).size.width*0.4,
-            padding: EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -148,7 +148,7 @@ class _VotingPowerWidgetState extends State<VotingPowerWidget> {
                           ],
                         ),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         width: 120,
                       ),
                       Container(
