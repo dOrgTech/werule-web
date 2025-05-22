@@ -1,6 +1,3 @@
-import 'dart:math';
-import 'package:Homebase/entities/human.dart';
-import 'package:Homebase/main.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/ad_banner.dart';
@@ -9,13 +6,9 @@ import 'package:flutter/services.dart';
 
 import '../entities/org.dart';
 import '../entities/proposal.dart';
-import '../widgets/memearrow.dart';
 import '../widgets/tokenAssets.dart';
 import '../widgets/viewConfig.dart';
-import 'dart:math';
 
-import 'package:flutter/material.dart';
-import 'dart:math';
 
 class Home extends StatefulWidget {
   Home({super.key, required this.org});

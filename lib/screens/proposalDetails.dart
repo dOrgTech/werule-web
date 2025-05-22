@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // For formatting the date
-import 'package:flutter/src/widgets/framework.dart';
 import '../entities/contractFunctions.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';

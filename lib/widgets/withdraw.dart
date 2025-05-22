@@ -1,14 +1,9 @@
 
 
-import 'dart:isolate';
-import 'dart:html' as html;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../entities/token.dart';
-import 'package:riverpod/riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/services.dart';  // Import this for TextInputFormatter
+// Import this for TextInputFormatter
 
 import '../entities/project.dart';
 const String escape = '\uE00C';

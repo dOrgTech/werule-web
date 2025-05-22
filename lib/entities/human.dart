@@ -1,15 +1,9 @@
-import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:flutter_web3_provider/ethers.dart';
-import 'dart:convert';
-import 'dart:js';
 import 'dart:js_util';
-import '../entities/token.dart';
-import 'dart:math';
 import '../main.dart';
 import '../utils/functions.dart';
-import 'org.dart';
 
 String prevChain = "0x1f47b";
 String simpleDAOAddress = "0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF";

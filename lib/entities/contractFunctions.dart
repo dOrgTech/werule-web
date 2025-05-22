@@ -11,15 +11,9 @@ import 'package:http/http.dart'; // For connecting to Ethereum via JSON RPC
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:convert';
-import 'package:convert/convert.dart';
 import 'package:web3dart/crypto.dart';
 import 'human.dart';
 import 'org.dart';
-import 'dart:typed_data';
-import 'package:web3dart/web3dart.dart';
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-import 'package:web3dart/crypto.dart';
 
 delegate(String toWhom, Org org) async {
   var sourceContract =

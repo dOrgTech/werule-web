@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:toggle_switch/toggle_switch.dart';
-import '../entities/org.dart';
 import '../entities/proposal.dart';
 
 class NewProposal extends StatefulWidget {

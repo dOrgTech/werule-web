@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../entities/contractFunctions.dart'; // Imports createDAO and createDAOwithWrappedToken
 import '../../entities/org.dart';
-import '../../entities/proposal.dart'; // For Member
+// For Member
 import '../../entities/token.dart';
 
 import 'creator/dao_config.dart';

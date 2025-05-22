@@ -58,7 +58,7 @@ class _TreasuryState extends State<Treasury> {
                       child: ElevatedButton(
                         style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Theme.of(context).indicatorColor)),
                         onPressed: (){},
-                        child: Text("Propose Transfer",
+                        child: const Text("Propose Transfer",
                         style: TextStyle(fontSize: 16),
                         ),),
                     ),

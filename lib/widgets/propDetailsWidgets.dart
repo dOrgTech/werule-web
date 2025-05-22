@@ -1,17 +1,10 @@
-import 'dart:convert';
-import 'dart:typed_data';
-import 'dart:typed_data';
-import 'dart:typed_data';
 import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:typed_data';
 import 'dart:async';
 import 'dart:math';
-import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web3dart/crypto.dart';
@@ -20,10 +13,7 @@ import 'package:web3dart/web3dart.dart';
 import '../entities/human.dart';
 import '../entities/proposal.dart';
 import '../utils/reusable.dart';
-import 'dart:typed_data';
-import 'package:web3dart/web3dart.dart';
-import 'package:convert/convert.dart';
-import 'package:collection/collection.dart'; // For ListEquality
+// For ListEquality
 
 class TokenTransfer {
   final String amount;

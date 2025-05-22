@@ -220,7 +220,7 @@ class _DAOState extends State<DAO> {
               ],
             ), // End of Column
 
-            Footer()
+            const Footer()
           ],
         ),
       ), // End of ListView
@@ -330,7 +330,7 @@ class _DAOState extends State<DAO> {
               ],
             ), // End of Column
 
-            Footer()
+            const Footer()
           ],
         ),
       ), // End of ListView

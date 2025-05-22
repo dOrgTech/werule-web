@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:gojs/gojs.dart';
 
 import '../entities/org.dart';
 

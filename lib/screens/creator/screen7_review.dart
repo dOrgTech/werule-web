@@ -214,7 +214,7 @@ class Screen7Review extends StatelessWidget {
                 ],
                 
                 // Registry Entries
-                Text('Registry Entries:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const Text('Registry Entries:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 const SizedBox(height: 8),
                 // DataTable will naturally be constrained by the parent SizedBox
                 DataTable(

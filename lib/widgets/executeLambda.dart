@@ -1,12 +1,9 @@
-import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../entities/contractFunctions.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
-import '../screens/dao.dart';
 import 'initiative.dart';
 
 class ACI extends StatefulWidget {

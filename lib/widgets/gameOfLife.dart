@@ -2,9 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-import 'dart:async';
-import 'dart:math';
-import 'package:flutter/material.dart';
 
 class GameOfLife extends StatefulWidget {
   const GameOfLife({super.key});

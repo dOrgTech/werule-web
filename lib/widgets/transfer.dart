@@ -2,16 +2,13 @@
 
 import 'package:Homebase/entities/definitions.dart';
 import 'package:Homebase/entities/proposal.dart';
-import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/widgets/newDebate.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
 import 'dart:math';
-import '../entities/human.dart';
 import '../entities/org.dart';
 import '../entities/token.dart';
-import '../screens/dao.dart';
 import '../entities/contractFunctions.dart';
 import 'initiative.dart';
 

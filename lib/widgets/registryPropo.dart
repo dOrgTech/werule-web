@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../entities/contractFunctions.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
-import '../screens/dao.dart';
 import 'package:lottie/lottie.dart';
 
 import 'initiative.dart';

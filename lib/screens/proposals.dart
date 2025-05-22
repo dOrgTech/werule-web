@@ -249,17 +249,17 @@ class _ProposalsState extends State<Proposals> {
                                   width: 60,
                                   child: const Text("ID #")),
                             ),
-                            Expanded(
+                            const Expanded(
                               child: SizedBox(
                                   width: 230,
-                                  child: const Padding(
+                                  child: Padding(
                                     padding: EdgeInsets.only(left: 48.0),
                                     child: Text("Title"),
                                   )),
                             ),
-                            SizedBox(
+                            const SizedBox(
                                 width: 230,
-                                child: const Center(child: Text("Author"))),
+                                child: Center(child: Text("Author"))),
                             const SizedBox(
                                 width: 150,
                                 child: Center(child: Text("▼ Posted"))),
@@ -503,7 +503,7 @@ class ProposalListState extends State<ProposalList> {
             width: 220,
             child: ElevatedButton(
                 style: ButtonStyle(
-                  elevation: WidgetStatePropertyAll(12),
+                  elevation: const WidgetStatePropertyAll(12),
                   backgroundColor:
                       WidgetStateProperty.all(createMaterialColor(
                     const Color.fromARGB(255, 175, 215, 218),

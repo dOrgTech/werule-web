@@ -136,7 +136,7 @@ class _MemeArrowWidgetState extends State<MemeArrowWidget>
     // The button bounding box
     const bxLeft = (containerW - buttonW) / 2;
     const bxTop = (containerH - buttonH) / 2;
-    final r = Rect.fromLTWH(bxLeft, bxTop, buttonW, buttonH);
+    const r = Rect.fromLTWH(bxLeft, bxTop, buttonW, buttonH);
 
     final side = _rand.nextInt(4);
     switch (side) {
@@ -232,7 +232,7 @@ class _MemeArrowWidgetState extends State<MemeArrowWidget>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Transform.scale(scale: 0.6, child: FlashingIcon()),
+                          Transform.scale(scale: 0.6, child: const FlashingIcon()),
                           const SizedBox(width: 17),
                           AnimatedContainer(
                               duration: const Duration(milliseconds: 489),

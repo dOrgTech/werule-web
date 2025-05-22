@@ -71,7 +71,7 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
       height: MediaQuery.of(context).size.height,
       child: Stack(
         children: [
-          Opacity(opacity: 0.04, child: GameOfLife()),
+          const Opacity(opacity: 0.04, child: GameOfLife()),
           Center(
             child: SizedBox(
               width: 600,

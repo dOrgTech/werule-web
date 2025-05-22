@@ -1,15 +1,9 @@
 import 'package:Homebase/main.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../entities/human.dart';
-import '../screens/dao.dart';
-import '../screens/explorer.dart';
 import '../utils/functions.dart';
-import 'package:toggle_switch/toggle_switch.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 bool isConnected = false;

@@ -71,7 +71,7 @@ class _RegistryState extends State<Registry> {
                         },
                       );
                     },
-                    child: Text(
+                    child: const Text(
                       "Add/Edit Item",
                       style: TextStyle(fontSize: 16, color: Colors.black87),
                     ),
@@ -92,10 +92,10 @@ class _RegistryState extends State<Registry> {
                     width: 140,
                     child: const Text("Key")),
               ),
-              Expanded(
+              const Expanded(
                 child: SizedBox(
                     width: 230,
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.only(left: 48.0),
                       child: Text("Value"),
                     )),

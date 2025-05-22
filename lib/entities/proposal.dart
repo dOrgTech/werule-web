@@ -64,10 +64,10 @@ class NotImplemented extends StatelessWidget {
   const NotImplemented({super.key});
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return const SizedBox(
         width: 300,
         height: 240,
-        child: const Center(
+        child: Center(
           child: Text("NOT IMPLEMENTED"),
         ));
   }

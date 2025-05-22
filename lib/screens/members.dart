@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import '../entities/org.dart';
-import '../entities/proposal.dart';
-import '../main.dart';
 import '../widgets/membersList.dart';
-import '../widgets/voteConcentration.dart';
 
 class Members extends StatefulWidget {
   Members({super.key, required this.org});

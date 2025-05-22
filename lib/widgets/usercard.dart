@@ -1,10 +1,7 @@
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import '../utils/functions.dart';
-import 'package:intl/intl.dart';
 import '../entities/human.dart';
-import 'membersList.dart';
 
 class UserCard extends StatelessWidget {
    UserCard({super.key, required this.human});

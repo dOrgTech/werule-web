@@ -141,7 +141,7 @@ class MemberEntryWidget extends StatelessWidget {
   final VoidCallback onRemove;
   final VoidCallback onChanged;
 
-  MemberEntryWidget({
+  const MemberEntryWidget({
     super.key,
     required this.entry,
     required this.onRemove,

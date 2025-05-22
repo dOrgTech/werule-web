@@ -73,11 +73,11 @@ class AccountState extends State<Account> {
         future: widget.org.refreshMember(widget.member!),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: SizedBox(
                   width: 140.0,
                   height: 140.0,
-                  child: const CircularProgressIndicator()),
+                  child: CircularProgressIndicator()),
             );
           }
           for (Proposal p in widget.member!.proposalsVoted) {

@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 /// A dark gradient background that fades to transparent over a ~50px border.
 class _FadeGradientBackground extends StatelessWidget {
-  const _FadeGradientBackground({super.key});
+  const _FadeGradientBackground();
 
   @override
   Widget build(BuildContext context) {

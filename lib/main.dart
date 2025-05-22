@@ -17,7 +17,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'entities/org.dart';
 import 'entities/token.dart';
-import 'firebase_options.dart';
+import 'firebase_options.dart'; 
 import 'screens/dao.dart';
 import 'screens/explorer.dart';
 import 'utils/theme.dart';
@@ -151,7 +151,7 @@ final GoRouter router = GoRouter(
       path: '/chat',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: Scaffold(body: Opacity(opacity: 0.1, child: GameOfLife())),
+        child: const Scaffold(body: Opacity(opacity: 0.1, child: GameOfLife())),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -192,7 +192,7 @@ final GoRouter router = GoRouter(
       pageBuilder: (context, state) {
         return CustomTransitionPage(
           key: state.pageKey,
-          child: TokenWrapperUI(), // Assuming Bridge() widget is defined elsewhere
+          child: const TokenWrapperUI(), // Assuming Bridge() widget is defined elsewhere
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,

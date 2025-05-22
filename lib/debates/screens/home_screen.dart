@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/debate.dart';
-import '../models/argument.dart';
 import 'debate_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {

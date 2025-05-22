@@ -98,7 +98,7 @@ class _MembersListState extends State<MembersList> {
                 onPressed: () {
                 context.go( "/${widget.org.address}/bridge");
                 },
-                child:  Text("Bridge "+ widget.org.symbol!),
+                child:  Text("Bridge ${widget.org.symbol!}"),
               ),
 
            

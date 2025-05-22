@@ -94,7 +94,7 @@ String generateWalletAddress() {
   final random = Random();
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const prefix = 'tz1';
-  final length = 36 - prefix.length;
+  const length = 36 - prefix.length;
   final randomString = String.fromCharCodes(Iterable.generate(
       length, (_) => characters.codeUnitAt(random.nextInt(characters.length))));
   return prefix + randomString;
@@ -104,7 +104,7 @@ String generateContractAddress() {
   final random = Random();
   const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const prefix = 'KT1';
-  final length = 36 - prefix.length;
+  const length = 36 - prefix.length;
   final randomString = String.fromCharCodes(Iterable.generate(
       length, (_) => characters.codeUnitAt(random.nextInt(characters.length))));
   return prefix + randomString;

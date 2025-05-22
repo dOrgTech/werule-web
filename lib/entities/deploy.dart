@@ -3,8 +3,6 @@ import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart'; // For connecting to Ethereum via JSON RPC
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:convert';
-import 'package:convert/convert.dart';
 import 'package:web3dart/crypto.dart';
 
 Future<void> deployDaoSuite() async {

@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/screens/creator/creator_widgets.dart';
-import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/widgets/newProposal.dart';
 import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:flutter/services.dart';
 import '../entities/definitions.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
-import '../screens/creator.dart';
 import 'initiative.dart'; // Import for DurationInput widget
 
 class DaoConfigurationWidget extends StatefulWidget {

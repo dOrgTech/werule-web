@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'dart:async';
-import 'package:provider/provider.dart';
 
 enum ElephantStatus { pending, voting, executionPending, executed }
 

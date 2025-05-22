@@ -1,12 +1,7 @@
-import 'package:Homebase/entities/definitions.dart';
-import 'package:Homebase/widgets/newProposal.dart';
 import 'package:flutter/material.dart';
 import '../debates/models/argument.dart';
 import '../debates/models/debate.dart';
-import '../entities/contractFunctions.dart';
 import '../entities/org.dart';
-import '../entities/proposal.dart';
-import '../screens/dao.dart';
 import 'package:lottie/lottie.dart';
 
 class NewDebate extends StatefulWidget {

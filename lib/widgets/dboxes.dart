@@ -65,7 +65,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
     if (showBothOptions) {
       // Initial state: show both buttons
       delegateYourVoteBottomWidget = widget.busy
-          ? Wait()
+          ? const Wait()
           : ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).indicatorColor,
@@ -76,7 +76,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
             );
 
       voteDirectlyBottomWidget = widget.busy
-          ? Wait()
+          ? const Wait()
           : ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).indicatorColor,
@@ -87,7 +87,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
     } else if (isVoteDirectlyEnabled) {
       // When Vote Directly is enabled
       voteDirectlyBottomWidget = widget.busy
-          ? Wait()
+          ? const Wait()
           : widget.m.personalBalance.toString() ==
                   widget.m.votingWeight.toString()
               ? const Padding(
@@ -116,7 +116,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                 );
 
       delegateYourVoteBottomWidget = widget.busy
-          ? Wait()
+          ? const Wait()
           : ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).indicatorColor,
@@ -128,7 +128,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
     } else {
       // When Delegate Your Vote is enabled
       delegateYourVoteBottomWidget = widget.busy
-          ? Wait()
+          ? const Wait()
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -149,7 +149,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
             );
 
       voteDirectlyBottomWidget = widget.busy
-          ? Wait()
+          ? const Wait()
           : ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).indicatorColor,

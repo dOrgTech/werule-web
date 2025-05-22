@@ -2,7 +2,6 @@ import "package:Homebase/debates/models/argument.dart";
 import "package:Homebase/screens/proposals.dart";
 import "package:Homebase/widgets/propDetailsWidgets.dart";
 import "package:Homebase/widgets/registryPropo.dart";
-import "package:Homebase/widgets/transfer.dart";
 import "package:Homebase/widgets/waiting.dart";
 import "package:flutter/material.dart";
 import "package:toggle_switch/toggle_switch.dart";
@@ -12,7 +11,6 @@ import "../entities/contractFunctions.dart";
 import "../entities/definitions.dart";
 import "../entities/org.dart";
 import "../entities/proposal.dart";
-import "../entities/token.dart";
 import "../screens/dao.dart";
 import "../utils/reusable.dart";
 

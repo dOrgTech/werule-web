@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../screens/proposalDetails.dart';
 
 class ActionLabel extends StatefulWidget {
   final String status;

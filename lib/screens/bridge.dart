@@ -18,8 +18,8 @@ enum BridgeAction { wrap, unwrap }
 
 class _BridgeState extends State<Bridge> {
   final String _loggedInUserAddress = "0xAbc123Def456Ghi789Jkl012Mno345Pqr678"; // Mock
-  double _availableBaseTokenBalance = 250.875;  // e.g., TKN balance
-  double _availableWrappedTokenBalance = 75.5; // e.g., wTKN balance - Mock data
+  final double _availableBaseTokenBalance = 250.875;  // e.g., TKN balance
+  final double _availableWrappedTokenBalance = 75.5; // e.g., wTKN balance - Mock data
 
   final String _baseTokenSymbol = "TKN";
   final String _wrappedTokenSymbol = "wTKN";

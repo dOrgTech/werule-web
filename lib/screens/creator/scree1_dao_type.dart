@@ -52,7 +52,7 @@ class Screen1DaoType extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             const SizedBox(height: 32),
-                            FlashingIcon(),
+                            const FlashingIcon(),
                             const SizedBox(height: 14),
                             SizedBox(
                                 width: 150,

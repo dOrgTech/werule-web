@@ -162,7 +162,7 @@ class _ExplorerState extends State<Explorer> {
         width: MediaQuery.of(context).size.width,
         child: Stack(
           children: [
-            Opacity(opacity: 0.03, child: GameOfLife()),
+            const Opacity(opacity: 0.03, child: GameOfLife()),
             Container(
               alignment: Alignment.topCenter,
               child: widget.loaded == true

@@ -25,15 +25,11 @@ class _TokenAssetsState extends State<TokenAssets> {
   Future<void> buildAssets() async {
     fungibleAssets.clear();
 
-    if (widget.org.nativeBalance == null) {
-      debugPrint("Either native token or native balance is null");
-    } else {
-      debugPrint("Adding native token ${widget.org.native.name}");
-      fungibleAssets.add(
-        asset(widget.org.native, widget.org.nativeBalance),
-      );
-    }
-
+    debugPrint("Adding native token ${widget.org.native.name}");
+    fungibleAssets.add(
+      asset(widget.org.native, widget.org.nativeBalance),
+    );
+  
     for (Token t in widget.org.erc20Tokens) {
       final bal = widget.org.treasury[t] ?? "0";
       debugPrint("Adding ERC20 token: ${t.name}, balance: $bal");

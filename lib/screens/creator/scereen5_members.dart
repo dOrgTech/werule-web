@@ -7,7 +7,7 @@ import 'package:Homebase/entities/org.dart';
 import 'package:flutter/foundation.dart'; // For compute
 import 'package:flutter/material.dart';
 
-import '../../entities/proposal.dart'; // For Member class
+// For Member class
 import 'creator_widgets.dart'; // For MemberEntry class and MemberEntryWidget
 import 'dao_config.dart'; // For DaoConfig class
 

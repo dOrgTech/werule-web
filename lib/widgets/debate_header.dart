@@ -274,7 +274,7 @@ class _DebateHeaderState extends State<DebateHeader> {
 /// A dark gradient background that fades ~50px from the edges
 /// to transparent, using a radial gradient mask.
 class _FadeGradientBackground extends StatelessWidget {
-  const _FadeGradientBackground({super.key});
+  const _FadeGradientBackground();
 
   @override
   Widget build(BuildContext context) {
