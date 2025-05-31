@@ -1,13 +1,11 @@
+import 'package:Homebase/services/blockscout.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/utils/reusable.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 // import '../screens/creator.dart';
-import '../entities/human.dart';
 import '../entities/org.dart';
-import 'dart:typed_data';
 
 String add1 = "https://i.ibb.co/2WbL5nC/add1.png";
 String add2 = "https://i.ibb.co/6rmksXk/add2.png";
@@ -35,34 +33,48 @@ class _MembersListState extends State<MembersList> {
   }
 
   Future<void> _fetchMembers() async {
-    final querySnap = await FirebaseFirestore.instance
-        .collection("idaos${Human().chain.name}")
-        .doc(widget.org.address)
-        .collection("members")
-        .get();
-
-    for (var doc in querySnap.docs) {
-      Member m = Member(address: doc.data()['address']);
-      // Keep personalBalance as a String to avoid breaking existing code
-      m.personalBalance = doc.data()['personalBalance'].toString();
-      List<String> proposalsCreatedHashes =
-          List<String>.from(doc.data()['proposalsCreated'] ?? []);
-      List<String> proposalsVotedHashes =
-          List<String>.from(doc.data()['proposalsVoted'] ?? []);
-      m.proposalsCreated = widget.org.proposals
-          .where((proposal) => proposalsCreatedHashes.contains(proposal.hash))
-          .toList();
-      m.proposalsVoted = widget.org.proposals
-          .where((proposal) => proposalsVotedHashes.contains(proposal.hash))
-          .toList();
-      m.lastSeen = doc.data()['lastSeen'] != null
-          ? (doc.data()['lastSeen'] as Timestamp).toDate()
-          : null;
-      m.delegate = doc.data()['delegate'] ?? "";
-      m.constituentsAddresses =
-          List<String>.from(doc.data()['constituents'] ?? []);
-      widget.org.memberAddresses[m.address.toLowerCase()] = m;
+    var balances= await getHolders(widget.org.govTokenAddress!);
+    for (var entry in balances.entries) {
+      String address = entry.key.toString();
+      String balance = entry.value.toString();
+      if (widget.org.memberAddresses.containsKey(address)) {
+        widget.org.memberAddresses[address]!.personalBalance = balance;
+      } else {
+        Member m = Member(address: address);
+        m.personalBalance = balance;
+        widget.org.memberAddresses[address] = m;
+      }
     }
+
+
+    // final querySnap = await FirebaseFirestore.instance
+    //     .collection("idaos${Human().chain.name}")
+    //     .doc(widget.org.address)
+    //     .collection("members")
+    //     .get();
+
+    // for (var doc in querySnap.docs) {
+    //   Member m = Member(address: doc.data()['address']);
+    //   // Keep personalBalance as a String to avoid breaking existing code
+    //   m.personalBalance = doc.data()['personalBalance'].toString();
+    //   List<String> proposalsCreatedHashes =
+    //       List<String>.from(doc.data()['proposalsCreated'] ?? []);
+    //   List<String> proposalsVotedHashes =
+    //       List<String>.from(doc.data()['proposalsVoted'] ?? []);
+    //   m.proposalsCreated = widget.org.proposals
+    //       .where((proposal) => proposalsCreatedHashes.contains(proposal.hash))
+    //       .toList();
+    //   m.proposalsVoted = widget.org.proposals
+    //       .where((proposal) => proposalsVotedHashes.contains(proposal.hash))
+    //       .toList();
+    //   m.lastSeen = doc.data()['lastSeen'] != null
+    //       ? (doc.data()['lastSeen'] as Timestamp).toDate()
+    //       : null;
+    //   m.delegate = doc.data()['delegate'] ?? "";
+    //   m.constituentsAddresses =
+    //       List<String>.from(doc.data()['constituents'] ?? []);
+    //   widget.org.memberAddresses[m.address.toLowerCase()] = m;
+    // }
   }
 
   void _changePage(int pageNumber) {
@@ -149,13 +161,7 @@ class _MembersListState extends State<MembersList> {
                   child: Text("Address"),
                 ),
               ),
-              Container(
-                height: 35,
-                color: const Color.fromARGB(0, 76, 175, 79),
-                child: const Center(
-                  child: Text("Voting\nWeight", textAlign: TextAlign.center),
-                ),
-              ),
+         
               Container(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
@@ -166,21 +172,7 @@ class _MembersListState extends State<MembersList> {
                   ),
                 ),
               ),
-              Container(
-                height: 42,
-                color: const Color.fromARGB(0, 76, 175, 79),
-                child: const Center(
-                  child:
-                      Text("Proposals\nCreated", textAlign: TextAlign.center),
-                ),
-              ),
-              Container(
-                height: 42,
-                color: const Color.fromARGB(0, 76, 175, 79),
-                child: const Center(
-                  child: Text("Proposals\nVoted", textAlign: TextAlign.center),
-                ),
-              ),
+         
             ],
           ),
         ],
@@ -197,10 +189,7 @@ class _MembersListState extends State<MembersList> {
         columnWidths: const <int, TableColumnWidth>{
           0: FlexColumnWidth(2.4),
           1: FlexColumnWidth(),
-          2: FlexColumnWidth(),
-          3: FlexColumnWidth(),
-          4: FlexColumnWidth(),
-          5: FlexColumnWidth(),
+          
         },
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: tableRows,
@@ -300,16 +289,7 @@ class MemberTableRow extends TableRow {
                 ),
               ),
             ),
-            Container(
-              height: 42,
-              color: const Color.fromARGB(0, 76, 175, 79),
-              child: Center(
-                child: Text(
-                    // "${member.votingWeight.toString()} " ??
-                    "${BigInt.parse(member.votingWeight.toString()) ~/ BigInt.from(10).pow(decimals)}" ??
-                        "N/A"),
-              ),
-            ),
+        
             Container(
               height: 42,
               color: const Color.fromARGB(0, 76, 175, 79),
@@ -319,20 +299,7 @@ class MemberTableRow extends TableRow {
                         "N/A"),
               ),
             ),
-            Container(
-              height: 42,
-              color: const Color.fromARGB(0, 76, 175, 79),
-              child: Center(
-                child: Text(member.proposalsCreated.length.toString()),
-              ),
-            ),
-            Container(
-              height: 42,
-              color: const Color.fromARGB(0, 76, 175, 79),
-              child: Center(
-                child: Text(member.proposalsVoted.length.toString()),
-              ),
-            ),
+         
           ],
         );
 }

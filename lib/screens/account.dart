@@ -1,19 +1,16 @@
 import 'dart:typed_data';
 
 // import 'package:Homebase/screens/creator.dart';
-import 'package:Homebase/screens/members.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:toggle_switch/toggle_switch.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart'; // Removed import if no longer needed
 import '../entities/human.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
-import '../main.dart';
 import '../utils/reusable.dart';
 import '../widgets/dboxes.dart';
-import '../widgets/membersList.dart';
 import '../widgets/proposalCard.dart';
-import '../widgets/voteConcentration.dart';
 // import 'applefarm.dart';
 
 Color listTitleColor = const Color.fromARGB(255, 211, 211, 211);
@@ -30,13 +27,67 @@ class Account extends StatefulWidget {
 }
 
 class AccountState extends State<Account> {
+  Future<Member?>? _accountDataFuture;
+
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    if (Human().address != null) {
+      // Initial member setup, will be fully refreshed by _loadAccountAndMemberData
+      widget.member = widget.org.memberAddresses[Human().address!.toLowerCase()] ??
+          Member(address: Human().address!, personalBalance: "0");
+      _accountDataFuture = _loadAccountAndMemberData();
+    }
+  }
+
+  Future<Member?> _loadAccountAndMemberData() async {
+    print("[AccountState] _loadAccountAndMemberData: Starting data load for user ${Human().address} in org ${widget.org.name}.");
+    
+    // Step 1: Ensure proposals for the organization are loaded.
+    await widget.org.getProposals(); // This populates widget.org.proposals AND calls widget.org.getMembers()
+    print("[AccountState] _loadAccountAndMemberData: widget.org.getProposals() completed. Found ${widget.org.proposals.length} org proposals. Found ${widget.org.memberAddresses.length} member addresses.");
+
+    // Re-assign widget.member using the now-populated widget.org.memberAddresses.
+    // This ensures we use the Member instance from the Org's list if available,
+    // which might have been partially populated by getHolders (called within getMembers).
+    if (Human().address != null) {
+        String userAddressLower = Human().address!.toLowerCase();
+        // Try to get the member from the org's list first
+        Member? existingMemberFromOrg = widget.org.memberAddresses[userAddressLower];
+        
+        if (existingMemberFromOrg != null) {
+            widget.member = existingMemberFromOrg;
+            print("[AccountState] _loadAccountAndMemberData: Member ${userAddressLower} found in org.memberAddresses. Using this instance.");
+        } else {
+            // If not found in org.memberAddresses (e.g., new user or not yet a token holder),
+            // ensure widget.member is a valid new instance if it was null, or keep existing if already initialized by initState.
+            if (widget.member == null || widget.member!.address.toLowerCase() != userAddressLower) {
+                 print("[AccountState] _loadAccountAndMemberData: Member ${userAddressLower} not found in org.memberAddresses. Creating/assigning new Member instance.");
+                 widget.member = Member(address: Human().address!, personalBalance: "0");
+            } else {
+                 print("[AccountState] _loadAccountAndMemberData: Member ${userAddressLower} not in org.memberAddresses, but widget.member already initialized with this address. Proceeding.");
+            }
+        }
+    } else {
+        // Human().address is null, so no member can be determined.
+        widget.member = null;
+    }
+
+    if (widget.member == null || widget.member!.address.isEmpty) {
+        print("[AccountState] _loadAccountAndMemberData: Member object is null or has empty address after attempting to source/initialize. Cannot proceed.");
+        return null;
+    }
+    
+    // Step 2: Refresh the specific member's data using the (potentially) updated widget.member instance.
+    Member refreshedMember = await widget.org.refreshMember(widget.member!);
+    widget.member = refreshedMember;
+    print("[AccountState] _loadAccountAndMemberData: widget.org.refreshMember() completed. Member has ${widget.member?.proposalsVoted.length ?? 0} voted proposals (from member object).");
+    
+    // Step 3: Populate createdProposals (must be after widget.org.getProposals())
     widget.createdProposals = [];
-    widget.votedOnProposals = [];
-    if (!(Human().address == null)) {
-      for (Proposal p in widget.org.proposals) {
-        if (p.author!.toLowerCase() == Human().address!.toLowerCase()) {
+    if (Human().address != null) {
+      for (Proposal p in widget.org.proposals) { // Uses the now-populated list
+        if (p.author?.toLowerCase() == Human().address!.toLowerCase()) {
           widget.createdProposals.add(ProposalCard(
             proposal: p,
             org: widget.org,
@@ -44,8 +95,76 @@ class AccountState extends State<Account> {
         }
       }
     }
+    print("[AccountState] _loadAccountAndMemberData: Populated ${widget.createdProposals.length} created proposal cards.");
 
-    return Human().address == null ? notSignedin() : accountWide(context);
+    // Step 4: Populate votedOnProposals (must be after widget.org.refreshMember())
+    widget.votedOnProposals = [];
+    if (widget.member != null) {
+        for (Proposal p in widget.member!.proposalsVoted) { // Uses the now-populated list from refreshed member
+            widget.votedOnProposals.add(ProposalCard( // Reverted to simple instantiation
+            proposal: p,
+            org: widget.org,
+            ));
+        }
+    }
+    print("[AccountState] _loadAccountAndMemberData: Populated ${widget.votedOnProposals.length} voted on proposal cards.");
+
+    if (mounted) {
+      setState(() {}); // Trigger a rebuild if necessary, though FutureBuilder handles this.
+    }
+    return widget.member;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (Human().address == null) {
+      return notSignedin();
+    }
+
+    // If _accountDataFuture wasn't set in initState (e.g. user signed in after), set it now.
+    if (_accountDataFuture == null) {
+        widget.member = widget.org.memberAddresses[Human().address!.toLowerCase()] ??
+             Member(address: Human().address!, personalBalance: "0");
+        _accountDataFuture = _loadAccountAndMemberData();
+    }
+
+    return FutureBuilder<Member?>(
+      future: _accountDataFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: SizedBox(
+                width: 140.0,
+                height: 140.0,
+                child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          print("[AccountScreen] FutureBuilder error: ${snapshot.error}\nStackTrace: ${snapshot.stackTrace}");
+          return Center(child: Text("Error loading account data: ${snapshot.error}"));
+        }
+
+        if (!snapshot.hasData || snapshot.data == null) {
+          print("[AccountScreen] FutureBuilder: No data or null member. Human address: ${Human().address}. Snapshot data: ${snapshot.data}");
+          return notSignedin(); // Or a more specific "member data not available"
+        }
+        
+        // widget.member is now snapshot.data, which is refreshed.
+        // widget.createdProposals and widget.votedOnProposals are populated by _loadAccountAndMemberData.
+        
+        print("[AccountScreen Build Inner] Using createdProposals count: ${widget.createdProposals.length}");
+        print("[AccountScreen Build Inner] Using votedOnProposals count: ${widget.votedOnProposals.length}");
+        print("[AccountScreen Build Inner] Member balance: ${widget.member?.personalBalance}");
+
+
+        if ((BigInt.tryParse(widget.member!.personalBalance ?? "0") ?? BigInt.zero) < BigInt.one) {
+            return notAMember();
+        }
+
+        return accountScreenContent(context); // Changed from accountWide to avoid nested FutureBuilder
+      },
+    );
   }
 
   Widget notSignedin() {
@@ -64,237 +183,164 @@ class AccountState extends State<Account> {
                 style: TextStyle(fontSize: 20, color: Colors.grey))));
   }
 
-  Widget accountWide(context) {
-    widget.member =
-        widget.org.memberAddresses[Human().address!.toLowerCase()] ??
-            Member(address: Human().address!, personalBalance: "0");
+  Widget accountScreenContent(BuildContext context) { // Renamed from accountWide
+    // Assumes widget.member, widget.createdProposals, and widget.votedOnProposals are populated
+    // by the main FutureBuilder calling _loadAccountAndMemberData.
 
-    return FutureBuilder(
-        future: widget.org.refreshMember(widget.member!),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: SizedBox(
-                  width: 140.0,
-                  height: 140.0,
-                  child: CircularProgressIndicator()),
-            );
-          }
-          for (Proposal p in widget.member!.proposalsVoted) {
-            print("adding one");
-            widget.votedOnProposals.add(ProposalCard(
-              proposal: p,
-              org: widget.org,
-            ));
-          }
-        
-          return (BigInt.parse(widget.member!.personalBalance!) < BigInt.one)
-              ? notAMember()
-              : ListView(
+    return ListView(
+      children: [
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 29),
+                SizedBox(
+                    child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 16),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 29),
-                            SizedBox(
-                                child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // Spacer(),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 35.0),
-                                  child: FutureBuilder<Uint8List>(
-                                    future: generateAvatarAsync(hashString(Human()
-                                        .address!)), // Make your generateAvatar function return Future<Uint8List>
-                                    builder: (context, snapshot) {
-                                      // Future.delayed(Duration(milliseconds: 500));
-                                      if (snapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        return Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(25.0),
-                                            color:
-                                                Theme.of(context).canvasColor,
-                                          ),
-                                          width: 50.0,
-                                          height: 50.0,
-                                        );
-                                      } else if (snapshot.hasData) {
-                                        return Container(
-                                            width: 50,
-                                            height: 50,
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        25.0)),
-                                            child:
-                                                Image.memory(snapshot.data!));
-                                      } else {
-                                        return Container(
-                                          width: 50.0,
-                                          height: 50.0,
-                                          color: Theme.of(context)
-                                              .canvasColor, // Error color
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  Human().address!,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const Spacer(),
-                              ],
-                            )),
-                            const SizedBox(height: 10),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 40, right: 40, top: 25, bottom: 25),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "Voting Weight",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Text(
-                                        widget.member!.votingWeight.toString(),
-                                        style: const TextStyle(
-                                            fontSize: 27,
-                                            fontWeight: FontWeight.normal),
-                                      ),
-                                    ],
-                                  ),
-                                  const Spacer(),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Personal ${widget.org.symbol} Balance",
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Text(
-                                        widget.member!.personalBalance
-                                            .toString(),
-                                        style: const TextStyle(
-                                            fontSize: 27,
-                                            fontWeight: FontWeight.normal),
-                                      ),
-                                    ],
-                                  ),
-                                  const Spacer(),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "Proposals Created",
-                                        style: TextStyle(fontSize: 16),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Text(
-                                        widget.member!.proposalsCreated.length
-                                            .toString(),
-                                        style: const TextStyle(
-                                            fontSize: 27,
-                                            fontWeight: FontWeight.normal),
-                                      ),
-                                    ],
-                                  ),
-                                  const Spacer(),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "Votes Cast",
-                                        style: TextStyle(fontSize: 16),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Text(
-                                        widget.member!.proposalsCreated.length
-                                            .toString(),
-                                        style: const TextStyle(
-                                            fontSize: 27,
-                                            fontWeight: FontWeight.normal),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 20)
-                                ],
+                    Padding(
+                      padding: const EdgeInsets.only(left: 35.0),
+                      child: FutureBuilder<Uint8List>(
+                        future: generateAvatarAsync(hashString(Human().address!)),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25.0),
+                                color: Theme.of(context).canvasColor,
                               ),
-                            ),
-                          ],
-                        ),
+                              width: 50.0,
+                              height: 50.0,
+                            );
+                          } else if (snapshot.hasData) {
+                            return Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(25.0)),
+                                child: Image.memory(snapshot.data!));
+                          } else {
+                            return Container(
+                              width: 50.0,
+                              height: 50.0,
+                              color: Theme.of(context).canvasColor,
+                            );
+                          }
+                        },
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    // CollapsibleRewardsDashboard(org: widget.org),
-                    // const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(38.0),
-                        child: Column(
-                          children: [
-                            const SizedBox(
-                              width: double.infinity,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Delegation settings",
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                  SizedBox(height: 9),
-                                  Text(
-                                      "You can either delegate your vote or accept delegations, but not both at the same time."),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 9),
-                            const Divider(),
-                            const SizedBox(height: 35),
-                            DelegationBoxes(
-                              accountState: this,
-                              org: widget.org,
-                              m: widget.member!,
-                            )
-                          ],
-                        ),
-                      ),
+                    const SizedBox(width: 10),
+                    Text(
+                      Human().address!,
+                      style: const TextStyle(fontSize: 16),
                     ),
-                    const SizedBox(height: 12),
-                    ActivityHistory(
-                        votedProposals: widget.votedOnProposals,
-                        createdProposals: widget.createdProposals),
-                    const SizedBox(height: 140),
+                    const Spacer(),
                   ],
-                );
-        });
+                )),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.only(
+                      left: 40, right: 40, top: 25, bottom: 25),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Voting Weight", style: TextStyle(fontSize: 16)),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.member?.votingWeight?.toString() ?? "0",
+                            style: const TextStyle(
+                                fontSize: 27, fontWeight: FontWeight.normal),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Personal ${widget.org.symbol} Balance", style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.member?.personalBalance?.toString() ?? "0",
+                            style: const TextStyle(
+                                fontSize: 27, fontWeight: FontWeight.normal),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Proposals Created", style: TextStyle(fontSize: 16)),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.createdProposals.length.toString(), // Uses correctly populated list
+                            style: const TextStyle(
+                                fontSize: 27, fontWeight: FontWeight.normal),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Votes Cast", style: TextStyle(fontSize: 16)),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.votedOnProposals.length.toString(), // Uses correctly populated list
+                            style: const TextStyle(
+                                fontSize: 27, fontWeight: FontWeight.normal),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 20)
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(38.0),
+            child: Column(
+              children: [
+                const SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Delegation settings", style: TextStyle(fontSize: 20)),
+                      SizedBox(height: 9),
+                      Text("You can either delegate your vote or accept delegations, but not both at the same time."),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 9),
+                const Divider(),
+                const SizedBox(height: 35),
+                DelegationBoxes(
+                  accountState: this,
+                  org: widget.org,
+                  m: widget.member!, // widget.member is guaranteed to be non-null here by FutureBuilder
+                )
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ActivityHistory(
+            votedProposals: widget.votedOnProposals, // Pass the populated lists
+            createdProposals: widget.createdProposals),
+        const SizedBox(height: 140),
+      ],
+    );
   }
 }
 
@@ -391,16 +437,16 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                               style: TextStyle(color: listTitleColor),
                             ),
                           )),
-                    ),
-                    SizedBox(
-                        width: 180,
-                        child: Center(
-                            child: Text(
-                          "Voted    ",
-                          style: TextStyle(color: listTitleColor),
-                        ))),
-                    SizedBox(
-                        width: 150,
+                     ),
+                    // SizedBox( // "Voted" column removed
+                    //     width: 180,
+                    //     child: Center(
+                    //         child: Text(
+                    //       "Voted    ",
+                    //       style: TextStyle(color: listTitleColor),
+                    //     ))),
+                    SizedBox( // Adjusted width, or use Expanded for more flexible layout
+                        width: 200, // Example: Increased width for "Posted"
                         child: Center(
                             child: Text(
                           "Posted",

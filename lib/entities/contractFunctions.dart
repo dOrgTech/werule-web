@@ -74,6 +74,40 @@ getVotes(who, Org org) async {
   }
 }
 
+
+getCurrentDelegate(who, Org org) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractWrapper = DeployedContract(
+    ContractAbi.fromJson(tokenAbiGlobal, 'delegates'),
+    EthereumAddress.fromHex(org.govTokenAddress!),
+  );
+  var getRepToken = contractWrapper.function('delegates');
+  
+  try {
+    var counter = await ethClient.call(
+      contract: contractWrapper,
+      function: getRepToken,
+      params: [EthereumAddress.fromHex(who)],
+    );
+
+    print('RPC Response for delegate:');
+    print(counter.toString());
+    String rezultat = counter[0].toString();
+    print('$rezultat ${rezultat.runtimeType}');
+    httpClient.close();
+    ethClient.dispose();
+    return rezultat;
+  } catch (e) {
+    print('Error: $e');
+    // Log the full response body
+    print('Response Body:');
+    print(httpClient.toString());
+    rethrow;
+  }
+}
+
+
 String getCalldata(ContractFunction functionAbi, List<dynamic> parameters) {
   final calldata = functionAbi.encodeCall(parameters);
   return "0x${bytesToHex(calldata)}";

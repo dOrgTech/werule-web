@@ -8,6 +8,8 @@ import 'human.dart';
 import 'proposal.dart';
 import 'token.dart';
 import 'contractFunctions.dart';
+import 'dart:async'; // Added for Timer if needed, or general async
+// import 'dart:convert'; // For utf8.decode if Blobs are still a concern
 
 class Org {
   var pollsCollection;
@@ -60,39 +62,35 @@ I mean I think they should because of reasons and stuff.
   List<Token> erc721Tokens = [];
   Token native = Token(
       type: "native", name: Human().chain.name, symbol: "XTZ", decimals: 18);
+
   populateTreasury() async {
     treasury = {};
+    if (registryAddress == null || registryAddress!.isEmpty) {
+      print("[Org.populateTreasury] Error: registryAddress is null or empty.");
+      return;
+    }
     nativeBalance = await getNativeBalance(registryAddress!);
     native.address = "native";
-    print("populating treasury");
+    print("[Org.populateTreasury] Populating treasury for org: $name, registry: $registryAddress");
     treasury.addAll({native: nativeBalance});
-    // treasuryMap.forEach((address, value) {
-    //   Token? matchingToken = tokens.cast<Token?>().firstWhere(
-    //         (token) => token?.address == address,
-    //         orElse: () => null,
-    //       );
-    //   if (matchingToken != null) {
-    //     treasury[matchingToken] = value;
-    //   }
-    // });
-    print("what is happening?");
     try {
       var balances = await getBalances(registryAddress);
       processTokens(balances);
     } catch (e) {
-      print("error getting balances$e");
+      print("[Org.populateTreasury] Error getting balances: $e");
     }
-    print("done populating treasury");
+    print("[Org.populateTreasury] Done populating treasury. Found ${erc20Tokens.length} ERC20 tokens.");
   }
 
   populateRegistry() async {
     registry = {};
+    // Placeholder for future registry population logic
   }
 
   createDebate(Debate d) async {
     Future.delayed(const Duration(seconds: 1));
-
-    return d.hash;
+    // Placeholder for actual debate creation logic (e.g., Firestore save)
+    return d.hash; // Assuming d.hash is how debates are identified
   }
 
   void processTokens(List<dynamic> data) {
@@ -102,15 +100,13 @@ I mean I think they should because of reasons and stuff.
       var value = item['value'];
       var tokenData = item['token'];
       if (tokenData != null && tokenData['type'] != null) {
-        // Parse token properties with type checking
-        var name = tokenData['name'] ?? 'Unknown';
-        var symbol = tokenData['symbol'] ?? 'Unknown';
+        var name = tokenData['name'] ?? 'Unknown Token';
+        var symbol = tokenData['symbol'] ?? '???';
         var decimals = tokenData['decimals'] != null
-            ? int.parse(tokenData['decimals'])
+            ? int.tryParse(tokenData['decimals'].toString()) ?? 0
             : 0;
-        var type = tokenData['type'] ?? 'Unknown';
-        var address = tokenData['address'] ?? 'Unknown';
-        // Create the Token object
+        var type = tokenData['type'] ?? 'Unknown Type';
+        var address = tokenData['address'] ?? 'Unknown Address';
         var token = Token(
           name: name,
           symbol: symbol,
@@ -118,147 +114,258 @@ I mean I think they should because of reasons and stuff.
           type: type,
         );
         token.address = address;
-        // Add to the respective list based on type
         if (type == 'ERC-20') {
           erc20Tokens.add(token);
           treasury.addAll({token: value.toString()});
         } else if (type == 'ERC-721') {
-          print("adding NFT");
+          print("[Org.processTokens] Adding NFT: $name ($symbol)");
           erc721Tokens.add(token);
+          // NFTs might not have a 'value' in the same way, or it might be a list of token IDs.
+          // Adjust how NFTs are added to treasury if needed.
         }
       }
     }
   }
 
   getMembers() async {
-    print("getting members");
-    var membersCollection = FirebaseFirestore.instance
-        .collection("idaosEtherlink-Testnet")
-        .doc(address)
-        .collection("members");
-    var membersSnapshot = await membersCollection.get();
-    for (var doc in membersSnapshot.docs) {
-      Member m = Member(address: doc.data()['address']);
-      m.personalBalance = doc.data()['personalBalance'];
-      m.votingWeight = "0";
-      List<String> proposalsCreatedHashes =
-          List<String>.from(doc.data()['proposalsCreated'] ?? []);
-      List<String> proposalsVotedHashes =
-          List<String>.from(doc.data()['proposalsVoted'] ?? []);
-      m.proposalsCreated = proposals
-          .where((proposal) => proposalsCreatedHashes.contains(proposal.hash))
-          .toList();
-      m.proposalsVoted = proposals
-          .where((proposal) => proposalsVotedHashes.contains(proposal.id))
-          .toList();
-
-      m.lastSeen = doc.data()['lastSeen'] != null
-          ? (doc.data()['lastSeen'] as Timestamp).toDate()
-          : null;
-      memberAddresses[m.address.toLowerCase()] = m;
-      m.delegate = doc.data()['delegate'] ?? "";
-      if (!(m.delegate == "")) {
-        if (!memberAddresses.keys.contains(m.delegate.toLowerCase())) {
-          Member delegate = Member(address: m.delegate);
-          memberAddresses[delegate.address.toLowerCase()] = delegate;
-          delegate.constituents.add(m);
-        } else {
-          memberAddresses[m.delegate.toLowerCase()]!.constituents.add(m);
-        }
-      }
+    print("[Org.getMembers] Called for org: $name, govTokenAddress: $govTokenAddress");
+    if (govTokenAddress == null || govTokenAddress!.isEmpty) {
+      print("[Org.getMembers] Exiting: govTokenAddress is null or empty.");
+      return;
     }
-
-    for (Member m in memberAddresses.values) {
-      if (m.delegate == m.address) {
-        for (Member constituent in m.constituents) {
-          m.votingWeight = (BigInt.parse(m.votingWeight!) +
-                  BigInt.parse(constituent.personalBalance!))
-              .toString();
-        }
+    try {
+      var balances = await getHolders(govTokenAddress!);
+      print("[Org.getMembers] Fetched ${balances.length} holders from getHolders.");
+      memberAddresses = {}; // Clear existing members
+      for (var entry in balances.entries) {
+        String memberAddr = entry.key.toString();
+        String balance = entry.value.toString();
+        Member m = Member(address: memberAddr, personalBalance: balance);
+        m.votingWeight = "0"; // Initialize voting weight, will be updated by refreshMember or delegation logic
+        memberAddresses[memberAddr.toLowerCase()] = m;
       }
-    }
-  }
+      print("[Org.getMembers] Populated ${memberAddresses.length} members.");
 
-  Future<Member> refreshMember(Member m) async {
-    m.votingWeight = "0";
-    m.votingWeight = await getVotes(m.address, this);
-    m.personalBalance = await getBalance(m.address, this);
-    return m;
+      // Placeholder for delegation logic if needed after initial member population
+      // for (Member m in memberAddresses.values) {
+      //   if (m.delegate == m.address) { // This assumes delegate field is already populated
+      //     for (Member constituent in m.constituents) {
+      //       m.votingWeight = (BigInt.parse(m.votingWeight!) +
+      //               BigInt.parse(constituent.personalBalance!))
+      //           .toString();
+      //     }
+      //   }
+      // }
+    } catch (e) {
+      print("[Org.getMembers] Error fetching or processing members: $e");
+    }
   }
 
   getProposals() async {
+    print("[Org.getProposals] Called for org: ${this.name}, DAO address: ${this.address}, chain: ${Human().chain.name}");
+    print("[Org.getProposals] debatesOnly flag: ${this.debatesOnly}");
+
     if (debatesOnly ?? false) {
+      print("[Org.getProposals] Exiting early because debatesOnly is true.");
+      this.proposals = [];
+      this.proposalIDs = [];
       return;
     }
-    pollsCollection = FirebaseFirestore.instance
-        .collection("idaos${Human().chain.name}")
-        .doc(address)
-        .collection("proposals");
-    var proposalsSnapshot = await pollsCollection.get();
-    for (var doc in proposalsSnapshot.docs) {
-      Proposal p = Proposal(org: this, name: doc.data()['title'] ?? "No title");
-      p.type = doc.data()['type'];
-      p.id = doc.id.toString();
-      p.against = doc.data()['against'];
-      p.inFavor = doc.data()['inFavor'];
-      p.hash = doc.id.toString();
-      p.callData = doc.data()['calldata'];
-      p.createdAt = (doc.data()['createdAt'] as Timestamp).toDate();
-      p.turnoutPercent = doc.data()['turnoutPercent'];
-      p.author = doc.data()['author'];
-      p.votesFor = doc.data()['votesFor'];
-      p.targets = List<String>.from(doc.data()['targets']);
-      p.values = List<String>.from(doc.data()['values']);
-      p.votesAgainst = doc.data()['votesAgainst'];
-      p.externalResource =
-          doc.data()['externalResource'] ?? "(no external resource)";
-      p.description = doc.data()['description'] ?? "no description";
-      proposals.add(p);
-      proposalIDs!.add(doc.id);
-      var statusHistoryMap = doc['statusHistory'] as Map<String, dynamic>;
-      print("before issue");
-      p.statusHistory = statusHistoryMap.map((key, value) {
-        return MapEntry(key, (value as Timestamp).toDate());
-      });
-
-      // print("also before issue");
-      // List<dynamic> blobArray = doc.data()?['callDatas'] ?? [];
-      // // Convert Blob to String correctly
-      // p.callDatas = blobArray
-      //     .map((blob) =>
-      //         utf8.decode((blob as Blob).bytes)) // Correctly decode Blob bytes
-      //     .toList()
-      //     .cast<String>();
-      // p.retrieveStage();
-      p.state = ProposalStatus.pending;
-      p.status = await p.anotherStageGetter();
+    if (this.address == null || this.address!.isEmpty) {
+      print("[Org.getProposals] Exiting early because org DAO address is null or empty.");
+      this.proposals = [];
+      this.proposalIDs = [];
+      return;
     }
 
-    await getMembers();
+    try {
+      pollsCollection = FirebaseFirestore.instance
+          .collection("idaos${Human().chain.name}")
+          .doc(this.address)
+          .collection("proposals");
+      
+      print("[Org.getProposals] Querying Firestore path: idaos${Human().chain.name}/${this.address}/proposals");
+      var proposalsSnapshot = await pollsCollection.get();
+      print("[Org.getProposals] Fetched ${proposalsSnapshot.docs.length} proposal documents from Firestore.");
+
+      proposals = []; // Clear existing proposals before repopulating
+      proposalIDs = [];
+
+      for (var doc in proposalsSnapshot.docs) {
+        Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?; 
+        if (data == null) {
+          print("[Org.getProposals] Warning: Document data is null for doc ID ${doc.id}. Skipping.");
+          continue;
+        }
+
+        Proposal p = Proposal(org: this, name: data['title']?.toString() ?? "No title");
+        p.type = data['type']?.toString();
+        p.id = doc.id;
+        p.against = data['against']?.toString() ?? "0"; // This is String in Proposal.dart
+        p.inFavor = data['inFavor']?.toString() ?? "0"; // This is String in Proposal.dart
+        p.hash = doc.id;
+        p.callData = data['calldata']; // Can be null
+        if (data['createdAt'] is Timestamp) {
+          p.createdAt = (data['createdAt'] as Timestamp).toDate();
+        }
+        p.turnoutPercent = int.tryParse(data['turnoutPercent']?.toString() ?? '0') ?? 0; // Corrected
+        p.author = data['author']?.toString();
+        p.votesFor = int.tryParse(data['votesFor']?.toString() ?? '0') ?? 0; // Corrected
+        p.targets = List<String>.from(data['targets'] ?? []);
+        p.values = List<String>.from(data['values']?.map((e) => e.toString()) ?? []);
+        p.votesAgainst = int.tryParse(data['votesAgainst']?.toString() ?? '0') ?? 0; // Corrected
+        p.externalResource = data['externalResource']?.toString() ?? "(no external resource)";
+        p.description = data['description']?.toString() ?? "no description";
+        
+        if (data['statusHistory'] is Map) {
+          var statusHistoryMap = data['statusHistory'] as Map<String, dynamic>;
+           p.statusHistory = statusHistoryMap.map((key, value) {
+             if (value is Timestamp) {
+               return MapEntry(key.toString(), value.toDate());
+             }
+             // Fallback for unexpected type, or log an error
+             return MapEntry(key.toString(), DateTime.now()); 
+           });
+        } else {
+          p.statusHistory = {};
+        }
+
+        p.state = ProposalStatus.pending; 
+        try {
+          p.status = await p.anotherStageGetter();
+        } catch (e) {
+          print("[Org.getProposals] Error in p.anotherStageGetter() for proposal ${p.id}: $e");
+          p.status = "Error fetching state";
+        }
+        
+        proposals.add(p);
+        proposalIDs!.add(doc.id);
+      }
+      print("[Org.getProposals] Populated ${proposals.length} proposals into org.proposals list.");
+    } catch (e) {
+      print("[Org.getProposals] Error fetching proposals: $e");
+      this.proposals = []; 
+      this.proposalIDs = [];
+    }
+    // It's important that getMembers() is called *after* proposals might be needed by refreshMember,
+    // but refreshMember itself needs org.proposals.
+    // Consider the overall data loading flow. If refreshMember is called from AccountScreen's FutureBuilder,
+    // ensure getProposals has completed before that FutureBuilder runs or within it.
+    await getMembers(); // This populates memberAddresses. refreshMember will then populate their proposalsVoted.
+  }
+
+  Future<Member> refreshMember(Member m) async {
+    print("[Org.refreshMember] Called for member: ${m.address} in org: ${this.name} (DAO Address: ${this.address})");
+    m.votingWeight = "0"; 
+    try {
+      // These are assumed to be on-chain calls
+      m.votingWeight = await getVotes(m.address, this);
+      m.personalBalance = await getBalance(m.address, this);
+      m.delegate = await getCurrentDelegate(m.address, this);
+    } catch (e) {
+      print("[Org.refreshMember] Error fetching on-chain data (votes, balance, delegate) for ${m.address}: $e");
+      m.personalBalance = m.personalBalance ?? "0"; // Keep existing if error, or default
+      m.votingWeight = m.votingWeight ?? "0";
+      m.delegate = m.delegate ?? "";
+    }
+    print("[Org.refreshMember] Fetched on-chain data for ${m.address}: Balance: ${m.personalBalance}, Voting Weight: ${m.votingWeight}, Delegate: ${m.delegate}");
+
+    // --- Populate proposalsVoted ---
+    if (this.address == null || this.address!.isEmpty) {
+        print("[Org.refreshMember] Org DAO address is null or empty, cannot fetch member's voted proposals.");
+        m.proposalsVoted = [];
+        return m;
+    }
+    if (m.address == null || m.address.isEmpty) { // m.address should always exist for a Member object
+        print("[Org.refreshMember] Member address is null or empty, cannot fetch member's voted proposals.");
+        m.proposalsVoted = [];
+        return m;
+    }
+
+    try {
+      // Critical: Ensure org.proposals is populated.
+      // If getProposals() hasn't run or completed, this won't work correctly.
+      if (this.proposals.isEmpty) {
+        print("[Org.refreshMember] Warning: org.proposals is empty when trying to populate proposalsVoted for ${m.address}. This may lead to an empty list. Consider calling getProposals() first if not already done.");
+        // One strategy could be:
+        // print("[Org.refreshMember] Attempting to fetch org.proposals now as it's empty...");
+        // await this.getProposals(); // This ensures proposals are loaded.
+        // if (this.proposals.isEmpty) {
+        //    print("[Org.refreshMember] org.proposals still empty after explicit fetch. proposalsVoted will be empty.");
+        // }
+      }
+
+      String memberDocPath = "idaos${Human().chain.name}/${this.address}/members/${m.address.toLowerCase()}";
+      print("[Org.refreshMember] Fetching member document from Firestore path: $memberDocPath");
+      
+      DocumentSnapshot memberDocSnapshot = await FirebaseFirestore.instance
+          .collection("idaos${Human().chain.name}")
+          .doc(this.address)
+          .collection("members")
+          .doc(m.address) // Use the original address casing
+          .get();
+
+      if (memberDocSnapshot.exists && memberDocSnapshot.data() != null) {
+        Map<String, dynamic> memberData = memberDocSnapshot.data() as Map<String, dynamic>;
+        List<dynamic> proposalsVotedHashesDynamic = memberData['proposalsVoted'] ?? [];
+        // Ensure all elements are strings, as Firestore can sometimes return mixed types if not strictly typed.
+        List<String> proposalsVotedHashes = proposalsVotedHashesDynamic.map((e) => e.toString()).toList();
+
+        print("[Org.refreshMember] Member ${m.address} raw voted proposal IDs from Firestore: ${proposalsVotedHashes.length} -> $proposalsVotedHashes");
+        
+        if (this.proposals.isEmpty && proposalsVotedHashes.isNotEmpty) {
+            print("[Org.refreshMember] DIAGNOSTIC: org.proposals is EMPTY, but member ${m.address} has voted proposal IDs from Firestore. Cannot match.");
+        } else {
+            print("[Org.refreshMember] DIAGNOSTIC: Comparing against ${this.proposals.length} proposals in org.proposals. Their IDs: ${this.proposals.map((p) => p.id).toList()}");
+        }
+
+        m.proposalsVoted = this.proposals.where((proposal) {
+                bool match = proposalsVotedHashes.contains(proposal.id);
+                if (proposalsVotedHashes.isNotEmpty) { // Only log detailed comparison if there's something to compare
+                    print("[Org.refreshMember] Comparing Firestore ID '${proposal.id}' (from org.proposals) with member's voted IDs: $proposalsVotedHashes. Match: $match");
+                }
+                return match;
+            }).toList();
+        print("[Org.refreshMember] Populated ${m.proposalsVoted.length} Proposal objects into member.proposalsVoted for ${m.address}.");
+        if (proposalsVotedHashes.isNotEmpty && m.proposalsVoted.isEmpty && this.proposals.isNotEmpty) {
+            print("[Org.refreshMember] DIAGNOSTIC: Member ${m.address} has voted proposal IDs from Firestore (${proposalsVotedHashes.join(", ")}), but no matches found in org.proposals (IDs: ${this.proposals.map((p) => p.id).join(", ")}). Check for case sensitivity or ID format differences.");
+        }
+
+      } else {
+        print("[Org.refreshMember] Member document not found for ${m.address} at $memberDocPath, or data is null. proposalsVoted will be empty.");
+        m.proposalsVoted = [];
+      }
+    } catch (e) {
+      print("[Org.refreshMember] Error fetching/populating proposalsVoted for member ${m.address}: $e");
+      m.proposalsVoted = []; // Ensure it's empty on error
+    }
+    
+    return m;
   }
 
   toJson() {
     return {
       'name': name,
-      'creationDate': creationDate,
+      'creationDate': creationDate?.toIso8601String(),
       'description': description,
       'token': govTokenAddress,
       'treasuryAddress': treasuryAddress,
       'registryAddress': registryAddress,
-      'address': address,
+      'address': address, // This is the DAO's main contract address
       'holders': holders,
       'symbol': symbol,
       'decimals': decimals,
-      'proposals': proposalIDs,
+      'proposals': proposalIDs, // List of proposal IDs
       'proposalThreshold': proposalThreshold,
-      'registry': registry,
-      'treasury': treasury,
+      'registry': registry, // Map
+      'treasury': treasury.map((key, value) => MapEntry(key.address ?? 'unknown_token', value)), // Serialize token map
       'votingDelay': votingDelay,
       'totalSupply': totalSupply,
       'votingDuration': votingDuration,
       'executionDelay': executionDelay,
       'quorum': quorum,
       'nonTransferrable': nonTransferrable,
+      'debatesOnly': debatesOnly,
     };
   }
 
@@ -612,26 +719,28 @@ class Member {
   String? votingWeight = "0";
   String? personalBalance;
   List<Proposal> proposalsCreated = [];
-  List<Proposal> proposalsVoted = [];
+  List<Proposal> proposalsVoted = []; // This will be populated by Org.refreshMember
   DateTime? lastSeen;
   String delegate = "";
   List<Member> constituents = [];
-  List<String> constituentsAddresses = [];
+  List<String> constituentsAddresses = []; // If needed for Firestore storage
 
   Member(
       {required this.address,
       this.amount,
-      this.votingWeight,
-      this.personalBalance});
+      this.votingWeight, // Typically fetched/calculated
+      this.personalBalance}); // Typically fetched
 
   toJson() {
     return {
       'address': address,
       'votingWeight': votingWeight,
       'personalBalance': personalBalance,
-      'proposalsCreated': proposalsCreated,
-      'proposalsVoted': proposalsVoted,
-      'lastSeen': lastSeen,
+      // Storing full Proposal objects in member doc might be redundant if they are in org.proposals
+      // Consider storing only proposal IDs/hashes for 'proposalsCreated' and 'proposalsVoted' in Firestore
+      'proposalsCreated': proposalsCreated.map((p) => p.id).toList(), // Store IDs
+      'proposalsVoted': proposalsVoted.map((p) => p.id).toList(),     // Store IDs
+      'lastSeen': lastSeen?.toIso8601String(),
       'delegate': delegate
     };
   }

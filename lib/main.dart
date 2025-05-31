@@ -1,15 +1,10 @@
 import 'dart:typed_data';
-import 'package:Homebase/chat/models.dart';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/bridge.dart';
-import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/screens/landing.dart';
-import 'package:Homebase/screens/applefarm.dart';
-import 'package:Homebase/screens/proposals.dart';
 import 'package:Homebase/screens/uni_bridge.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:Homebase/utils/reusable.dart';
-import 'package:Homebase/widgets/eneftee.dart';
 import 'package:Homebase/widgets/initiative.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';

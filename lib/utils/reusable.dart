@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:image/image.dart' as img;
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'dart:math';

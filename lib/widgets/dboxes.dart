@@ -2,7 +2,6 @@ import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:graphite/graphite.dart';
 import '../entities/human.dart';
 import '../entities/org.dart';
 import '../main.dart';
@@ -36,27 +35,38 @@ class DelegationBoxes extends StatefulWidget {
   @override
   _DelegationBoxesState createState() => _DelegationBoxesState();
 }
+enum situation  { virgin, voting, delegating,}
 
 class _DelegationBoxesState extends State<DelegationBoxes> {
   bool isVoteDirectlyEnabled = true; // Default to Vote Directly enabled
+  bool isDelegateYourVoteEnabled = false; // Default to Delegate Your Vote disabled
   bool showBothOptions = false; // Initially show both options
-  int numDelegatedAccounts = 5; // Placeholder value
-  String delegateAddress = "0x3Af8...43bae"; // Placeholder address
-
+  String delegateAddress = "No Delegate Set";
+  situation currentSituation = situation.virgin;
+  
   @override
   Widget build(BuildContext context) {
-    if (widget.m.delegate == "" && widget.m.votingWeight.toString() == "0") {
+    if (widget.m.votingWeight ==  0) {
       print("we should show both options");
       showBothOptions = true;
-    } else if (widget.m.delegate.toLowerCase() ==
-        Human().address!.toLowerCase()) {
+
+    } else if (widget.m.votingWeight ==
+        widget.m.personalBalance) {
+      print("piropopir");
       showBothOptions = false;
+      currentSituation = situation.voting;
       isVoteDirectlyEnabled = true;
-      numDelegatedAccounts = widget.m.constituents.length;
+      isDelegateYourVoteEnabled = true;
     } else {
       showBothOptions = false;
       isVoteDirectlyEnabled = false;
       delegateAddress = getShortAddress(widget.m.delegate);
+      if (widget.m.delegate.toLowerCase() == widget.m.address.toLowerCase()) {
+        isDelegateYourVoteEnabled = false;
+      } else {
+        isDelegateYourVoteEnabled = true;
+        currentSituation = situation.delegating;
+      }
     }
 
     Widget delegateYourVoteBottomWidget;
@@ -82,7 +92,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                 backgroundColor: Theme.of(context).indicatorColor,
               ),
               onPressed: _claimVotingPower,
-              child: const Text('Claim Voting Power'),
+              child: const Text('Claidvm Voting Power'),
             );
     } else if (isVoteDirectlyEnabled) {
       // When Vote Directly is enabled
@@ -103,7 +113,7 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                         color: Colors.white),
                     children: [
                       TextSpan(
-                        text: '$numDelegatedAccounts accounts',
+                        text: 'multiple accounts',
                         style: TextStyle(
                             fontSize: 17,
                             color: Theme.of(context).indicatorColor,
@@ -121,8 +131,9 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).indicatorColor,
               ),
-              onPressed: null,
-              //  _setDelegate,
+              onPressed: () {
+                    _setDelegate();
+                  },
               child: const Text('Set Delegate'),
             );
     } else {
@@ -274,12 +285,12 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Row(
+          title: const Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text('$numDelegatedAccounts Constituents:'),
-              const Spacer(),
-              const OldSchoolLink(
+              Text('multiple constituents:'),
+              Spacer(),
+              OldSchoolLink(
                   text: "Download CSV", url: "https://something.com")
             ],
           ),

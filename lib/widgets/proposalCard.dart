@@ -10,10 +10,8 @@ import 'package:go_router/go_router.dart';
 
 class ProposalCard extends StatefulWidget {
   ProposalCard({super.key, required this.proposal, required this.org});
-  Proposal proposal;
-  String type = "proposals";
-  int option = 0;
-  Org org;
+  final Proposal proposal;
+  final Org org;
 
   @override
   State<ProposalCard> createState() => _ProposalCardState();
@@ -56,81 +54,12 @@ class _ProposalCardState extends State<ProposalCard> {
     if (status == "noQuorum") {
       status = "no quorum";
     }
-    return widget.type == "proposals"
-        ? proposals(context)
-        : widget.type == "votedOn"
-            ? votedOn(context)
-            : Container();
+    // Always return the 'proposals' layout
+    return proposals(context);
   }
 
-  Widget votedOn(context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6),
-      child: Container(
-        decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 78, 78, 78),
-            borderRadius: BorderRadius.circular(8),
-            border:
-                Border.all(width: 0.2, color: const Color.fromARGB(255, 43, 43, 43))),
-        child: InkWell(
-          onTap: () {
-            print("tapped on proposalCard");
-            context.go("/${widget.org.address!}/${widget.proposal.id}");
-          },
-          child: SizedBox(
-            height: 44,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 25.0),
-                  child: SizedBox(
-                      width: 90, child: Text(widget.proposal.id.toString())),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 1.0),
-                    child: Text(
-                      widget.proposal.name!,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                    width: 180,
-                    child: widget.option == 0
-                        ? const Icon(Icons.thumb_down,
-                            color: Color.fromARGB(255, 238, 129, 121))
-                        : const Icon(Icons.thumb_up_sharp,
-                            color: Color.fromARGB(255, 93, 223, 162))),
-                SizedBox(
-                    width: 150,
-                    child: Center(
-                        child: Text(
-                      DateFormat('M/1d/yyyy HH:mm')
-                          .format(widget.proposal.createdAt!),
-                      style: const TextStyle(fontSize: 14),
-                    ))),
-                SizedBox(
-                    width: 120,
-                    child: Center(
-                        child: Text(
-                      widget.proposal.type!,
-                      style: const TextStyle(fontSize: 12),
-                    ))),
-                Container(
-                    padding: const EdgeInsets.only(right: 10),
-                    height: 20,
-                    width: 110,
-                    child: Center(
-                        child: widget.proposal.statusPill(status, context))),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget votedOn(context) { // REMOVED votedOn method
+  // } // Ensure this method is fully removed or commented out
 
   Widget proposals(BuildContext context) {
     return Padding(

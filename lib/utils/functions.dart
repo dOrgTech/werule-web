@@ -1,10 +1,6 @@
 import 'dart:async';
-import "package:flutter/material.dart";
 import 'dart:math';
-import 'dart:convert';
-import 'dart:ui';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
 import 'package:image/image.dart' as img;
 
 Future<Uint8List> generateAvatarAsync(String hash,

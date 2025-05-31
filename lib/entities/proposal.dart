@@ -3,11 +3,9 @@
 import 'dart:math';
 
 import 'package:Homebase/entities/contractFunctions.dart';
-import 'package:Homebase/entities/token.dart';
 import 'package:Homebase/widgets/configProposal.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../debates/models/debate.dart';
 import '../widgets/executeLambda.dart';
 import '../widgets/initiative.dart';
 import '../widgets/newDebate.dart';

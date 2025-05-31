@@ -1,7 +1,5 @@
 import 'package:Homebase/widgets/footer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
 import '../entities/human.dart';
 import '../entities/token.dart';
@@ -9,9 +7,6 @@ import '../screens/account.dart';
 import '../screens/proposalDetails.dart';
 import '../screens/proposals.dart';
 import '../screens/registry.dart';
-import '../screens/treasury.dart';
-import '../widgets/footer.dart';
-import '../widgets/membersList.dart';
 import '../widgets/menu.dart';
 import '../entities/org.dart';
 import 'debateDetails.dart';

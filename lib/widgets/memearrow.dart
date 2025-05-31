@@ -4,7 +4,6 @@ import 'package:Homebase/screens/creator/creator_widgets.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 
-import '../screens/creator.dart';
 
 /// A large fixed-size 1200×250 widget with comedic lines from edges
 /// to a central square-cornered button, using strict 90° segments.

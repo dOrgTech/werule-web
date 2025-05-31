@@ -1,4 +1,3 @@
-import 'package:Homebase/entities/human.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:Homebase/widgets/transfer.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:toggle_switch/toggle_switch.dart';
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import '../entities/token.dart';
-import 'eneftee.dart';
 import 'initiative.dart';
 
 class TokenAssets extends StatefulWidget {

@@ -311,8 +311,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                             null)) {
                           widget.member = widget.p.org
                               .memberAddresses[Human().address!.toLowerCase()];
-                          if (BigInt.parse(widget.member!.votingWeight!) >
-                              BigInt.zero) {
+                        
                             Vote v = Vote(
                                 castAt: DateTime.now(),
                                 option: 1,
@@ -358,18 +357,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                             } catch (e) {
                               print(e.toString());
                             }
-                          } else {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(const SnackBar(
-                                    content: Center(
-                              child: Text(
-                                "Claim your voting power if you want to participate in governance (in the Account tab).",
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    color: Color.fromARGB(255, 70, 11, 7)),
-                              ),
-                            )));
-                          }
+                         
                         } else {
                           ScaffoldMessenger.of(context)
                               .showSnackBar(const SnackBar(

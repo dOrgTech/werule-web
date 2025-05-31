@@ -1,18 +1,11 @@
-import 'package:Homebase/entities/contractFunctions.dart';
-import 'package:Homebase/entities/proposal.dart';
-import 'package:Homebase/screens/creator/dao_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter/material.dart';
-import '../entities/human.dart';
 import '../entities/token.dart';
 import '../main.dart';
 import '../widgets/gameOfLife.dart';
 import '../widgets/menu.dart';
 import '../entities/org.dart';
 import '../widgets/daocard.dart';
-import '../widgets/footer.dart';
 import 'creator.dart';
 
 class Explorer extends StatefulWidget {

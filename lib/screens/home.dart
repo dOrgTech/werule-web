@@ -125,7 +125,7 @@ class _HomeState extends State<Home> {
                         children: [
                           Text("${widget.org.symbol} Token: "),
                           Text(
-                            // "d2038jd028wjfoisfpjq3p9f8jpe398hfpsqhiw"
+                           
                             widget.org.govTokenAddress!,
                             style: const TextStyle(fontSize: 11),
                           ),
@@ -133,7 +133,17 @@ class _HomeState extends State<Home> {
                             width: 2,
                           ),
                           TextButton(
-                              onPressed: () {}, child: const Icon(Icons.copy)),
+                              onPressed: () {
+                                //copy the address to clipboard
+                                Clipboard.setData(ClipboardData(
+                                    text: widget.org.govTokenAddress!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        duration: Duration(seconds: 1),
+                                        content: Center(
+                                            child: Text(
+                                                'Address copied to clipboard'))));
+                              }, child: const Icon(Icons.copy)),
                         ],
                       ),
                     ),
@@ -326,7 +336,17 @@ class _HomeState extends State<Home> {
                             width: 2,
                           ),
                           TextButton(
-                              onPressed: () {}, child: const Icon(Icons.copy)),
+                              onPressed: () {
+                                //copy the address to clipboard
+                                Clipboard.setData(ClipboardData(
+                                    text: widget.org.govTokenAddress!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        duration: Duration(seconds: 1),
+                                        content: Center(
+                                            child: Text(
+                                                'Address copied to clipboard'))));
+                              }, child: const Icon(Icons.copy)),
                         ],
                       ),
                     ),

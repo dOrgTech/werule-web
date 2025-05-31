@@ -2,8 +2,6 @@ import 'package:Homebase/screens/explorer.dart';
 import 'package:Homebase/widgets/gameOfLife.dart';
 import 'package:Homebase/widgets/menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 
 import '../entities/human.dart';
 import '../main.dart';

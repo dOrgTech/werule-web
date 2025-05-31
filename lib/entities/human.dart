@@ -18,7 +18,7 @@ var chains = {
       rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede",
       blockExplorer: "https://sepolia.etherscan.io"),
   "0x1f47b": Chain(
-      wrapperContract: "0xe74f7F87F4002C6Df24684b2d95D3cDCFdE4c343",
+      wrapperContract: "0x1e050e98F0215450bd41494F9B67bC3032c561D7",
       wrapperContract_w: "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2",
       id: 128123,
       name: "Etherlink-Testnet",
@@ -53,6 +53,7 @@ class Human extends ChangeNotifier {
   bool metamask = true;
   bool allowed = false;
   Web3Provider? web3user;
+  
   bool voting = false;
   bool isOverlayVisible = false;
   bool voted = false;
@@ -79,54 +80,103 @@ class Human extends ChangeNotifier {
   factory Human() {
     return _instance;
   }
+  Future<void> _requestSwitchOrAddEtherlinkTestnet() async {
+    const String targetChainId = "0x1f47b";
+    final Chain targetChainDetails = chains[targetChainId]!;
+
+    try {
+      print("Attempting wallet_switchEthereumChain to $targetChainId");
+      await promiseToFuture(ethereum!.request(RequestParams(
+        method: 'wallet_switchEthereumChain',
+        params: [{'chainId': targetChainId}],
+      )));
+      print("wallet_switchEthereumChain request sent. Waiting for chainChanged event.");
+    } catch (switchError) {
+      print("wallet_switchEthereumChain failed: $switchError. Attempting wallet_addEthereumChain.");
+      try {
+        var chainInfo = {
+          "chainId": targetChainId,
+          "chainName": targetChainDetails.name,
+          "nativeCurrency": {
+            "name": "Tezos", // Consistent with original
+            "symbol": targetChainDetails.nativeSymbol,
+            "decimals": targetChainDetails.decimals
+          },
+          "rpcUrls": [targetChainDetails.rpcNode],
+          "blockExplorerUrls": [targetChainDetails.blockExplorer],
+        };
+        print("Attempting wallet_addEthereumChain for $targetChainId");
+        await promiseToFuture(ethereum!.request(RequestParams(
+          method: 'wallet_addEthereumChain',
+          params: [chainInfo],
+        )));
+        print("wallet_addEthereumChain request sent. Waiting for chainChanged event.");
+      } catch (addError) {
+        print("wallet_addEthereumChain failed: $addError. User likely on wrong chain.");
+        // If add also fails, user is stuck on wrong chain.
+        // Set state to reflect this hard failure.
+        this.chain = targetChainDetails; // Default to target for data loading
+        this.wrongChain = true;
+        this.web3user = null; // No valid web3user for the desired chain
+        notifyListeners();
+      }
+    }
+  }
+
   void _setupListeners() {
-    // Ensure Ethereum is available
     if (ethereum != null) {
-      // Listen for account changes
       ethereum!.on('accountsChanged', allowInterop((accounts) {
         if (accounts.isEmpty) {
-          // Handle wallet disconnection
           print("Wallet disconnected");
           address = null;
         } else {
-          // Handle account change
           address = ethereum!.selectedAddress.toString();
-          getUser();
+          getUser(); // Assuming this is light and synchronous
           print("Account changed: $address");
         }
-        notifyListeners(); // Notify listeners about the change
+        notifyListeners();
       }));
 
-      // Listen for chain changes
-      ethereum!.on('chainChanged', allowInterop((chainId) {
-        print("Chain changed: $chainId");
-        if (!chains.keys.contains(chainId)) {
-          print("schimbam la nimic");
-          wrongChain = true;
-          chain = Chain(
-              wrapperContract: "",
-              id: 0,
-              name: 'N/A',
-              nativeSymbol: '',
-              wrapperContract_w: "",
-              decimals: 0,
-              rpcNode: '',
-              blockExplorer: "");
-          notifyListeners();
-          return "nogo";
-        } else {
+      ethereum!.on('chainChanged', allowInterop((newChainIdHex) async {
+        String newChainId = newChainIdHex.toString(); // Ensure it's a string
+        print("Chain changed event. New chainId: $newChainId");
+        const String etherlinkTestnetId = "0x1f47b";
+
+        if (ethereum != null) {
           web3user = Web3Provider(ethereum!);
-          wrongChain = false;
-          chain = chains[chainId]!;
-          persist().then((value) {
-            print("users length ${users!.length}");
-            // navigatorKey.currentState!.pushNamed("/");
-            refreshPage();
-            print("something");
-          });
+        } else {
+          web3user = null;
         }
-        // Optionally update the chain information here
-        notifyListeners(); // Notify listeners about the change
+
+        if (newChainId == etherlinkTestnetId) {
+          print("Chain is now Etherlink-Testnet.");
+          this.wrongChain = false;
+          this.chain = chains[etherlinkTestnetId]!;
+          if (prevChain != etherlinkTestnetId) {
+            await persist();
+            refreshPage();
+            prevChain = etherlinkTestnetId;
+          }
+        } else if (chains.keys.contains(newChainId)) {
+          print("Chain is now another supported chain: $newChainId");
+          this.wrongChain = false;
+          this.chain = chains[newChainId]!;
+          if (prevChain != newChainId) {
+            await persist();
+            refreshPage();
+            prevChain = newChainId;
+          }
+        } else {
+          print("Chain is now an unsupported chain: $newChainId. Requesting switch/add Etherlink-Testnet.");
+          this.chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
+          this.wrongChain = true; // Mark as wrong until switch/add succeeds
+          notifyListeners(); // Notify UI about this intermediate state
+
+          await _requestSwitchOrAddEtherlinkTestnet();
+          // If switch/add is successful, this listener will be called again with the new chainId.
+          // If it fails hard, _requestSwitchOrAddEtherlinkTestnet sets the final wrongChain state.
+        }
+        notifyListeners(); // Notify of final state from this handler
       }));
     }
   }
@@ -137,70 +187,60 @@ class Human extends ChangeNotifier {
 
   signIn() async {
     print("signing into the thing");
-    // address = "0xA6A40E0b6DB5a6f808703DBe91DbE50B7FC1fa3E";
-    // notifyListeners();
-    // return;
+    const String etherlinkTestnetId = "0x1f47b";
+
     try {
-      var accounts = await promiseToFuture(
-        ethereum!.request(
-          RequestParams(method: 'eth_requestAccounts'),
-        ),
+      await promiseToFuture(
+        ethereum!.request(RequestParams(method: 'eth_requestAccounts')),
       );
       address = ethereum?.selectedAddress.toString();
-      var chainaidi = ethereum?.chainId;
-      print("chainid is $chainaidi");
-      web3user = Web3Provider(ethereum!);
-      print("web3user $web3user");
-      if (!chains.keys.contains(chainaidi)) {
-        wrongChain = true;
-        chain = Chain(
-            wrapperContract: "",
-            id: 0,
-            wrapperContract_w: "",
-            name: 'N/A',
-            nativeSymbol: '',
-            decimals: 0,
-            rpcNode: '',
-            blockExplorer: "");
+      var currentChainIdFromWallet = ethereum?.chainId?.toString(); // Ensure string
+      print("Current chainId from wallet after eth_requestAccounts: $currentChainIdFromWallet");
 
-        // Request user to add the network
-        var chainInfo = {
-          "chainId": "0x1f47b", // Replace with your chain ID
-          "chainName": "Etherlink-Testnet",
-          "nativeCurrency": {"name": "Tezos", "symbol": "XTZ", "decimals": 18},
-          "rpcUrls": [chain.rpcNode], // Replace with your RPC URL
-          "blockExplorerUrls": [
-            "https://your.explorer.url"
-          ] // Replace with your block explorer URL
-        };
-
-        try {
-          await promiseToFuture(
-            ethereum!.request(
-              RequestParams(
-                method: 'wallet_addEthereumChain',
-                params: [chainInfo],
-              ),
-            ),
-          );
-        } catch (e) {
-          print("User rejected network addition: $e");
-          return "nogo";
-        }
-
-        notifyListeners();
-        return "nogo";
-      } else {
-        print("we are in this here else");
-        wrongChain = false;
-        chain = chains[chainaidi]!;
-        if (!(chain == chains[prevChain])) {
-          await persist();
-          refreshPage();
-        }
+      if (ethereum != null) {
+        web3user = Web3Provider(ethereum!);
       }
+
+      if (currentChainIdFromWallet == etherlinkTestnetId) {
+        print("Wallet connected on Etherlink-Testnet.");
+        // Ensure state reflects this, especially if not already set by an early chainChanged event
+        if (this.chain.id != chains[etherlinkTestnetId]!.id || this.wrongChain) {
+          this.chain = chains[etherlinkTestnetId]!;
+          this.wrongChain = false;
+          if (prevChain != etherlinkTestnetId) {
+            await persist();
+            refreshPage();
+            prevChain = etherlinkTestnetId;
+          }
+        }
+      } else if (chains.keys.contains(currentChainIdFromWallet)) {
+        print("Wallet connected on another supported chain: $currentChainIdFromWallet");
+         if (this.chain.id != chains[currentChainIdFromWallet!]!.id || this.wrongChain) {
+            this.chain = chains[currentChainIdFromWallet]!;
+            this.wrongChain = false;
+            if (prevChain != currentChainIdFromWallet) {
+                await persist();
+                refreshPage();
+                prevChain = currentChainIdFromWallet;
+            }
+         }
+      } else {
+        print("Wallet connected on unsupported chain: $currentChainIdFromWallet. Requesting switch/add Etherlink-Testnet.");
+        // Set an intermediate state before attempting switch
+        this.chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
+        this.wrongChain = true;
+        notifyListeners();
+
+        await _requestSwitchOrAddEtherlinkTestnet();
+        // The chainChanged event will handle the final state update after switch/add attempt.
+      }
+      notifyListeners(); // Notify of any immediate changes from signIn
     } catch (e) {
       print("Error signing in: $e");
+      this.chain = chains[etherlinkTestnetId]!; // Fallback
+      this.wrongChain = true;
+      this.web3user = null;
+      notifyListeners();
     }
   }
 }

@@ -748,36 +748,61 @@ class VotesModal extends StatefulWidget {
 class _VotesModalState extends State<VotesModal> {
   late Future<void> _votesFuture;
 
-  Future<void> getVotes() async {
-    var votesCollection = FirebaseFirestore.instance
-        .collection("idaos${Human().chain.name}")
-        .doc(widget.p.org.address)
-        .collection("proposals")
-        .doc(widget.p.id.toString())
-        .collection("votes");
-    print("creating the collection");
-    var votesSnapshot = await votesCollection.get();
-    print("length of votesSnapshot.docs ${votesSnapshot.docs.length}");
-    widget.p.votes.clear();
-    for (var doc in votesSnapshot.docs) {
-      print("adding a vote");
-      widget.p.votes.add(Vote(
-        votingPower: parseNumber(doc.data()['weight'], widget.p.org.decimals!),
-        voter: doc.data()['voter'],
-        hash: "0x" +
-            doc
-                .data()['hash']
-                .bytes
-                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-                .join(),
-        proposalID: widget.p.id!,
-        option: doc.data()['option'],
-        castAt: (doc.data()['cast'] != null)
-            ? DateTime.parse(doc.data()['cast'])
-            : null,
-      ));
+ Future<void> getVotes() async {
+  var votesCollection = FirebaseFirestore.instance
+      .collection("idaos${Human().chain.name}")
+      .doc(widget.p.org.address)
+      .collection("proposals")
+      .doc(widget.p.id.toString())
+      .collection("votes");
+  print("creating the collection");
+  var votesSnapshot = await votesCollection.get();
+  print("length of votesSnapshot.docs ${votesSnapshot.docs.length}");
+  widget.p.votes.clear();
+
+  for (var doc in votesSnapshot.docs) {
+    print("processing vote for doc ID: ${doc.id}");
+    final data = doc.data();
+    final dynamic rawHash = data['hash']; // Use dynamic for initial access
+    String finalHash = "0xINVALID_HASH"; // Default/fallback hash
+
+    if (rawHash == null) {
+      print("Warning: 'hash' field is null for doc ${doc.id}");
+      // finalHash remains "0xINVALID_HASH" or you can choose another default
+      // or even skip this vote if a hash is essential
+    } else if (rawHash is Blob) {
+      // This is the expected case for your original code
+      finalHash = "0x${rawHash.bytes
+              .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+              .join()}";
+    } else if (rawHash is String) {
+      // If it's already a string, perhaps it's already hex-encoded (without '0x')
+      // Or perhaps it's the problematic string from your comment
+      // You need to decide how to handle string hashes.
+      // The example "0x3d1h287wqhsdiasudh132iudhq9w879d8" is NOT valid hex.
+      // If it's supposed to be a valid hex string (e.g., "3d1a2b..."), you can do:
+      print("Warning: 'hash' field is a String for doc ${doc.id}. Value: $rawHash. Assuming it's a hex string.");
+      finalHash = "0x$rawHash"; // Ensure rawHash is actually a valid hex string part
+    } else {
+      // Handle other unexpected types
+      print(
+          "Error: 'hash' field is of unexpected type: ${rawHash.runtimeType} for doc ${doc.id}. Value: $rawHash");
+      // finalHash remains "0xINVALID_HASH"
     }
+
+    print("adding a vote with hash: $finalHash");
+    widget.p.votes.add(Vote(
+      votingPower: parseNumber(data['weight'], widget.p.org.decimals!),
+      voter: data['voter'],
+      hash: finalHash,
+      proposalID: widget.p.id!,
+      option: data['option'],
+      castAt: (data['cast'] != null)
+          ? DateTime.parse(data['cast'])
+          : null,
+    ));
   }
+}
 
   @override
   void initState() {
