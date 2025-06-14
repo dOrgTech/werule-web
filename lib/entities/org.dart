@@ -44,6 +44,7 @@ I mean I think they should because of reasons and stuff.
   String? treasuryAddress;
   String? registryAddress;
   List<Proposal> proposals = [];
+  String? wrapped;
   List<Debate> debates = [];
   List<String>? proposalIDs = [];
   late String name;
@@ -162,29 +163,29 @@ I mean I think they should because of reasons and stuff.
   }
 
   getProposals() async {
-    print("[Org.getProposals] Called for org: ${this.name}, DAO address: ${this.address}, chain: ${Human().chain.name}");
-    print("[Org.getProposals] debatesOnly flag: ${this.debatesOnly}");
+    print("[Org.getProposals] Called for org: $name, DAO address: $address, chain: ${Human().chain.name}");
+    print("[Org.getProposals] debatesOnly flag: $debatesOnly");
 
     if (debatesOnly ?? false) {
       print("[Org.getProposals] Exiting early because debatesOnly is true.");
-      this.proposals = [];
-      this.proposalIDs = [];
+      proposals = [];
+      proposalIDs = [];
       return;
     }
-    if (this.address == null || this.address!.isEmpty) {
+    if (address == null || address!.isEmpty) {
       print("[Org.getProposals] Exiting early because org DAO address is null or empty.");
-      this.proposals = [];
-      this.proposalIDs = [];
+      proposals = [];
+      proposalIDs = [];
       return;
     }
 
     try {
       pollsCollection = FirebaseFirestore.instance
           .collection("idaos${Human().chain.name}")
-          .doc(this.address)
+          .doc(address)
           .collection("proposals");
       
-      print("[Org.getProposals] Querying Firestore path: idaos${Human().chain.name}/${this.address}/proposals");
+      print("[Org.getProposals] Querying Firestore path: idaos${Human().chain.name}/$address/proposals");
       var proposalsSnapshot = await pollsCollection.get();
       print("[Org.getProposals] Fetched ${proposalsSnapshot.docs.length} proposal documents from Firestore.");
 
@@ -244,8 +245,8 @@ I mean I think they should because of reasons and stuff.
       print("[Org.getProposals] Populated ${proposals.length} proposals into org.proposals list.");
     } catch (e) {
       print("[Org.getProposals] Error fetching proposals: $e");
-      this.proposals = []; 
-      this.proposalIDs = [];
+      proposals = []; 
+      proposalIDs = [];
     }
     // It's important that getMembers() is called *after* proposals might be needed by refreshMember,
     // but refreshMember itself needs org.proposals.
@@ -255,7 +256,7 @@ I mean I think they should because of reasons and stuff.
   }
 
   Future<Member> refreshMember(Member m) async {
-    print("[Org.refreshMember] Called for member: ${m.address} in org: ${this.name} (DAO Address: ${this.address})");
+    print("[Org.refreshMember] Called for member: ${m.address} in org: $name (DAO Address: $address)");
     m.votingWeight = "0"; 
     try {
       // These are assumed to be on-chain calls
@@ -271,12 +272,12 @@ I mean I think they should because of reasons and stuff.
     print("[Org.refreshMember] Fetched on-chain data for ${m.address}: Balance: ${m.personalBalance}, Voting Weight: ${m.votingWeight}, Delegate: ${m.delegate}");
 
     // --- Populate proposalsVoted ---
-    if (this.address == null || this.address!.isEmpty) {
+    if (address == null || address!.isEmpty) {
         print("[Org.refreshMember] Org DAO address is null or empty, cannot fetch member's voted proposals.");
         m.proposalsVoted = [];
         return m;
     }
-    if (m.address == null || m.address.isEmpty) { // m.address should always exist for a Member object
+    if (m.address.isEmpty) { // m.address should always exist for a Member object
         print("[Org.refreshMember] Member address is null or empty, cannot fetch member's voted proposals.");
         m.proposalsVoted = [];
         return m;
@@ -285,7 +286,7 @@ I mean I think they should because of reasons and stuff.
     try {
       // Critical: Ensure org.proposals is populated.
       // If getProposals() hasn't run or completed, this won't work correctly.
-      if (this.proposals.isEmpty) {
+      if (proposals.isEmpty) {
         print("[Org.refreshMember] Warning: org.proposals is empty when trying to populate proposalsVoted for ${m.address}. This may lead to an empty list. Consider calling getProposals() first if not already done.");
         // One strategy could be:
         // print("[Org.refreshMember] Attempting to fetch org.proposals now as it's empty...");
@@ -295,12 +296,12 @@ I mean I think they should because of reasons and stuff.
         // }
       }
 
-      String memberDocPath = "idaos${Human().chain.name}/${this.address}/members/${m.address.toLowerCase()}";
+      String memberDocPath = "idaos${Human().chain.name}/$address/members/${m.address.toLowerCase()}";
       print("[Org.refreshMember] Fetching member document from Firestore path: $memberDocPath");
       
       DocumentSnapshot memberDocSnapshot = await FirebaseFirestore.instance
           .collection("idaos${Human().chain.name}")
-          .doc(this.address)
+          .doc(address)
           .collection("members")
           .doc(m.address) // Use the original address casing
           .get();
@@ -313,13 +314,13 @@ I mean I think they should because of reasons and stuff.
 
         print("[Org.refreshMember] Member ${m.address} raw voted proposal IDs from Firestore: ${proposalsVotedHashes.length} -> $proposalsVotedHashes");
         
-        if (this.proposals.isEmpty && proposalsVotedHashes.isNotEmpty) {
+        if (proposals.isEmpty && proposalsVotedHashes.isNotEmpty) {
             print("[Org.refreshMember] DIAGNOSTIC: org.proposals is EMPTY, but member ${m.address} has voted proposal IDs from Firestore. Cannot match.");
         } else {
-            print("[Org.refreshMember] DIAGNOSTIC: Comparing against ${this.proposals.length} proposals in org.proposals. Their IDs: ${this.proposals.map((p) => p.id).toList()}");
+            print("[Org.refreshMember] DIAGNOSTIC: Comparing against ${proposals.length} proposals in org.proposals. Their IDs: ${proposals.map((p) => p.id).toList()}");
         }
 
-        m.proposalsVoted = this.proposals.where((proposal) {
+        m.proposalsVoted = proposals.where((proposal) {
                 bool match = proposalsVotedHashes.contains(proposal.id);
                 if (proposalsVotedHashes.isNotEmpty) { // Only log detailed comparison if there's something to compare
                     print("[Org.refreshMember] Comparing Firestore ID '${proposal.id}' (from org.proposals) with member's voted IDs: $proposalsVotedHashes. Match: $match");
@@ -327,8 +328,8 @@ I mean I think they should because of reasons and stuff.
                 return match;
             }).toList();
         print("[Org.refreshMember] Populated ${m.proposalsVoted.length} Proposal objects into member.proposalsVoted for ${m.address}.");
-        if (proposalsVotedHashes.isNotEmpty && m.proposalsVoted.isEmpty && this.proposals.isNotEmpty) {
-            print("[Org.refreshMember] DIAGNOSTIC: Member ${m.address} has voted proposal IDs from Firestore (${proposalsVotedHashes.join(", ")}), but no matches found in org.proposals (IDs: ${this.proposals.map((p) => p.id).join(", ")}). Check for case sensitivity or ID format differences.");
+        if (proposalsVotedHashes.isNotEmpty && m.proposalsVoted.isEmpty && proposals.isNotEmpty) {
+            print("[Org.refreshMember] DIAGNOSTIC: Member ${m.address} has voted proposal IDs from Firestore (${proposalsVotedHashes.join(", ")}), but no matches found in org.proposals (IDs: ${proposals.map((p) => p.id).join(", ")}). Check for case sensitivity or ID format differences.");
         }
 
       } else {

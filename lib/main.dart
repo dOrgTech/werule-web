@@ -77,6 +77,16 @@ persist() async {
         decimals: org.decimals,
         name: org.name);
     org.govTokenAddress = doc.data()['token'];
+    var wrappedValue = doc.data()['wrapped'];
+    if (wrappedValue is String) {
+      org.wrapped = wrappedValue;
+      print("FOUND A WRAPPED TOKEN string: ${org.wrapped}");
+    } else {
+      org.wrapped = null;
+      if (wrappedValue != null) {
+        print("Firestore field 'wrapped' was not null but was not a String. Type: ${wrappedValue.runtimeType}, Value: $wrappedValue");
+      }
+    }
     org.proposalThreshold = doc.data()['proposalThreshold'];
     org.votingDelay = doc.data()['votingDelay'];
     org.registryAddress = doc.data()['registryAddress'];

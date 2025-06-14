@@ -46,6 +46,19 @@ class Explorer extends StatefulWidget {
         org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
         org.registry = Map<String, String>.from(doc.data()['registry']);
         org.totalSupply = doc.data()['totalSupply'];
+
+        // Populate the 'wrapped' field
+        var wrappedValue = doc.data()['wrapped'];
+        if (wrappedValue is String) {
+          org.wrapped = wrappedValue;
+          print("[Explorer.getDaos] Org '${org.name}' - FOUND A WRAPPED TOKEN string: ${org.wrapped}");
+        } else {
+          org.wrapped = null;
+          if (wrappedValue != null) {
+            print("[Explorer.getDaos] Org '${org.name}' - Firestore field 'wrapped' was not null but was not a String. Type: ${wrappedValue.runtimeType}, Value: $wrappedValue");
+          }
+        }
+
         if (org.name.contains("dOrg")) {
           print("debates only ${org.name}");
           org.debatesOnly = true;

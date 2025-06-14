@@ -1,5 +1,6 @@
 import 'dart:typed_data';
-
+// import 'package:Homebase/screens/bridge.dart'; // Comment out or remove old Bridge import
+import 'package:Homebase/widgets/governance_token_bridge_widget.dart'; // Import the new widget
 // import 'package:Homebase/screens/creator.dart';
 import 'package:Homebase/utils/functions.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,6 @@ import '../utils/reusable.dart';
 import '../widgets/dboxes.dart';
 import '../widgets/proposalCard.dart';
 // import 'applefarm.dart';
-
 Color listTitleColor = const Color.fromARGB(255, 211, 211, 211);
 
 class Account extends StatefulWidget {
@@ -57,15 +57,15 @@ class AccountState extends State<Account> {
         
         if (existingMemberFromOrg != null) {
             widget.member = existingMemberFromOrg;
-            print("[AccountState] _loadAccountAndMemberData: Member ${userAddressLower} found in org.memberAddresses. Using this instance.");
+            print("[AccountState] _loadAccountAndMemberData: Member $userAddressLower found in org.memberAddresses. Using this instance.");
         } else {
             // If not found in org.memberAddresses (e.g., new user or not yet a token holder),
             // ensure widget.member is a valid new instance if it was null, or keep existing if already initialized by initState.
             if (widget.member == null || widget.member!.address.toLowerCase() != userAddressLower) {
-                 print("[AccountState] _loadAccountAndMemberData: Member ${userAddressLower} not found in org.memberAddresses. Creating/assigning new Member instance.");
+                 print("[AccountState] _loadAccountAndMemberData: Member $userAddressLower not found in org.memberAddresses. Creating/assigning new Member instance.");
                  widget.member = Member(address: Human().address!, personalBalance: "0");
             } else {
-                 print("[AccountState] _loadAccountAndMemberData: Member ${userAddressLower} not in org.memberAddresses, but widget.member already initialized with this address. Proceeding.");
+                 print("[AccountState] _loadAccountAndMemberData: Member $userAddressLower not in org.memberAddresses, but widget.member already initialized with this address. Proceeding.");
             }
         }
     } else {
@@ -157,12 +157,49 @@ class AccountState extends State<Account> {
         print("[AccountScreen Build Inner] Using votedOnProposals count: ${widget.votedOnProposals.length}");
         print("[AccountScreen Build Inner] Member balance: ${widget.member?.personalBalance}");
 
+        final bool isMember = (BigInt.tryParse(widget.member!.personalBalance ?? "0") ?? BigInt.zero) >= BigInt.one;
+        final bool canShowBridge = widget.org.wrapped != null;
 
-        if ((BigInt.tryParse(widget.member!.personalBalance ?? "0") ?? BigInt.zero) < BigInt.one) {
+        if (isMember) {
+          return accountScreenContent(context);
+        } else {
+          // Not a member
+          if (canShowBridge) {
+            // Not a member, but DAO is wrapped, so show bridge and "not a member" message
+            return ListView(
+              children: [
+                const SizedBox(height: 16), // Consistent padding
+                Card( // Bridge Card structure
+                  child: Padding(
+                    padding: const EdgeInsets.all(38.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Token Bridge (${widget.org.symbol} <-> Underlying)",
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                        const SizedBox(height: 9),
+                        const Text(
+                            "Use this bridge to wrap your underlying tokens into governance tokens, or unwrap them back."),
+                        const SizedBox(height: 9),
+                        const Divider(),
+                        const SizedBox(height: 20),
+                        GovernanceTokenBridgeWidget(org: widget.org),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                notAMember(),
+                const SizedBox(height: 140), // Consistent bottom padding
+              ],
+            );
+          } else {
+            // Not a member and DAO is not wrapped
             return notAMember();
+          }
         }
-
-        return accountScreenContent(context); // Changed from accountWide to avoid nested FutureBuilder
       },
     );
   }
@@ -252,7 +289,7 @@ class AccountState extends State<Account> {
                           const Text("Voting Weight", style: TextStyle(fontSize: 16)),
                           const SizedBox(height: 10),
                           Text(
-                            widget.member?.votingWeight?.toString() ?? "0",
+                            parseNumber(widget.member?.votingWeight ?? "0", widget.org.decimals ?? 18),
                             style: const TextStyle(
                                 fontSize: 27, fontWeight: FontWeight.normal),
                           ),
@@ -265,7 +302,7 @@ class AccountState extends State<Account> {
                           Text("Personal ${widget.org.symbol} Balance", style: const TextStyle(fontSize: 16)),
                           const SizedBox(height: 10),
                           Text(
-                            widget.member?.personalBalance?.toString() ?? "0",
+                            parseNumber(widget.member?.personalBalance ?? "0", widget.org.decimals ?? 18),
                             style: const TextStyle(
                                 fontSize: 27, fontWeight: FontWeight.normal),
                           ),
@@ -335,6 +372,30 @@ class AccountState extends State<Account> {
           ),
         ),
         const SizedBox(height: 12),
+        if (widget.org.wrapped != null) ...[
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(38.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Token Bridge (${widget.org.symbol} <-> Underlying)",
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(height: 9),
+                  const Text(
+                      "Use this bridge to wrap your underlying tokens into governance tokens, or unwrap them back."),
+                  const SizedBox(height: 9),
+                  const Divider(),
+                  const SizedBox(height: 20),
+                  GovernanceTokenBridgeWidget(org: widget.org), // Use the new GovernanceTokenBridgeWidget here
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         ActivityHistory(
             votedProposals: widget.votedOnProposals, // Pass the populated lists
             createdProposals: widget.createdProposals),

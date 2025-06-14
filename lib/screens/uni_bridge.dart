@@ -8,17 +8,6 @@ import 'package:Homebase/widgets/menu.dart';
 import 'package:flutter_web3_provider/ethereum.dart'; 
 import 'package:js/js_util.dart' show promiseToFuture, callMethod, getProperty; // Ensured getProperty is here
  enum WrapperAction { wrap, unwrap } // Corrected: No underscore prefix for enum type
-
-// --- ABIs (Human-Readable) ---
-const List<String> erc20ApproveAbiHumanReadable = [
-  "function approve(address spender, uint256 value) returns (bool)"
-];
-
-const List<String> wrapperContractAbiHumanReadable = [
-  "function depositFor(address account, uint256 value)",
-  "function withdrawTo(address account, uint256 value)" // For unwrap
-];
-
 enum TransactionProgress { 
   idle,
   awaitingUserAddress,
@@ -38,7 +27,15 @@ enum TransactionProgress {
   unwrapComplete,
   error,
 }
+// --- ABIs (Human-Readable) ---
+const List<String> erc20ApproveAbiHumanReadable = [
+  "function approve(address spender, uint256 value) returns (bool)"
+];
 
+const List<String> wrapperContractAbiHumanReadable = [
+  "function depositFor(address account, uint256 value)",
+  "function withdrawTo(address account, uint256 value)" // For unwrap
+];
 class TokenWrapperUI extends StatefulWidget {
   const TokenWrapperUI({super.key});
 

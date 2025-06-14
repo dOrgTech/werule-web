@@ -115,9 +115,9 @@ class Human extends ChangeNotifier {
         print("wallet_addEthereumChain failed: $addError. User likely on wrong chain.");
         // If add also fails, user is stuck on wrong chain.
         // Set state to reflect this hard failure.
-        this.chain = targetChainDetails; // Default to target for data loading
-        this.wrongChain = true;
-        this.web3user = null; // No valid web3user for the desired chain
+        chain = targetChainDetails; // Default to target for data loading
+        wrongChain = true;
+        web3user = null; // No valid web3user for the desired chain
         notifyListeners();
       }
     }
@@ -144,14 +144,20 @@ class Human extends ChangeNotifier {
 
         if (ethereum != null) {
           web3user = Web3Provider(ethereum!);
+          try {
+            final network = await promiseToFuture(web3user!.getNetwork());
+            print('Provider network detected in chainChanged: ${getProperty(network, "name")}, chainId: ${getProperty(network, "chainId")}');
+          } catch (e) {
+            print('Error getting network from provider in chainChanged: $e');
+          }
         } else {
           web3user = null;
         }
 
         if (newChainId == etherlinkTestnetId) {
           print("Chain is now Etherlink-Testnet.");
-          this.wrongChain = false;
-          this.chain = chains[etherlinkTestnetId]!;
+          wrongChain = false;
+          chain = chains[etherlinkTestnetId]!;
           if (prevChain != etherlinkTestnetId) {
             await persist();
             refreshPage();
@@ -159,8 +165,8 @@ class Human extends ChangeNotifier {
           }
         } else if (chains.keys.contains(newChainId)) {
           print("Chain is now another supported chain: $newChainId");
-          this.wrongChain = false;
-          this.chain = chains[newChainId]!;
+          wrongChain = false;
+          chain = chains[newChainId]!;
           if (prevChain != newChainId) {
             await persist();
             refreshPage();
@@ -168,8 +174,8 @@ class Human extends ChangeNotifier {
           }
         } else {
           print("Chain is now an unsupported chain: $newChainId. Requesting switch/add Etherlink-Testnet.");
-          this.chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
-          this.wrongChain = true; // Mark as wrong until switch/add succeeds
+          chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
+          wrongChain = true; // Mark as wrong until switch/add succeeds
           notifyListeners(); // Notify UI about this intermediate state
 
           await _requestSwitchOrAddEtherlinkTestnet();
@@ -194,19 +200,25 @@ class Human extends ChangeNotifier {
         ethereum!.request(RequestParams(method: 'eth_requestAccounts')),
       );
       address = ethereum?.selectedAddress.toString();
-      var currentChainIdFromWallet = ethereum?.chainId?.toString(); // Ensure string
+      var currentChainIdFromWallet = ethereum?.chainId.toString(); // Ensure string
       print("Current chainId from wallet after eth_requestAccounts: $currentChainIdFromWallet");
 
       if (ethereum != null) {
         web3user = Web3Provider(ethereum!);
+        try {
+          final network = await promiseToFuture(web3user!.getNetwork());
+          print('Provider network detected after signIn: ${getProperty(network, "name")}, chainId: ${getProperty(network, "chainId")}');
+        } catch (e) {
+          print('Error getting network from provider after signIn: $e');
+        }
       }
 
       if (currentChainIdFromWallet == etherlinkTestnetId) {
         print("Wallet connected on Etherlink-Testnet.");
         // Ensure state reflects this, especially if not already set by an early chainChanged event
-        if (this.chain.id != chains[etherlinkTestnetId]!.id || this.wrongChain) {
-          this.chain = chains[etherlinkTestnetId]!;
-          this.wrongChain = false;
+        if (chain.id != chains[etherlinkTestnetId]!.id || wrongChain) {
+          chain = chains[etherlinkTestnetId]!;
+          wrongChain = false;
           if (prevChain != etherlinkTestnetId) {
             await persist();
             refreshPage();
@@ -215,9 +227,9 @@ class Human extends ChangeNotifier {
         }
       } else if (chains.keys.contains(currentChainIdFromWallet)) {
         print("Wallet connected on another supported chain: $currentChainIdFromWallet");
-         if (this.chain.id != chains[currentChainIdFromWallet!]!.id || this.wrongChain) {
-            this.chain = chains[currentChainIdFromWallet]!;
-            this.wrongChain = false;
+         if (chain.id != chains[currentChainIdFromWallet!]!.id || wrongChain) {
+            chain = chains[currentChainIdFromWallet]!;
+            wrongChain = false;
             if (prevChain != currentChainIdFromWallet) {
                 await persist();
                 refreshPage();
@@ -227,8 +239,8 @@ class Human extends ChangeNotifier {
       } else {
         print("Wallet connected on unsupported chain: $currentChainIdFromWallet. Requesting switch/add Etherlink-Testnet.");
         // Set an intermediate state before attempting switch
-        this.chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
-        this.wrongChain = true;
+        chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
+        wrongChain = true;
         notifyListeners();
 
         await _requestSwitchOrAddEtherlinkTestnet();
@@ -237,9 +249,9 @@ class Human extends ChangeNotifier {
       notifyListeners(); // Notify of any immediate changes from signIn
     } catch (e) {
       print("Error signing in: $e");
-      this.chain = chains[etherlinkTestnetId]!; // Fallback
-      this.wrongChain = true;
-      this.web3user = null;
+      chain = chains[etherlinkTestnetId]!; // Fallback
+      wrongChain = true;
+      web3user = null;
       notifyListeners();
     }
   }

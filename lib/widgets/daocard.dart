@@ -53,7 +53,7 @@ class DAOCard extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(7),
-            color: Colors.grey.shade600.withOpacity(0.6),
+            color: Colors.grey.shade600.withOpacity(0.45),
           ),
           child: TextButton(
             style: ButtonStyle(
@@ -172,6 +172,12 @@ class DAOCard extends StatelessWidget {
           top: 6,
           right: 8,
           child: Opacity(opacity: 0.38, child: copilas),
+        ),
+        org.wrapped==null?const Text(""):
+         const Positioned(
+          bottom: 9,
+          right: 8,
+          child: Opacity(opacity: 0.38, child: Icon(Icons.token)),
         ),
       ],
     );

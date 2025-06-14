@@ -69,6 +69,19 @@ class _DAOState extends State<DAO> {
       // dao.treasuryMap = Map<String, String>.from(data['treasury']);
       dao.registry = Map<String, String>.from(data['registry']);
       dao.totalSupply = data['totalSupply'];
+
+      // Populate the 'wrapped' field
+      var wrappedValue = data['wrapped'];
+      if (wrappedValue is String) {
+        dao.wrapped = wrappedValue;
+        print("[DAO StreamBuilder] Org '${dao.name}' - FOUND A WRAPPED TOKEN string: ${dao.wrapped}");
+      } else {
+        dao.wrapped = null;
+        if (wrappedValue != null) {
+          print("[DAO StreamBuilder] Org '${dao.name}' - Firestore field 'wrapped' was not null but was not a String. Type: ${wrappedValue.runtimeType}, Value: $wrappedValue");
+        }
+      }
+
       // Perform the async task before yielding
 
       dao.getMembers();

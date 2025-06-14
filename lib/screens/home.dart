@@ -358,10 +358,14 @@ class _HomeState extends State<Home> {
                   maxWidth: 450,
                 ),
                 padding: const EdgeInsets.all(11.0),
-                child: Text(
-                  widget.org.description!,
-                  textAlign: TextAlign.center,
-                ),
+                child: Builder(builder: (context) {
+                  print("[Home Widget] Displaying description. org.name: ${widget.org.name}, org.wrapped: '${widget.org.wrapped}', org.description: '${widget.org.description}'");
+                  return Text(
+                    widget.org.wrapped ?? widget.org.description!,
+                    // widget.org.description!,
+                    textAlign: TextAlign.center,
+                  );
+                }),
               ),
             ],
           ),

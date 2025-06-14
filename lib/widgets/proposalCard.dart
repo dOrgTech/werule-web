@@ -9,7 +9,7 @@ import '../entities/proposal.dart';
 import 'package:go_router/go_router.dart';
 
 class ProposalCard extends StatefulWidget {
-  ProposalCard({super.key, required this.proposal, required this.org});
+  const ProposalCard({super.key, required this.proposal, required this.org});
   final Proposal proposal;
   final Org org;
 

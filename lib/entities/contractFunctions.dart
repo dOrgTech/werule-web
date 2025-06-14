@@ -63,8 +63,9 @@ getVotes(who, Org org) async {
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
     ethClient.dispose();
-    String withoutDecimals = parseNumber(rezultat, org.decimals!);
-    return withoutDecimals;
+    // String withoutDecimals = parseNumber(rezultat, org.decimals!);
+    // return withoutDecimals;
+    return rezultat; // Return raw string
   } catch (e) {
     print('Error: $e');
     // Log the full response body
@@ -135,14 +136,43 @@ getBalance(who, Org org) async {
     print('$rezultat ${rezultat.runtimeType}');
     httpClient.close();
     ethClient.dispose();
-    String withoutDecimals = parseNumber(rezultat, org.decimals!);
-    return withoutDecimals;
+    // String withoutDecimals = parseNumber(rezultat, org.decimals!);
+    // return withoutDecimals;
+    return rezultat; // Return raw string
   } catch (e) {
     print('Error: $e');
     // Log the full response body
     print('Response Body:');
     print(httpClient.toString());
     httpClient.close();
+    rethrow;
+  }
+}
+
+Future<String> getERC20Balance(String tokenAddress, String userAddress) async {
+  var httpClient = Client();
+  var ethClient = Web3Client(Human().chain.rpcNode, httpClient);
+  final contractWrapper = DeployedContract(
+    ContractAbi.fromJson(tokenAbiGlobal, 'balanceOf'), // Standard ERC20 ABI for balanceOf
+    EthereumAddress.fromHex(tokenAddress),
+  );
+  var balanceOfFunction = contractWrapper.function('balanceOf');
+
+  try {
+    var result = await ethClient.call(
+      contract: contractWrapper,
+      function: balanceOfFunction,
+      params: [EthereumAddress.fromHex(userAddress)],
+    );
+    String balance = result[0].toString();
+    print('RPC Response for ERC20 balance (token: $tokenAddress, user: $userAddress): $balance');
+    httpClient.close();
+    ethClient.dispose();
+    return balance; // Return raw string balance
+  } catch (e) {
+    print('Error fetching ERC20 balance (token: $tokenAddress, user: $userAddress): $e');
+    httpClient.close();
+    ethClient.dispose();
     rethrow;
   }
 }

@@ -1,5 +1,6 @@
+import 'package:Homebase/entities/human.dart'; // Added for Human().address
 import 'package:Homebase/entities/org.dart'; // Your actual Org import
-import 'package:Homebase/widgets/menu.dart';
+// import 'package:Homebase/widgets/menu.dart'; // Removed as TopMenu is removed from Bridge
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For TextInputFormatters
 
@@ -17,13 +18,9 @@ class Bridge extends StatefulWidget {
 enum BridgeAction { wrap, unwrap }
 
 class _BridgeState extends State<Bridge> {
-  final String _loggedInUserAddress = "0xAbc123Def456Ghi789Jkl012Mno345Pqr678"; // Mock
-  final double _availableBaseTokenBalance = 250.875;  // e.g., TKN balance
-  final double _availableWrappedTokenBalance = 75.5; // e.g., wTKN balance - Mock data
-
-  final String _baseTokenSymbol = "TKN";
-  final String _wrappedTokenSymbol = "wTKN";
-
+  // final String _loggedInUserAddress = "0xAbc123Def456Ghi789Jkl012Mno345Pqr678"; // Mock - Removed
+  final double _availableBaseTokenBalance = 250.875;  // Mock - Will be replaced by actual fetched balance
+  final double _availableWrappedTokenBalance = 75.5; 
   BridgeAction _currentAction = BridgeAction.wrap; // Default to wrap mode
 
   final _amountController = TextEditingController();
@@ -53,8 +50,11 @@ class _BridgeState extends State<Bridge> {
     // Determine context based on _currentAction
     bool isWrapping = _currentAction == BridgeAction.wrap;
     String actionVerb = isWrapping ? "wrap" : "unwrap";
-    String fromSymbol = isWrapping ? _baseTokenSymbol : _wrappedTokenSymbol;
-    String toSymbol = isWrapping ? _wrappedTokenSymbol : _baseTokenSymbol;
+    String baseTokenSymbol = widget.org.wrapped?.substring(0, 6) ?? "BASE"; // Example for base symbol
+    String wrappedTokenSymbol = widget.org.symbol ?? "WRAPPED";
+
+    String fromSymbol = isWrapping ? baseTokenSymbol : wrappedTokenSymbol;
+    String toSymbol = isWrapping ? wrappedTokenSymbol : baseTokenSymbol;
     double currentBalance = isWrapping ? _availableBaseTokenBalance : _availableWrappedTokenBalance;
 
     if (amount > currentBalance) {
@@ -65,7 +65,7 @@ class _BridgeState extends State<Bridge> {
     }
 
     print(
-        'User wants to $actionVerb $amount $fromSymbol for DAO: ${widget.org.address}. User Address: $_loggedInUserAddress');
+        'User wants to $actionVerb $amount $fromSymbol for DAO: ${widget.org.address}. User Address: ${Human().address}');
     
     setState(() => _isLoading = true);
 
@@ -138,25 +138,30 @@ class _BridgeState extends State<Bridge> {
 
     // Determine current symbols and balance based on the toggle state
     final bool isWrappingMode = _currentAction == BridgeAction.wrap;
-    final String pageTitle = isWrappingMode
-        ? "Wrap $_baseTokenSymbol to $_wrappedTokenSymbol"
-        : "Unwrap $_wrappedTokenSymbol to $_baseTokenSymbol";
-    final String currentInputTokenSymbol = isWrappingMode ? _baseTokenSymbol : _wrappedTokenSymbol;
-    // final String currentOutputTokenSymbol = isWrappingMode ? _wrappedTokenSymbol : _baseTokenSymbol; // If needed for descriptive text
-    final double currentRelevantBalance = isWrappingMode ? _availableBaseTokenBalance : _availableWrappedTokenBalance;
+
+    // Use actual symbols from widget.org
+    final String actualBaseTokenSymbol = widget.org.wrapped != null && widget.org.wrapped!.length >= 6
+                                       ? "${widget.org.wrapped!.substring(0, 6)}.." // Placeholder, ideally fetch symbol
+                                       : "BASE";
+    final String actualWrappedTokenSymbol = widget.org.symbol ?? "WRAPPED";
+
+    // final String pageTitle = isWrappingMode // Page title is part of Account screen now
+    //     ? "Wrap $actualBaseTokenSymbol to $actualWrappedTokenSymbol"
+    //     : "Unwrap $actualWrappedTokenSymbol to $actualBaseTokenSymbol";
+    final String currentInputTokenSymbol = isWrappingMode ? actualBaseTokenSymbol : actualWrappedTokenSymbol;
+    final double currentRelevantBalance = isWrappingMode ? _availableBaseTokenBalance : _availableWrappedTokenBalance; // Still mock
     final String actionButtonText = isWrappingMode ? "Wrap $currentInputTokenSymbol" : "Unwrap $currentInputTokenSymbol";
     final String amountInputLabel = "Amount of $currentInputTokenSymbol to ${isWrappingMode ? 'Wrap' : 'Unwrap'}";
 
 
-    return Scaffold(
-      appBar: const TopMenu(),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0), // Adjusted overall padding
-          children: [
-         
-            const SizedBox(height: 15),
+    return Form( // Removed Scaffold and AppBar
+      key: _formKey,
+      child: ListView(
+        shrinkWrap: true, // Added shrinkWrap
+        physics: const NeverScrollableScrollPhysics(), // Added physics
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+        children: [
+          // Removed SizedBox(height: 15) as padding is handled by the Card in Account screen
 
             // --- Token Wrapper UI Section (Centered and Constrained Width) ---
             Center(
@@ -165,9 +170,7 @@ class _BridgeState extends State<Bridge> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch, // Makes children like ElevatedButton fill the constrained width
                   children: [
-                    
                     const SizedBox(height: 20),
-
                     // Toggle Buttons for Wrap/Unwrap
                     Center( // Center the ToggleButtons themselves
                       child: ToggleButtons(
@@ -189,14 +192,14 @@ class _BridgeState extends State<Bridge> {
                         color: colorScheme.onSurface.withOpacity(0.7), // Text color when not selected
                         constraints: const BoxConstraints(minHeight: 40.0, minWidth: 90.0), // Adjust for text
                         children: [
-                          Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("Wrap $_baseTokenSymbol")),
-                          Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("Unwrap $_wrappedTokenSymbol")),
+                          Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("Wrap $actualBaseTokenSymbol")),
+                          Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("Unwrap $actualWrappedTokenSymbol")),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    _buildInfoRow(context, "Your Address:", _loggedInUserAddress, isMonospace: true),
+                    // _buildInfoRow(context, "Your Address:", _loggedInUserAddress, isMonospace: true), // Removed user address display
                     _buildInfoRow(
                       context,
                       "Available $currentInputTokenSymbol:", // Dynamic balance label
@@ -283,8 +286,8 @@ class _BridgeState extends State<Bridge> {
                     Center(
                       child: Text(
                         isWrappingMode
-                          ? "You will receive $_wrappedTokenSymbol."
-                          : "You will receive $_baseTokenSymbol.",
+                          ? "You will receive $actualWrappedTokenSymbol."
+                          : "You will receive $actualBaseTokenSymbol.",
                         style: textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
@@ -296,8 +299,7 @@ class _BridgeState extends State<Bridge> {
            
              const SizedBox(height: 30), // Some padding at the bottom
           ],
-        ),
-      ),
-    );
+        ), // This closes the ListView
+    ); // This closes the Form
   }
 }

@@ -2,7 +2,6 @@ import 'package:Homebase/entities/contractFunctions.dart';
 import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import '../entities/human.dart';
 import '../entities/org.dart';
 import '../main.dart';
 import '../screens/account.dart';
@@ -92,7 +91,9 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                 backgroundColor: Theme.of(context).indicatorColor,
               ),
               onPressed: _claimVotingPower,
-              child: const Text('Claidvm Voting Power'),
+              child: 
+              
+              const Text('Claidvm Voting Power'),
             );
     } else if (isVoteDirectlyEnabled) {
       // When Vote Directly is enabled

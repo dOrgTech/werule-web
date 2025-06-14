@@ -265,8 +265,9 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
             padding: const EdgeInsets.all(38.0),
             child: Screen9DeploymentComplete(
                 daoName: daoConfig.daoName ?? 'DAO',
-                onGoToDAO: () {
+                onGoToDAO: () async {
                   if (widget.org.address != null) {
+                    await persist(); // Added this line
                     String checksumaddress =
                         toChecksumAddress(widget.org.address!);
                     context.go("/$checksumaddress");

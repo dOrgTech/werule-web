@@ -1,5 +1,3 @@
-// lib/screens/debate_details.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../widgets/debate_header.dart';
@@ -11,7 +9,6 @@ import '../entities/org.dart';
 class DebateDetails extends StatefulWidget {
   final Debate debate;
   DebateDetails({super.key, required this.debate});
-
   bool enabled = false;
   bool busy = false;
   BigInt votesFor = BigInt.zero;
@@ -44,7 +41,6 @@ class DebateDetailsState extends State<DebateDetails> {
         currentArgument = currentArgument.parent!;
       });
     }
-    // If there's no parent, do nothing (already at the root).
   }
 
   void _refreshDebate() {
