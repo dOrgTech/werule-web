@@ -18,3 +18,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HOMEBASE_6907D }}
           channelId: live
           projectId: homebase-6907d
+          target: wer

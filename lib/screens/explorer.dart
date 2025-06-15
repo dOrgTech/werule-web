@@ -234,7 +234,7 @@ class _ExplorerState extends State<Explorer> {
                             borderSide: const BorderSide(width: 0.1),
                           ),
                           prefixIcon: const Icon(Icons.search),
-                          hintText: 'Search by DAO Name',
+                          hintText: 'Find DAO by name',
                         ),
                       ),
                     ),
