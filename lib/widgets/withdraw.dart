@@ -1,14 +1,9 @@
 
 
-import 'dart:isolate';
-import 'dart:html' as html;
-import 'package:beamer/beamer.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homebase/entities/token.dart';
-import 'package:riverpod/riverpod.dart';
+
+import '../entities/token.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/services.dart';  // Import this for TextInputFormatter
+// Import this for TextInputFormatter
 
 import '../entities/project.dart';
 const String escape = '\uE00C';
@@ -36,7 +31,7 @@ class WithdrawState extends State<Withdraw> {
     
     List<String> paymentTokens=[];
     for (Token t in widget.project.acceptedTokens!){
-      paymentTokens.add(t.symbol +" ("+t.name+")");}
+      paymentTokens.add("${t.symbol} (${t.name})");}
     return
     Container(
       width: 650,
@@ -69,10 +64,10 @@ class WithdrawState extends State<Withdraw> {
                 width: 130,
                 child: TextButton(
                   style: ButtonStyle(
-                    overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                    backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                    elevation: MaterialStateProperty.all(1.0),
-                    shape: MaterialStateProperty.all(
+                    overlayColor: WidgetStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                    backgroundColor: WidgetStateProperty.all<Color>(Theme.of(context).indicatorColor),
+                    elevation: WidgetStateProperty.all(1.0),
+                    shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(7.0),
                       ),
@@ -87,7 +82,6 @@ class WithdrawState extends State<Withdraw> {
                 )),
               ),
             ),
-            
             ],
           )
     );

@@ -1,0 +1,5 @@
+List<String> timelockAbiString=[
+  'function deployDAO (address, address, string, uint48, uint32)',
+  'function deployedDAOs (uint256)'
+  'function getNumberOfDAOs() returns (uint)
+];

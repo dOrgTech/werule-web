@@ -1,5 +1,26 @@
 {
   "projects": {
     "default": "homebase-6907d"
-  }
+  },
+  "targets": {
+    "default": {
+      "hosting": [
+        "homebase-6907d"
+      ]
+    },
+    "werule": {
+      "hosting": [
+        "werule"
+      ]
+    },
+    "homebase-6907d": {
+      "hosting": {
+        "werule": [
+          "werule"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
 }

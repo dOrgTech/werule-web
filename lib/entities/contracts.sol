@@ -11,7 +11,7 @@ contract DAO {
     uint256 public stakeReturnedIfRejected;
     uint public quorumThreshold;
     uint256 public maximumTransferAmount;
-
+    
     enum proposalType {transfer, changeQuorum, changeFee, arbitraryContractCall, editRegistry, changeMaxTransferAmount}
     enum proposalStatus {pending, active, passed, rejected, noQuorum, executable, dropped, expired, executed}
     

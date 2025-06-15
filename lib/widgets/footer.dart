@@ -1,21 +1,23 @@
+import 'package:Homebase/widgets/menu.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 
 class Footer extends StatelessWidget {
+  const Footer({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-  mainAxisSize: MainAxisSize.min,
-  children: [
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
         Container(
           width: MediaQuery.of(context).size.width,
-          color: Color.fromARGB(255, 25, 25, 25),
-          padding: EdgeInsets.symmetric(vertical: 26, horizontal: 32),
+          color: const Color.fromARGB(255, 25, 25, 25),
+          padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 32),
           child: Center(
             child: Container(
               // width: 1200,
-              constraints: BoxConstraints(maxWidth: 1050),
+              constraints: const BoxConstraints(maxWidth: 1050),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -23,7 +25,7 @@ class Footer extends StatelessWidget {
                     children: [
                       InkWell(
                         onTap: () {},
-                        child: Text(
+                        child: const Text(
                           'Terms',
                           style: TextStyle(
                             color: Colors.white,
@@ -31,10 +33,10 @@ class Footer extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       InkWell(
                         onTap: () {},
-                        child: Text(
+                        child: const Text(
                           'Privacy',
                           style: TextStyle(
                             color: Colors.white,
@@ -42,10 +44,10 @@ class Footer extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       InkWell(
                         onTap: () {},
-                        child: Text(
+                        child: const Text(
                           'Contact',
                           style: TextStyle(
                             color: Colors.white,
@@ -58,31 +60,13 @@ class Footer extends StatelessWidget {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                       SvgPicture.asset(
-                                   'assets/logos/homebase_logo.svg',
-                                   semanticsLabel: 'Acme Logo'
-                                   ,height: 25,
-                                   color: Theme.of(context).indicatorColor,
-                                   // color: Colors.red,
-                             ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Homebase',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 18),
+                      const MediaQuery(
+                          data: MediaQueryData(textScaler: TextScaler.linear(1.7)),
+                          child: Logo()),
+                      const SizedBox(height: 18),
                       Text(
-                        '© Tezos-Homebase ${DateTime.now().year}',
-                        style: TextStyle(
+                        '© ${DateTime.now().year}',
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white,
                         ),
@@ -95,7 +79,7 @@ class Footer extends StatelessWidget {
                         children: [
                           GestureDetector(
                             onTap: () {},
-                            child: Text(
+                            child: const Text(
                               'Powered by ',
                               style: TextStyle(
                                 fontSize: 14,
@@ -103,47 +87,44 @@ class Footer extends StatelessWidget {
                               ),
                             ),
                           ),
-                           InkWell(
-                    onTap: () {},
-                    child: Text(
-                      'Tezos Commons',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
+                          InkWell(
+                            onTap: () {},
+                            child: const Text(
+                              'Tezos Commons',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                        SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Text(
-                        'Developed by ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                        ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Text(
+                            'Developed by ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: const Text(
+                              'Eight Rice',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                       InkWell(
-                    onTap: () {},
-                    child: Text(
-                      'dOrg',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
                     ],
                   ),
-                    ],
-                  ),
-                 
-                
-                 
                 ],
               ),
             ),

@@ -1,338 +1,516 @@
+import 'package:Homebase/widgets/newProposal.dart';
+import 'package:Homebase/widgets/registryPropo.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:flutter/services.dart';
+import '../entities/org.dart';
+import '../entities/proposal.dart';
+import 'initiative.dart';
 
-
-final List<String> items = ['Transfer', 
-   'Change Config','Change Guardian','Change Delegate', "Engagement with another DAO" ];
-
-  // The current selected value of the dropdown
-String? selectedValue = 'Transfer';
-
-Widget getComponent(context){
-  Map<String,Widget> components={
-  "Transfer":transfer(context),
-  "Engagement with another DAO":engagement(context,"dao"),
-  'Change Config':notImpl()
-  ,'Change Guardian':notImpl()
-  ,'Change Delegate':notImpl()
-};
-return components[selectedValue] as Widget;
-}
-
-
-
-class ExecuteLambda extends StatefulWidget {
-  ExecuteLambda({super.key});
+class ACI extends StatefulWidget {
+  Proposal p;
+  Org? org;
+  int stage = 0;
+  State proposalsState;
+  InitiativeState initiativeState;
+  bool isSetInfo = false;
+  ACI({
+    super.key,
+    required this.proposalsState,
+    required this.initiativeState,
+    required this.p,
+    required this.org,
+  }) {
+    p.type = "contract call";
+  }
 
   @override
-  State<ExecuteLambda> createState() => _ExecuteLambdaState();
+  State<ACI> createState() => _ACIState();
 }
 
-class _ExecuteLambdaState extends State<ExecuteLambda> {
-  
+class _ACIState extends State<ACI> {
+  final _formKey = GlobalKey<FormState>();
+  final _keyController = TextEditingController();
+  final _callDataController = TextEditingController();
+  final _targetController = TextEditingController();
+  final _amountController = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  // Example JSON placeholder
+  final String _jsonExample = '''
+        {
+          "function": "transfer",
+          "parameters": {
+            "uint": 12345,
+            "address": "0x1234567890abcdef"
+          }
+        }''';
+  @override
+  void dispose() {
+    _keyController.dispose();
+    _callDataController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {}
+  }
+
+  finishSettingInfo() {
+    setState(() {
+      widget.isSetInfo = false;
+    });
+  }
+
+  @override
+  void initState() {
+    widget.p.type = "contract call";
+    widget.initiativeState.widget.p.type = "contract call";
+    super.initState();
+    _focusNode.addListener(_handleFocusChange);
+    _callDataController.addListener(() {
+      runLogic();
+    });
+  }
+
+  void _handleFocusChange() {
+    if (!_focusNode.hasFocus && _controller.text.isEmpty) {
+      setState(() {
+        _controller.text = _jsonExample;
+      });
+    } else if (_focusNode.hasFocus && _controller.text == _jsonExample) {
+      setState(() {
+        _controller.clear();
+      });
+    }
+  }
+
+  runLogic() {
+    widget.p.callDatas = [];
+    widget.p.callData = _controller.text;
+    String calldata0 = _callDataController.text;
+    widget.p.callDatas.add(calldata0);
+    widget.p.targets = [_targetController.text];
+    widget.p.values = [_amountController.text];
+    widget.initiativeState.widget.p.callDatas = widget.p.callDatas;
+    widget.initiativeState.widget.p.callData = widget.p.callData;
+    widget.initiativeState.widget.p.targets = widget.p.targets;
+    widget.initiativeState.widget.p.values = widget.p.values;
+  }
+
   @override
   Widget build(BuildContext context) {
-    
-    return Container(
-          constraints: const BoxConstraints(maxWidth: 900),
-          padding: const EdgeInsets.symmetric(horizontal: 60),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Theme.of(context).highlightColor,
-              width: 0.3,
-            ),
-          ),
-          // width: MediaQuery.of(context).size.width*0.7,
-          height: MediaQuery.of(context).size.height*0.86,
-          child: Scrollbar(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+    return widget.isSetInfo
+        ? NewProposal(p: widget.p, next: finishSettingInfo)
+        : widget.stage == -1
+            ? const AwaitingConfirmation()
+            : Form(
+                key: _formKey,
+                child: Container(
+                  width: 650,
+                  padding: const EdgeInsets.all(26.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text("Pick an available function:"),
-                      SizedBox(width: 20),
-                      DropdownButton<String>(
-                        hint:Text('Select a value'),
-                        enableFeedback: true,
-                          value: selectedValue,
-                          focusColor: Colors.transparent,
-                          items: items.map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-              setState(() {
-                selectedValue = newValue;
-              });
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 52.0),
+                        child: TextFormField(
+                          onChanged: (value) {
+                            widget.p.values = [value.toString()];
                           },
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8,),
-                getComponent(context)
-                ],
-              ),
-          ))
-    );
-  }
-}
-
-
-Widget engagement(context, which){
-    return Engagement(which: "dao");
-  }
-
-  
-
-Widget notImpl(){
-  return Placeholder();
-}
-
-
-Widget transfer(context){
-    return Container(
-      child: Column(
-        children: [
-               const SizedBox(height: 60,),
-               SizedBox(
-                  width:430,
-                  child: TextField(
-                    onChanged: (value) {
-                     
-                    },
-                    maxLength: 42,
-                    style: TextStyle(fontSize: 16),
-                    decoration: InputDecoration(
-                      labelText: "Recipient Address",
-                      ),),
-                ),
-                 // ignore: prefer_const_constructors
-                 SizedBox(
-                  width:430,
-                  // ignore: prefer_const_constructors
-                  child: TextField(
-                    
-                    maxLength: 42,
-                    style: const TextStyle(fontSize: 16),
-                    decoration: const InputDecoration(
-                      labelText: "Amount",
-                      ),),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width:430,
-                  height: 40,
-                  child: TextButton(
-                    style: ButtonStyle(
-                      elevation: MaterialStatePropertyAll(0.1),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add),
-                      SizedBox(width: 20),
-                      Text("Add recipient"),
-                    ],
-                  ), onPressed: (){},)
-                ),
-               const SizedBox(height: 77,),
-                SizedBox(
-                  height: 40,
-                  width: 170,
-                  child: TextButton(
-                    style: ButtonStyle(
-                      overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                      backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                      elevation: MaterialStateProperty.all(1.0),
-                      
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(7.0),
+                          controller: _targetController,
+                          decoration: const InputDecoration(
+                              labelText: 'Target Contract'),
+                          validator: (value) => value == null || value.isEmpty
+                              ? '0xa47Fe903cE6d....'
+                              : null,
                         ),
                       ),
-                    ),
-                    onPressed: null,
-                    
-                     child: const Center(
-                    child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                  )),
-                )
- 
-        ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 152.0),
+                        child: TextFormField(
+                          onChanged: (value) {},
+                          controller: _amountController,
+                          decoration: const InputDecoration(
+                              labelText: 'Value in XTZ to attach'),
+                          validator: (value) => value == null || value.isEmpty
+                              ? '0xa47Fe903cE6d....'
+                              : "0",
+                        ),
+                      ),
+                      TextFormField(
+                        maxLines: 8,
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Function JSON Definition',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Please enter a value'
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 52.0),
+                        child: TextFormField(
+                          onChanged: (value) {},
+                          controller: _callDataController,
+                          decoration:
+                              const InputDecoration(labelText: 'callData'),
+                          validator: (value) => value == null || value.isEmpty
+                              ? '0xa47Fe903cE6d....'
+                              : null,
+                        ),
+                      ),
+                      // SubmitButton(
+                      //     submit: () async {
+                      //       widget.p.callDatas = [];
+                      //       widget.p.callData = _controller.text;
+                      //       String calldata0 = _callDataController.text;
+                      //       widget.p.callDatas.add(calldata0);
+                      //       widget.p.targets = [_targetController.text];
+                      //       widget.p.values = [_amountController.text];
+                      //       widget.p.createdAt = DateTime.now();
+                      //       widget.p.statusHistory
+                      //           .addAll({"pending": DateTime.now()});
+                      //       setState(() {
+                      //         widget.stage = -1;
+                      //       });
+                      //       try {
+                      //         String cevine = "";
+                      //         await propose(widget.p);
+                      //         if (cevine.contains("not ok")) {
+                      //           ScaffoldMessenger.of(context)
+                      //               .showSnackBar(const SnackBar(
+                      //                   duration: Duration(seconds: 1),
+                      //                   content: Center(
+                      //                       child: SizedBox(
+                      //                           height: 70,
+                      //                           child: Center(
+                      //                             child: Text(
+                      //                               "Error submitting proposal",
+                      //                               style: TextStyle(
+                      //                                   fontSize: 24,
+                      //                                   color: Colors.red),
+                      //                             ),
+                      //                           )))));
+                      //           Navigator.of(context).pop();
+                      //           return;
+                      //         }
+                      //         // widget.p.status = "pending";
+                      //         ScaffoldMessenger.of(context)
+                      //             .showSnackBar(const SnackBar(
+                      //                 duration: Duration(seconds: 1),
+                      //                 content: Center(
+                      //                     child: SizedBox(
+                      //                         height: 70,
+                      //                         child: Center(
+                      //                           child: Text(
+                      //                             "Proposal submitted",
+                      //                             style:
+                      //                                 TextStyle(fontSize: 24),
+                      //                           ),
+                      //                         )))));
+                      //       } catch (e) {
+                      //         ScaffoldMessenger.of(context)
+                      //             .showSnackBar(const SnackBar(
+                      //                 duration: Duration(seconds: 1),
+                      //                 content: Center(
+                      //                     child: SizedBox(
+                      //                         height: 70,
+                      //                         child: Center(
+                      //                           child: Text(
+                      //                             "Error submitting proposal",
+                      //                             style: TextStyle(
+                      //                                 fontSize: 24,
+                      //                                 color: Colors.red),
+                      //                           ),
+                      //                         )))));
+                      //       }
+
+                      //       // Navigator.of(context).push(MaterialPageRoute(
+                      //       //     builder: (context) => Scaffold(
+                      //       //         body:
+                      //       //             //  DaoSetupWizard())
+                      //       //             // Center(child: TransferWidget(org: orgs[0],)))
+                      //       //             DAO(
+                      //       //                 InitialTabIndex: 1,
+                      //       //                 org: widget.org))));
+                      //     },
+                      //     isSubmitEnabled: true)
+                    ],
+                  ),
+                ),
+              );
+  }
+}
+
+class ContractInteractionWidget extends StatefulWidget {
+  Proposal p;
+  ContractInteractionWidget({super.key, required this.p});
+  @override
+  _ContractInteractionWidgetState createState() =>
+      _ContractInteractionWidgetState();
+}
+
+class _ContractInteractionWidgetState extends State<ContractInteractionWidget> {
+  final TextEditingController _contractController = TextEditingController();
+  final TextEditingController _valueController = TextEditingController();
+  final Map<String, List<Map<String, String>>> _functionParameters = {
+    'functionA': [
+      {'name': '_member', 'type': 'address'},
+      {'name': 'amount', 'type': 'number'},
+    ],
+    'functionB': [
+      {'name': 'param', 'type': 'string'},
+    ],
+    'functionC': [
+      {'name': '_target', 'type': 'address'},
+      {'name': 'value', 'type': 'number'},
+    ],
+  };
+  String? _selectedFunction;
+  List<TextEditingController> _paramControllers = [];
+  bool isSetInfo = true;
+  bool _isFirstStep = true;
+  bool _isLoading = false;
+  bool _isFormValid = false;
+
+  @override
+  void dispose() {
+    _contractController.dispose();
+    _valueController.dispose();
+    for (var controller in _paramControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  bool _isValidEvmAddress(String address) {
+    return RegExp(r"^0x[a-fA-F0-9]{40}$").hasMatch(address);
+  }
+
+  bool _isValueValid(String value) {
+    return double.tryParse(value) != null;
+  }
+
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _isValidEvmAddress(_contractController.text) &&
+          _isValueValid(_valueController.text);
+    });
+  }
+
+  void _goToNextStep() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+      _isLoading = false;
+      _isFirstStep = false;
+      _selectedFunction = null;
+      _paramControllers
+          .clear(); // Clear parameter controllers for the new function selection
+      _isFormValid = false; // Reset form validity for second step
+    });
+  }
+
+  void _goBack() {
+    setState(() {
+      _isFirstStep = true;
+      _validateForm(); // Revalidate first step fields
+    });
+  }
+
+  void _initializeParameterControllers() {
+    _paramControllers = _functionParameters[_selectedFunction]!
+        .map((_) => TextEditingController())
+        .toList();
+  }
+
+  void _validateSubmitButton() {
+    bool allParamsFilled = _paramControllers.isNotEmpty &&
+        _paramControllers.every((controller) => controller.text.isNotEmpty);
+    bool allParamsValid = _selectedFunction != null &&
+        _functionParameters[_selectedFunction!]!.asMap().entries.every((entry) {
+          final paramType = entry.value['type'];
+          final controller = _paramControllers[entry.key];
+          if (paramType == 'address') {
+            return _isValidEvmAddress(controller.text);
+          } else if (paramType == 'number') {
+            return double.tryParse(controller.text) != null;
+          } else {
+            return controller.text.isNotEmpty;
+          }
+        });
+
+    setState(() {
+      _isFormValid = allParamsFilled && allParamsValid;
+    });
+  }
+
+  Widget _buildParameterInput(String name, String type, int index) {
+    return Container(
+      padding: const EdgeInsets.only(top: 12.0),
+      child: TextFormField(
+        controller: _paramControllers[index],
+        decoration: InputDecoration(
+          labelText: '$name ($type)',
+          border: const OutlineInputBorder(),
+        ),
+        keyboardType: type == 'number'
+            ? const TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.text,
+        inputFormatters: type == 'number'
+            ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
+            : type == 'address'
+                ? [FilteringTextInputFormatter.allow(RegExp(r'[a-fA-F0-9x]'))]
+                : [],
+        onChanged: (_) => _validateSubmitButton(),
       ),
     );
   }
 
-
-
-class Engagement extends StatelessWidget {
-  Engagement({super.key, required this.which});
-  String which;
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildFirstStep() {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(13.0),
-          child: SizedBox(
-                      height: 40,
-                       child: Center(
-                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Funds in escrow: ",style: TextStyle(fontSize: 18)),
-                                Text("28400.00", style: TextStyle(fontSize: 18,color: Theme.of(context).indicatorColor),),
-                                const SizedBox(width: 8),
-                                Text("USDT", style: TextStyle(fontSize: 18,color: Theme.of(context).indicatorColor),),
-                                const SizedBox(width: 20),
-                                Text("from ", style: TextStyle(fontSize: 18)),
-                                const SizedBox(width: 10),
-                                Text("9 senders", style: TextStyle(fontSize: 18, color: Theme.of(context).indicatorColor),),
-                                const SizedBox(width: 30),
-                                ElevatedButton(onPressed: (){}, child: Text("View"))
-                                
-                              ],
-                            ),
-                       ),
-                     ),
-        ),
-         SizedBox(
-                    height: 40,
-                     child: Center(
-                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("Arbiter Address: "),
-                              Text("KT1LyPqdRVBFdQvhjyybG5osRCXnGSrk15M5", style: TextStyle(fontSize: 11),),
-                              const SizedBox(width: 2,),
-                              TextButton(
-                                onPressed: (){},
-                                child: const Icon(Icons.copy)),
-                            ],
-                          ),
-                     ),
-                   ),
-                   SizedBox(
-                    height: 40,
-                     child: Center(
-                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("Terms of Engagement: "),
-                              Text("https://ipfs/QmNrgEMcUygbKzZe...", style: TextStyle(fontSize: 11),),
-                              const SizedBox(width: 2,),
-                              TextButton(
-                                onPressed: (){},
-                                child: const Icon(Icons.copy)),
-                            ],
-                          ),
-                     ),
-                   ),
-
-
-
-        Container(
-          padding: EdgeInsets.all(30),
-          child: Column(
-            children: [
-              
-            SizedBox(width: 50,height: 4,),
-            Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.all(50),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: const  Text("Throw the project into arbitration",
-                    textAlign: TextAlign.center,
-                     style: TextStyle(fontSize: 19), 
-                      ),
-                  ),
-                  SizedBox(height: 30),
-                  SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(width: 50,height: 40,),
-              
-          Container(
-              decoration: BoxDecoration(
-                color: Color(0x31000000),
-                border: Border.all(width: 1, color:  Color(0x2111111))
-              ),
-              padding: EdgeInsets.only(top:50,bottom:50,left:40,right:40),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: 380,
-                    child: const  Text("Return all funds to the sender(s)",
-                     style: TextStyle(fontSize: 19), 
-                      ),
-                  ),
-                  SizedBox(height: 30),
-                  SizedBox(
-                      height: 40,
-                      width: 170,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          overlayColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          backgroundColor: MaterialStateProperty.all<Color>(Theme.of(context).indicatorColor),
-                          elevation: MaterialStateProperty.all(1.0),
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(7.0),
-                            ),
-                          ),
-                        ),
-                        onPressed: (){
-                          Navigator.of(context).pop();
-                        },
-                         child: const Center(
-                        child: Text("SUBMIT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color:Colors.black),),
-                      )),
-                    ),
-                ],
-              ),
-            ),
-   
-        
-          
-            ]
-          )
+        TextFormField(
+          controller: _contractController,
+          decoration: const InputDecoration(
+            labelText: 'Destination Contract Address',
+            border: OutlineInputBorder(),
           ),
+          onChanged: (_) => _validateForm(),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[a-fA-F0-9x]')),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _valueController,
+          decoration: const InputDecoration(
+            labelText: 'Attached Value',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
+          onChanged: (_) => _validateForm(),
+        ),
+        const SizedBox(height: 16),
       ],
     );
+  }
+
+  Widget _buildSecondStep() {
+    return Column(
+      children: [
+        TextFormField(
+          controller: _contractController,
+          enabled: false,
+          decoration: const InputDecoration(
+            labelText: 'Destination Contract Address (Locked)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _valueController,
+          enabled: false,
+          decoration: const InputDecoration(
+            labelText: 'Attached Value (Locked)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : DropdownButtonFormField<String>(
+                hint: const Text('Select Function'),
+                value: _selectedFunction,
+                items: _functionParameters.keys
+                    .map((function) => DropdownMenuItem(
+                          value: function,
+                          child: Text(function),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedFunction = value;
+                    _initializeParameterControllers();
+                    _validateSubmitButton();
+                  });
+                },
+              ),
+        if (_selectedFunction != null && !_isLoading)
+          ..._functionParameters[_selectedFunction!]!
+              .asMap()
+              .entries
+              .map((entry) => _buildParameterInput(
+                  entry.value['name']!, entry.value['type']!, entry.key))
+              ,
+      ],
+    );
+  }
+
+  completeSetInfo() {
+    setState(() {
+      isSetInfo = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return isSetInfo
+        ? NewProposal(p: widget.p, next: completeSetInfo)
+        : Container(
+            width: 600,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.7),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _isFirstStep
+                              ? _buildFirstStep()
+                              : _buildSecondStep(),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  margin: const EdgeInsets.only(bottom: 50),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: isSetInfo
+                        ? []
+                        : [
+                            if (_isFirstStep) const Spacer(),
+                            _isFirstStep
+                                ? ElevatedButton(
+                                    onPressed:
+                                        _isFormValid ? _goToNextStep : null,
+                                    child: const Text('Next'),
+                                  )
+                                : TextButton(
+                                    onPressed: _goBack,
+                                    child: const Text('< Back'),
+                                  ),
+                            if (!_isFirstStep)
+                              SubmitButton(
+                                  submit: () {}, isSubmitEnabled: _isFormValid)
+                          ],
+                  ),
+                ),
+              ],
+            ),
+          );
   }
 }

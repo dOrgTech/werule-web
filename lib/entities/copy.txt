@@ -1,0 +1,9 @@
+ok it works. Remember to add these imports on your next output:
+import '../entities/org.dart';
+import '../screens/creator.dart';
+
+Now having just used it with a large csv of over 100 entries, I can see a few things to optimize:
+
+1. once you select the csv file, the app just freezes for about 20 seconds, until it finishes parsing the file, and then it displays the individual member addresses correctly with their respective amounts. Can we make it so that while this parsing is happening we don't get this unresponsive vibe from the app? I'm thinking we could use a separate thread to parse the file and in the UI we could show a linear progress indicator while that is happening.
+
+2. we need to scroll the list of members separately from the rest of the elements. So the button to 

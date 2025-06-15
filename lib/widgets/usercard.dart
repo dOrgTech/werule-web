@@ -1,10 +1,7 @@
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:homebase/utils/functions.dart';
-import 'package:intl/intl.dart';
+import '../utils/functions.dart';
 import '../entities/human.dart';
-import 'membersList.dart';
 
 class UserCard extends StatelessWidget {
    UserCard({super.key, required this.human});
@@ -63,8 +60,9 @@ class UserCard extends StatelessWidget {
                 Container(
                 height: 42,
                 color: const Color.fromARGB(0, 76, 175, 79),
-                child: Center(child: Text(
-                  DateFormat('MMM d, yyyy').format(human.lastActive!)
+                child: const Center(child: Text(
+               "Replace this"
+                  // DateFormat('MMM d, yyyy').format(human.lastActive!)
                   ))),
             
             ],
