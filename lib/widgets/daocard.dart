@@ -11,6 +11,7 @@ class DAOCard extends StatelessWidget {
   Org org;
   @override
   Widget build(BuildContext context) {
+    print("DAOCard build for org: ${org.name} (Address: ${org.address}), org.wrapped: ${org.wrapped}"); // ADDED LOG
     var random = Random();
     var chance = random.nextDouble();
     Widget copilas = org.debatesOnly == false
@@ -20,9 +21,7 @@ class DAOCard extends StatelessWidget {
                 colors: 
                   [
                   Color.fromARGB(255, 205, 176, 96), 
-                  // Dominant color
                   Color.fromARGB(255, 206, 206, 206), 
-                  // Gradient to white
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
@@ -153,7 +152,7 @@ class DAOCard extends StatelessWidget {
                                             : "${org.description!
                                                     .substring(0, 140)}...",
                                         style: const TextStyle(fontSize: 13)))),
-                          ),
+                   ),
                           const Spacer(),
                           Text(getShortAddress(org.address!),
                               style: TextStyle(
@@ -173,12 +172,17 @@ class DAOCard extends StatelessWidget {
           right: 8,
           child: Opacity(opacity: 0.38, child: copilas),
         ),
-        org.wrapped==null?const Text(""):
-         const Positioned(
-          bottom: 9,
-          right: 8,
-          child: Opacity(opacity: 0.38, child: Icon(Icons.token)),
-        ),
+        // If org.wrapped is a non-null and non-empty string, show the token icon.
+        // Otherwise, show an empty SizedBox (effectively nothing).
+        (org.wrapped != null && org.wrapped!.isNotEmpty)
+            ? 
+            const Positioned(
+                bottom: 9,
+                right: 8,
+                child: Opacity(opacity: 0.38, child: Icon(Icons.token)),
+              )
+            : const SizedBox.shrink(),
+           
       ],
     );
   }

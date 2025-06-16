@@ -4,7 +4,7 @@ import 'package:Homebase/widgets/menu.dart';
 import 'package:flutter/material.dart';
 
 import '../entities/human.dart';
-import '../main.dart';
+import '../main.dart' show persistAndComplete; // Import persistAndComplete
 
 class Landing extends StatefulWidget {
   Landing({super.key});
@@ -50,10 +50,12 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
         widget.loading = true;
       });
       Human().landing = false;
-      await persist();
+      await persistAndComplete(); // Use persistAndComplete
 
       // Use `mounted` to ensure the widget is still in the tree
       if (mounted) {
+        // Consider using context.go("/") here if you want to use GoRouter navigation
+        // For now, keeping Navigator.push as per original logic
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => Explorer()),

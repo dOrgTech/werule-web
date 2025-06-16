@@ -43,7 +43,7 @@ enum TransactionProgress {
 
 class GovernanceTokenBridgeWidget extends StatefulWidget {
   final Org org;
-  const GovernanceTokenBridgeWidget({Key? key, required this.org}) : super(key: key);
+  const GovernanceTokenBridgeWidget({super.key, required this.org});
 
   @override
   _GovernanceTokenBridgeWidgetState createState() => _GovernanceTokenBridgeWidgetState();
@@ -60,8 +60,8 @@ class _GovernanceTokenBridgeWidgetState extends State<GovernanceTokenBridgeWidge
 
   String _underlyingTokenBalance = "0";
   String _wrappedTokenBalance = "0";
-  String _underlyingTokenSymbol = "UNDERLYING"; 
-  int _underlyingDecimals = 18; 
+  final String _underlyingTokenSymbol = "UNDERLYING"; 
+  final int _underlyingDecimals = 18; 
 
   @override
   void initState() {
@@ -510,13 +510,13 @@ class _GovernanceTokenBridgeWidgetState extends State<GovernanceTokenBridgeWidge
             Center(
               child: ElevatedButton(
                 onPressed: uiDisabled ? null : _handleTransaction,
-                child: Text(_isWrapping ? 'Wrap Tokens' : 'Unwrap Tokens'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).indicatorColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   textStyle: const TextStyle(fontSize: 16),
                 ).copyWith(backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) => states.contains(WidgetState.disabled) ? Colors.grey.shade400 : Theme.of(context).indicatorColor)),
+                child: Text(_isWrapping ? 'Wrap Tokens' : 'Unwrap Tokens'),
               ),
             ),
             const SizedBox(height: 10), 

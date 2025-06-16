@@ -59,16 +59,23 @@ class ProposalDetails extends StatefulWidget {
 
         p.hash = p.id!;
         p.callData = data['calldata'];
+        
         List<dynamic> blobArray = data['callDatas'] ?? [];
+        p.callDatas = [];
+        print("lungimea la calldatas din stream: ${blobArray.length}");
 
         for (var blob in blobArray) {
-          if (blob is Blob) {
-            // Prints the raw byte array
-            String hexString = blob.bytes
-                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-                .join();
-            p.callDatas.add(hexString);
+          if (true) {
+            // print("blob is " + blob.toString());
+            // print(blob.runtimeType.toString());
+            // // Prints the raw byte array
+            // String hexString = blob.bytes
+            //     .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+            //     .join();
+            // p.callDatas.add(hexString);
+            p.callDatas.add(blob);
           }
+          print("TOPERGU  Call data: ${blob.toString()}");
         }
         List<String> amounts = await getProposalVotes(p);
         p.against = amounts[0];
@@ -529,6 +536,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
 
   @override
   Widget build(BuildContext context) {
+    // return Text("Merge asa");
     return everything();
   }
 
@@ -550,7 +558,7 @@ class ProposalDetailsState extends State<ProposalDetails> {
                       CircularProgressIndicator()); // Show a loading indicator
             }
             if (snapshot.hasError) {
-              return Text("Error: ${snapshot.error}");
+              return Text("Eroare: ${snapshot.error}");
             }
 
             return SingleChildScrollView(

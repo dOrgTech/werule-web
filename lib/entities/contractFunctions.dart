@@ -720,6 +720,7 @@ String bytesToHex(Uint8List bytes) {
 }
 
 queueProposal(Proposal p) async {
+  print("entering queue");
   String concatenatedDescription =
       "${p.name}0|||0${p.type}0|||0${p.description}0|||0${p.externalResource}";
   Uint8List encodedInput =
@@ -743,6 +744,7 @@ queueProposal(Proposal p) async {
     final transaction = await promiseToFuture(callMethod(
         sourceContract, "queue", [p.targets, p.values, calldatas, hashHex]));
     print("facuram tranzactia");
+    
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
         callMethod(Human().web3user!, 'waitForTransaction', [hash]));
@@ -755,7 +757,7 @@ queueProposal(Proposal p) async {
       return rezultat.toString();
     }
   } catch (e) {
-    print("nu s-a putut$e");
+    print("nu s-a putut: $e");
     state.setState(() {
       state.widget.done = true;
       state.widget.error = true;

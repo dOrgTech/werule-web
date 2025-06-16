@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:flutter_web3_provider/ethers.dart';
 import 'dart:js_util';
-import '../main.dart';
+import '../main.dart' show persistAndComplete; // Import persistAndComplete
 import '../utils/functions.dart';
 
-String prevChain = "0x1f47b";
+String prevChain = "0xa729";
 String simpleDAOAddress = "0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF";
 var chains = {
   "0xaa36a7": Chain(
@@ -27,8 +27,8 @@ var chains = {
       rpcNode: "https://node.ghostnet.etherlink.com",
       blockExplorer: "https://testnet.explorer.etherlink.com"),
   "0xa729": Chain(
-      wrapperContract: "",
-      wrapperContract_w: "",
+      wrapperContract: "0x3B342c54181A027929B67250855A35C7233DFD46",
+      wrapperContract_w: "0xACFD7D5e73D3D0f0ae82a8156068297d65dCE70c",
       id: 42793,
       name: "Etherlink",
       nativeSymbol: "XTZ",
@@ -159,7 +159,7 @@ class Human extends ChangeNotifier {
           wrongChain = false;
           chain = chains[etherlinkTestnetId]!;
           if (prevChain != etherlinkTestnetId) {
-            await persist();
+            await persistAndComplete(); // Use persistAndComplete
             refreshPage();
             prevChain = etherlinkTestnetId;
           }
@@ -168,7 +168,7 @@ class Human extends ChangeNotifier {
           wrongChain = false;
           chain = chains[newChainId]!;
           if (prevChain != newChainId) {
-            await persist();
+            await persistAndComplete(); // Use persistAndComplete
             refreshPage();
             prevChain = newChainId;
           }
@@ -220,7 +220,7 @@ class Human extends ChangeNotifier {
           chain = chains[etherlinkTestnetId]!;
           wrongChain = false;
           if (prevChain != etherlinkTestnetId) {
-            await persist();
+            await persistAndComplete(); // Use persistAndComplete
             refreshPage();
             prevChain = etherlinkTestnetId;
           }
@@ -231,7 +231,7 @@ class Human extends ChangeNotifier {
             chain = chains[currentChainIdFromWallet]!;
             wrongChain = false;
             if (prevChain != currentChainIdFromWallet) {
-                await persist();
+                await persistAndComplete(); // Use persistAndComplete
                 refreshPage();
                 prevChain = currentChainIdFromWallet;
             }

@@ -482,6 +482,7 @@ class RegistryProposalDetails extends StatelessWidget {
   Proposal p;
 
   RegistryProposalDetails({super.key, required this.p});
+  
   decodeParams(hexString) {
     Uint8List dataBytes = hexToBytes(hexString);
     Uint8List dataWithoutSelector = dataBytes.sublist(4);
@@ -528,12 +529,17 @@ class RegistryProposalDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     // Convert hex string to bytes
     List<Widget> operations = [];
+    print("inainte sa decodam callDatas: ${p.callDatas.length}");
     for (var callData in p.callDatas) {
+      print("decodam UNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATED: $callData");
       List<String> values = decodeParams(p.callDatas[0]);
+      print("decodat valoared: $values");
       operations.add(operation(values));
     }
 
-    return ListView(children: operations);
+    return ListView(children:  [ 
+      Text("registry proposal details for ${p.org.name}"),
+      ...operations]);
   }
 
   Widget _buildDetailRow(String label, String value) {

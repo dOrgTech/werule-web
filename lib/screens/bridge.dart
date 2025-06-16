@@ -18,11 +18,9 @@ class Bridge extends StatefulWidget {
 enum BridgeAction { wrap, unwrap }
 
 class _BridgeState extends State<Bridge> {
-  // final String _loggedInUserAddress = "0xAbc123Def456Ghi789Jkl012Mno345Pqr678"; // Mock - Removed
-  final double _availableBaseTokenBalance = 250.875;  // Mock - Will be replaced by actual fetched balance
+  final double _availableBaseTokenBalance = 250.875; 
   final double _availableWrappedTokenBalance = 75.5; 
-  BridgeAction _currentAction = BridgeAction.wrap; // Default to wrap mode
-
+  BridgeAction _currentAction = BridgeAction.wrap; 
   final _amountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -39,7 +37,6 @@ class _BridgeState extends State<Bridge> {
     }
 
     final amount = double.tryParse(_amountController.text);
-    // This check should be covered by the validator, but it's good for belt-and-suspenders
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid positive amount.')),
@@ -52,7 +49,6 @@ class _BridgeState extends State<Bridge> {
     String actionVerb = isWrapping ? "wrap" : "unwrap";
     String baseTokenSymbol = widget.org.wrapped?.substring(0, 6) ?? "BASE"; // Example for base symbol
     String wrappedTokenSymbol = widget.org.symbol ?? "WRAPPED";
-
     String fromSymbol = isWrapping ? baseTokenSymbol : wrappedTokenSymbol;
     String toSymbol = isWrapping ? wrappedTokenSymbol : baseTokenSymbol;
     double currentBalance = isWrapping ? _availableBaseTokenBalance : _availableWrappedTokenBalance;
@@ -79,18 +75,10 @@ class _BridgeState extends State<Bridge> {
       );
       setState(() {
         _isLoading = false;
-        _amountController.clear(); // Optionally clear after action
-
-        // --- MOCK BALANCE UPDATE (for demonstration) ---
-        // In a real app, you'd fetch new balances from the blockchain
+        _amountController.clear(); 
         if (isWrapping) {
-          // _availableBaseTokenBalance -= amount; // Be careful with floating point arithmetic
-          // _availableWrappedTokenBalance += amount;
         } else {
-          // _availableWrappedTokenBalance -= amount;
-          // _availableBaseTokenBalance += amount;
         }
-        // --- END MOCK BALANCE UPDATE ---
       });
     });
   }

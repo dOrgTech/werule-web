@@ -206,6 +206,20 @@ I mean I think they should because of reasons and stuff.
         p.inFavor = data['inFavor']?.toString() ?? "0"; // This is String in Proposal.dart
         p.hash = doc.id;
         p.callData = data['calldata']; // Can be null
+        
+        List<dynamic> blobArray = data['callDatas'] ?? [];
+
+
+        for (var blob in blobArray) {
+          if (blob is Blob) {
+            // Prints the raw byte array
+            String hexString = blob.bytes
+                .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+                .join();
+            p.callDatas.add(hexString);
+          }
+
+        }
         if (data['createdAt'] is Timestamp) {
           p.createdAt = (data['createdAt'] as Timestamp).toDate();
         }
@@ -367,6 +381,7 @@ I mean I think they should because of reasons and stuff.
       'quorum': quorum,
       'nonTransferrable': nonTransferrable,
       'debatesOnly': debatesOnly,
+      'underlying': wrapped, // If this org is a wrapper for another token
     };
   }
 

@@ -1,5 +1,5 @@
 // lib/screens/creator.dart
-import 'package:Homebase/main.dart'; // For orgs list
+import 'package:Homebase/main.dart' show orgs, persistAndComplete; // For orgs list and persistAndComplete
 import 'package:Homebase/screens/creator/scereen5_members.dart';
 import 'package:Homebase/screens/creator/scree1_dao_type.dart';
 import 'package:flutter/material.dart';
@@ -267,7 +267,7 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                 daoName: daoConfig.daoName ?? 'DAO',
                 onGoToDAO: () async {
                   if (widget.org.address != null) {
-                    await persist(); // Added this line
+                    await persistAndComplete(); // Use persistAndComplete
                     String checksumaddress =
                         toChecksumAddress(widget.org.address!);
                     context.go("/$checksumaddress");

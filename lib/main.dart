@@ -1,3 +1,4 @@
+import 'dart:async'; // Added for Completer
 import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/bridge.dart';
@@ -24,9 +25,13 @@ import '../widgets/gameOfLife.dart';
 
 String metamask = "https://i.ibb.co/HpmDHg0/metamask.png";
 List<User>? users;
-List<Org> orgs = [];
+List<Org> orgs = []; // Global list for Org objects
 List<Token> tokens = [];
 List<Proposal>? proposals;
+
+// Completer to signal when initial persistence is done
+Completer<void> _initialPersistCompleter = Completer<void>();
+Future<void> get initialPersistDone => _initialPersistCompleter.future;
 
 var daosCollection;
 var pollsCollection;
@@ -35,11 +40,15 @@ var tokensCollection;
 // Us3r us3r = Us3r(human: humans[0]);
 var systemCollection = FirebaseFirestore.instance.collection('some');
 
-persist() async {
-  print("persisting");
+// Renamed original persist logic
+_persistInternal() async {
+  print("Executing _persistInternal: Loading data from Firestore...");
 
-  users = [];
-  proposals = [];
+  // Initialize local lists to prevent modifying globals prematurely
+  List<User> localUsers = [];
+  List<Proposal> localProposals = [];
+  List<Org> localOrgs = [];
+  List<Token> localTokens = [];
   daosCollection =
       FirebaseFirestore.instance.collection("idaos${Human().chain.name}");
   tokensCollection =
@@ -48,7 +57,7 @@ persist() async {
   var tokensSnapshot = await tokensCollection.get();
 
   for (var doc in tokensSnapshot.docs) {
-    print(doc.data());
+    // print(doc.data()); // Consider reducing verbose logging or making it conditional
     if (doc.data()['id'] == "native") {
       continue;
     }
@@ -58,35 +67,40 @@ persist() async {
         symbol: doc.data()['symbol'],
         decimals: doc.data()['decimals']);
     t.address = doc.data()['address'];
-    tokens.add(t);
+    localTokens.add(t);
   }
-  orgs = [];
+  // localOrgs is already initialized as empty
 
   for (var doc in daosSnapshot.docs) {
-    print("we are doing this ");
+    String orgName = doc.data()['name'] ?? "Unnamed Org";
+    // print("Processing DAO: $orgName (ID: ${doc.id})");
     Org org = Org(
-        name: doc.data()['name'],
+        name: orgName,
         description: doc.data()['description'],
         govTokenAddress: doc.data()['govTokenAddress']);
     org.address = doc.data()['address'];
     org.symbol = doc.data()['symbol'];
-    org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
+    if (doc.data()['creationDate'] is Timestamp) {
+      org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
+    }
     org.govToken = Token(
         type: "erc20",
-        symbol: org.symbol!,
-        decimals: org.decimals,
+        symbol: org.symbol ?? "",
+        decimals: org.decimals, // Ensure org.decimals is set before this if it comes from doc
         name: org.name);
     org.govTokenAddress = doc.data()['token'];
-    var wrappedValue = doc.data()['wrapped'];
+    var wrappedValue = doc.data()['underlying'];
     if (wrappedValue is String) {
       org.wrapped = wrappedValue;
-      print("FOUND A WRAPPED TOKEN string: ${org.wrapped}");
+      print("DAO '${org.name}': FOUND A WRAPPED TOKEN string: ${org.wrapped}");
     } else {
       org.wrapped = null;
       if (wrappedValue != null) {
-        print("Firestore field 'wrapped' was not null but was not a String. Type: ${wrappedValue.runtimeType}, Value: $wrappedValue");
+        print("DAO '${org.name}': Firestore field 'wrapped' was not null but was not a String. Type: ${wrappedValue.runtimeType}, Value: $wrappedValue");
       }
     }
+    print("DAO '${org.name}' (Address: ${org.address}): Processed 'underlying'. org.wrapped is now: ${org.wrapped}"); // ADDED LOG
+    // Ensure all fields are safely accessed with null checks or defaults
     org.proposalThreshold = doc.data()['proposalThreshold'];
     org.votingDelay = doc.data()['votingDelay'];
     org.registryAddress = doc.data()['registryAddress'];
@@ -106,18 +120,51 @@ persist() async {
       print("Full DAO  ${org.name}");
       org.debatesOnly = false;
     }
-    orgs.add(org);
+    localOrgs.add(org);
+  }
+
+  // Atomically update global lists
+  // Ensure other global lists (users, proposals) are handled similarly if populated here
+  users = localUsers;
+  proposals = localProposals;
+  orgs = localOrgs;
+  tokens = localTokens;
+
+  print("_persistInternal completed. Orgs loaded: ${orgs.length}");
+}
+
+// Wrapper to call _persistInternal and manage the completer
+Future<void> persistAndComplete() async {
+  if (_initialPersistCompleter.isCompleted) {
+    print("Initial persist already completed. Skipping.");
+    return;
+  }
+  try {
+    await _persistInternal();
+    _initialPersistCompleter.complete();
+    print("Initial data persistence marked as complete.");
+  } catch (e, s) {
+    print("Error during initial data persistence: $e\n$s");
+    _initialPersistCompleter.completeError(e, s);
   }
 }
 
-List<Token> erc20Tokens = [];
+
+List<Token> erc20Tokens = []; // If these are populated by _persistInternal, handle them similarly
 List<Token> erc721Tokens = [];
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Good practice
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+
   if (Human().landing == false) {
-    await persist();
-    // List<dynamic>
+    // Don't await here directly, let FutureBuilder handle it via initialPersistDone
+    persistAndComplete();
+  } else {
+    if (!_initialPersistCompleter.isCompleted) {
+      _initialPersistCompleter.complete(); // Mark as complete if persist is skipped
+      print("Persistence skipped (landing == true), marked as complete.");
+    }
   }
 
   runApp(ChangeNotifierProvider<Human>(
@@ -135,9 +182,16 @@ final GoRouter router = GoRouter(
           key: state.pageKey,
           child: Human().landing == true
               ? Scaffold(body: Landing())
-              : FutureBuilder(
-                  future: persist(),
+              : FutureBuilder<void>(
+                  future: initialPersistDone, // Wait for the initial persist to complete
                   builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(key: Key("root_loader")));
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text("Error loading data: ${snapshot.error}"));
+                    }
+                    // Data is loaded (or persist was skipped and completed)
                     return Explorer();
                   },
                 ),
@@ -148,7 +202,7 @@ final GoRouter router = GoRouter(
             );
           },
           transitionDuration:
-              const Duration(milliseconds: 800), // Increase fade time
+              const Duration(milliseconds: 800),
         );
       },
     ),
@@ -173,9 +227,19 @@ final GoRouter router = GoRouter(
         key: state.pageKey,
         child: Scaffold(
             body: Center(
-                child: FutureBuilder(
-                    future: persist(),
+                child: FutureBuilder<void>( // Use initialPersistDone
+                    future: initialPersistDone,
                     builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator(key: Key("nft_loader")));
+                      }
+                      if (snapshot.hasError) {
+                        return Center(child: Text("Error loading data: ${snapshot.error}"));
+                      }
+                      // Ensure orgs is not empty and index is valid before accessing orgs[0]
+                      if (orgs.isEmpty) {
+                        return const Center(child: Text("No DAOs loaded for NFT page."));
+                      }
                       return snapshot.connectionState == ConnectionState.waiting
                           ? const CircularProgressIndicator()
                           : Initiative(
@@ -220,31 +284,69 @@ final GoRouter router = GoRouter(
         } else {
           org = null;
         }
-        var child = org == null
-            ? FutureBuilder(
-                future: persist(),
+        // This child logic needs to run *after* initialPersistDone has completed.
+        // So, the entire page builder for '/:id' should be wrapped in a FutureBuilder for initialPersistDone.
+        Widget pageContent;
+        if (Human().landing == true) { // Or some other logic if DAOs can be accessed without full persist
+            pageContent = Scaffold(body: Center(child: Text("Cannot access DAO when in landing mode."))); // Placeholder
+        } else {
+            pageContent = FutureBuilder<void>(
+                future: initialPersistDone,
                 builder: (context, snapshot) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (ModalRoute.of(context)?.isCurrent ?? false) {
-                      context.go("/");
-                    }
-                  });
-                  return Explorer();
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(key: Key("dao_detail_loader")));
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text("Error loading prerequisite data: ${snapshot.error}"));
+                  }
+
+                  // initialPersistDone has completed, global orgs list should be populated
+                  Org? org;
+                  bool hasOrg = orgs.any((o) => o.address == id);
+                  if (hasOrg) {
+                    org = orgs.firstWhere((o) => o.address == id);
+                  }
+
+                  if (org == null) {
+                    // Org not found after initial load.
+                    // Consider navigation or a "Not Found" message.
+                    // The original code tried to call persist() again and redirect.
+                    // This might indicate an actual missing org or a bad ID.
+                    // For now, redirect or show "Not Found".
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                       if (ModalRoute.of(context)?.isCurrent ?? false) {
+                           // context.go("/"); // Option: redirect to home
+                       }
+                    });
+                    return Scaffold(body: Center(child: Text("DAO with ID '$id' not found.")));
+                  }
+                  return DAO(org: org, InitialTabIndex: 0);
                 },
-              )
-            : DAO(org: org, InitialTabIndex: 0);
+            );
+        }
 
         return CustomTransitionPage(
-          key: state.pageKey,
-          child: child,
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          key: state.pageKey, // Keep this one
+          child: pageContent, // Keep this one
+          transitionsBuilder: (context, animation, secondaryAnimation, child) { // Keep this one
             return FadeTransition(
               opacity: animation,
               child: child,
             );
           },
           transitionDuration:
-              const Duration(milliseconds: 800),
+              const Duration(milliseconds: 800), // Keep this one
+          // REMOVE DUPLICATED PARAMETERS BELOW
+          // key: state.pageKey,
+          // child: child,
+          // transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          //   return FadeTransition(
+          //     opacity: animation,
+          //     child: child,
+          //   );
+          // },
+          // transitionDuration:
+          //     const Duration(milliseconds: 800),
         );
       },
       routes: [

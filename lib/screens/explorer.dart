@@ -12,67 +12,12 @@ class Explorer extends StatefulWidget {
   Explorer({super.key}); 
   Widget? game;
   String query = "";
-  bool loaded = false;
-  List<Widget> daos = [];
+  // bool loaded = false; // This can be removed as loading is handled by main.dart's FutureBuilder
+  List<Widget> daos = []; // This will be populated from the global orgs list
   TextEditingController controlla = TextEditingController();
 
-  Future<String> getDaos() async {
-    var daosSnapshot = await daosCollection.get();
-    orgs = [];
-    for (var doc in daosSnapshot.docs) {
-      try {
-        Org org = Org(
-            name: doc.data()['name'],
-            description: doc.data()['description'],
-            govTokenAddress: doc.data()['govTokenAddress']);
-        org.address = doc.data()['address'];
-        org.symbol = doc.data()['symbol'];
-        org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
-        org.govToken = Token(
-            type: "erc20",
-            symbol: org.symbol!,
-            decimals: org.decimals,
-            name: org.name);
-        org.govTokenAddress = doc.data()['token'];
-        org.proposalThreshold = doc.data()['proposalThreshold'];
-        org.votingDelay = doc.data()['votingDelay'];
-        org.treasuryAddress = doc.data()['treasuryAddress'];
-        org.registryAddress = doc.data()['registryAddress'];
-        org.votingDuration = doc.data()['votingDuration'];
-        org.executionDelay = doc.data()['executionDelay'];
-        org.quorum = doc.data()['quorum'];
-        org.decimals = doc.data()['decimals'];
-        org.holders = doc.data()['holders'];
-        org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
-        org.registry = Map<String, String>.from(doc.data()['registry']);
-        org.totalSupply = doc.data()['totalSupply'];
-
-        // Populate the 'wrapped' field
-        var wrappedValue = doc.data()['wrapped'];
-        if (wrappedValue is String) {
-          org.wrapped = wrappedValue;
-          print("[Explorer.getDaos] Org '${org.name}' - FOUND A WRAPPED TOKEN string: ${org.wrapped}");
-        } else {
-          org.wrapped = null;
-          if (wrappedValue != null) {
-            print("[Explorer.getDaos] Org '${org.name}' - Firestore field 'wrapped' was not null but was not a String. Type: ${wrappedValue.runtimeType}, Value: $wrappedValue");
-          }
-        }
-
-        if (org.name.contains("dOrg")) {
-          print("debates only ${org.name}");
-          org.debatesOnly = true;
-        } else {
-          print("Full DAO  ${org.name}");
-          org.debatesOnly = false;
-        }
-        orgs.add(org);
-      } catch (e) {
-        print("could not go $e");
-      }
-    }
-    return "done";
-  }
+  // REMOVE getDaos() method entirely, as Explorer will use the global 'orgs' list
+  // populated by _persistInternal in main.dart
 
   @override
   State<Explorer> createState() => _ExplorerState();
@@ -88,6 +33,16 @@ class _ExplorerState extends State<Explorer> {
   void initState() {
     widget.game = Container();
     super.initState();
+    // Initial filter and pagination should happen after the global orgs are available.
+    // We can call this directly in build or once after initState.
+    // Since Explorer is built after initialPersistDone, orgs should be ready.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) { // Ensure widget is still in the tree
+        setState(() {
+          _applyFilterAndPagination();
+        });
+      }
+    });
   }
 
   @override
@@ -171,19 +126,9 @@ class _ExplorerState extends State<Explorer> {
             const Opacity(opacity: 0.03, child: GameOfLife()),
             Container(
               alignment: Alignment.topCenter,
-              child: widget.loaded == true
-                  ? wide()
-                  : FutureBuilder<String>(
-                      future: widget.getDaos(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        widget.loaded = true;
-                        _applyFilterAndPagination();
-                        return wide();
-                      }),
+              child: wide() // Directly build 'wide' as data is already loaded by main.dart
+              // The FutureBuilder here is removed because initialPersistDone in main.dart handles the loading state.
+              // By the time Explorer is built, 'orgs' global list should be populated.
             ),
           ],
         ),
