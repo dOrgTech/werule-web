@@ -22,7 +22,9 @@ getBalances(address) async {
 
 
 Future<Map<String, String>> getHolders(String tokenAddress) async {
-  var url = 'https://testnet.explorer.etherlink.com/api/v2/tokens/$tokenAddress/holders';
+  var url =
+  Human().chain.blockExplorer +
+      '/api/v2/tokens/$tokenAddress/holders';
   var headers = {
     'accept': 'application/json',
   };

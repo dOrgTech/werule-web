@@ -104,14 +104,9 @@ class _MembersListState extends State<MembersList> {
           return Column(
             children: [
               const Text(
-                  "No members found.\n\n\nTo wrap the underlying token, use this tool. "),
+                  "No members found.\n\n\nRecently added members can take up to one hour to get indexed and show up here"),
               const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                context.go( "/${widget.org.address}/bridge");
-                },
-                child:  Text("Bridge ${widget.org.symbol!}"),
-              ),
+             
 
            
             ],

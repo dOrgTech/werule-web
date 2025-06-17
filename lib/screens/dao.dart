@@ -47,7 +47,7 @@ class _DAOState extends State<DAO> with TickerProviderStateMixin { // Add Ticker
   }
 
   void _setupTabs(Org dao) {
-    _showBridgeTab = (dao.wrapped != null && dao.wrapped!.isNotEmpty);
+    _showBridgeTab = false;
     print("[DAO _setupTabs] Org '${dao.name}', wrapped: '${dao.wrapped}', _showBridgeTab: $_showBridgeTab");
 
     _tabs = [

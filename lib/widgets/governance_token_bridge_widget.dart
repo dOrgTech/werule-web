@@ -253,25 +253,27 @@ class _GovernanceTokenBridgeWidgetState extends State<GovernanceTokenBridgeWidge
       
       final transactionResponseJs = await promiseToFuture(callMethod(contract, methodName, jsify(methodArgs)));
       
-      final String txHash = json.decode(json.encode(transactionResponseJs))["hash"];
+      // Directly access the 'hash' property from the JavaScript object
+      final String txHash = getProperty(transactionResponseJs, 'hash');
       print("$stepName tx hash: $txHash");
 
-      _errorMessage = "Tx Hash: $txHash"; 
+      _errorMessage = "Tx Hash: $txHash";
       if (mounted) {
         setState(() {
           _currentProgress = submittedState;
-          _progressMessage = _getProgressDisplayMessageFull(); 
+          _progressMessage = _getProgressDisplayMessageFull();
         });
       }
       
       final txReceiptJs = await promiseToFuture(web3User.waitForTransaction(txHash, 1));
-      final receiptStatus = json.decode(json.encode(txReceiptJs))["status"];
-      final int status = (receiptStatus is int) ? receiptStatus : int.tryParse(receiptStatus.toString()) ?? 0;
+      // Directly access 'status' and 'transactionHash' properties from the JavaScript receipt object
+      final dynamic receiptStatusJs = getProperty(txReceiptJs, 'status');
+      final int status = (receiptStatusJs is int) ? receiptStatusJs : int.tryParse(receiptStatusJs.toString()) ?? 0;
 
-      _errorMessage = "";
+      _errorMessage = ""; // Clear txHash from error message after it's used for waiting
 
       if (status == 1) {
-        final String receiptTxHash = json.decode(json.encode(txReceiptJs))["transactionHash"];
+        final String receiptTxHash = getProperty(txReceiptJs, 'transactionHash');
         print("$stepName successful. Receipt Tx Hash: $receiptTxHash");
         return true;
       } else {
