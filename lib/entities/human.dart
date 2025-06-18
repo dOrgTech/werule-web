@@ -2,24 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web3_provider/ethereum.dart';
 import 'package:flutter_web3_provider/ethers.dart';
 import 'dart:js_util';
-import '../main.dart' show persistAndComplete; // Import persistAndComplete
 import '../utils/functions.dart';
+import 'dart:async'; // For Completer
+import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore types
+import 'org.dart'; // For Org type
+import 'token.dart'; // For Token type
+import 'proposal.dart'; // For Proposal type
 
-String prevChain = "0xa729";
-String simpleDAOAddress = "0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF";
+String prevChain = "0x1f47b"; // Default to Etherlink-Testnet
+String simpleDAOAddress = "0x0881F2000c386A6DD6c73bfFD9196B1e99f108fF"; // Example, ensure it's used appropriately
+
 var chains = {
-  "0xaa36a7": Chain(
-      wrapperContract: "",
-      wrapperContract_w: "",
-      id: 11155111,
-      name: "Sepolia",
-      nativeSymbol: "sETH",
-      decimals: 18,
-      rpcNode: "https://sepolia.infura.io/v3/1081d644fc4144b587a4f762846ceede",
-      blockExplorer: "https://sepolia.etherscan.io"),
   "0x1f47b": Chain(
-      wrapperContract: "0x1e050e98F0215450bd41494F9B67bC3032c561D7",
-      wrapperContract_w: "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2",
+      wrapperContract: "0x1e050e98F0215450bd41494F9B67bC3032c561D7", // Example address
+      wrapperContract_w: "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2", // Example address
       id: 128123,
       name: "Etherlink-Testnet",
       nativeSymbol: "XTZ",
@@ -27,8 +23,8 @@ var chains = {
       rpcNode: "https://node.ghostnet.etherlink.com",
       blockExplorer: "https://testnet.explorer.etherlink.com"),
   "0xa729": Chain(
-      wrapperContract: "0x3B342c54181A027929B67250855A35C7233DFD46",
-      wrapperContract_w: "0xACFD7D5e73D3D0f0ae82a8156068297d65dCE70c",
+      wrapperContract: "0x3B342c54181A027929B67250855A35C7233DFD46", // Example address
+      wrapperContract_w: "0xACFD7D5e73D3D0f0ae82a8156068297d65dCE70c", // Example address
       id: 42793,
       name: "Etherlink",
       nativeSymbol: "XTZ",
@@ -38,19 +34,37 @@ var chains = {
 };
 
 class Human extends ChangeNotifier {
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey();
+  List<User> users = [];
+  List<Org> orgs = [];
+  List<Token> tokens = [];
+  List<Proposal> proposals = [];
+  var daosCollection;
+  var tokensCollection;
+
+  Completer<void> _dataLoadCompleter = Completer<void>()..complete();
+  Future<void> get dataReady => _dataLoadCompleter.future;
+  bool get dataLoadCompleterIsCompleted => _dataLoadCompleter.isCompleted;
+
+  void completeDataLoad() {
+    if (!_dataLoadCompleter.isCompleted) {
+      _dataLoadCompleter.complete();
+    }
+  }
+
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   GlobalKey<NavigatorState> get navigatorKey => _navigatorKey;
+
   String session_id = generateWalletAddress();
   bool busy = false;
   bool beta = true;
   bool wrongChain = false;
-  int chainID = 5;
-  bool landing = false;
+  // int chainID = 5; // This seems unused, Human().chain.id is preferred
+  bool landing = false; // Set to true if app should start on landing page
   String chainNativeEarnings = "0";
   String chainUSDTEarnings = "0";
   String? address;
-  Chain chain = chains[prevChain]!;
-  bool metamask = true;
+  late Chain chain; // Will be initialized in _internal constructor
+  bool metamask = true; // Assume true, update based on ethereum object
   bool allowed = false;
   Web3Provider? web3user;
   
@@ -60,130 +74,270 @@ class Human extends ChangeNotifier {
   List<ChatItem> chatHistory = [
     ChatItem(
       isSender: false,
-      message:
-          "If you have questions about the platform, ask them here. I'm not human but I'll do my best.",
+      message: "If you have questions about the platform, ask them here. I'm not human but I'll do my best.",
     ),
   ];
 
   get balances => null;
-
   get actions => null;
+
   void refreshPage() {
-    print("refreshing the page");
-    _navigatorKey.currentState?.pushNamed("/");
+    print("Human: refreshPage called. Navigating to /");
+    _navigatorKey.currentState?.pushNamed("/"); // This might not be needed if UI reacts to notifyListeners
+    notifyListeners();
+  }
+
+  Future<void> _persistInternal() async {
+    print("Human._persistInternal: Loading data for chain: ${chain.name} (ID: ${chain.id.toRadixString(16)})");
+    List<User> localUsers = [];
+    List<Proposal> localProposals = [];
+    List<Org> localOrgs = [];
+    List<Token> localTokens = [];
+
+    daosCollection = FirebaseFirestore.instance.collection("idaos${chain.name}");
+    tokensCollection = FirebaseFirestore.instance.collection("tokens${chain.name}");
+
+    try {
+      var daosSnapshot = await daosCollection.get();
+      var tokensSnapshot = await tokensCollection.get();
+
+      for (var doc in tokensSnapshot.docs) {
+        if (doc.data()['id'] == "native") continue;
+        Token t = Token(
+            type: doc.data()['type'],
+            name: doc.data()['name'],
+            symbol: doc.data()['symbol'],
+            decimals: doc.data()['decimals']);
+        t.address = doc.data()['address'];
+        localTokens.add(t);
+      }
+
+      for (var doc in daosSnapshot.docs) {
+        String orgName = doc.data()['name'] ?? "Unnamed Org";
+        Org org = Org(
+            name: orgName,
+            description: doc.data()['description'],
+            govTokenAddress: doc.data()['govTokenAddress']);
+        org.address = doc.data()['address'];
+        org.symbol = doc.data()['symbol'];
+        if (doc.data()['creationDate'] is Timestamp) {
+          org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
+        }
+        org.govToken = Token(
+            type: "erc20",
+            symbol: org.symbol ?? "",
+            decimals: doc.data()['decimals'], // Ensure org.decimals is set from doc if available
+            name: org.name);
+        org.govTokenAddress = doc.data()['token'];
+        var wrappedValue = doc.data()['underlying'];
+        if (wrappedValue is String && wrappedValue.isNotEmpty) {
+          org.wrapped = wrappedValue;
+        } else {
+          org.wrapped = null;
+        }
+        print("Human._persistInternal DAO '${org.name}' (Address: ${org.address}): Processed 'underlying'. org.wrapped is now: ${org.wrapped}");
+        org.proposalThreshold = doc.data()['proposalThreshold']?.toString();
+        org.votingDelay = doc.data()['votingDelay'];
+        org.registryAddress = doc.data()['registryAddress'];
+        org.treasuryAddress = doc.data()['treasuryAddress'] ?? org.registryAddress; // Fallback for treasuryAddress
+        org.votingDuration = doc.data()['votingDuration'];
+        org.executionDelay = doc.data()['executionDelay'];
+        org.quorum = doc.data()['quorum'];
+        org.decimals = doc.data()['decimals'];
+        org.holders = doc.data()['holders'];
+        if (doc.data()['treasury'] is Map) {
+            org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
+        }
+        if (doc.data()['registry'] is Map) {
+            org.registry = Map<String, String>.from(doc.data()['registry']);
+        }
+        org.totalSupply = doc.data()['totalSupply']?.toString();
+        org.debatesOnly = org.name.contains("dOrg");
+        localOrgs.add(org);
+      }
+
+      users = localUsers;
+      proposals = localProposals;
+      orgs = localOrgs;
+      tokens = localTokens;
+
+      print("Human._persistInternal completed. Orgs loaded: ${orgs.length} for chain ${chain.name}");
+    } catch (e, s) {
+      print("Error in Human._persistInternal for chain ${chain.name}: $e\n$s");
+      users = []; proposals = []; orgs = []; tokens = [];
+      rethrow;
+    }
+  }
+
+  Future<void> persistAndComplete() async {
+    print("Human.persistAndComplete: Triggered for chain: ${chain.name}. Resetting dataLoadCompleter.");
+    if (!_dataLoadCompleter.isCompleted) {
+        print("Human.persistAndComplete: Previous load not completed. Completing it now before starting new one.");
+        _dataLoadCompleter.complete(); // Complete previous if any, to avoid deadlock
+    }
+    _dataLoadCompleter = Completer<void>();
+
+    try {
+      await _persistInternal();
+      if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
+      print("Human.persistAndComplete: Data persistence complete for chain ${chain.name}.");
+    } catch (e, s) {
+      print("Human.persistAndComplete: Error during data persistence for chain ${chain.name}: $e\n$s");
+      if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.completeError(e, s);
+    }
+    notifyListeners();
   }
 
   Human._internal() {
+    chain = chains[prevChain] ?? chains.values.first;
     _setupListeners();
+    if (!landing) {
+       print("Human._internal: Initializing, not in landing mode. Calling persistAndComplete for ${chain.name}.");
+       persistAndComplete();
+    } else {
+       print("Human._internal: Initializing, in landing mode. Marking dataLoadCompleter as complete.");
+       if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
+    }
   }
   static final Human _instance = Human._internal();
   factory Human() {
     return _instance;
   }
-  Future<void> _requestSwitchOrAddEtherlinkTestnet() async {
-    const String targetChainId = "0x1f47b";
-    final Chain targetChainDetails = chains[targetChainId]!;
 
+  Future<void> switchToChainAndReload(String targetChainIdHex) async {
+    print("Human.switchToChainAndReload: Called for targetChainIdHex: $targetChainIdHex. Current chain: ${chain.name} (ID: 0x${chain.id.toRadixString(16)})");
+    
+    final String normalizedTargetChainIdHex = targetChainIdHex.startsWith('0x') ? targetChainIdHex : '0x$targetChainIdHex';
+
+    if ("0x${chain.id.toRadixString(16)}" == normalizedTargetChainIdHex && orgs.isNotEmpty && !wrongChain) {
+      print("Human.switchToChainAndReload: Already on target chain $normalizedTargetChainIdHex and data seems loaded. Not reloading.");
+      if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
+      notifyListeners();
+      return;
+    }
+
+    Chain? targetChainDetails = chains[normalizedTargetChainIdHex];
+    if (targetChainDetails != null) {
+      print("Human.switchToChainAndReload: Target chain ${targetChainDetails.name} found. Current wallet chainId: ${ethereum?.chainId}");
+      chain = targetChainDetails; // Optimistically set the chain
+      wrongChain = false; 
+      prevChain = normalizedTargetChainIdHex; 
+
+      if (ethereum?.chainId?.toString() != normalizedTargetChainIdHex) {
+        print("Human.switchToChainAndReload: Wallet is on a different chain (${ethereum?.chainId}). Requesting switch to ${targetChainDetails.name}.");
+        await _requestSwitchOrAddNetwork(normalizedTargetChainIdHex, targetChainDetails);
+        // The chainChanged listener will call persistAndComplete if switch is successful.
+        // If switch fails, chainChanged might set wrongChain=true.
+        // We call notifyListeners here to update UI if _requestSwitchOrAddNetwork itself sets wrongChain.
+        notifyListeners(); 
+      } else {
+        print("Human.switchToChainAndReload: Wallet already on target chain ${targetChainDetails.name}. Fetching data.");
+        await persistAndComplete(); // Already on the right chain, just fetch data.
+      }
+    } else {
+      print("Human.switchToChainAndReload: Unknown targetChainIdHex: $normalizedTargetChainIdHex. Marking as wrongChain.");
+      wrongChain = true;
+      chain = chains[prevChain] ?? chains.values.first; // Revert to prev known good or default
+      orgs = []; tokens = []; users = []; proposals = [];
+      if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
+      notifyListeners();
+    }
+  }
+
+  Future<void> _requestSwitchOrAddNetwork(String targetChainIdHex, Chain targetChainDetails) async {
+    if (ethereum == null) {
+      print("Human._requestSwitchOrAddNetwork: Ethereum provider not available.");
+      wrongChain = true;
+      notifyListeners();
+      return;
+    }
     try {
-      print("Attempting wallet_switchEthereumChain to $targetChainId");
+      print("Human._requestSwitchOrAddNetwork: Attempting wallet_switchEthereumChain to $targetChainIdHex (${targetChainDetails.name})");
       await promiseToFuture(ethereum!.request(RequestParams(
         method: 'wallet_switchEthereumChain',
-        params: [{'chainId': targetChainId}],
+        params: [{'chainId': targetChainIdHex}],
       )));
-      print("wallet_switchEthereumChain request sent. Waiting for chainChanged event.");
+      print("Human._requestSwitchOrAddNetwork: wallet_switchEthereumChain request for ${targetChainDetails.name} sent.");
     } catch (switchError) {
-      print("wallet_switchEthereumChain failed: $switchError. Attempting wallet_addEthereumChain.");
+      print("Human._requestSwitchOrAddNetwork: wallet_switchEthereumChain to ${targetChainDetails.name} failed: $switchError. Attempting wallet_addEthereumChain.");
       try {
         var chainInfo = {
-          "chainId": targetChainId,
+          "chainId": targetChainIdHex,
           "chainName": targetChainDetails.name,
-          "nativeCurrency": {
-            "name": "Tezos", // Consistent with original
-            "symbol": targetChainDetails.nativeSymbol,
-            "decimals": targetChainDetails.decimals
-          },
+          "nativeCurrency": { "name": targetChainDetails.nativeSymbol, "symbol": targetChainDetails.nativeSymbol, "decimals": targetChainDetails.decimals },
           "rpcUrls": [targetChainDetails.rpcNode],
           "blockExplorerUrls": [targetChainDetails.blockExplorer],
         };
-        print("Attempting wallet_addEthereumChain for $targetChainId");
         await promiseToFuture(ethereum!.request(RequestParams(
           method: 'wallet_addEthereumChain',
           params: [chainInfo],
         )));
-        print("wallet_addEthereumChain request sent. Waiting for chainChanged event.");
+        print("Human._requestSwitchOrAddNetwork: wallet_addEthereumChain request for ${targetChainDetails.name} sent.");
       } catch (addError) {
-        print("wallet_addEthereumChain failed: $addError. User likely on wrong chain.");
-        // If add also fails, user is stuck on wrong chain.
-        // Set state to reflect this hard failure.
-        chain = targetChainDetails; // Default to target for data loading
-        wrongChain = true;
-        web3user = null; // No valid web3user for the desired chain
+        print("Human._requestSwitchOrAddNetwork: wallet_addEthereumChain for ${targetChainDetails.name} failed: $addError.");
+        wrongChain = true; // Explicitly set wrongChain if add fails
         notifyListeners();
       }
+    }
+  }
+
+  Future<void> attemptSwitchToEtherlinkMainnet() async {
+    const String etherlinkMainnetIdHex = "0xa729";
+    final Chain? etherlinkMainnetDetails = chains[etherlinkMainnetIdHex];
+    if (etherlinkMainnetDetails != null) {
+      await _requestSwitchOrAddNetwork(etherlinkMainnetIdHex, etherlinkMainnetDetails);
+    } else {
+      print("Human.attemptSwitchToEtherlinkMainnet: Etherlink Mainnet details not found in chains map.");
     }
   }
 
   void _setupListeners() {
     if (ethereum != null) {
       ethereum!.on('accountsChanged', allowInterop((accounts) {
+        print("Human.accountsChanged: Event received. Accounts: $accounts");
         if (accounts.isEmpty) {
-          print("Wallet disconnected");
           address = null;
         } else {
           address = ethereum!.selectedAddress.toString();
-          getUser(); // Assuming this is light and synchronous
-          print("Account changed: $address");
+          getUser();
         }
         notifyListeners();
       }));
 
-      ethereum!.on('chainChanged', allowInterop((newChainIdHex) async {
-        String newChainId = newChainIdHex.toString(); // Ensure it's a string
-        print("Chain changed event. New chainId: $newChainId");
-        const String etherlinkTestnetId = "0x1f47b";
+      ethereum!.on('chainChanged', allowInterop((newChainIdHexFromEvent) async {
+        String newChainId = newChainIdHexFromEvent.toString();
+        print("Human.chainChanged event: Wallet reported new chainId: $newChainId. Current Human().chain: ${chain.name} (0x${chain.id.toRadixString(16)}), prevChain global var: $prevChain");
 
-        if (ethereum != null) {
-          web3user = Web3Provider(ethereum!);
-          try {
-            final network = await promiseToFuture(web3user!.getNetwork());
-            print('Provider network detected in chainChanged: ${getProperty(network, "name")}, chainId: ${getProperty(network, "chainId")}');
-          } catch (e) {
-            print('Error getting network from provider in chainChanged: $e');
+        if (ethereum != null) web3user = Web3Provider(ethereum!); else web3user = null;
+
+        Chain? newChainDetails = chains[newChainId];
+
+        if (newChainDetails != null) {
+          print("Human.chainChanged: New chain $newChainId (${newChainDetails.name}) is supported.");
+          if ("0x${chain.id.toRadixString(16)}" != newChainId || prevChain != newChainId) {
+            print("Human.chainChanged: Chain is different from current state or prevChain. Updating and reloading.");
+            chain = newChainDetails;
+            wrongChain = false;
+            prevChain = newChainId; // Update global prevChain to reflect successful switch
+            await persistAndComplete();
+          } else {
+            print("Human.chainChanged: New chain $newChainId is same as current and prevChain. No data re-fetch by chainChanged. Ensuring wrongChain is false.");
+            if(wrongChain) wrongChain = false; // Correct wrongChain if it was true
+            if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
+            notifyListeners();
           }
         } else {
-          web3user = null;
+          print("Human.chainChanged: New chain $newChainId is UNSUPPORTED.");
+          wrongChain = true;
+          chain = chains["0xa729"] ?? chains.values.first; // Default to Etherlink Mainnet for UI
+          orgs = []; tokens = []; users = []; proposals = [];
+          if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
+          notifyListeners();
         }
-
-        if (newChainId == etherlinkTestnetId) {
-          print("Chain is now Etherlink-Testnet.");
-          wrongChain = false;
-          chain = chains[etherlinkTestnetId]!;
-          if (prevChain != etherlinkTestnetId) {
-            await persistAndComplete(); // Use persistAndComplete
-            refreshPage();
-            prevChain = etherlinkTestnetId;
-          }
-        } else if (chains.keys.contains(newChainId)) {
-          print("Chain is now another supported chain: $newChainId");
-          wrongChain = false;
-          chain = chains[newChainId]!;
-          if (prevChain != newChainId) {
-            await persistAndComplete(); // Use persistAndComplete
-            refreshPage();
-            prevChain = newChainId;
-          }
-        } else {
-          print("Chain is now an unsupported chain: $newChainId. Requesting switch/add Etherlink-Testnet.");
-          chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
-          wrongChain = true; // Mark as wrong until switch/add succeeds
-          notifyListeners(); // Notify UI about this intermediate state
-
-          await _requestSwitchOrAddEtherlinkTestnet();
-          // If switch/add is successful, this listener will be called again with the new chainId.
-          // If it fails hard, _requestSwitchOrAddEtherlinkTestnet sets the final wrongChain state.
-        }
-        notifyListeners(); // Notify of final state from this handler
       }));
+    } else {
+        print("Human._setupListeners: ethereum object is null. Cannot set up listeners.");
+        metamask = false; // Ensure metamask is false if ethereum is null at setup
     }
   }
 
@@ -192,66 +346,66 @@ class Human extends ChangeNotifier {
   }
 
   signIn() async {
-    print("signing into the thing");
-    const String etherlinkTestnetId = "0x1f47b";
+    print("Human.signIn: Attempting to sign in.");
+    if (ethereum == null) {
+      print("Human.signIn: Ethereum provider not available.");
+      metamask = false;
+      notifyListeners();
+      return;
+    }
+    metamask = true;
+    busy = true;
+    notifyListeners();
 
     try {
-      await promiseToFuture(
-        ethereum!.request(RequestParams(method: 'eth_requestAccounts')),
-      );
-      address = ethereum?.selectedAddress.toString();
-      var currentChainIdFromWallet = ethereum?.chainId.toString(); // Ensure string
-      print("Current chainId from wallet after eth_requestAccounts: $currentChainIdFromWallet");
+      await promiseToFuture(ethereum!.request(RequestParams(method: 'eth_requestAccounts')));
+      address = ethereum?.selectedAddress?.toString();
+      String? currentChainIdFromWallet = ethereum?.chainId?.toString();
+      print("Human.signIn: Wallet currentChainId: $currentChainIdFromWallet, address: $address");
 
-      if (ethereum != null) {
-        web3user = Web3Provider(ethereum!);
-        try {
-          final network = await promiseToFuture(web3user!.getNetwork());
-          print('Provider network detected after signIn: ${getProperty(network, "name")}, chainId: ${getProperty(network, "chainId")}');
-        } catch (e) {
-          print('Error getting network from provider after signIn: $e');
-        }
+      if (address == null || address!.isEmpty) {
+        print("Human.signIn: No address obtained.");
+        busy = false; notifyListeners(); return;
       }
 
-      if (currentChainIdFromWallet == etherlinkTestnetId) {
-        print("Wallet connected on Etherlink-Testnet.");
-        // Ensure state reflects this, especially if not already set by an early chainChanged event
-        if (chain.id != chains[etherlinkTestnetId]!.id || wrongChain) {
-          chain = chains[etherlinkTestnetId]!;
-          wrongChain = false;
-          if (prevChain != etherlinkTestnetId) {
-            await persistAndComplete(); // Use persistAndComplete
-            refreshPage();
-            prevChain = etherlinkTestnetId;
-          }
+      web3user = Web3Provider(ethereum!);
+      Chain? detectedChainDetails = chains[currentChainIdFromWallet];
+
+      if (detectedChainDetails != null) {
+        print("Human.signIn: Wallet on supported chain: ${detectedChainDetails.name}. Current Human().chain: ${chain.name}");
+        wrongChain = false;
+        if ("0x${chain.id.toRadixString(16)}" != currentChainIdFromWallet || prevChain != currentChainIdFromWallet) {
+          print("Human.signIn: Chain different from current state or prevChain. Updating and reloading.");
+          chain = detectedChainDetails;
+          prevChain = currentChainIdFromWallet!;
+          await persistAndComplete();
+        } else {
+          print("Human.signIn: Chain same as current and prevChain. No re-fetch by signIn. Ensuring data completer is done.");
+          if (!_dataLoadCompleter.isCompleted) await dataReady; // Wait if ongoing
+          else if(orgs.isEmpty && !landing) await persistAndComplete(); // If completed but no orgs, try fetch
+          else if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
         }
-      } else if (chains.keys.contains(currentChainIdFromWallet)) {
-        print("Wallet connected on another supported chain: $currentChainIdFromWallet");
-         if (chain.id != chains[currentChainIdFromWallet!]!.id || wrongChain) {
-            chain = chains[currentChainIdFromWallet]!;
-            wrongChain = false;
-            if (prevChain != currentChainIdFromWallet) {
-                await persistAndComplete(); // Use persistAndComplete
-                refreshPage();
-                prevChain = currentChainIdFromWallet;
-            }
-         }
       } else {
-        print("Wallet connected on unsupported chain: $currentChainIdFromWallet. Requesting switch/add Etherlink-Testnet.");
-        // Set an intermediate state before attempting switch
-        chain = chains[etherlinkTestnetId]!; // Default to Etherlink for data
+        print("Human.signIn: Wallet on UNSUPPORTED chain: $currentChainIdFromWallet.");
         wrongChain = true;
-        notifyListeners();
-
-        await _requestSwitchOrAddEtherlinkTestnet();
-        // The chainChanged event will handle the final state update after switch/add attempt.
+        chain = chains["0xa729"] ?? chains.values.first;
+        orgs = []; tokens = []; users = []; proposals = [];
+        if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.complete();
+        
+        final Chain? etherlinkMainnetDetails = chains["0xa729"];
+        if (etherlinkMainnetDetails != null) {
+            await _requestSwitchOrAddNetwork("0xa729", etherlinkMainnetDetails);
+        }
       }
-      notifyListeners(); // Notify of any immediate changes from signIn
-    } catch (e) {
-      print("Error signing in: $e");
-      chain = chains[etherlinkTestnetId]!; // Fallback
+    } catch (e,s) {
+      print("Error during Human.signIn: $e\n$s");
       wrongChain = true;
-      web3user = null;
+      chain = chains["0xa729"] ?? chains.values.first;
+      web3user = null; address = null;
+      orgs = []; tokens = []; users = []; proposals = [];
+      if (!_dataLoadCompleter.isCompleted) _dataLoadCompleter.completeError(e,s);
+    } finally {
+      busy = false;
       notifyListeners();
     }
   }
@@ -263,11 +417,10 @@ class ChatItem {
   String message;
 }
 
-class User {}
+class User {} // Basic User class, can be expanded
 
 class Action {
   Action({required this.type, required this.contract, required this.time});
-
   String type;
   String contract;
   DateTime time;
@@ -291,5 +444,5 @@ class Chain {
   String nativeSymbol;
   String blockExplorer;
   String rpcNode;
-  var fbCollection;
+  var fbCollection; // This seems unused, consider removing or typing if used
 }

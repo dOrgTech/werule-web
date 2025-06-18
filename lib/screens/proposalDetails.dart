@@ -93,10 +93,17 @@ class ProposalDetails extends StatefulWidget {
         BigInt totalVotes =
             BigInt.parse(data['inFavor']) + BigInt.parse(data['against']);
         BigInt numerator = totalVotes * BigInt.from(10).pow(18);
-        BigInt turnoutbigInt = numerator ~/ BigInt.parse(p.org.totalSupply!);
-        double ceva =
-            turnoutbigInt.toDouble() / BigInt.from(10).pow(18).toDouble();
-        p.turnout = ceva.toDouble();
+        BigInt orgTotalSupply = BigInt.tryParse(p.org.totalSupply ?? "0") ?? BigInt.zero;
+
+        if (orgTotalSupply == BigInt.zero) {
+          print("[ProposalDetails] Org total supply is zero for ${p.org.name}. Setting turnout to 0.");
+          p.turnout = 0.0;
+        } else {
+          BigInt turnoutbigInt = numerator ~/ orgTotalSupply;
+          double ceva =
+              turnoutbigInt.toDouble() / BigInt.from(10).pow(18).toDouble();
+          p.turnout = ceva.toDouble();
+        }
 
         p.targets = List<String>.from(data['targets']);
         p.values = List<String>.from(data['values']);

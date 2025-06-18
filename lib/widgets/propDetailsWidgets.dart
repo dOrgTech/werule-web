@@ -537,9 +537,9 @@ class RegistryProposalDetails extends StatelessWidget {
       operations.add(operation(values));
     }
 
-    return ListView(children:  [ 
-      Text("registry proposal details for ${p.org.name}"),
-      ...operations]);
+    return ListView(children:  
+    
+      operations);
   }
 
   Widget _buildDetailRow(String label, String value) {

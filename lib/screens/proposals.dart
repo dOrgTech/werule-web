@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../debates/models/debate.dart';
 import '../entities/human.dart';
-import '../main.dart';
+// import '../main.dart'; // Global orgs no longer used directly from here
+import 'package:provider/provider.dart'; // Import Provider
 import '../screens/proposalDetails.dart';
 import '../utils/theme.dart';
 import '../widgets/proposalCard.dart';
@@ -30,7 +31,7 @@ class Proposals extends StatefulWidget {
 }
 
 class _ProposalsState extends State<Proposals> {
-  Proposal p = Proposal(org: orgs[0]);
+  late Proposal p; // Initialize in initState
   String? selectedType = 'All';
   List<String> typesDropdown = [
     'All',
@@ -57,6 +58,15 @@ class _ProposalsState extends State<Proposals> {
 
   @override
   void initState() {
+    super.initState();
+    // Initialize 'p' using the org passed to the widget
+    // Ensure Human instance is available if needed for default values in Proposal constructor,
+    // though Proposal(org: widget.org) should be sufficient.
+    // If Human().address is needed by Proposal constructor, ensure Human is accessible.
+    // For now, assuming Proposal constructor handles it or widget.org is enough.
+    p = Proposal(org: widget.org);
+
+
     typesDropdown = [
       'All',
       'Debate',
@@ -67,8 +77,8 @@ class _ProposalsState extends State<Proposals> {
       'Change Config'
     ];
 
-    super.initState();
     widget.which = "all";
+    // populateProposals(); // Call this after proposals are fetched if it depends on them
   }
 
   void populateProposals() {

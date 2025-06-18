@@ -2,9 +2,10 @@ import 'package:Homebase/screens/explorer.dart';
 import 'package:Homebase/widgets/gameOfLife.dart';
 import 'package:Homebase/widgets/menu.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import Provider
 
 import '../entities/human.dart';
-import '../main.dart' show persistAndComplete; // Import persistAndComplete
+// import '../main.dart' show persistAndComplete; // No longer needed from main.dart
 
 class Landing extends StatefulWidget {
   Landing({super.key});
@@ -50,7 +51,8 @@ class _LandingState extends State<Landing> with TickerProviderStateMixin {
         widget.loading = true;
       });
       Human().landing = false;
-      await persistAndComplete(); // Use persistAndComplete
+      // Access Human instance via Provider to call its persistAndComplete
+      await Provider.of<Human>(context, listen: false).persistAndComplete();
 
       // Use `mounted` to ensure the widget is still in the tree
       if (mounted) {

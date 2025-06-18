@@ -16,12 +16,20 @@ import 'human.dart';
 import 'org.dart';
 
 delegate(String toWhom, Org org) async {
+  final human = Human(); // Get the singleton instance
+  if (human.web3user == null) {
+    print("Error in delegate: web3user is null. Wallet not connected or on wrong chain?");
+    return "not ok: Wallet not ready";
+  }
+  // Ensure we are using the latest provider state by creating contract with current web3user
   var sourceContract =
-      Contract(org.govTokenAddress!, tokenAbiString, Human().web3user);
-  print("facuram contractu");
+      Contract(org.govTokenAddress!, tokenAbiString, human.web3user);
+  print("delegate: Contract object created with current web3user for chain: ${human.chain.name}");
   try {
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed ok");
+    // Connect with the signer from the current web3user
+    final signer = human.web3user!.getSigner();
+    sourceContract = sourceContract.connect(signer);
+    print("delegate: Contract connected with signer for chain: ${human.chain.name}");
     final transaction =
         await promiseToFuture(callMethod(sourceContract, "delegate", [toWhom]));
     print("facuram tranzactia");
@@ -443,24 +451,26 @@ Future<List<String>> createDAOwithWrappedToken(Org org, DaoConfig daoConfig) asy
     return ["ERROR: Wrapped token symbol not provided"];
   }
 
-  final String contractAddressToUse = Human().chain.wrapperContract_w ?? "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2"; 
-  print("Using wrapper contract address for wrapped token DAO: $contractAddressToUse");
+  final human = Human(); // Get the singleton instance
+  final String contractAddressToUse = human.chain.wrapperContract_w ?? "0xf4B3022b0fb4e8A73082ba9081722d6a276195c2";
+  print("Using wrapper contract address for wrapped token DAO: $contractAddressToUse for chain: ${human.chain.name}");
 
-  if (Human().web3user == null) {
-    print("Error: Web3 provider (Human().web3user) is null.");
+  if (human.web3user == null) {
+    print("Error in createDAOwithWrappedToken: web3user is null.");
     return ["ERROR: Web3 provider not initialized"];
   }
 
   var sourceContract = Contract(
-      contractAddressToUse, 
+      contractAddressToUse,
       wrapperAbiStringGlobal,
-      Human().web3user
+      human.web3user // Use human.web3user
   );
-  print("Contract object created with address: $contractAddressToUse");
+  print("createDAOwithWrappedToken: Contract object created with address: $contractAddressToUse for chain: ${human.chain.name}");
 
   try {
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("Contract connected with signer.");
+    final signer = human.web3user!.getSigner(); // Get signer from current web3user
+    sourceContract = sourceContract.connect(signer);
+    print("createDAOwithWrappedToken: Contract connected with signer for chain: ${human.chain.name}");
 
     String executionDelayString = (org.executionDelay ?? 0).toString();
     String votingDelayString = (org.votingDelay ?? 0).toString();
@@ -495,7 +505,7 @@ Future<List<String>> createDAOwithWrappedToken(Org org, DaoConfig daoConfig) asy
     print("Transaction hash: $hash");
 
     final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash, 1]));
+        callMethod(human.web3user!, 'waitForTransaction', [hash, 1])); // Use human.web3user
     
     final decodedResult = json.decode(stringify(result));
     print("Transaction receipt status: ${decodedResult["status"]}");
@@ -591,14 +601,22 @@ createDAO(Org org) async {
     org.proposalThreshold.toString(),
     org.quorum.toString(),
   ]);
-  print("wrapper contract address ${Human().chain.wrapperContract}");
-  print("web3 is of type ${Human().web3user}");
+  final human = Human(); // Get the singleton instance
+  print("wrapper contract address ${human.chain.wrapperContract} for chain: ${human.chain.name}");
+  print("web3 is of type ${human.web3user}");
+
+  if (human.web3user == null) {
+    print("Error in createDAO: web3user is null.");
+    return ["ERROR: Web3 provider not initialized"]; // Or appropriate error list
+  }
+
   var sourceContract = Contract(
-      Human().chain.wrapperContract, wrapperAbiStringGlobal, Human().web3user);
-  print("facuram contractu");
+      human.chain.wrapperContract, wrapperAbiStringGlobal, human.web3user); // Use human.web3user
+  print("createDAO: Contract object created for chain: ${human.chain.name}");
   try {
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed oki");
+    final signer = human.web3user!.getSigner(); // Get signer from current web3user
+    sourceContract = sourceContract.connect(signer);
+    print("createDAO: Contract connected with signer for chain: ${human.chain.name}");
 
     if (org.debatesOnly ?? false) {
       org.registry = {"debatesOnly": "True"};
@@ -628,7 +646,7 @@ createDAO(Org org) async {
     final hash = json.decode(stringify(transaction))["hash"];
 
     final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+        callMethod(human.web3user!, 'waitForTransaction', [hash])); // Use human.web3user
     if (json.decode(stringify(result))["status"] == 0) {
       print("nu merge eroare de greseala");
       return "not ok";
@@ -675,13 +693,21 @@ propose(Proposal p) async {
   print(p.description);
   String concatenated =
       "${p.name}0|||0${p.type}0|||0${p.description}0|||0${p.externalResource}";
-  print("web3user: ${Human().web3user}");
-  var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
-  print("facuram contractu");
+  final human = Human(); // Get the singleton instance
+  print("propose: web3user is type ${human.web3user} for chain: ${human.chain.name}");
+
+  if (human.web3user == null) {
+    print("Error in propose: web3user is null.");
+    return "not ok: Wallet not ready";
+  }
+
+  var sourceContract = Contract(p.org.address!, daoAbiString, human.web3user); // Use human.web3user
+  print("propose: Contract object created for chain: ${human.chain.name}");
   String calldata0;
   try {
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed ok");
+    final signer = human.web3user!.getSigner(); // Get signer from current web3user
+    sourceContract = sourceContract.connect(signer);
+    print("propose: Contract connected with signer for chain: ${human.chain.name}");
     print("concatenated: $concatenated");
     print("targets ${p.targets}");
     print("values ${p.values}");
@@ -691,7 +717,7 @@ propose(Proposal p) async {
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+        callMethod(human.web3user!, 'waitForTransaction', [hash])); // Use human.web3user
     if (json.decode(stringify(result))["status"] == 0) {
       print("nu merge eroare de greseala");
       return "not ok";
@@ -728,11 +754,19 @@ queueProposal(Proposal p) async {
   Uint8List keccakHash = keccak256(encodedInput);
   String hashHex = "0x${bytesToHex(keccakHash)}";
   print("Keccak-256 hash: $hashHex");
-  var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
-  print("facuram contractu");
+  final human = Human(); // Get the singleton instance
+
+  if (human.web3user == null) {
+    print("Error in queueProposal: web3user is null.");
+    return "not ok: Wallet not ready";
+  }
+
+  var sourceContract = Contract(p.org.address!, daoAbiString, human.web3user); // Use human.web3user
+  print("queueProposal: Contract object created for chain: ${human.chain.name}");
   try {
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed ok");
+    final signer = human.web3user!.getSigner(); // Get signer from current web3user
+    sourceContract = sourceContract.connect(signer);
+    print("queueProposal: Contract connected with signer for chain: ${human.chain.name}");
     List<String> calldatas = [];
     for (String c in p.callDatas) {
       calldatas.add("0x$c");
@@ -747,7 +781,7 @@ queueProposal(Proposal p) async {
     
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+        callMethod(human.web3user!, 'waitForTransaction', [hash])); // Use human.web3user
     if (json.decode(stringify(result))["status"] == 0) {
       print("nu merge eroare de greseala");
       return "not ok";
@@ -775,11 +809,19 @@ execute(Proposal p) async {
   Uint8List keccakHash = keccak256(encodedInput);
   String hashHex = "0x${bytesToHex(keccakHash)}";
   print("Keccak-256 hash: $hashHex");
-  var sourceContract = Contract(p.org.address!, daoAbiString, Human().web3user);
-  print("facuram contractu");
+  final human = Human(); // Get the singleton instance
+
+  if (human.web3user == null) {
+    print("Error in execute: web3user is null.");
+    return "not ok: Wallet not ready";
+  }
+
+  var sourceContract = Contract(p.org.address!, daoAbiString, human.web3user); // Use human.web3user
+  print("execute: Contract object created for chain: ${human.chain.name}");
   try {
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
-    print("signed okkkkk");
+    final signer = human.web3user!.getSigner(); // Get signer from current web3user
+    sourceContract = sourceContract.connect(signer);
+    print("execute: Contract connected with signer for chain: ${human.chain.name}");
     List<String> calldatas = [];
     for (String c in p.callDatas) {
       calldatas.add("0x$c");
@@ -793,7 +835,7 @@ execute(Proposal p) async {
     print("facuram tranzactia");
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+        callMethod(human.web3user!, 'waitForTransaction', [hash])); // Use human.web3user
     if (json.decode(stringify(result))["status"] == 0) {
       print("nu merge eroare de greseala");
       return "not ok";
@@ -813,17 +855,23 @@ execute(Proposal p) async {
 }
 
 vote(Vote v, Org org) async {
-  var sourceContract = Contract(org.address!, daoAbiString, Human().web3user);
-  print("facuram contractu");
+  final human = Human(); // Get the singleton instance
+  if (human.web3user == null) {
+    print("Error in vote: web3user is null.");
+    return "not ok: Wallet not ready";
+  }
+  var sourceContract = Contract(org.address!, daoAbiString, human.web3user); // Use human.web3user
+  print("vote: Contract object created for chain: ${human.chain.name}");
   try {
-    print("before signing");
-    sourceContract = sourceContract.connect(Human().web3user!.getSigner());
+    print("vote: before signing for chain: ${human.chain.name}");
+    final signer = human.web3user!.getSigner(); // Get signer from current web3user
+    sourceContract = sourceContract.connect(signer);
     final transaction = await promiseToFuture(callMethod(
         sourceContract, "castVote", [v.proposalID, v.option.toString()]));
-    print("facuram tranzactia");
+    print("vote: transaction submitted for chain: ${human.chain.name}");
     final hash = json.decode(stringify(transaction))["hash"];
     final result = await promiseToFuture(
-        callMethod(Human().web3user!, 'waitForTransaction', [hash]));
+        callMethod(human.web3user!, 'waitForTransaction', [hash])); // Use human.web3user
     if (json.decode(stringify(result))["status"] == 0) {
       print("nu merge eroare de greseala");
       return "not ok";

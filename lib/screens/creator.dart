@@ -1,5 +1,7 @@
 // lib/screens/creator.dart
-import 'package:Homebase/main.dart' show orgs, persistAndComplete; // For orgs list and persistAndComplete
+// import 'package:Homebase/main.dart' show orgs, persistAndComplete; // No longer needed from main.dart
+import 'package:Homebase/entities/human.dart'; // Import Human
+import 'package:provider/provider.dart'; // Import Provider
 import 'package:Homebase/screens/creator/scereen5_members.dart';
 import 'package:Homebase/screens/creator/scree1_dao_type.dart';
 import 'package:flutter/material.dart';
@@ -174,8 +176,8 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
               decimals: widget.org.decimals!, 
               address: results[1] 
           );
-
-          orgs.add(widget.org);
+          // Access Human instance via Provider to add to its orgs list
+          Provider.of<Human>(context, listen: false).orgs.add(widget.org);
           success = true;
           print("DAO Deployment successful: ${widget.org.name}, DAO Address: ${widget.org.address}, Token Address: ${widget.org.govTokenAddress}");
         } else {
@@ -267,7 +269,8 @@ class _DaoSetupWizardState extends State<DaoSetupWizard> {
                 daoName: daoConfig.daoName ?? 'DAO',
                 onGoToDAO: () async {
                   if (widget.org.address != null) {
-                    await persistAndComplete(); // Use persistAndComplete
+                    // Access Human instance via Provider to call its persistAndComplete
+                    await Provider.of<Human>(context, listen: false).persistAndComplete();
                     String checksumaddress =
                         toChecksumAddress(widget.org.address!);
                     context.go("/$checksumaddress");

@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:Homebase/utils/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart'; // Import Provider
+import '../entities/human.dart'; // Import Human
 import '../entities/org.dart';
 import '../utils/reusable.dart';
 
@@ -68,7 +70,9 @@ class DAOCard extends StatelessWidget {
               ),
             ),
             onPressed: () {
-              context.go("/${org.address!}");
+              final human = Provider.of<Human>(context, listen: false);
+              final String currentChainIdHex = "0x${human.chain.id.toRadixString(16)}";
+              context.go("/chain/$currentChainIdHex/${org.address!}");
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 14.0),

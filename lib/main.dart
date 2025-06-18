@@ -1,4 +1,4 @@
-import 'dart:async'; // Added for Completer
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:Homebase/entities/proposal.dart';
 import 'package:Homebase/screens/bridge.dart';
@@ -13,222 +13,98 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'entities/org.dart';
 import 'entities/token.dart';
-import 'firebase_options.dart'; 
+import 'firebase_options.dart';
 import 'screens/dao.dart';
 import 'screens/explorer.dart';
 import 'utils/theme.dart';
 import 'entities/human.dart';
+import 'package:Homebase/widgets/unsupported_chain_widget.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart'; // Already in human.dart
 import 'package:provider/provider.dart';
-import '../widgets/gameOfLife.dart';
+import '../widgets/gameOfLife.dart'; // Assuming this path is correct
 
 String metamask = "https://i.ibb.co/HpmDHg0/metamask.png";
-List<User>? users;
-List<Org> orgs = []; // Global list for Org objects
-List<Token> tokens = [];
-List<Proposal>? proposals;
-
-// Completer to signal when initial persistence is done
-Completer<void> _initialPersistCompleter = Completer<void>();
-Future<void> get initialPersistDone => _initialPersistCompleter.future;
-
-var daosCollection;
-var pollsCollection;
-var votesCollection;
-var tokensCollection;
-// Us3r us3r = Us3r(human: humans[0]);
-var systemCollection = FirebaseFirestore.instance.collection('some');
-
-// Renamed original persist logic
-_persistInternal() async {
-  print("Executing _persistInternal: Loading data from Firestore...");
-
-  // Initialize local lists to prevent modifying globals prematurely
-  List<User> localUsers = [];
-  List<Proposal> localProposals = [];
-  List<Org> localOrgs = [];
-  List<Token> localTokens = [];
-  daosCollection =
-      FirebaseFirestore.instance.collection("idaos${Human().chain.name}");
-  tokensCollection =
-      FirebaseFirestore.instance.collection("tokens${Human().chain.name}");
-  var daosSnapshot = await daosCollection.get();
-  var tokensSnapshot = await tokensCollection.get();
-
-  for (var doc in tokensSnapshot.docs) {
-    // print(doc.data()); // Consider reducing verbose logging or making it conditional
-    if (doc.data()['id'] == "native") {
-      continue;
-    }
-    Token t = Token(
-        type: doc.data()['type'],
-        name: doc.data()['name'],
-        symbol: doc.data()['symbol'],
-        decimals: doc.data()['decimals']);
-    t.address = doc.data()['address'];
-    localTokens.add(t);
-  }
-  // localOrgs is already initialized as empty
-
-  for (var doc in daosSnapshot.docs) {
-    String orgName = doc.data()['name'] ?? "Unnamed Org";
-    // print("Processing DAO: $orgName (ID: ${doc.id})");
-    Org org = Org(
-        name: orgName,
-        description: doc.data()['description'],
-        govTokenAddress: doc.data()['govTokenAddress']);
-    org.address = doc.data()['address'];
-    org.symbol = doc.data()['symbol'];
-    if (doc.data()['creationDate'] is Timestamp) {
-      org.creationDate = (doc.data()['creationDate'] as Timestamp).toDate();
-    }
-    org.govToken = Token(
-        type: "erc20",
-        symbol: org.symbol ?? "",
-        decimals: org.decimals, // Ensure org.decimals is set before this if it comes from doc
-        name: org.name);
-    org.govTokenAddress = doc.data()['token'];
-    var wrappedValue = doc.data()['underlying'];
-    if (wrappedValue is String) {
-      org.wrapped = wrappedValue;
-      print("DAO '${org.name}': FOUND A WRAPPED TOKEN string: ${org.wrapped}");
-    } else {
-      org.wrapped = null;
-      if (wrappedValue != null) {
-        print("DAO '${org.name}': Firestore field 'wrapped' was not null but was not a String. Type: ${wrappedValue.runtimeType}, Value: $wrappedValue");
-      }
-    }
-    print("DAO '${org.name}' (Address: ${org.address}): Processed 'underlying'. org.wrapped is now: ${org.wrapped}"); // ADDED LOG
-    // Ensure all fields are safely accessed with null checks or defaults
-    org.proposalThreshold = doc.data()['proposalThreshold'];
-    org.votingDelay = doc.data()['votingDelay'];
-    org.registryAddress = doc.data()['registryAddress'];
-    org.treasuryAddress = org.registryAddress;
-    org.votingDuration = doc.data()['votingDuration'];
-    org.executionDelay = doc.data()['executionDelay'];
-    org.quorum = doc.data()['quorum'];
-    org.decimals = doc.data()['decimals'];
-    org.holders = doc.data()['holders'];
-    org.treasuryMap = Map<String, String>.from(doc.data()['treasury']);
-    org.registry = Map<String, String>.from(doc.data()['registry']);
-    org.totalSupply = doc.data()['totalSupply'];
-    if (org.name.contains("dOrg")) {
-      print("debates only ${org.name}");
-      org.debatesOnly = true;
-    } else {
-      print("Full DAO  ${org.name}");
-      org.debatesOnly = false;
-    }
-    localOrgs.add(org);
-  }
-
-  // Atomically update global lists
-  // Ensure other global lists (users, proposals) are handled similarly if populated here
-  users = localUsers;
-  proposals = localProposals;
-  orgs = localOrgs;
-  tokens = localTokens;
-
-  print("_persistInternal completed. Orgs loaded: ${orgs.length}");
-}
-
-// Wrapper to call _persistInternal and manage the completer
-Future<void> persistAndComplete() async {
-  if (_initialPersistCompleter.isCompleted) {
-    print("Initial persist already completed. Skipping.");
-    return;
-  }
-  try {
-    await _persistInternal();
-    _initialPersistCompleter.complete();
-    print("Initial data persistence marked as complete.");
-  } catch (e, s) {
-    print("Error during initial data persistence: $e\n$s");
-    _initialPersistCompleter.completeError(e, s);
-  }
-}
-
-
-List<Token> erc20Tokens = []; // If these are populated by _persistInternal, handle them similarly
+List<Token> erc20Tokens = [];
 List<Token> erc721Tokens = [];
 
+// GlobalKey for GoRouter
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Good practice
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
-
-  if (Human().landing == false) {
-    // Don't await here directly, let FutureBuilder handle it via initialPersistDone
-    persistAndComplete();
-  } else {
-    if (!_initialPersistCompleter.isCompleted) {
-      _initialPersistCompleter.complete(); // Mark as complete if persist is skipped
-      print("Persistence skipped (landing == true), marked as complete.");
-    }
-  }
-
-  runApp(ChangeNotifierProvider<Human>(
-    create: (context) => Human(),
-    child: const MyApp(),
-  ));
+  runApp(
+    ChangeNotifierProvider<Human>(
+      create: (context) => Human(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-final GoRouter router = GoRouter(
-  routes: [
-    GoRoute(
-      path: '/',
-      pageBuilder: (context, state) {
-        return CustomTransitionPage(
-          key: state.pageKey,
-          child: Human().landing == true
-              ? Scaffold(body: Landing())
-              : FutureBuilder<void>(
-                  future: initialPersistDone, // Wait for the initial persist to complete
+// Helper for transitions
+Widget _fade(BuildContext context, Animation<double> animation,
+        Animation<double> secondaryAnimation, Widget child) =>
+    FadeTransition(opacity: animation, child: child);
+const _duration = Duration(milliseconds: 800);
+
+// Function to create the router, can be called from MyApp
+GoRouter _createRouter() {
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: Consumer<Human>(
+              builder: (context, human, child) {
+                if (human.landing == true) {
+                  return Scaffold(body: Landing());
+                }
+                return FutureBuilder<void>(
+                  future: human.dataReady,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator(key: Key("root_loader")));
+                      return const Center(child: CircularProgressIndicator(key: Key("root_loader_main")));
                     }
                     if (snapshot.hasError) {
-                      return Center(child: Text("Error loading data: ${snapshot.error}"));
+                      return Center(child: Text("Error loading data: ${snapshot.error}\n${snapshot.stackTrace}"));
                     }
-                    // Data is loaded (or persist was skipped and completed)
+                    if (human.wrongChain) {
+                      return const UnsupportedChainWidget();
+                    }
                     return Explorer();
                   },
-                ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          transitionDuration:
-              const Duration(milliseconds: 800),
-        );
-      },
-    ),
-    GoRoute(
-      path: '/chat',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: const Scaffold(body: Opacity(opacity: 0.1, child: GameOfLife())),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
+                );
+              },
+            ),
+            transitionsBuilder: _fade,
+            transitionDuration: _duration,
           );
         },
-        transitionDuration:
-            const Duration(milliseconds: 800), // Increase fade time
       ),
-    ),
-    GoRoute(
-      path: '/nft',
-      pageBuilder: (context, state) => CustomTransitionPage(
-        key: state.pageKey,
-        child: Scaffold(
+      GoRoute(
+        path: '/chat',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const Scaffold(body: Opacity(opacity: 0.1, child: GameOfLife())),
+          transitionsBuilder: _fade,
+          transitionDuration: _duration,
+        ),
+      ),
+      GoRoute(
+        path: '/nft',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: Scaffold(
             body: Center(
-                child: FutureBuilder<void>( // Use initialPersistDone
-                    future: initialPersistDone,
+              child: Consumer<Human>(
+                builder: (context, human, child) {
+                  return FutureBuilder<void>(
+                    future: human.dataReady,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator(key: Key("nft_loader")));
@@ -236,251 +112,253 @@ final GoRouter router = GoRouter(
                       if (snapshot.hasError) {
                         return Center(child: Text("Error loading data: ${snapshot.error}"));
                       }
-                      // Ensure orgs is not empty and index is valid before accessing orgs[0]
-                      if (orgs.isEmpty) {
+                      if (human.wrongChain) {
+                        return const UnsupportedChainWidget();
+                      }
+                      if (human.orgs.isEmpty) {
                         return const Center(child: Text("No DAOs loaded for NFT page."));
                       }
-                      return snapshot.connectionState == ConnectionState.waiting
-                          ? const CircularProgressIndicator()
-                          : Initiative(
-                              org: orgs[0],
-                            );
-                    }))),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-        transitionDuration:
-            const Duration(milliseconds: 800), // Increase fade time
-      ),
-    ),
-    GoRoute( // New route for /bridge
-      path: '/bridge',
-      pageBuilder: (context, state) {
-        return CustomTransitionPage(
-          key: state.pageKey,
-          child: const TokenWrapperUI(), // Assuming Bridge() widget is defined elsewhere
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          transitionDuration:
-              const Duration(milliseconds: 800),
-        );
-      },
-    ),
-    GoRoute(
-      path: '/:id', // This 'id' is the <dao address>
-      pageBuilder: (context, state) {
-        final id = state.pathParameters['id']!;
-        Org? org;
-        bool hasOrg = orgs.any((org) => org.address == id);
-        if (hasOrg) {
-          org = orgs.firstWhere((org) => org.address == id);
-        } else {
-          org = null;
-        }
-        // This child logic needs to run *after* initialPersistDone has completed.
-        // So, the entire page builder for '/:id' should be wrapped in a FutureBuilder for initialPersistDone.
-        Widget pageContent;
-        if (Human().landing == true) { // Or some other logic if DAOs can be accessed without full persist
-            pageContent = Scaffold(body: Center(child: Text("Cannot access DAO when in landing mode."))); // Placeholder
-        } else {
-            pageContent = FutureBuilder<void>(
-                future: initialPersistDone,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(key: Key("dao_detail_loader")));
-                  }
-                  if (snapshot.hasError) {
-                    return Center(child: Text("Error loading prerequisite data: ${snapshot.error}"));
-                  }
-
-                  // initialPersistDone has completed, global orgs list should be populated
-                  Org? org;
-                  bool hasOrg = orgs.any((o) => o.address == id);
-                  if (hasOrg) {
-                    org = orgs.firstWhere((o) => o.address == id);
-                  }
-
-                  if (org == null) {
-                    // Org not found after initial load.
-                    // Consider navigation or a "Not Found" message.
-                    // The original code tried to call persist() again and redirect.
-                    // This might indicate an actual missing org or a bad ID.
-                    // For now, redirect or show "Not Found".
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                       if (ModalRoute.of(context)?.isCurrent ?? false) {
-                           // context.go("/"); // Option: redirect to home
-                       }
-                    });
-                    return Scaffold(body: Center(child: Text("DAO with ID '$id' not found.")));
-                  }
-                  return DAO(org: org, InitialTabIndex: 0);
-                },
-            );
-        }
-
-        return CustomTransitionPage(
-          key: state.pageKey, // Keep this one
-          child: pageContent, // Keep this one
-          transitionsBuilder: (context, animation, secondaryAnimation, child) { // Keep this one
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          transitionDuration:
-              const Duration(milliseconds: 800), // Keep this one
-          // REMOVE DUPLICATED PARAMETERS BELOW
-          // key: state.pageKey,
-          // child: child,
-          // transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          //   return FadeTransition(
-          //     opacity: animation,
-          //     child: child,
-          //   );
-          // },
-          // transitionDuration:
-          //     const Duration(milliseconds: 800),
-        );
-      },
-      routes: [
-        GoRoute(
-          path: ':nestedId', // This 'nestedId' can be 'bridge' or a proposal ID
-          pageBuilder: (context, state) {
-            final daoAddress = state.pathParameters['id']!;
-            final nestedSegment = state.pathParameters['nestedId']!;
-
-            Org org = orgs.firstWhere((org) => org.address == daoAddress,
-                orElse: () {
-                  throw Exception("DAO not found for address: $daoAddress while accessing $nestedSegment");
-                });
-
-            Widget pageContent;
-
-            if (nestedSegment.toLowerCase() == 'bridge') {
-              pageContent = Bridge(org: org);
-            } else {
-              pageContent = StreamBuilder<Object>(
-                stream: null,
-                builder: (context, snapshot) {
-                  return DAO(
-                    org: org,
-                    InitialTabIndex: 1,
-                    proposalHash: nestedSegment,
+                      return Initiative(org: human.orgs[0]);
+                    },
                   );
                 },
-              );
-            }
-
-            return CustomTransitionPage(
-              key: state.pageKey,
-              child: pageContent,
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-              transitionDuration:
-                  const Duration(milliseconds: 800),
-            );
-          },
+              ),
+            ),
+          ),
+          transitionsBuilder: _fade,
+          transitionDuration: _duration,
         ),
-      ],
-    ),
-  ],
-);
+      ),
+      GoRoute(
+        path: '/bridge', // General bridge route, might need context if DAO specific
+        pageBuilder: (context, state) {
+          // This might need an Org parameter if it's DAO-specific
+          // For now, assuming it's a general bridge UI
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const TokenWrapperUI(), 
+            transitionsBuilder: _fade,
+            transitionDuration: _duration,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/chain/:chainIdHex/:id', // :id is daoAddress
+        pageBuilder: (context, state) {
+          final String? chainIdHexFromUrl = state.pathParameters['chainIdHex'];
+          final String? daoId = state.pathParameters['id'];
+          if (chainIdHexFromUrl == null || daoId == null) {
+            return CustomTransitionPage(child: Scaffold(body: Center(child: Text("Invalid URL: Missing chain or DAO ID."))), transitionsBuilder: _fade, transitionDuration: _duration);
+          }
+          return CustomTransitionPage(
+            key: ValueKey("dao_${chainIdHexFromUrl}_$daoId"),
+            child: DaoRouteWrapper(
+              targetChainIdHex: chainIdHexFromUrl,
+              daoId: daoId,
+              isNested: false,
+            ),
+            transitionsBuilder: _fade,
+            transitionDuration: _duration,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: ':nestedSegment',
+            pageBuilder: (context, state) {
+              final String? chainIdHexFromUrl = state.pathParameters['chainIdHex'];
+              final String? daoAddress = state.pathParameters['id'];
+              final String? nestedSegment = state.pathParameters['nestedSegment'];
+              if (chainIdHexFromUrl == null || daoAddress == null || nestedSegment == null) {
+                return CustomTransitionPage(child: Scaffold(body: Center(child: Text("Invalid URL for nested DAO segment."))), transitionsBuilder: _fade, transitionDuration: _duration);
+              }
+              return CustomTransitionPage(
+                key: ValueKey("dao_nested_${chainIdHexFromUrl}_${daoAddress}_$nestedSegment"),
+                child: DaoRouteWrapper(
+                  targetChainIdHex: chainIdHexFromUrl,
+                  daoId: daoAddress,
+                  isNested: true,
+                  nestedSegment: nestedSegment,
+                ),
+                transitionsBuilder: _fade,
+                transitionDuration: _duration,
+              );
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/:id', // Old route
+        redirect: (BuildContext context, GoRouterState state) {
+          final String? id = state.pathParameters['id'];
+          final human = Provider.of<Human>(context, listen: false);
+          final String currentChainHex = "0x${human.chain.id.toRadixString(16)}";
+          print("Redirecting from old route /:id ($id) to /chain/$currentChainHex/$id");
+          return '/chain/$currentChainHex/$id';
+        },
+      ),
+    ],
+  );
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
+    final human = Provider.of<Human>(context, listen: false);
     if (ethereum == null) {
-      print("n-are metamask");
-      Human().metamask = false;
+      print("MyApp build: ethereum is null, setting human.metamask = false");
+      human.metamask = false;
     } else {
-      print("are metamask");
-      Human().metamask = true;
+      print("MyApp build: ethereum is not null, setting human.metamask = true");
+      human.metamask = true;
     }
 
-    // Proposal p;
-    // if (true) {
-    //   p = Proposal(org: orgs[0]);
-    //   p.author =
-    //       Human().address ?? "0xc5C77EC5A79340f0240D6eE8224099F664A08EEb";
-    //   p.name = "sarmalele reci";
-    //   p.description = "ce sa facem ca sa fie facut";
-    //   p.createdAt = DateTime.now();
-    //   p.targets = ["0xdestinationcontractad4099F664A08EEb"];
-    //   p.values = ["0"];
-    //   p.hash = makeProposal();
-    //   p.externalResource = "asdasdasd";
-    //   p.status = "active";
-    //   p.type = "treasury";
-    //   // p.type = "mint " + orgs[0].symbol.toString();
-    //   // p.type = "mint " + orgs[0].symbol.toString();
-    //   // p.callDatas = [
-    //   //   {
-    //   //     "recipient1address": "100000",
-    //   //   }
-    //   // ];
-    //   p.callDatas = [
-    //     {"treasuryAddress": "0x09a8ud02398du203987dyas8ouroyaiudy37"}
-    //   ];
-    //   p.store();
-    // } else {
-    //   p = orgs[0].proposals[0];
-    // }
-
-    ThemeData temanormal = ThemeData(
-      fontFamily: 'CascadiaCode',
-      splashColor: const Color(0xff000000),
-      indicatorColor: const Color.fromARGB(255, 161, 215, 219),
-      dividerColor: createMaterialColor(const Color(0xffcfc099)),
-      brightness: Brightness.dark,
-      hintColor: Colors.white70,
-      primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
-      highlightColor: const Color(0xff6e6e6e),
-      useMaterial3: false,
-      // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
-      primarySwatch:
-          createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
-    );
-
-    ThemeData testare = ThemeData(
-      fontFamily: 'CascadiaCode',
-      splashColor: const Color(0xff000000),
-      indicatorColor: const Color.fromARGB(255, 52, 68, 70),
-      dividerColor: createMaterialColor(const Color(0xffcfc099)),
-      brightness: Brightness.light,
-      hintColor: Colors.white70,
-      primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
-      highlightColor: const Color(0xff6e6e6e),
-      // colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(Color(0xffefefef))).copyWith(secondary: createMaterialColor(Color(0xff383736))),
-      primarySwatch:
-          createMaterialColor(const Color.fromARGB(255, 255, 255, 255)),
-    );
-
     return MaterialApp.router(
-        //remove debug banner
         debugShowCheckedModeBanner: false,
         title: 'weRule',
-        theme: temanormal,
-        routerConfig: router);
+        theme: ThemeData(
+            fontFamily: 'CascadiaCode',
+            brightness: Brightness.dark,
+            indicatorColor: const Color.fromARGB(255, 161, 215, 219),
+            primaryColor: createMaterialColor(const Color(0xff4d4d4d)), // Ensure createMaterialColor is defined or use Colors.
+            highlightColor: const Color(0xff6e6e6e),
+            dividerColor: createMaterialColor(const Color(0xffcfc099)), // Ensure createMaterialColor is defined
+            hintColor: Colors.white70,
+            useMaterial3: false,
+            // Add other theme properties from temanormal as needed
+             colorScheme: ColorScheme.fromSwatch(
+                brightness: Brightness.dark,
+                primarySwatch: createMaterialColor(const Color.fromARGB(255, 255, 255, 255))
+            ).copyWith(
+                secondary: createMaterialColor(const Color(0xff383736))
+            )
+        ),
+        routerConfig: _createRouter() // Call _createRouter here
+      );
+  }
+}
+
+class DaoRouteWrapper extends StatefulWidget {
+  final String targetChainIdHex;
+  final String daoId;
+  final bool isNested;
+  final String? nestedSegment;
+
+  const DaoRouteWrapper({
+    super.key,
+    required this.targetChainIdHex,
+    required this.daoId,
+    required this.isNested,
+    this.nestedSegment,
+  });
+
+  @override
+  State<DaoRouteWrapper> createState() => _DaoRouteWrapperState();
+}
+
+class _DaoRouteWrapperState extends State<DaoRouteWrapper> {
+  late Future<void> _chainSetupFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _chainSetupFuture = _initializeChain();
+  }
+
+  Future<void> _initializeChain() async {
+    final human = Provider.of<Human>(context, listen: false);
+    final String normalizedTargetChainIdHex = widget.targetChainIdHex.startsWith('0x') 
+                                              ? widget.targetChainIdHex 
+                                              : '0x${widget.targetChainIdHex}';
+    final String currentHumanChainHex = "0x${human.chain.id.toRadixString(16)}";
+
+    print("DaoRouteWrapper _initializeChain: Target: $normalizedTargetChainIdHex, Current: $currentHumanChainHex, DAO ID: ${widget.daoId}");
+
+    if (currentHumanChainHex != normalizedTargetChainIdHex || human.orgs.isEmpty || human.wrongChain) {
+       if (chains.containsKey(normalizedTargetChainIdHex)) { // Ensure target chain is known
+           print("DaoRouteWrapper: Target chain $normalizedTargetChainIdHex differs or data needs load. Switching/Reloading.");
+           // This will set human.chain, call persistAndComplete (which creates new dataReady future & notifies)
+           await human.switchToChainAndReload(normalizedTargetChainIdHex); 
+       } else {
+           print("DaoRouteWrapper: Target chain $normalizedTargetChainIdHex from URL is unknown.");
+           human.wrongChain = true; 
+           if (!human.dataLoadCompleterIsCompleted) human.completeDataLoad();
+           human.notifyListeners();
+           // No throw needed, FutureBuilder will handle wrongChain
+       }
+    } else {
+        print("DaoRouteWrapper: Already on target chain $normalizedTargetChainIdHex and data likely loaded.");
+        if (!human.dataLoadCompleterIsCompleted) human.completeDataLoad();
+        // No need to notify if nothing changed
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _chainSetupFuture, 
+      builder: (context, setupSnapshot) {
+        if (setupSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(key: Key("chain_setup_loader")));
+        }
+        // Do not check setupSnapshot.hasError here if _initializeChain handles its errors by setting human.wrongChain
+        // or completing human.dataReady with an error.
+
+        return Consumer<Human>(
+          builder: (context, human, child) {
+            // Now that _chainSetupFuture is complete, human.dataReady should be the one for the target chain (or completed with error)
+            return FutureBuilder<void>(
+              future: human.dataReady,
+              builder: (context, dataSnapshot) {
+                if (dataSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(key: Key("dao_data_loader_wrapper")));
+                }
+                if (dataSnapshot.hasError) {
+                  return Center(child: Text("Error loading DAO data: ${dataSnapshot.error}"));
+                }
+                if (human.wrongChain) { 
+                  return const UnsupportedChainWidget();
+                }
+                
+                final String currentHumanChainHex = "0x${human.chain.id.toRadixString(16)}";
+                final String normalizedTargetChainIdHex = widget.targetChainIdHex.startsWith('0x') 
+                                                          ? widget.targetChainIdHex 
+                                                          : '0x${widget.targetChainIdHex}';
+
+                if (currentHumanChainHex != normalizedTargetChainIdHex) {
+                    return Center(child: Text("Chain switch in progress. Expected $normalizedTargetChainIdHex, currently on ${human.chain.name}."));
+                }
+
+                Org? orgToDisplay;
+                bool hasOrg = human.orgs.any((o) => o.address == widget.daoId);
+                if (hasOrg) {
+                  orgToDisplay = human.orgs.firstWhere((o) => o.address == widget.daoId);
+                }
+
+                if (orgToDisplay == null) {
+                  return Scaffold(body: Center(child: Text("DAO with ID '${widget.daoId}' not found on chain ${human.chain.name}.")));
+                }
+
+                if (widget.isNested) {
+                  if (widget.nestedSegment!.toLowerCase() == 'bridge') {
+                    return Bridge(org: orgToDisplay);
+                  }
+                  return DAO(org: orgToDisplay, InitialTabIndex: 1, proposalHash: widget.nestedSegment);
+                } else {
+                  return DAO(org: orgToDisplay, InitialTabIndex: 0);
+                }
+              },
+            );
+          },
+        );
+      },
+    );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({super.key, required this.title});
-  bool izzo = true;
+  const MyHomePage({super.key, required this.title});
   final String title;
   @override
   State<MyHomePage> createState() => MyHomePageState();
@@ -490,21 +368,10 @@ class MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-        // body:  DelegationBoxes()
-        // body: NewProposal(org: orgs[0])
-        // body: Members(org: orgs[2],)
-        // body: Prelaunch()
-
-        // body: DaoConfigurationDetails(
-        //     type: "Quorum",
-        //     proposalData: {"treasuryAddress": "s0a9d09vuj09cj09j4093qjf"})
-        // body: RegistryProposalDetails(
-        //     keyName: "thekeyofthething", value: "and here is the value")
-        // // body: Explorer()
+        // body: Explorer() // Example
         );
   }
 }
-// 0xc5C77EC5A79340f0240D6eE8224099F664A08EEb
 
 class WalletBTN extends StatefulWidget {
   const WalletBTN({super.key});
@@ -513,16 +380,13 @@ class WalletBTN extends StatefulWidget {
 }
 
 class _WalletBTNState extends State<WalletBTN> {
-  final bool _isConnecting = false;
   @override
   void initState() {
     super.initState();
-    // Load existing address
   }
 
   @override
   Widget build(BuildContext context) {
-    // Access Human instance using Provider
     var human = Provider.of<Human>(context);
 
     if (human.busy) {
@@ -554,32 +418,26 @@ class _WalletBTNState extends State<WalletBTN> {
                         style:
                             TextStyle(fontFamily: "Roboto Mono", fontSize: 16),
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.network(
-                            metamask,
+                            metamask, 
                             height: 100,
                           ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      const SizedBox(height: 10),
                       const Text(
                         "Download it from",
                         style:
                             TextStyle(fontFamily: "Roboto Mono", fontSize: 16),
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      const SizedBox(height: 10),
                       TextButton(
                           onPressed: () {
-                            launch("https://metamask.io/");
+                            launchUrl(Uri.parse("https://metamask.io/"));
                           },
                           child: const Text(
                             "https://metamask.io/",
@@ -593,18 +451,12 @@ class _WalletBTNState extends State<WalletBTN> {
             },
           );
         } else {
-          // Since we're in a StatelessWidget, no need to call setState
           if (human.address == null) {
-            setState(() {
-              human.busy = true;
-            });
             await human.signIn();
-            setState(() {
-              human.busy = false;
-            });
           } else {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: ((context) => Explorer())));
+            print("WalletBTN: Already signed in, address: ${human.address}. Triggering data refresh.");
+            // If already signed in, clicking might imply user wants to refresh or ensure correct chain
+            await human.signIn(); // signIn logic now handles re-verification and potential data reload
           }
         }
       },
@@ -615,7 +467,7 @@ class _WalletBTNState extends State<WalletBTN> {
               ? Row(
                   children: [
                     const SizedBox(width: 4),
-                    Image.network(metamask, height: 27), // Adjust the URL
+                    Image.network(metamask, height: 27),
                     const SizedBox(width: 9),
                     const Text("Connect Wallet"),
                   ],
@@ -623,30 +475,14 @@ class _WalletBTNState extends State<WalletBTN> {
               : Row(
                   children: [
                     FutureBuilder<Uint8List>(
-                      future: generateAvatarAsync(hashString(human
-                          .address!)), // Make your generateAvatar function return Future<Uint8List>
+                      future: generateAvatarAsync(hashString(human.address!)),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Container(
-                            width: 40.0,
-                            height: 40.0,
-                            color: Colors.grey,
-                          );
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Container(width: 40.0, height: 40.0, color: Colors.grey);
                         } else if (snapshot.hasData) {
-                          print("generating");
-                          return Image.memory(
-                            snapshot.data!,
-                            height: 40,
-                            // fit: BoxFit.contain,
-                          );
+                          return Image.memory(snapshot.data!, height: 40);
                         } else {
-                          return Container(
-                            width: 40.0,
-                            height: 40.0,
-                            color: const Color.fromARGB(
-                                255, 116, 116, 116), // Error color
-                          );
+                          return Container(width: 40.0, height: 40.0, color: const Color.fromARGB(255, 116, 116, 116));
                         }
                       },
                     ),

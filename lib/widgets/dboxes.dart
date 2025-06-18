@@ -3,7 +3,9 @@ import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import '../entities/org.dart';
-import '../main.dart';
+// import '../main.dart'; // daosCollection is now in Human
+import '../entities/human.dart'; // Import Human
+import 'package:provider/provider.dart'; // Import Provider
 import '../screens/account.dart';
 
 class Wait extends StatelessWidget {
@@ -363,7 +365,18 @@ class _DelegationBoxesState extends State<DelegationBoxes> {
                                 });
                                 return;
                               }
-                              var memberDoc = await daosCollection
+                              // Access daosCollection via Human instance
+                              final human = Provider.of<Human>(context, listen: false);
+                              if (human.daosCollection == null) {
+                                print("Error: human.daosCollection is null in DelegationDialog _setDelegate");
+                                // Handle this error appropriately, e.g., show a message and return
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Error: DAO data not fully loaded. Please try again."))
+                                );
+                                setState(() { widget.busy = false; });
+                                return;
+                              }
+                              var memberDoc = await human.daosCollection
                                   .doc(widget.org.address)
                                   .collection("members")
                                   .doc(widget.m.address)

@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import Provider
 import '../entities/token.dart';
-import '../main.dart';
+// import '../main.dart'; // No longer needed for global orgs
+import '../entities/human.dart'; // Import Human
 import '../widgets/gameOfLife.dart';
 import '../widgets/menu.dart';
 import '../entities/org.dart';
@@ -52,8 +54,13 @@ class _ExplorerState extends State<Explorer> {
   }
 
   void _applyFilterAndPagination() {
+    // Access orgs from Human instance via Provider
+    // Ensure context is available here. If _applyFilterAndPagination is called from initState,
+    // it might be too early for Provider.of. It's called from addPostFrameCallback in initState, which is fine.
+    // And also from onChanged of TextField, where context is available.
+    final human = Provider.of<Human>(context, listen: false);
     _filteredOrgs =
-        orgs.where((o) => o.name.toLowerCase().contains(widget.query)).toList();
+        human.orgs.where((o) => o.name.toLowerCase().contains(widget.query)).toList();
 
     _totalPages = (_filteredOrgs.length / _itemsPerPage).ceil();
     if (_totalPages == 0) {

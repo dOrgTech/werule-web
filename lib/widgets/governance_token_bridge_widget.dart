@@ -514,7 +514,7 @@ class _GovernanceTokenBridgeWidgetState extends State<GovernanceTokenBridgeWidge
                 onPressed: uiDisabled ? null : _handleTransaction,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).indicatorColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: const Color.fromARGB(255, 0, 0, 0),
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   textStyle: const TextStyle(fontSize: 16),
                 ).copyWith(backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) => states.contains(WidgetState.disabled) ? Colors.grey.shade400 : Theme.of(context).indicatorColor)),

@@ -4,6 +4,8 @@ import 'package:Homebase/utils/reusable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart'; // Import Provider
+import '../entities/human.dart'; // Import Human
 import '../entities/org.dart';
 import '../entities/proposal.dart';
 import 'package:go_router/go_router.dart';
@@ -68,7 +70,11 @@ class _ProposalCardState extends State<ProposalCard> {
         elevation: 3,
         child: InkWell(
           onTap: () {
-            context.go("/${widget.org.address!}/${widget.proposal.id}");
+            final human = Provider.of<Human>(context, listen: false);
+            final String currentChainIdHex = "0x${human.chain.id.toRadixString(16)}";
+            // Ensure proposal.id is not null, though it should be set if the card is displayed.
+            final String proposalId = widget.proposal.id ?? "unknown_proposal";
+            context.go("/chain/$currentChainIdHex/${widget.org.address!}/$proposalId");
           },
           child: SizedBox(
             height: 44,
