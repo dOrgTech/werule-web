@@ -1,0 +1,72 @@
+// lib/src/models/org.dart
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class Org {
+  final String name;
+  final String address; // The document ID from Firestore
+  final int decimals;
+  final DateTime creationDate;
+  final int executionDelay; // Note: Firestore field is executionDelay
+  final int holders;
+  final bool nonTransferrable;
+  final String proposalThreshold;
+  final List proposals;
+  final int quorum;
+  final Map<String, dynamic> registry; // Storing as a map
+  final String symbol;
+  final String govTokenAddress; // Mapped from 'token' field
+  final String totalSupply;
+  final String? underlyingToken; // Made nullable
+  final int votingDelay;
+  final int votingDuration;
+  final bool debatesOnly;
+  final String description;
+
+  Org({
+    required this.name,
+    required this.address,
+    required this.decimals,
+    required this.creationDate,
+    required this.executionDelay,
+    required this.holders,
+    required this.nonTransferrable,
+    required this.proposalThreshold,
+    required this.proposals,
+    required this.quorum,
+    required this.registry,
+    required this.symbol,
+    required this.govTokenAddress,
+    required this.totalSupply,
+    this.underlyingToken,
+    required this.votingDelay,
+    required this.votingDuration,
+    this.debatesOnly = false, // Default value
+    required this.description,
+  });
+
+  // Factory constructor to create an Org from a Firestore document
+  factory Org.fromFirestore(Map<String, dynamic> json, String docId) {
+    return Org(
+      address: docId, // Use the document ID as the address
+      name: json['name'] ?? 'Unnamed DAO',
+      symbol: json['symbol'] ?? 'NO_SYM',
+      description: json['description'] ?? 'No description provided.',
+      decimals: json['decimals'] ?? 0,
+      creationDate: (json['creationDate'] as Timestamp).toDate(),
+      executionDelay: json['executionDelay'] ?? 0,
+      holders: json['holders'] ?? 0,
+      nonTransferrable: json['nonTransferrable'] ?? false,
+      proposalThreshold: json['proposalThreshold']?.toString() ?? '0',
+      proposals: json['proposals'] ?? [],
+      quorum: json['quorum'] ?? 0,
+      registry: json['registry'] is Map ? Map<String, dynamic>.from(json['registry']) : {},
+      govTokenAddress: json['token'] ?? '', // Mapping from 'token'
+      totalSupply: json['totalSupply']?.toString() ?? '0',
+      // 'underlying_token' doesn't seem to be in your Firestore example, adding for future use
+      underlyingToken: json['underlying_token'], 
+      votingDelay: json['votingDelay'] ?? 0,
+      votingDuration: json['votingDuration'] ?? 0,
+    );
+  }
+}

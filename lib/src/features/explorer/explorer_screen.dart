@@ -1,0 +1,276 @@
+// lib/src/features/explorer/explorer_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/widgets/dao_card.dart';
+import '../../models/network.dart';
+import '../../providers/dao_provider.dart';
+import '../../providers/network_provider.dart';
+import '../../utils/reusable.dart';
+
+class ExplorerScreen extends StatefulWidget {
+  final String? networkName;
+  const ExplorerScreen({super.key, this.networkName});
+
+  @override
+  State<ExplorerScreen> createState() => _ExplorerScreenState();
+}
+
+class _ExplorerScreenState extends State<ExplorerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.networkName != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<NetworkProvider>().selectNetworkByName(widget.networkName!);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final networkProvider = context.watch<NetworkProvider>();
+
+    if (auth.isConnected && auth.chainId != null && auth.chainId != networkProvider.selectedNetwork?.chainId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<NetworkProvider>().selectNetworkByChainId(auth.chainId!);
+      });
+    }
+
+    final isChainSupported = !auth.isConnected || (auth.chainId != null && networkProvider.isChainSupported(auth.chainId!));
+
+    return Scaffold(
+      backgroundColor: const Color(0xff222222),
+      appBar: AppBar(
+        title: InkWell(
+          onTap: () => context.go('/'),
+          child: const Text('WeRule DAO Explorer'),
+        ),
+        backgroundColor: const Color(0xff222222),
+        elevation: 0,
+        actions: const [
+          _NetworkSelector(),
+          SizedBox(width: 8),
+          _WalletConnector(),
+          SizedBox(width: 16),
+        ],
+      ),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 20.0),
+                  child: _TopBar(),
+                ),
+                auth.isAutoConnecting
+                    ? const Center(child: CircularProgressIndicator())
+                    : !isChainSupported
+                        ? const _WrongNetworkScreen()
+                        : Consumer<DaoProvider>(
+                            builder: (context, daoProvider, child) {
+                              switch (daoProvider.state) {
+                                case DataState.loading:
+                                  return const Center(child: CircularProgressIndicator());
+                                case DataState.error:
+                                  return Center(child: Text('Error: ${daoProvider.errorMessage}'));
+                                case DataState.loaded:
+                                  if (daoProvider.displayedDaos.isEmpty) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(32.0),
+                                      child: Center(child: Text('No DAOs found matching your search.')),
+                                    );
+                                  }
+                                  return LayoutBuilder(builder: (context, constraints) {
+                                    int crossAxisCount;
+                                    double childAspectRatio;
+                                    if (constraints.maxWidth < 600) { crossAxisCount = 1; childAspectRatio = 1.8;
+                                    } else if (constraints.maxWidth < 950) { crossAxisCount = 2; childAspectRatio = 1.6;
+                                    } else { crossAxisCount = 3; childAspectRatio = 1.7; }
+                                    return GridView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: crossAxisCount, mainAxisSpacing: 16.0, crossAxisSpacing: 16.0, childAspectRatio: childAspectRatio,
+                                      ),
+                                      itemCount: daoProvider.displayedDaos.length,
+                                      itemBuilder: (context, index) {
+                                        final org = daoProvider.displayedDaos[index];
+                                        return InkWell(
+                                          borderRadius: BorderRadius.circular(8.0),
+                                          onTap: () {
+                                            final selectedNetwork = context.read<NetworkProvider>().selectedNetwork;
+                                            if (selectedNetwork != null) {
+                                              context.go('/${selectedNetwork.name}/${org.address}');
+                                            }
+                                          },
+                                          child: DAOCard(org: org),
+                                        );
+                                      },
+                                    );
+                                  });
+                                case DataState.initial:
+                                  return const Center(child: Text("Select a network to begin."));
+                              }
+                            },
+                          ),
+                const _PaginationControls(),
+                const SizedBox(height: 100),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NetworkSelector extends StatelessWidget {
+  const _NetworkSelector();
+  @override
+  Widget build(BuildContext context) {
+    final networkProvider = context.watch<NetworkProvider>();
+    final authProvider = context.read<AuthProvider>();
+    if (networkProvider.isLoading) {
+      return const Center(child: Padding(padding: EdgeInsets.all(12.0), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))));
+    }
+    if (networkProvider.networks.isEmpty || networkProvider.selectedNetwork == null) {
+      return const Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text("No Networks")));
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      decoration: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(8)),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Network>(
+          value: networkProvider.selectedNetwork,
+          icon: const Icon(Icons.keyboard_arrow_down),
+          onChanged: (Network? newNetwork) {
+            if (newNetwork != null) {
+              // THE FIX: We tell the router to navigate to the new URL immediately.
+              context.go('/${newNetwork.name}');
+
+              // Then, if the wallet is connected, we also ask it to switch.
+              // The app's reconciliation logic will handle any temporary mismatch.
+              if (authProvider.isConnected) {
+                authProvider.switchWalletChain(newNetwork);
+              }
+            }
+          },
+          items: networkProvider.networks.map<DropdownMenuItem<Network>>((Network network) {
+            return DropdownMenuItem<Network>(
+              value: network,
+              child: Text(network.name),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _WalletConnector extends StatelessWidget {
+  const _WalletConnector();
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    if (auth.isLoading || auth.isAutoConnecting) {
+      return const Center(child: Padding(padding: EdgeInsets.all(12.0), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))));
+    }
+    if (!auth.isConnected) {
+      return ElevatedButton(
+        onPressed: () => context.read<AuthProvider>().connectWallet(),
+        child: const Text("Connect Wallet"),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      decoration: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(8)),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: auth.selectedAccount,
+          icon: const Icon(Icons.keyboard_arrow_down),
+          onChanged: (String? newAccount) {
+            context.read<AuthProvider>().selectAccount(newAccount);
+          },
+          items: auth.accounts.map<DropdownMenuItem<String>>((String account) {
+            return DropdownMenuItem<String>(
+              value: account,
+              child: Text(shortenString(account)),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _WrongNetworkScreen extends StatelessWidget {
+  const _WrongNetworkScreen();
+  @override
+  Widget build(BuildContext context) {
+    final networkProvider = context.watch<NetworkProvider>();
+    final authProvider = context.read<AuthProvider>();
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.amber, size: 60),
+          const SizedBox(height: 24),
+          const Text("Network Not Supported", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          const Text("Please switch to one of the following networks in your wallet:"),
+          const SizedBox(height: 24),
+          ...networkProvider.networks.map((network) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: ElevatedButton(
+              onPressed: () => authProvider.switchWalletChain(network),
+              child: Text("Switch to ${network.name}"),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar();
+  @override
+  Widget build(BuildContext context) {
+    final daoProvider = context.watch<DaoProvider>();
+    final isMobile = MediaQuery.of(context).size.width < 700;
+    final searchBar = TextField(onChanged: (value) => daoProvider.search(value), decoration: InputDecoration(hintText: 'Find DAO by name or address', prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.grey)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).indicatorColor))));
+    final daoCount = Text('${daoProvider.totalDaoCount} DAOs', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
+    final createDaoButton = ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xffa1d0d0), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Create DAO', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)));
+    if (isMobile) {
+      return Column(children: [searchBar, const SizedBox(height: 16), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [daoCount, createDaoButton])]);
+    } else {
+      return Row(children: [Expanded(flex: 2, child: searchBar), const Spacer(flex: 1), daoCount, const SizedBox(width: 24), createDaoButton]);
+    }
+  }
+}
+
+class _PaginationControls extends StatelessWidget {
+  const _PaginationControls();
+  @override
+  Widget build(BuildContext context) {
+    final daoProvider = context.watch<DaoProvider>();
+    if (daoProvider.state != DataState.loaded || daoProvider.totalPages <= 1) {
+      return const SizedBox.shrink();
+    }
+    final currentPage = daoProvider.currentPage;
+    final totalPages = daoProvider.totalPages;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: SizedBox(height: 52, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [IconButton(icon: const Icon(Icons.first_page), onPressed: currentPage > 1 ? () => daoProvider.changePage(1) : null), IconButton(icon: const Icon(Icons.chevron_left), onPressed: currentPage > 1 ? () => daoProvider.changePage(currentPage - 1) : null), Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Text('Page $currentPage of $totalPages')), IconButton(icon: const Icon(Icons.chevron_right), onPressed: currentPage < totalPages ? () => daoProvider.changePage(currentPage + 1) : null), IconButton(icon: const Icon(Icons.last_page), onPressed: currentPage < totalPages ? () => daoProvider.changePage(totalPages) : null)])),
+    );
+  }
+}
+// lib/src/features/explorer/explorer_screen.dart
