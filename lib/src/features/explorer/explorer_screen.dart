@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/providers/auth_provider.dart';
-import 'package:werule/widgets/dao_card.dart';
+
 import '../../models/network.dart';
 import '../../providers/dao_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../utils/reusable.dart';
+// Import the new shared AppBar
+import '../../widgets/dao_card.dart';
+import '../../widgets/shared_app_bar.dart';
 
 class ExplorerScreen extends StatefulWidget {
   final String? networkName;
@@ -44,19 +47,13 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xff222222),
-      appBar: AppBar(
-        title: InkWell(
-          onTap: () => context.go('/'),
-          child: const Text('WeRule DAO Explorer'),
-        ),
-        backgroundColor: const Color(0xff222222),
-        elevation: 0,
-        actions: const [
-          _NetworkSelector(),
-          SizedBox(width: 8),
-          _WalletConnector(),
-          SizedBox(width: 16),
-        ],
+      // Use the new SharedAppBar
+      appBar: const SharedAppBar(
+        isNetworkSelectorEnabled: true, // Enable selector on explorer
+      ),
+      // Add the endDrawer for the mobile layout
+      endDrawer: const MobileDrawer(
+        isNetworkSelectorEnabled: true,
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -131,6 +128,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     );
   }
 }
+
 
 class _NetworkSelector extends StatelessWidget {
   const _NetworkSelector();
