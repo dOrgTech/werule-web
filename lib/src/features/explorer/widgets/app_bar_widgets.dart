@@ -65,7 +65,38 @@ class WalletConnector extends StatelessWidget {
     }
     if (!auth.isConnected) {
       return ElevatedButton(
-        onPressed: () => context.read<AuthProvider>().connectWallet(),
+        onPressed: () {
+          if (auth.isWalletAvailable) {
+            context.read<AuthProvider>().connectWallet();
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  backgroundColor: const Color(0xff2c2c2c),
+                  title: const Text('No Wallet Detected'),
+                  content: const SingleChildScrollView(
+                    child: ListBody(
+                      children: <Widget>[
+                        Text('A web3 wallet (like MetaMask or Rabby) is required to connect.'),
+                        SizedBox(height: 8),
+                        Text('Please install a browser extension and refresh the page.'),
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('OK'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        },
         child: const Text("Connect Wallet"),
       );
     }

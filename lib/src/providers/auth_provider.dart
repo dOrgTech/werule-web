@@ -23,6 +23,7 @@ class AuthProvider extends ChangeNotifier {
   List<String> get accounts => _accounts;
   String? get selectedAccount => _selectedAccount;
   int? get chainId => _chainId;
+  bool get isWalletAvailable => _blockchainService.isWalletAvailable();
 
   // Constructor is simplified
   AuthProvider(this._blockchainService) {

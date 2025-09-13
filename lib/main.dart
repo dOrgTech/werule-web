@@ -8,6 +8,7 @@ import 'package:werule/src/providers/dao_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/routing/app_router.dart';
 import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/services/members_service.dart';
 import 'package:werule/src/services/treasury_service.dart';
@@ -32,7 +33,8 @@ class MyApp extends StatelessWidget {
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         Provider<BlockchainService>(create: (_) => BlockchainService()),
         Provider<TreasuryService>(create: (_) => TreasuryService()),
-        Provider<MembersService>(create: (_) => MembersService()), // NEW
+        Provider<MembersService>(create: (_) => MembersService()),
+        Provider<CalldataService>(create: (_) => CalldataService()), // NEW
 
         // Independent Providers
         ChangeNotifierProvider<NetworkProvider>(

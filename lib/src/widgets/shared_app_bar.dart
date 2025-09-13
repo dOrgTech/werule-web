@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:werule/src/features/dao_detail/widgets/footer.dart';
 import 'package:werule/src/features/explorer/widgets/app_bar_widgets.dart';
 
 class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -22,10 +23,8 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
         // Define a threshold for switching to mobile layout.
         final isMobile = constraints.maxWidth < 650;
 
-        final titleWidget = InkWell(
-          onTap: () => context.go('/'),
-          child: const Text('WeRule DAO Explorer'),
-        );
+        final titleWidget = Logo();
+        
 
         final actionsRow = [
           NetworkSelector(isEnabled: isNetworkSelectorEnabled),

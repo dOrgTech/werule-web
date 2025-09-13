@@ -93,6 +93,26 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
       return null;
     }
   }
-}
 
-// lib/src/services/firestore_service.dart
+  // NEW: Get a real-time stream for a single proposal
+  Stream<Proposal?> getProposalStream(String networkDaoCollection, String daoAddress, String proposalId) {
+    try {
+      final docStream = _db
+          .collection(networkDaoCollection)
+          .doc(daoAddress)
+          .collection('proposals')
+          .doc(proposalId)
+          .snapshots();
+
+      return docStream.map((doc) {
+        if (doc.exists) {
+          return Proposal.fromFirestore(doc);
+        }
+        return null;
+      });
+    } catch (e) {
+      print("Error creating proposal stream: $e");
+      return Stream.error(Exception('Failed to create proposal stream.'));
+    }
+  }
+}

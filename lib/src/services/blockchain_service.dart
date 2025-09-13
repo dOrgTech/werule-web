@@ -1,6 +1,9 @@
 // lib/src/services/blockchain_service.dart
 
 import 'package:flutter_web3/flutter_web3.dart' as web3;
+import 'package:web3dart/web3dart.dart';
+import 'package:http/http.dart' as http;
+import 'package:werule/src/services/governor_abi.dart';
 import '../models/network.dart';
 
 class BlockchainService {
@@ -90,6 +93,82 @@ class BlockchainService {
       // This is the core fix for the crash.
       callback(_parseChainId(chainId));
     });
+  }
+
+  // --- NEW METHODS for Governor Contract Interaction ---
+
+  Future<int> getProposalState(String contractAddress, BigInt proposalId, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        ContractAbi.fromJson(governorAbi, 'Governor'),
+        EthereumAddress.fromHex(contractAddress),
+      );
+      final stateFunction = contract.function('state');
+      final result = await client.call(
+        contract: contract,
+        function: stateFunction,
+        params: [proposalId],
+      );
+      // The result is a list containing the state enum, which is a uint8.
+      if (result.isNotEmpty && result[0] is BigInt) {
+        return (result[0] as BigInt).toInt();
+      }
+      throw Exception('Failed to parse proposal state from contract.');
+    } catch (e) {
+      print('[BlockchainService] Error getting proposal state: $e');
+      rethrow;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  Future<List<BigInt>> getProposalVotes(String contractAddress, BigInt proposalId, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        ContractAbi.fromJson(governorAbi, 'Governor'),
+        EthereumAddress.fromHex(contractAddress),
+      );
+      final votesFunction = contract.function('proposalVotes');
+      final result = await client.call(
+        contract: contract,
+        function: votesFunction,
+        params: [proposalId],
+      );
+      // result is [againstVotes, forVotes, abstainVotes]
+      if (result.length == 3) {
+        return result.cast<BigInt>();
+      }
+      throw Exception('Failed to parse proposal votes from contract.');
+    } catch (e) {
+      print('[BlockchainService] Error getting proposal votes: $e');
+      rethrow;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // --- NEW: Placeholder Action Methods ---
+
+  Future<String> castVote(String contractAddress, BigInt proposalId, int support) async {
+    // In a real app, this would use web3.personal!.sendTransaction to vote.
+    print('Casting vote for proposal $proposalId with support $support on contract $contractAddress');
+    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
+    // throw Exception("User rejected transaction"); // Uncomment to test error case
+    return "0x_mock_vote_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
+  }
+
+  Future<String> queueProposal(String contractAddress, BigInt proposalId) async {
+    print('Queueing proposal $proposalId on contract $contractAddress');
+    await Future.delayed(const Duration(seconds: 2));
+    return "0x_mock_queue_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
+  }
+
+  Future<String> executeProposal(String contractAddress, BigInt proposalId) async {
+    print('Executing proposal $proposalId on contract $contractAddress');
+    await Future.delayed(const Duration(seconds: 2));
+    return "0x_mock_execute_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
 }
 // lib/src/services/blockchain_service.dart
