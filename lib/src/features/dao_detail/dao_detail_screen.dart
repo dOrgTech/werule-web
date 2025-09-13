@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/widgets/dao_treasury_widget.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/widgets/shared_app_bar.dart';
 
@@ -27,6 +29,15 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // THE FIX: This is the crucial change. We now explicitly tell the
+    // global NetworkProvider to update its state to match the network
+    // specified in the URL. This ensures all subsequent widgets (like the
+    // treasury) use the correct network's RPC and explorer URLs.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NetworkProvider>().selectNetworkByName(widget.networkName);
+    });
+
     final firestoreService = context.read<FirestoreService>();
     _daoDetailsFuture = _fetchDetails(firestoreService);
   }
@@ -45,9 +56,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff222222),
-      // Use the SharedAppBar, selector is disabled by default.
       appBar: const SharedAppBar(),
-      // Add the endDrawer for mobile.
       endDrawer: const MobileDrawer(
         isNetworkSelectorEnabled: false,
       ),
@@ -91,6 +100,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                             context.go('/${widget.networkName}/${widget.daoAddress}/proposals/${p.id}');
                           },
                         )),
+                  DaoTreasuryWidget(dao: dao),
                 ],
               ),
             ),

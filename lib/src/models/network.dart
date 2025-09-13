@@ -11,8 +11,9 @@ class Network {
   final String rpcUrl;
   final String daoFactory;
   final int chainId;
-  final String nativeCurrencyName; // NEW: e.g., "Tezos"
-  final String nativeCurrencySymbol; // NEW: e.g., "XTZ"
+  final String nativeCurrencyName;
+  final String nativeCurrencySymbol;
+  final String blockExplorerUrl;
 
   Network({
     required this.name,
@@ -21,6 +22,7 @@ class Network {
     required this.chainId,
     required this.nativeCurrencyName,
     required this.nativeCurrencySymbol,
+    required this.blockExplorerUrl,
   });
 
   factory Network.fromFirestore(Map<String, dynamic> data, String docId) {
@@ -31,6 +33,7 @@ class Network {
       chainId: data['chainId'] ?? knownChainIds[docId] ?? 0,
       nativeCurrencyName: data['nativeCurrency'] ?? 'ETH', // Fallback
       nativeCurrencySymbol: data['symbol'] ?? 'ETH', // Fallback
+      blockExplorerUrl: data['blockExplorer'] ?? '',
     );
   }
 

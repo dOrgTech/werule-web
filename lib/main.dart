@@ -9,6 +9,7 @@ import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/routing/app_router.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/services/treasury_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         // Services
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         Provider<BlockchainService>(create: (_) => BlockchainService()),
+        Provider<TreasuryService>(create: (_) => TreasuryService()),
 
         // Independent Providers
         ChangeNotifierProvider<NetworkProvider>(

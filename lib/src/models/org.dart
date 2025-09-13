@@ -7,13 +7,13 @@ class Org {
   final String address; // The document ID from Firestore
   final int decimals;
   final DateTime creationDate;
-  final int executionDelay; // Note: Firestore field is executionDelay
+  final int executionDelay;
   final int holders;
   final bool nonTransferrable;
   final String proposalThreshold;
   final List proposals;
   final int quorum;
-  final Map<String, dynamic> registry; // Storing as a map
+  final String registryAddress; 
   final String symbol;
   final String govTokenAddress; // Mapped from 'token' field
   final String totalSupply;
@@ -34,21 +34,20 @@ class Org {
     required this.proposalThreshold,
     required this.proposals,
     required this.quorum,
-    required this.registry,
+    required this.registryAddress,
     required this.symbol,
     required this.govTokenAddress,
     required this.totalSupply,
     this.underlyingToken,
     required this.votingDelay,
     required this.votingDuration,
-    this.debatesOnly = false, // Default value
+    this.debatesOnly = false,
     required this.description,
   });
 
-  // Factory constructor to create an Org from a Firestore document
   factory Org.fromFirestore(Map<String, dynamic> json, String docId) {
     return Org(
-      address: docId, // Use the document ID as the address
+      address: docId,
       name: json['name'] ?? 'Unnamed DAO',
       symbol: json['symbol'] ?? 'NO_SYM',
       description: json['description'] ?? 'No description provided.',
@@ -60,13 +59,13 @@ class Org {
       proposalThreshold: json['proposalThreshold']?.toString() ?? '0',
       proposals: json['proposals'] ?? [],
       quorum: json['quorum'] ?? 0,
-      registry: json['registry'] is Map ? Map<String, dynamic>.from(json['registry']) : {},
-      govTokenAddress: json['token'] ?? '', // Mapping from 'token'
+      registryAddress: json['registryAddress'] as String? ?? '',
+      govTokenAddress: json['token'] ?? '',
       totalSupply: json['totalSupply']?.toString() ?? '0',
-      // 'underlying_token' doesn't seem to be in your Firestore example, adding for future use
       underlyingToken: json['underlying_token'], 
       votingDelay: json['votingDelay'] ?? 0,
       votingDuration: json['votingDuration'] ?? 0,
     );
   }
 }
+// lib/src/models/org.dart```
