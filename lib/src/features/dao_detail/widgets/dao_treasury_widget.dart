@@ -138,6 +138,7 @@ class _TreasuryViewState extends State<_TreasuryView> {
           );
 
         final toggleButtons = ToggleButtons(
+          selectedColor: Theme.of(context).indicatorColor,
           isSelected: [_selectedTab == 0, _selectedTab == 1],
           onPressed: (index) { setState(() { _selectedTab = index; }); },
           borderRadius: BorderRadius.circular(8),

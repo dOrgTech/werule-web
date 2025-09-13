@@ -3,12 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/explorer/widgets/game_of_life.dart';
 import 'package:werule/src/providers/auth_provider.dart';
+
 import '../../models/network.dart';
 import '../../providers/dao_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../utils/reusable.dart';
-import '../../widgets/dao_card.dart';
+// Import the new shared AppBar
+import 'widgets/dao_card.dart';
 import '../../widgets/shared_app_bar.dart';
 
 class ExplorerScreen extends StatefulWidget {
@@ -47,77 +50,107 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       endDrawer: const MobileDrawer(
         isNetworkSelectorEnabled: true,
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 20.0),
-                  child: _TopBar(),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.03,
+            child: GameOfLife(),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 20.0),
+                      child: _TopBar(),
+                    ),
+                    auth.isAutoConnecting
+                        ? const Center(child: CircularProgressIndicator())
+                        : !isChainSupported
+                            ? const _WrongNetworkScreen()
+                            : Consumer<DaoProvider>(
+                                builder: (context, daoProvider, child) {
+                                  // THE FIX: Use AnimatedSwitcher to fade between states (e.g., loading and loaded).
+                                  return AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 500),
+                                    child: _buildDaoContent(context, daoProvider),
+                                  );
+                                },
+                              ),
+                    const _PaginationControls(),
+                    const SizedBox(height: 100),
+                  ],
                 ),
-                auth.isAutoConnecting
-                    ? const Center(child: CircularProgressIndicator())
-                    : !isChainSupported
-                        ? const _WrongNetworkScreen()
-                        : Consumer<DaoProvider>(
-                            builder: (context, daoProvider, child) {
-                              switch (daoProvider.state) {
-                                case DataState.loading:
-                                  return const Center(child: CircularProgressIndicator());
-                                case DataState.error:
-                                  return Center(child: Text('Error: ${daoProvider.errorMessage}'));
-                                case DataState.loaded:
-                                  if (daoProvider.displayedDaos.isEmpty) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(32.0),
-                                      child: Center(child: Text('No DAOs found matching your search.')),
-                                    );
-                                  }
-                                  return LayoutBuilder(builder: (context, constraints) {
-                                    int crossAxisCount;
-                                    double childAspectRatio;
-                                    if (constraints.maxWidth < 600) { crossAxisCount = 1; childAspectRatio = 1.8;
-                                    } else if (constraints.maxWidth < 950) { crossAxisCount = 2; childAspectRatio = 1.6;
-                                    } else { crossAxisCount = 3; childAspectRatio = 1.7; }
-                                    return GridView.builder(
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: crossAxisCount, mainAxisSpacing: 16.0, crossAxisSpacing: 16.0, childAspectRatio: childAspectRatio,
-                                      ),
-                                      itemCount: daoProvider.displayedDaos.length,
-                                      itemBuilder: (context, index) {
-                                        final org = daoProvider.displayedDaos[index];
-                                        return InkWell(
-                                          borderRadius: BorderRadius.circular(8.0),
-                                          onTap: () {
-                                            final selectedNetwork = context.read<NetworkProvider>().selectedNetwork;
-                                            if (selectedNetwork != null) {
-                                              context.go('/${selectedNetwork.name}/${org.address}');
-                                            }
-                                          },
-                                          child: DAOCard(org: org),
-                                        );
-                                      },
-                                    );
-                                  });
-                                case DataState.initial:
-                                  return const Center(child: Text("Select a network to begin."));
-                              }
-                            },
-                          ),
-                const _PaginationControls(),
-                const SizedBox(height: 100),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  // THE FIX: Extracted the content logic into a separate method for clarity.
+  Widget _buildDaoContent(BuildContext context, DaoProvider daoProvider) {
+    // A unique key is used for each state, telling AnimatedSwitcher to perform the transition.
+    switch (daoProvider.state) {
+      case DataState.loading:
+        return const Center(
+          key: ValueKey('loading'),
+          child: CircularProgressIndicator(),
+        );
+      case DataState.error:
+        return Center(
+          key: const ValueKey('error'),
+          child: Text('Error: ${daoProvider.errorMessage}'),
+        );
+      case DataState.loaded:
+        if (daoProvider.displayedDaos.isEmpty) {
+          return const Padding(
+            key: ValueKey('empty'),
+            padding: EdgeInsets.all(32.0),
+            child: Center(child: Text('No DAOs found matching your search.')),
+          );
+        }
+        return LayoutBuilder(
+          key: ValueKey('loaded_${daoProvider.totalDaoCount}'), // Key changes when data reloads
+          builder: (context, constraints) {
+            int crossAxisCount;
+            double childAspectRatio;
+            if (constraints.maxWidth < 600) { crossAxisCount = 1; childAspectRatio = 1.8;
+            } else if (constraints.maxWidth < 950) { crossAxisCount = 2; childAspectRatio = 1.6;
+            } else { crossAxisCount = 3; childAspectRatio = 1.7; }
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount, mainAxisSpacing: 16.0, crossAxisSpacing: 16.0, childAspectRatio: childAspectRatio,
+              ),
+              itemCount: daoProvider.displayedDaos.length,
+              itemBuilder: (context, index) {
+                final org = daoProvider.displayedDaos[index];
+                return InkWell(
+                  borderRadius: BorderRadius.circular(8.0),
+                  onTap: () {
+                    final selectedNetwork = context.read<NetworkProvider>().selectedNetwork;
+                    if (selectedNetwork != null) {
+                      context.go('/${selectedNetwork.name}/${org.address}');
+                    }
+                  },
+                  child: DAOCard(org: org),
+                );
+              },
+            );
+          });
+      case DataState.initial:
+        return const Center(
+          key: ValueKey('initial'),
+          child: Text("Select a network to begin."),
+        );
+    }
   }
 }
 

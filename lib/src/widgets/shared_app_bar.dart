@@ -21,17 +21,25 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 650;
 
-        final titleWidget = Logo();
+        const titleWidget = Logo();
         
         final actionsRow = [
-          NetworkSelector(isEnabled: isNetworkSelectorEnabled),
-          const SizedBox(width: 8),
-          const WalletConnector(),
+          Padding(
+            padding: const EdgeInsets.only (top:2.0),
+            child: NetworkSelector(isEnabled: isNetworkSelectorEnabled),
+          ),
+          // THE FIX: Increased spacing between the buttons.
+          const SizedBox(width: 22),
+          Padding(
+            padding: const EdgeInsets.only(top:2.0),
+            child: const WalletConnector(),
+          ),
         ];
 
         return AppBar(
           backgroundColor: const Color(0xff222222),
           elevation: 0,
+          toolbarHeight: 42,
           automaticallyImplyLeading: false,
           leading: leading,
           title: Center(
@@ -39,17 +47,17 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
               constraints: const BoxConstraints(maxWidth: 1200),
               child: Row(
                 children: [
-                  titleWidget,
+                  Padding(
+                    padding: const EdgeInsets.only (left:22.0, top:2),
+                    child: titleWidget,
+                  ),
                   const Spacer(),
-                  // On desktop, show actions directly in the AppBar.
                   if (!isMobile) ...actionsRow,
                 ],
               ),
             ),
           ),
           actions: [
-            // On mobile, show the hamburger menu icon.
-            // A Builder is used to get the correct Scaffold context.
             if (isMobile)
               Builder(
                 builder: (context) => IconButton(
@@ -57,7 +65,7 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 ),
               ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 18),
           ],
         );
       },
@@ -65,7 +73,7 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(44);
 }
 
 class MobileDrawer extends StatelessWidget {

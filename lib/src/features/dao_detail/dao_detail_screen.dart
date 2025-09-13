@@ -1,6 +1,5 @@
 // lib/src/features/dao_detail/dao_detail_screen.dart
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/dao_detail/tabs/account_tab.dart';
 import 'package:werule/src/features/dao_detail/tabs/members_tab.dart';
@@ -62,9 +61,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff222222),
-      // The main, global App Bar. It will correctly show the hamburger menu on mobile.
       appBar: const SharedAppBar(),
-      // The drawer for the main AppBar to open.
       endDrawer: const MobileDrawer(
         isNetworkSelectorEnabled: false,
       ),
@@ -84,6 +81,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
           final Org dao = snapshot.data!['dao'];
           final List<Proposal> proposals = snapshot.data!['proposals'];
           const tabCount = 5;
+          const double tabBarAreaVerticalPadding = 16.0;
 
           return DefaultTabController(
             length: tabCount,
@@ -97,41 +95,49 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // --- Main Content Area ---
                         Column(
                           children: [
                             Align(
                               alignment: Alignment.topCenter,
                               child: ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 1200),
-                                // THE FIX: Replaced the problematic nested AppBar with a simple Container.
-                                // This Container holds the TabBar but does NOT interact with the Scaffold,
-                                // preventing the duplicate hamburger menu from being created.
-                                child: Container(
-                                  height: kToolbarHeight, // Standard height for a tab bar area
-                                  alignment: Alignment.center,
-                                  child: LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      final isMobile = constraints.maxWidth < 600;
-                                      return TabBar(
-                                        labelColor: Theme.of(context).indicatorColor,
-                                        unselectedLabelColor: Colors.grey[400],
-                                        indicatorColor: Theme.of(context).indicatorColor,
-                                        tabs: [
-                                          _buildTab("Overview", Icons.dashboard, isMobile),
-                                          _buildTab("Proposals", Icons.front_hand, isMobile),
-                                          _buildTab("Registry", Icons.list, isMobile),
-                                          _buildTab("Members", Icons.people, isMobile),
-                                          _buildTab("Account", Icons.person, isMobile),
-                                        ],
-                                      );
-                                    },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: tabBarAreaVerticalPadding / 2,
+                                    horizontal: 16.0,
+                                  ),
+                                  child: Container(
+                                    height: 40,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xff2c2c2c), // Card background color
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final isMobile = constraints.maxWidth < 600;
+                                        return TabBar(
+                                          // THE FIX: This removes the divider line beneath the tabs.
+                                          dividerColor: Colors.transparent,
+                                          labelColor: Theme.of(context).indicatorColor,
+                                          unselectedLabelColor: const Color.fromARGB(255, 177, 177, 177),
+                                          indicatorColor: Theme.of(context).indicatorColor,
+                                          tabs: [
+                                            _buildTab("Overview", Icons.dashboard, isMobile),
+                                            _buildTab("Proposals", Icons.front_hand, isMobile),
+                                            _buildTab("Registry", Icons.list, isMobile),
+                                            _buildTab("Members", Icons.people, isMobile),
+                                            _buildTab("Account", Icons.person, isMobile),
+                                          ],
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                             SizedBox(
-                              height: viewportConstraints.maxHeight - kToolbarHeight,
+                              height: viewportConstraints.maxHeight - (kToolbarHeight + tabBarAreaVerticalPadding),
                               child: Align(
                                 alignment: Alignment.topCenter,
                                 child: ConstrainedBox(
@@ -154,7 +160,6 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                             ),
                           ],
                         ),
-                        // --- Footer ---
                         const Footer(),
                       ],
                     ),
@@ -178,10 +183,10 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
         children: [
           Icon(icon, size: 20),
           const SizedBox(width: 8),
-          Text(text),
+          Text(text, style: const TextStyle(fontSize: 16.3),),
         ],
       ),
     );
   }
 }
-// lib/src/features/dao_detail/dao_detail_screen.dart```
+// lib/src/features/dao_detail/dao_detail_screen.dart

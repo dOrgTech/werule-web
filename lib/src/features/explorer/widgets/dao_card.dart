@@ -17,9 +17,6 @@ class DAOCard extends StatelessWidget {
 
     return Stack(
       children: [
-        // THE FIX: The `Material` and `InkWell` widgets have been removed.
-        // This is now just a Container for decoration and layout.
-        // It no longer captures tap events.
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -30,7 +27,6 @@ class DAOCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // --- Left Column (Avatar, Symbol, Members) ---
                 Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -65,7 +61,6 @@ class DAOCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: 16),
-                // --- Right Column (Name, Description, Address) ---
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,9 +83,11 @@ class DAOCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Text(
-                        getShortAddress(org.address),
-                        style: TextStyle(fontSize: 12, color: Theme.of(context).indicatorColor.withOpacity(0.8)),
+                      Center(
+                        child: Text(
+                          getShortAddress(org.address),
+                          style: TextStyle(fontSize: 12, color: Theme.of(context).indicatorColor.withOpacity(0.8)),
+                        ),
                       ),
                     ],
                   ),

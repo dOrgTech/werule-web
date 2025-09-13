@@ -93,8 +93,8 @@ class _ProposalsTabState extends State<ProposalsTab> {
                    if (filteredProposals.isEmpty) {
                      return const Center(
                         child: Padding(
-                          padding: EdgeInsets.only(top: 48.0),
-                          child: Text('No proposals found matching the criteria.'),
+                          padding: EdgeInsets.only(top: 148.0),
+                          child: Text('No proposals created yet...', style: TextStyle(fontSize: 23, color: Colors.white24),),
                         ),
                       );
                    }
