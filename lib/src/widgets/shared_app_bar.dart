@@ -17,15 +17,12 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use a LayoutBuilder to check the available width.
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Define a threshold for switching to mobile layout.
         final isMobile = constraints.maxWidth < 650;
 
         final titleWidget = Logo();
         
-
         final actionsRow = [
           NetworkSelector(isEnabled: isNetworkSelectorEnabled),
           const SizedBox(width: 8),
@@ -35,11 +32,8 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
         return AppBar(
           backgroundColor: const Color(0xff222222),
           elevation: 0,
-          // Disable the automatic back button.
           automaticallyImplyLeading: false,
-          // Use our custom leading widget if provided.
           leading: leading,
-          // The title is now a constrained and centered row.
           title: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200),
@@ -55,12 +49,14 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           actions: [
             // On mobile, show the hamburger menu icon.
+            // A Builder is used to get the correct Scaffold context.
             if (isMobile)
-              IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
+              Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openEndDrawer(),
+                ),
               ),
-            // Add padding to the right for the hamburger menu.
             const SizedBox(width: 8),
           ],
         );
@@ -72,7 +68,6 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-// A simple widget for the content of the mobile drawer.
 class MobileDrawer extends StatelessWidget {
   final bool isNetworkSelectorEnabled;
   const MobileDrawer({super.key, required this.isNetworkSelectorEnabled});
@@ -96,3 +91,4 @@ class MobileDrawer extends StatelessWidget {
     );
   }
 }
+// lib/src/widgets/shared_app_bar.dart

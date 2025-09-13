@@ -49,7 +49,7 @@ MaterialColor createMaterialColor(Color color) {
         
 ThemeData dark = ThemeData(
   splashColor: const Color.fromARGB(255, 133, 133, 133),
-  
+  fontFamily: 'CascadiaCode',
   dividerColor: const Color.fromARGB(255, 147, 147, 147),
   brightness: Brightness.dark,
   indicatorColor:  const Color(0xffa1d0d0),

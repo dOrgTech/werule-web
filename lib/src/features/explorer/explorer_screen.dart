@@ -4,12 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/providers/auth_provider.dart';
-
 import '../../models/network.dart';
 import '../../providers/dao_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../utils/reusable.dart';
-// Import the new shared AppBar
 import '../../widgets/dao_card.dart';
 import '../../widgets/shared_app_bar.dart';
 
@@ -25,11 +23,8 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   @override
   void initState() {
     super.initState();
-    // THE FIX: This is the correct way to set state based on a route parameter.
-    // It happens after the initial build, preventing the "setState during build" error.
     if (widget.networkName != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Check if the component is still mounted before accessing context.
         if (mounted) {
           context.read<NetworkProvider>().selectNetworkByName(widget.networkName!);
         }
@@ -42,9 +37,6 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     final auth = context.watch<AuthProvider>();
     final networkProvider = context.watch<NetworkProvider>();
 
-    // THE FIX: The state-changing logic that caused the deep-link vs. wallet
-    // conflict has been removed from the build method. The UI will now simply
-    // react to the state, not try to change it here.
     final isChainSupported = !auth.isConnected || (auth.chainId != null && networkProvider.isChainSupported(auth.chainId!));
 
     return Scaffold(
@@ -123,83 +115,6 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-
-class _NetworkSelector extends StatelessWidget {
-  const _NetworkSelector();
-  @override
-  Widget build(BuildContext context) {
-    final networkProvider = context.watch<NetworkProvider>();
-    final authProvider = context.read<AuthProvider>();
-    if (networkProvider.isLoading) {
-      return const Center(child: Padding(padding: EdgeInsets.all(12.0), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))));
-    }
-    if (networkProvider.networks.isEmpty || networkProvider.selectedNetwork == null) {
-      return const Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text("No Networks")));
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      decoration: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(8)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<Network>(
-          value: networkProvider.selectedNetwork,
-          icon: const Icon(Icons.keyboard_arrow_down),
-          onChanged: (Network? newNetwork) {
-            if (newNetwork != null) {
-              context.go('/${newNetwork.name}');
-
-              if (authProvider.isConnected) {
-                authProvider.switchWalletChain(newNetwork);
-              }
-            }
-          },
-          items: networkProvider.networks.map<DropdownMenuItem<Network>>((Network network) {
-            return DropdownMenuItem<Network>(
-              value: network,
-              child: Text(network.name),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _WalletConnector extends StatelessWidget {
-  const _WalletConnector();
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    if (auth.isLoading || auth.isAutoConnecting) {
-      return const Center(child: Padding(padding: EdgeInsets.all(12.0), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))));
-    }
-    if (!auth.isConnected) {
-      return ElevatedButton(
-        onPressed: () => context.read<AuthProvider>().connectWallet(),
-        child: const Text("Connect Wallet"),
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      decoration: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(8)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: auth.selectedAccount,
-          icon: const Icon(Icons.keyboard_arrow_down),
-          onChanged: (String? newAccount) {
-            context.read<AuthProvider>().selectAccount(newAccount);
-          },
-          items: auth.accounts.map<DropdownMenuItem<String>>((String account) {
-            return DropdownMenuItem<String>(
-              value: account,
-              child: Text(shortenString(account)),
-            );
-          }).toList(),
         ),
       ),
     );

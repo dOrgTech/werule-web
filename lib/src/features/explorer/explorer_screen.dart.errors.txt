@@ -1,0 +1,14 @@
+Problems found in: explorer_screen.dart
+==================================================
+
+ERROR at Line 47:15 (dart)
+   Message: The argument type 'Builder' can't be assigned to the parameter type 'PreferredSizeWidget?'. 
+
+WARNING at Line 135:7 (dart)
+   Message: The declaration '_NetworkSelector' isn't referenced.
+Try removing the declaration of '_NetworkSelector'.
+
+WARNING at Line 175:7 (dart)
+   Message: The declaration '_WalletConnector' isn't referenced.
+Try removing the declaration of '_WalletConnector'.
+

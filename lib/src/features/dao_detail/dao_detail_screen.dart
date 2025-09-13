@@ -7,6 +7,7 @@ import 'package:werule/src/features/dao_detail/tabs/members_tab.dart';
 import 'package:werule/src/features/dao_detail/tabs/overview_tab.dart';
 import 'package:werule/src/features/dao_detail/tabs/proposals_tab.dart';
 import 'package:werule/src/features/dao_detail/tabs/registry_tab.dart';
+import 'package:werule/src/features/dao_detail/widgets/footer.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/network_provider.dart';
@@ -61,7 +62,9 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff222222),
+      // The main, global App Bar. It will correctly show the hamburger menu on mobile.
       appBar: const SharedAppBar(),
+      // The drawer for the main AppBar to open.
       endDrawer: const MobileDrawer(
         isNetworkSelectorEnabled: false,
       ),
@@ -84,56 +87,80 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
 
           return DefaultTabController(
             length: tabCount,
-            child: Scaffold(
-              backgroundColor: const Color(0xff222222),
-              appBar: AppBar(
-                primary: false,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                automaticallyImplyLeading: false,
-                title: Center(
+            child: LayoutBuilder(
+              builder: (context, viewportConstraints) {
+                return SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isMobile = constraints.maxWidth < 600;
-                        return TabBar(
-                          // THE FIX: Added colors for selected and unselected tabs.
-                          labelColor: Theme.of(context).indicatorColor,
-                          unselectedLabelColor: Colors.grey[400],
-                          indicatorColor: Theme.of(context).indicatorColor,
-                          dividerColor: const Color.fromARGB(255, 59, 59, 59),
-                          tabs: [
-                            _buildTab("Overview", Icons.dashboard, isMobile),
-                            _buildTab("Proposals", Icons.front_hand, isMobile),
-                            _buildTab("Registry", Icons.list, isMobile),
-                            _buildTab("Members", Icons.people, isMobile),
-                            _buildTab("Account", Icons.person, isMobile),
+                    constraints: BoxConstraints(
+                      minHeight: viewportConstraints.maxHeight,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // --- Main Content Area ---
+                        Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.topCenter,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 1200),
+                                // THE FIX: Replaced the problematic nested AppBar with a simple Container.
+                                // This Container holds the TabBar but does NOT interact with the Scaffold,
+                                // preventing the duplicate hamburger menu from being created.
+                                child: Container(
+                                  height: kToolbarHeight, // Standard height for a tab bar area
+                                  alignment: Alignment.center,
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final isMobile = constraints.maxWidth < 600;
+                                      return TabBar(
+                                        labelColor: Theme.of(context).indicatorColor,
+                                        unselectedLabelColor: Colors.grey[400],
+                                        indicatorColor: Theme.of(context).indicatorColor,
+                                        tabs: [
+                                          _buildTab("Overview", Icons.dashboard, isMobile),
+                                          _buildTab("Proposals", Icons.front_hand, isMobile),
+                                          _buildTab("Registry", Icons.list, isMobile),
+                                          _buildTab("Members", Icons.people, isMobile),
+                                          _buildTab("Account", Icons.person, isMobile),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: viewportConstraints.maxHeight - kToolbarHeight,
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 1200),
+                                  child: TabBarView(
+                                    children: [
+                                      OverviewTab(dao: dao),
+                                      ProposalsTab(
+                                        proposals: proposals,
+                                        networkName: widget.networkName,
+                                        daoAddress: widget.daoAddress,
+                                      ),
+                                      const RegistryTab(),
+                                      MembersTab(dao: dao),
+                                      const AccountTab(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
-                        );
-                      }
+                        ),
+                        // --- Footer ---
+                        const Footer(),
+                      ],
                     ),
                   ),
-                ),
-              ),
-              body: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1200),
-                  child: TabBarView(
-                    children: [
-                      OverviewTab(dao: dao),
-                      ProposalsTab(
-                          proposals: proposals,
-                          networkName: widget.networkName,
-                          daoAddress: widget.daoAddress),
-                      const RegistryTab(),
-                      MembersTab(dao: dao),
-                      const AccountTab(),
-                    ],
-                  ),
-                ),
-              ),
+                );
+              },
             ),
           );
         },
@@ -157,4 +184,4 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
     );
   }
 }
-// lib/src/features/dao_detail/dao_detail_screen.dart
+// lib/src/features/dao_detail/dao_detail_screen.dart```
