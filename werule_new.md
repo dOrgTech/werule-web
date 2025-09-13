@@ -3225,6 +3225,7 @@ class Org {
 ```dart
 // lib/src/models/proposal.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:web3dart/crypto.dart'; // THE FIX: Import for bytesToHex utility.
 
 enum ProposalStatus {
   Pending,
@@ -3292,6 +3293,19 @@ class Proposal {
       });
     }
 
+    // THE FIX: Process `callDatas` to handle both String and Blob types.
+    final rawCallDatas = data['callDatas'] as List<dynamic>? ?? [];
+    final List<String> processedCallDatas = [];
+    for (final item in rawCallDatas) {
+      if (item is String) {
+        processedCallDatas.add(item);
+      } else if (item is Blob) {
+        // A Blob from Firestore contains raw bytes. Convert them to a hex string.
+        // The bytesToHex function from web3dart's crypto utility is perfect for this.
+        processedCallDatas.add(bytesToHex(item.bytes, include0x: true));
+      }
+    }
+
     return Proposal(
       id: doc.id,
       author: data['author'] ?? 'Unknown Author',
@@ -3303,7 +3317,7 @@ class Proposal {
       statusHistory: history,
       type: data['type'],
       targets: List<String>.from(data['targets'] ?? []),
-      callDatas: List<String>.from(data['callDatas'] ?? []),
+      callDatas: processedCallDatas, // Use the safely processed list.
       externalResource: data['externalResource'],
     );
   }

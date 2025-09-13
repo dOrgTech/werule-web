@@ -12,6 +12,7 @@ import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/services/members_service.dart';
 import 'package:werule/src/services/treasury_service.dart';
+import 'package:werule/src/utils/theme.dart'; // THE FIX: Import your custom theme.
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -34,7 +35,7 @@ class MyApp extends StatelessWidget {
         Provider<BlockchainService>(create: (_) => BlockchainService()),
         Provider<TreasuryService>(create: (_) => TreasuryService()),
         Provider<MembersService>(create: (_) => MembersService()),
-        Provider<CalldataService>(create: (_) => CalldataService()), // NEW
+        Provider<CalldataService>(create: (_) => CalldataService()),
 
         // Independent Providers
         ChangeNotifierProvider<NetworkProvider>(
@@ -55,7 +56,8 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         title: 'WeRule Refactored',
-        theme: ThemeData.dark(),
+        // THE FIX: Use your custom dark theme instead of the default one.
+        theme: dark,
         routerConfig: appRouter,
       ),
     );
