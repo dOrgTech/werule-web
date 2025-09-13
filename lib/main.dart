@@ -9,6 +9,7 @@ import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/routing/app_router.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/services/members_service.dart';
 import 'package:werule/src/services/treasury_service.dart';
 import 'firebase_options.dart';
 
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         Provider<BlockchainService>(create: (_) => BlockchainService()),
         Provider<TreasuryService>(create: (_) => TreasuryService()),
+        Provider<MembersService>(create: (_) => MembersService()), // NEW
 
         // Independent Providers
         ChangeNotifierProvider<NetworkProvider>(
@@ -49,11 +51,10 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ],
-      // SWITCH TO MaterialApp.router
       child: MaterialApp.router(
         title: 'WeRule Refactored',
         theme: ThemeData.dark(),
-        routerConfig: appRouter, // Use the router configuration
+        routerConfig: appRouter,
       ),
     );
   }

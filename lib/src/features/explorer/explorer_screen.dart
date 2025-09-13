@@ -25,9 +25,14 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   @override
   void initState() {
     super.initState();
+    // THE FIX: This is the correct way to set state based on a route parameter.
+    // It happens after the initial build, preventing the "setState during build" error.
     if (widget.networkName != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<NetworkProvider>().selectNetworkByName(widget.networkName!);
+        // Check if the component is still mounted before accessing context.
+        if (mounted) {
+          context.read<NetworkProvider>().selectNetworkByName(widget.networkName!);
+        }
       });
     }
   }
@@ -37,21 +42,16 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     final auth = context.watch<AuthProvider>();
     final networkProvider = context.watch<NetworkProvider>();
 
-    if (auth.isConnected && auth.chainId != null && auth.chainId != networkProvider.selectedNetwork?.chainId) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.read<NetworkProvider>().selectNetworkByChainId(auth.chainId!);
-      });
-    }
-
+    // THE FIX: The state-changing logic that caused the deep-link vs. wallet
+    // conflict has been removed from the build method. The UI will now simply
+    // react to the state, not try to change it here.
     final isChainSupported = !auth.isConnected || (auth.chainId != null && networkProvider.isChainSupported(auth.chainId!));
 
     return Scaffold(
       backgroundColor: const Color(0xff222222),
-      // Use the new SharedAppBar
       appBar: const SharedAppBar(
-        isNetworkSelectorEnabled: true, // Enable selector on explorer
+        isNetworkSelectorEnabled: true,
       ),
-      // Add the endDrawer for the mobile layout
       endDrawer: const MobileDrawer(
         isNetworkSelectorEnabled: true,
       ),
@@ -151,11 +151,8 @@ class _NetworkSelector extends StatelessWidget {
           icon: const Icon(Icons.keyboard_arrow_down),
           onChanged: (Network? newNetwork) {
             if (newNetwork != null) {
-              // THE FIX: We tell the router to navigate to the new URL immediately.
               context.go('/${newNetwork.name}');
 
-              // Then, if the wallet is connected, we also ask it to switch.
-              // The app's reconciliation logic will handle any temporary mismatch.
               if (authProvider.isConnected) {
                 authProvider.switchWalletChain(newNetwork);
               }

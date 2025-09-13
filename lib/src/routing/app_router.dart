@@ -11,18 +11,26 @@ import 'package:werule/src/providers/network_provider.dart';
 final appRouter = GoRouter(
   routes: [
     // Root route: '/'
-    // Redirects to the explorer with the default network's chain ID.
     GoRoute(
       path: '/',
       builder: (context, state) => const ExplorerScreen(),
       redirect: (context, state) {
-        // Find the default network from the provider.
-        final defaultNetwork = context.read<NetworkProvider>().defaultNetwork;
-        // If a default network is found, redirect to its explorer page.
-        if (defaultNetwork != null) {
-          return '/${defaultNetwork.name}';
+        final networkProvider = context.read<NetworkProvider>();
+
+        // THE FIX: The redirect logic is now smarter.
+        // Priority 1: If a network is already selected, redirect to its explorer page.
+        // This maintains the state when navigating back to the home screen.
+        if (networkProvider.selectedNetwork != null) {
+          return '/${networkProvider.selectedNetwork!.name}';
         }
-        // If no networks are loaded yet, stay on the root to show a loading state.
+
+        // Priority 2 (Fallback): If no network is selected yet (on initial app load),
+        // use the default network.
+        if (networkProvider.defaultNetwork != null) {
+          return '/${networkProvider.defaultNetwork!.name}';
+        }
+
+        // If networks haven't loaded at all, don't redirect yet.
         return null;
       },
     ),

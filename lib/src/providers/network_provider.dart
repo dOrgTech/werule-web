@@ -17,21 +17,33 @@ class NetworkProvider extends ChangeNotifier {
   Network? _selectedNetwork;
   Network? get selectedNetwork => _selectedNetwork;
 
-  // A getter for the default network, used by the router for root redirects.
   Network? get defaultNetwork => _networks.isNotEmpty ? _networks.first : null;
 
-  bool _isLoading = false;
+  bool _isLoading = true; // Start as true since we fetch on creation
   bool get isLoading => _isLoading;
 
+  String? _pendingNetworkName; // THE FIX: Remember the desired network from a deep link.
+
   Future<void> fetchNetworks() async {
-    _isLoading = true;
-    notifyListeners();
+    // Only set loading to true if we are actually fetching for the first time.
+    if (_networks.isEmpty) {
+      _isLoading = true;
+      notifyListeners();
+    }
     try {
       _networks = await _firestoreService.getNetworks();
-      // On initial fetch, if no network is selected, set the default one.
-      if (_networks.isNotEmpty && _selectedNetwork == null) {
+      
+      // THE FIX: After loading, check if a network was requested before the list was ready.
+      if (_pendingNetworkName != null) {
+        final pendingName = _pendingNetworkName!;
+        _pendingNetworkName = null; // Clear the pending request.
+        selectNetworkByName(pendingName); // Re-run the select logic now that networks exist.
+      } 
+      // If no pending request was made and no network is selected yet, set the default one.
+      else if (_networks.isNotEmpty && _selectedNetwork == null) {
         _selectedNetwork = _networks.first;
       }
+
     } catch (e) {
       print("Error in NetworkProvider: $e");
     }
@@ -57,14 +69,21 @@ class NetworkProvider extends ChangeNotifier {
     }
   }
 
-  // Selects a network by its name (from the URL).
+  // This method is now safe to be called at any time.
   void selectNetworkByName(String name) {
+    // THE FIX: If networks aren't loaded yet, just store the name and wait for fetchNetworks to complete.
+    if (_networks.isEmpty) {
+      _pendingNetworkName = name;
+      return;
+    }
+
     try {
-      // Find the network where the name matches.
+      // If networks are loaded, find and select the network immediately.
       final network = _networks.firstWhere((n) => n.name == name);
       selectNetwork(network);
     } catch (e) {
       // If the network name from the URL is invalid, fall back to the default network.
+      print("Could not find network with name '$name', falling back to default.");
       selectNetwork(defaultNetwork);
     }
   }
