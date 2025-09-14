@@ -11,20 +11,19 @@ class ProposalStatusWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final properties = _getStatusProperties(status);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
       decoration: BoxDecoration(
         color: properties['bgColor'],
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: properties['borderColor']!, width: 0.8),
       ),
-      child: Text(
-        properties['text']!,
-        style: TextStyle(
-          color: properties['textColor'],
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
+      child:Text(
+  properties['text']!,
+  style: DefaultTextStyle.of(context).style.copyWith(
+    color: properties['textColor'],
+    fontSize: 12, // keep your custom size
+  ),
+)
     );
   }
 

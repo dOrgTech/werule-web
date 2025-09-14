@@ -202,12 +202,13 @@ class _ProposalsTabState extends State<ProposalsTab> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: DefaultTextStyle(
         style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold),
-        child: Row(
-          children: const [
+        child: const Row(
+          children: [
             SizedBox(width: 60, child: Text("ID #")),
             Expanded(flex: 3, child: Text("Title")),
             Expanded(flex: 2, child: Text("Author")),
             SizedBox(width: 140, child: Text("Posted")),
+            Spacer(),
             SizedBox(width: 100, child: Text("Type")),
             SizedBox(width: 110, child: Text("Status", textAlign: TextAlign.center)),
           ],
@@ -234,15 +235,19 @@ class DesktopProposalListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: const Color(0xff3a3a3a),
+      color: const Color.fromARGB(169, 54, 54, 54),
       margin: const EdgeInsets.symmetric(vertical: 4.0),
+      elevation: 8,
+      shape:  RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(3.0),
+      ),
       child: InkWell(
         onTap: () {
           context.go('/$networkName/$daoAddress/proposals/${proposal.id}');
         },
-        borderRadius: BorderRadius.circular(4.0),
+        borderRadius: BorderRadius.zero,
         child: Container(
-          height: 52,
+          height: 45,
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
@@ -284,11 +289,13 @@ class DesktopProposalListItem extends StatelessWidget {
                   style: TextStyle(fontSize: 14, color: Colors.grey[400]),
                 ),
               ),
+              const Spacer(),
               SizedBox(
                 width: 100,
                 child: Text(
                   proposal.type ?? 'N/A',
                   textAlign: TextAlign.start,
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
               SizedBox(
@@ -322,11 +329,15 @@ class MobileProposalListItem extends StatelessWidget {
     return Card(
       color: const Color(0xff3a3a3a),
       margin: const EdgeInsets.symmetric(vertical: 6.0),
+      elevation: 2,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
       child: InkWell(
         onTap: () {
           context.go('/$networkName/$daoAddress/proposals/${proposal.id}');
         },
-        borderRadius: BorderRadius.circular(4.0),
+        borderRadius: BorderRadius.zero,
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
