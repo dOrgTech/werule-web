@@ -1,7 +1,6 @@
 // lib/src/features/proposal_detail/widgets/details/shared_widgets.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:werule/src/utils/reusable.dart';
 
 Widget buildDetailRow(String label, String value, {bool isCode = false}) {
   return Padding(

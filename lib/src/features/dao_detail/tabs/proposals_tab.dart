@@ -1,22 +1,26 @@
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
+import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/utils/proposal_status_helper.dart';
 import 'package:werule/src/utils/reusable.dart';
 
 class ProposalsTab extends StatefulWidget {
-  final List<Proposal> proposals;
+  final Org org; 
   final String networkName;
-  final String daoAddress;
 
   const ProposalsTab({
     super.key,
-    required this.proposals,
+    required this.org,
     required this.networkName,
-    required this.daoAddress,
   });
 
   @override
@@ -27,34 +31,21 @@ class _ProposalsTabState extends State<ProposalsTab> {
   String _selectedType = 'All';
   String _selectedStatus = 'All';
 
+  late Stream<List<Proposal>> _proposalsStream;
+
   final List<String> _typeOptions = const [
     'All', 'Registry', 'Transfer', 'Contract Call', 'Mint', 'Burn', 'Quorum', 'Voting Delay', 'Voting Period', 'Threshold'
   ];
   final List<String> _statusOptions = const [
     'All', "Active", "Succeeded", "Queued", "Executable", "Executed", "Expired", "No Quorum", "Pending", "Rejected", "Defeated"
   ];
-
-  ProposalStatus _getProposalStatus(Proposal proposal) {
-    if (proposal.statusHistory.isEmpty) {
-      return ProposalStatus.Pending;
-    }
-    var latestEntry = proposal.statusHistory.entries
-        .reduce((a, b) => a.value.isAfter(b.value) ? a : b);
-    
-    switch (latestEntry.key.toLowerCase()) {
-      case 'active': return ProposalStatus.Active;
-      case 'succeeded': return ProposalStatus.Succeeded;
-      case 'passed': return ProposalStatus.Succeeded;
-      case 'queued': return ProposalStatus.Queued;
-      case 'executable': return ProposalStatus.Executable;
-      case 'executed': return ProposalStatus.Executed;
-      case 'expired': return ProposalStatus.Expired;
-      case 'no quorum': return ProposalStatus.NoQuorum;
-      case 'pending': return ProposalStatus.Pending;
-      case 'rejected': return ProposalStatus.Rejected;
-      case 'defeated': return ProposalStatus.Defeated;
-      default: return ProposalStatus.Unknown;
-    }
+  
+  @override
+  void initState() {
+    super.initState();
+    final firestoreService = context.read<FirestoreService>();
+    final collectionName = 'idaos${widget.networkName}';
+    _proposalsStream = firestoreService.getProposalsStream(collectionName, widget.org.address);
   }
 
   String _statusToString(ProposalStatus status) {
@@ -68,58 +59,80 @@ class _ProposalsTabState extends State<ProposalsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredProposals = widget.proposals.where((p) {
-      final typeMatch = _selectedType == 'All' ||
-          (p.type != null && p.type!.toLowerCase().contains(_selectedType.toLowerCase()));
-      final statusMatch = _selectedStatus == 'All' ||
-          _statusToString(_getProposalStatus(p)) == _selectedStatus;
-      return typeMatch && statusMatch;
-    }).toList();
+    return Column(
+      children: [
+        _buildControls(),
+        const SizedBox(height: 20),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 700;
+            return Column(
+              children: [
+                if (!isMobile) _buildHeader(),
+                if (!isMobile) const SizedBox(height: 8),
+                StreamBuilder<List<Proposal>>(
+                  stream: _proposalsStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: Padding(
+                        padding: EdgeInsets.only(top: 148.0),
+                        child: CircularProgressIndicator(),
+                      ));
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                       return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 148.0),
+                            child: Text('No proposals created yet...', style: TextStyle(fontSize: 23, color: Colors.white24),),
+                          ),
+                        );
+                    }
+                    
+                    final allProposals = snapshot.data!;
+                    final filteredProposals = allProposals.where((p) {
+                      final currentStatus = ProposalStatusHelper.calculateDisplayStatus(p, widget.org);
+                      final typeMatch = _selectedType == 'All' ||
+                          (p.type != null && p.type!.toLowerCase().contains(_selectedType.toLowerCase()));
+                      final statusMatch = _selectedStatus == 'All' ||
+                          _statusToString(currentStatus) == _selectedStatus;
+                      return typeMatch && statusMatch;
+                    }).toList();
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 700;
-        return Column(
-          children: [
-            _buildControls(),
-            const SizedBox(height: 20),
-            if (!isMobile) _buildHeader(),
-            if (!isMobile) const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filteredProposals.isEmpty ? 1 : filteredProposals.length,
-                itemBuilder: (context, index) {
-                   if (filteredProposals.isEmpty) {
-                     return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 148.0),
-                          child: Text('No proposals created yet...', style: TextStyle(fontSize: 23, color: Colors.white24),),
-                        ),
-                      );
-                   }
-                   final proposal = filteredProposals[index];
-                   if (isMobile) {
-                      return MobileProposalListItem(
-                        proposal: proposal,
-                        status: _getProposalStatus(proposal),
-                        networkName: widget.networkName,
-                        daoAddress: widget.daoAddress,
-                      );
-                   } else {
-                      return DesktopProposalListItem(
-                        proposal: proposal,
-                        status: _getProposalStatus(proposal),
-                        networkName: widget.networkName,
-                        daoAddress: widget.daoAddress,
-                      );
-                   }
-                },
-              ),
-            ),
-          ],
-        );
-      },
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height - 250, 
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filteredProposals.length,
+                        itemBuilder: (context, index) {
+                           final proposal = filteredProposals[index];
+                           if (isMobile) {
+                              return MobileProposalListItem(
+                                key: ValueKey(proposal.id),
+                                proposal: proposal,
+                                org: widget.org,
+                                networkName: widget.networkName,
+                              );
+                           } else {
+                              return DesktopProposalListItem(
+                                key: ValueKey(proposal.id),
+                                proposal: proposal,
+                                org: widget.org,
+                                networkName: widget.networkName,
+                              );
+                           }
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -218,20 +231,91 @@ class _ProposalsTabState extends State<ProposalsTab> {
   }
 }
 
-class DesktopProposalListItem extends StatelessWidget {
+// --- Stateful Desktop List Item ---
+class DesktopProposalListItem extends StatefulWidget {
   final Proposal proposal;
-  final ProposalStatus status;
+  final Org org;
   final String networkName;
-  final String daoAddress;
 
   const DesktopProposalListItem({
     super.key,
     required this.proposal,
-    required this.status,
+    required this.org,
     required this.networkName,
-    required this.daoAddress,
   });
 
+  @override
+  State<DesktopProposalListItem> createState() => _DesktopProposalListItemState();
+}
+
+class _DesktopProposalListItemState extends State<DesktopProposalListItem> {
+  late ProposalStatus _displayStatus;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStatusAndScheduleNext();
+  }
+
+  // THE FIX: Implement didUpdateWidget to react to data changes from the parent.
+  @override
+  void didUpdateWidget(covariant DesktopProposalListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the proposal data from Firestore has changed, re-run our logic.
+    // A simple check on the status history is a reliable indicator of change.
+    if (widget.proposal.statusHistory != oldWidget.proposal.statusHistory) {
+      _updateStatusAndScheduleNext();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateStatusAndScheduleNext() {
+    // Always cancel any existing timer before setting a new one.
+    _timer?.cancel();
+
+    setState(() {
+      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
+    });
+    
+    _scheduleNextUpdate();
+  }
+
+  void _scheduleNextUpdate() {
+    final now = DateTime.now();
+    DateTime? nextTransitionTime;
+
+    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
+    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
+
+    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
+      nextTransitionTime = voteStart;
+    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
+      nextTransitionTime = voteEnd;
+    } else if (_displayStatus == ProposalStatus.Queued) {
+      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
+      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
+      if (executionETA.isAfter(now)) {
+        nextTransitionTime = executionETA;
+      }
+    }
+
+    if (nextTransitionTime != null) {
+      final duration = nextTransitionTime.difference(now);
+      _timer = Timer(duration, () {
+        if (mounted) {
+          // When the timer fires, re-run the whole logic.
+          _updateStatusAndScheduleNext();
+        }
+      });
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -243,7 +327,7 @@ class DesktopProposalListItem extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          context.go('/$networkName/$daoAddress/proposals/${proposal.id}');
+          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
         },
         borderRadius: BorderRadius.zero,
         child: Container(
@@ -258,7 +342,7 @@ class DesktopProposalListItem extends StatelessWidget {
                   splashRadius: 20,
                   tooltip: 'Copy Proposal ID',
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: proposal.id));
+                    Clipboard.setData(ClipboardData(text: widget.proposal.id));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Center(child: Text('Proposal ID copied to clipboard')),
@@ -270,7 +354,7 @@ class DesktopProposalListItem extends StatelessWidget {
               Expanded(
                 flex: 3,
                 child: Text(
-                  proposal.title,
+                  widget.proposal.title,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
@@ -278,14 +362,14 @@ class DesktopProposalListItem extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: Text(
-                  shortenString(proposal.author),
+                  shortenString(widget.proposal.author),
                   style: const TextStyle(fontFamily: 'monospace'),
                 ),
               ),
               SizedBox(
                 width: 140,
                 child: Text(
-                  DateFormat('M/d/yyyy HH:mm').format(proposal.createdAt),
+                  DateFormat('M/d/yyyy HH:mm').format(widget.proposal.createdAt),
                   style: TextStyle(fontSize: 14, color: Colors.grey[400]),
                 ),
               ),
@@ -293,14 +377,14 @@ class DesktopProposalListItem extends StatelessWidget {
               SizedBox(
                 width: 100,
                 child: Text(
-                  proposal.type ?? 'N/A',
+                  widget.proposal.type ?? 'N/A',
                   textAlign: TextAlign.start,
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
               SizedBox(
                 width: 110,
-                child: Center(child: ProposalStatusWidget(status: status)),
+                child: Center(child: ProposalStatusWidget(status: _displayStatus)),
               ),
             ],
           ),
@@ -310,19 +394,84 @@ class DesktopProposalListItem extends StatelessWidget {
   }
 }
 
-class MobileProposalListItem extends StatelessWidget {
+// --- Stateful Mobile List Item ---
+class MobileProposalListItem extends StatefulWidget {
   final Proposal proposal;
-  final ProposalStatus status;
+  final Org org;
   final String networkName;
-  final String daoAddress;
 
   const MobileProposalListItem({
     super.key,
     required this.proposal,
-    required this.status,
+    required this.org,
     required this.networkName,
-    required this.daoAddress,
   });
+
+  @override
+  State<MobileProposalListItem> createState() => _MobileProposalListItemState();
+}
+
+class _MobileProposalListItemState extends State<MobileProposalListItem> {
+  late ProposalStatus _displayStatus;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStatusAndScheduleNext();
+  }
+
+  // THE FIX: Implement didUpdateWidget to react to data changes from the parent.
+  @override
+  void didUpdateWidget(covariant MobileProposalListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.proposal.statusHistory != oldWidget.proposal.statusHistory) {
+      _updateStatusAndScheduleNext();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateStatusAndScheduleNext() {
+    _timer?.cancel();
+    setState(() {
+      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
+    });
+    _scheduleNextUpdate();
+  }
+
+  void _scheduleNextUpdate() {
+    final now = DateTime.now();
+    DateTime? nextTransitionTime;
+
+    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
+    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
+
+    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
+      nextTransitionTime = voteStart;
+    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
+      nextTransitionTime = voteEnd;
+    } else if (_displayStatus == ProposalStatus.Queued) {
+      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
+      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
+      if (executionETA.isAfter(now)) {
+        nextTransitionTime = executionETA;
+      }
+    }
+
+    if (nextTransitionTime != null) {
+      final duration = nextTransitionTime.difference(now);
+      _timer = Timer(duration, () {
+        if (mounted) {
+          _updateStatusAndScheduleNext();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +484,7 @@ class MobileProposalListItem extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          context.go('/$networkName/$daoAddress/proposals/${proposal.id}');
+          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
         },
         borderRadius: BorderRadius.zero,
         child: Padding(
@@ -348,13 +497,13 @@ class MobileProposalListItem extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      proposal.title,
+                      widget.proposal.title,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ProposalStatusWidget(status: status),
+                  ProposalStatusWidget(status: _displayStatus),
                 ],
               ),
               const Divider(height: 20),
@@ -362,8 +511,8 @@ class MobileProposalListItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildMobileDetailColumn("ID", shortenString(proposal.id), context),
-                  _buildMobileDetailColumn("Type", proposal.type ?? 'N/A', context),
+                  _buildMobileDetailColumn("ID", shortenString(widget.proposal.id), context),
+                  _buildMobileDetailColumn("Type", widget.proposal.type ?? 'N/A', context),
                 ],
               ),
               const SizedBox(height: 12),
@@ -371,8 +520,8 @@ class MobileProposalListItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildMobileDetailColumn("Author", shortenString(proposal.author), context, isMono: true),
-                   _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(proposal.createdAt), context),
+                   _buildMobileDetailColumn("Author", shortenString(widget.proposal.author), context, isMono: true),
+                   _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(widget.proposal.createdAt), context),
                 ],
               ),
             ],

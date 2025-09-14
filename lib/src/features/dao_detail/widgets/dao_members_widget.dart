@@ -161,9 +161,9 @@ class _DaoMembersWidgetState extends State<DaoMembersWidget> {
           flex: 2,
           child: TextField(
             onChanged: _filterMembers,
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
-              prefixIcon: const Icon(Icons.search),
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+              prefixIcon: Icon(Icons.search),
               hintText: 'Find member by address...',
             ),
           ),

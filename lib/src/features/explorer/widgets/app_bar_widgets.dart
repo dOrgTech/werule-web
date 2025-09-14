@@ -95,7 +95,7 @@ class WalletConnector extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     
-    return Container(
+    return SizedBox(
       width: 175,
       height: 40,
       child: Center(

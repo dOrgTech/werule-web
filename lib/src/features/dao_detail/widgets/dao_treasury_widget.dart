@@ -128,11 +128,11 @@ class _TreasuryViewState extends State<_TreasuryView> {
             onChanged: (value) {
               setState(() { _searchQuery = value; });
             },
-            decoration: InputDecoration(
-              border: const OutlineInputBorder(
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
               ),
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: Icon(Icons.search),
               hintText: 'Find token by name, address, or symbol',
             ),
           );

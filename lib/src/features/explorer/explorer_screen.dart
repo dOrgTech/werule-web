@@ -6,10 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:werule/src/features/explorer/widgets/game_of_life.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 
-import '../../models/network.dart';
 import '../../providers/dao_provider.dart';
 import '../../providers/network_provider.dart';
-import '../../utils/reusable.dart';
 // Import the new shared AppBar
 import 'widgets/dao_card.dart';
 import '../../widgets/shared_app_bar.dart';

@@ -11,16 +11,19 @@ class ProposalVotesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // THE FIX: Watch the provider to get real-time updates
     final provider = context.watch<ProposalDetailProvider>();
 
-    final forVotes = provider.onChainForVotes;
-    final againstVotes = provider.onChainAgainstVotes;
+    // Use the proposal object held by the provider
+    final forVotes = provider.proposal.inFavor;
+    final againstVotes = provider.proposal.against;
     final totalVotes = forVotes + againstVotes;
     
     final int forPercentInt = totalVotes > BigInt.zero ? ((forVotes * BigInt.from(100)) ~/ totalVotes).toInt() : 0;
     final int againstPercentInt = totalVotes > BigInt.zero ? 100 - forPercentInt : 0;
     
-    final totalSupply = BigInt.tryParse(org.totalSupply) ?? BigInt.zero;
+    // Use the proposal's snapshot total supply for turnout calculation
+    final totalSupply = BigInt.tryParse(provider.proposal.totalSupply) ?? BigInt.zero;
     final double turnoutPercentDouble;
     if (totalSupply > BigInt.zero) {
       final turnoutBigInt = (totalVotes * BigInt.from(10000)) ~/ totalSupply;
@@ -31,6 +34,7 @@ class ProposalVotesCard extends StatelessWidget {
     final bool quorumMet = turnoutPercentDouble >= org.quorum;
 
     String formatVotes(BigInt amount) {
+      // We still use the org's decimals for formatting
       return formatTotalSupply(amount.toString(), org.decimals);
     }
 
@@ -43,7 +47,6 @@ class ProposalVotesCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // THE FIX: Use Row with Spacer to push button to the right
             Row(
               children: [
                 Text("${formatVotes(totalVotes)} Votes", style: Theme.of(context).textTheme.titleLarge),
@@ -85,7 +88,6 @@ class ProposalVotesCard extends StatelessWidget {
               againstPercent: 0,
               height: 12,
               quorumPercent: org.quorum.toDouble(),
-              // THE FIX: Use the new fillColor property for the turnout bar
               fillColor: Colors.grey.shade400,
             ),
           ],
@@ -124,21 +126,21 @@ class _ProgressBar extends StatelessWidget {
   final double againstPercent;
   final double height;
   final double? quorumPercent;
-  final Color? fillColor; // THE FIX: Add optional fillColor
+  final Color? fillColor;
 
   const _ProgressBar({
     required this.forPercent,
     required this.againstPercent,
     this.height = 8.0,
     this.quorumPercent,
-    this.fillColor, // THE FIX: Add to constructor
+    this.fillColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return Stack(
-        clipBehavior: Clip.none, // Allow quorum marker to draw outside
+        clipBehavior: Clip.none,
         children: [
           Container(
             width: double.infinity,
@@ -148,7 +150,6 @@ class _ProgressBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(height / 2),
             ),
           ),
-          // THE FIX: Conditional rendering based on fillColor
           if (fillColor != null)
             Container(
               width: constraints.maxWidth * (forPercent / 100),
@@ -181,7 +182,7 @@ class _ProgressBar extends StatelessWidget {
             ),
           if (quorumPercent != null)
             Positioned(
-              left: (constraints.maxWidth * (quorumPercent! / 100)) - 1, // center the marker
+              left: (constraints.maxWidth * (quorumPercent! / 100)) - 1,
               top: -4,
               bottom: -4,
               child: Container(width: 2, color: Colors.black),

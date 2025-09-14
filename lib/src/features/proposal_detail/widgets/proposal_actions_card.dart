@@ -93,8 +93,11 @@ class _ActionButtons extends StatelessWidget {
               context.read<BlockchainService>().castVote("0xTODO", BigInt.zero, 1)
             );
             if (context.mounted) {
-              if (error != null) _showSnackbar(context, error, isError: true);
-              else _showSnackbar(context, "Vote cast successfully!");
+              if (error != null) {
+                _showSnackbar(context, error, isError: true);
+              } else {
+                _showSnackbar(context, "Vote cast successfully!");
+              }
             }
           } : null,
           icon: Icon(Icons.thumb_up, color: isEnabled ? supportColor : Colors.grey),
@@ -111,8 +114,11 @@ class _ActionButtons extends StatelessWidget {
               context.read<BlockchainService>().castVote("0xTODO", BigInt.zero, 0)
             );
              if (context.mounted) {
-              if (error != null) _showSnackbar(context, error, isError: true);
-              else _showSnackbar(context, "Vote cast successfully!");
+              if (error != null) {
+                _showSnackbar(context, error, isError: true);
+              } else {
+                _showSnackbar(context, "Vote cast successfully!");
+              }
             }
           } : null,
           icon: Icon(Icons.thumb_down, color: isEnabled ? rejectColor : Colors.grey),
@@ -133,8 +139,11 @@ class _ActionButtons extends StatelessWidget {
           context.read<BlockchainService>().queueProposal("0xTODO", BigInt.zero)
         );
         if (context.mounted) {
-          if (error != null) _showSnackbar(context, error, isError: true);
-          else _showSnackbar(context, "Proposal queued for execution!");
+          if (error != null) {
+            _showSnackbar(context, error, isError: true);
+          } else {
+            _showSnackbar(context, "Proposal queued for execution!");
+          }
         }
       },
       child: const Text("Queue for Execution"),
@@ -148,8 +157,11 @@ class _ActionButtons extends StatelessWidget {
           context.read<BlockchainService>().executeProposal("0xTODO", BigInt.zero)
         );
          if (context.mounted) {
-          if (error != null) _showSnackbar(context, error, isError: true);
-          else _showSnackbar(context, "Proposal executed!");
+          if (error != null) {
+            _showSnackbar(context, error, isError: true);
+          } else {
+            _showSnackbar(context, "Proposal executed!");
+          }
         }
       },
       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),

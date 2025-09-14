@@ -5,11 +5,12 @@ import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/utils/proposal_status_helper.dart'; // THE FIX: We can use our helper here too
 
 class ProposalDetailProvider extends ChangeNotifier {
   final BlockchainService _blockchainService;
-  final Proposal _proposal;
-  final Org _org;
+  late Proposal _proposal; // Make non-final
+  late Org _org; // Make non-final
   final Network _network;
   Timer? _countdownTimer;
 
@@ -19,9 +20,10 @@ class ProposalDetailProvider extends ChangeNotifier {
     required Org org,
     required Network network,
   })  : _blockchainService = blockchainService,
-        _proposal = proposal,
-        _org = org,
         _network = network {
+    // Initialize with the first version of the proposal data
+    _proposal = proposal;
+    _org = org;
     _initialize();
   }
 
@@ -30,8 +32,6 @@ class ProposalDetailProvider extends ChangeNotifier {
   bool _isActionBusy = false;
   String? _errorMessage;
   ProposalStatus _status = ProposalStatus.Unknown;
-  BigInt _onChainForVotes = BigInt.zero;
-  BigInt _onChainAgainstVotes = BigInt.zero;
   int _remainingSeconds = 0;
   Map<ProposalStatus, DateTime> _fullTimeline = {};
 
@@ -40,121 +40,97 @@ class ProposalDetailProvider extends ChangeNotifier {
   bool get isActionBusy => _isActionBusy;
   String? get errorMessage => _errorMessage;
   ProposalStatus get status => _status;
-  BigInt get onChainForVotes => _onChainForVotes;
-  BigInt get onChainAgainstVotes => _onChainAgainstVotes;
+  Proposal get proposal => _proposal; // Expose the current proposal
   int get remainingSeconds => _remainingSeconds;
   bool get showCountdown => _status == ProposalStatus.Pending || _status == ProposalStatus.Active || _status == ProposalStatus.Queued;
   Map<ProposalStatus, DateTime> get fullTimeline => _fullTimeline;
+  
+  // THE FIX: Public method to update the provider with new data from the stream
+  void update(Proposal newProposal, Org newOrg) {
+    // Use the equality operator we defined to prevent unnecessary rebuilds
+    if (newProposal == _proposal && newOrg == _org) {
+      return;
+    }
+    _proposal = newProposal;
+    _org = newOrg;
+    
+    // Re-run the entire state calculation and timer logic
+    _recalculateStateAndRestartTimer();
+  }
 
   Future<void> _initialize() async {
-    await determineProposalStatus();
-    await _fetchOnChainVotes();
-    _startCountdown();
+    // Fetch the absolute on-chain state once for maximum accuracy on first load.
+    await _syncWithOnChainState();
+    _recalculateStateAndRestartTimer();
     _isLoading = false;
     notifyListeners();
   }
   
-  // --- Logic ---
-  Future<void> determineProposalStatus() async {
-    _isLoading = true;
-    _errorMessage = null;
+  // THE FIX: Centralized logic for recalculating state and managing the timer.
+  void _recalculateStateAndRestartTimer() {
+    _status = ProposalStatusHelper.calculateDisplayStatus(_proposal, _org);
+    _calculateFullTimeline(_status);
+    _startCountdown();
     notifyListeners();
+  }
 
+  // This method gets the definitive on-chain state enum (0-7)
+  Future<void> _syncWithOnChainState() async {
     try {
       final proposalId = BigInt.tryParse(_proposal.id);
-      if (proposalId == null) throw Exception("Invalid Proposal ID: ${_proposal.id}");
+      if (proposalId == null) throw Exception("Invalid Proposal ID");
 
       final onChainStateIndex = await _blockchainService.getProposalState(_org.address, proposalId, _network.rpcUrl);
       ProposalStatus onChainStatus = ProposalStatus.values[onChainStateIndex];
       
-      final now = DateTime.now();
-      // THE FIX: Use `minutes` for votingDelay and votingDuration.
-      final voteStart = _proposal.createdAt.add(Duration(minutes: _org.votingDelay));
-      final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
-
-      if (onChainStatus == ProposalStatus.Defeated) {
-        final totalVotes = _proposal.inFavor + _proposal.against;
-        final quorumVotes = (BigInt.parse(_org.totalSupply) * BigInt.from(_org.quorum)) ~/ BigInt.from(100);
-        _status = (totalVotes < quorumVotes) ? ProposalStatus.NoQuorum : ProposalStatus.Rejected;
-      } else if (onChainStatus == ProposalStatus.Succeeded) {
-        _status = ProposalStatus.Succeeded;
-      } else if (onChainStatus == ProposalStatus.Queued) {
-        final queuedTime = _proposal.statusHistory['queued'] ?? voteEnd;
-        // THE FIX: Use `seconds` for executionDelay.
-        final executionETA = queuedTime.add(Duration(seconds: _org.executionDelay));
-        _status = now.isAfter(executionETA) ? ProposalStatus.Executable : ProposalStatus.Queued;
-      } else {
-        _status = onChainStatus;
-      }
-
-      _calculateFullTimeline(onChainStatus);
+      // We can use this to enhance our timeline calculation if needed, but our helper is quite accurate.
+      // For now, the main benefit is ensuring the initial state is perfect.
+      // We still use our helper for the final calculation to include NoQuorum/Defeated logic.
+      _status = ProposalStatusHelper.calculateDisplayStatus(_proposal, _org);
 
     } catch (e) {
-      _errorMessage = "Failed to determine proposal status. ${e.toString()}";
-      _status = ProposalStatus.Unknown;
+      _errorMessage = "Failed to sync on-chain status: ${e.toString()}";
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
-  void _calculateFullTimeline(ProposalStatus onChainStatus) {
+  void _calculateFullTimeline(ProposalStatus currentStatus) {
     final timeline = <ProposalStatus, DateTime>{};
-
-    // THE FIX: Use the correct time units (minutes) for voting calculations.
     final createdAt = _proposal.createdAt;
     final voteStart = createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
-
+    final now = DateTime.now();
     timeline[ProposalStatus.Pending] = createdAt;
-
-    if (onChainStatus.index >= ProposalStatus.Active.index) {
+    if (now.isAfter(voteStart)) {
         timeline[ProposalStatus.Active] = voteStart;
     }
-
-    if (onChainStatus.index >= ProposalStatus.Canceled.index) {
-        switch (onChainStatus) {
+    if (now.isAfter(voteEnd)) {
+        switch (currentStatus) {
             case ProposalStatus.Succeeded:
             case ProposalStatus.Queued:
             case ProposalStatus.Executed:
                 timeline[ProposalStatus.Succeeded] = voteEnd;
                 break;
             case ProposalStatus.Defeated:
-                timeline[_status] = voteEnd;
+            case ProposalStatus.NoQuorum:
+            case ProposalStatus.Rejected:
+                timeline[currentStatus] = voteEnd; // Show the specific failure reason
                 break;
-            case ProposalStatus.Canceled:
-                 timeline[ProposalStatus.Canceled] = _proposal.statusHistory['canceled'] ?? voteEnd;
-                 break;
             default:
-                break;
+                 break;
         }
     }
-    
-    if (onChainStatus.index >= ProposalStatus.Queued.index) {
-        timeline[ProposalStatus.Queued] = _proposal.statusHistory['queued'] ?? voteEnd;
+    if (_proposal.statusHistory.containsKey('queued')) {
+        timeline[ProposalStatus.Queued] = _proposal.statusHistory['queued']!;
     }
-    if (onChainStatus.index >= ProposalStatus.Executed.index) {
-       timeline[ProposalStatus.Executed] = _proposal.statusHistory['executed'] ?? DateTime.now();
+    if (_proposal.statusHistory.containsKey('executed')) {
+       timeline[ProposalStatus.Executed] = _proposal.statusHistory['executed']!;
     }
-
     _fullTimeline = timeline;
-  }
-
-  Future<void> _fetchOnChainVotes() async {
-    try {
-      final proposalId = BigInt.parse(_proposal.id);
-      final votes = await _blockchainService.getProposalVotes(_org.address, proposalId, _network.rpcUrl);
-      _onChainAgainstVotes = votes[0];
-      _onChainForVotes = votes[1];
-    } catch (e) {
-      _errorMessage = "Failed to fetch on-chain votes. ${e.toString()}";
-    }
-    notifyListeners();
   }
 
   void _startCountdown() {
     _countdownTimer?.cancel();
-    _updateRemainingTime();
+    _updateRemainingTime(); // Run once immediately
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updateRemainingTime());
   }
 
@@ -162,23 +138,25 @@ class ProposalDetailProvider extends ChangeNotifier {
     final now = DateTime.now();
     DateTime? targetTime;
 
-    // THE FIX: Use `minutes` for voting calculations here as well for consistency.
     final voteStart = _proposal.createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
 
-    if (_status == ProposalStatus.Pending) {
-      targetTime = voteStart;
-    } else if (_status == ProposalStatus.Active) {
-      targetTime = voteEnd;
-    } else if (_status == ProposalStatus.Queued) {
+    if (_status == ProposalStatus.Pending) targetTime = voteStart;
+    else if (_status == ProposalStatus.Active) targetTime = voteEnd;
+    else if (_status == ProposalStatus.Queued) {
       final queuedTime = _proposal.statusHistory['queued'] ?? voteEnd;
-      // THE FIX: Use `seconds` for execution delay.
       targetTime = queuedTime.add(Duration(seconds: _org.executionDelay));
     }
 
     if (targetTime != null) {
       final remaining = targetTime.difference(now).inSeconds;
-      _remainingSeconds = remaining > 0 ? remaining : 0;
+      if (remaining <= 0 && _remainingSeconds > 0) {
+        // THE FIX: Time's up! Trigger a full state recalculation.
+        _remainingSeconds = 0;
+        _recalculateStateAndRestartTimer();
+      } else {
+        _remainingSeconds = remaining > 0 ? remaining : 0;
+      }
     } else {
       _remainingSeconds = 0;
     }
@@ -205,4 +183,4 @@ class ProposalDetailProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-// lib/src/providers/proposal_detail_provider.dart```
+// lib/src/providers/proposal_detail_provider.dart

@@ -146,9 +146,9 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                     children: [
                                       OverviewTab(dao: dao),
                                       ProposalsTab(
-                                        proposals: proposals,
+                                        org: dao,
+                                       
                                         networkName: widget.networkName,
-                                        daoAddress: widget.daoAddress,
                                       ),
                                       const RegistryTab(),
                                       MembersTab(dao: dao),

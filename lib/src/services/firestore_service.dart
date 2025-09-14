@@ -75,6 +75,25 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
+  // THE FIX: New method to get a real-time stream of proposals.
+  Stream<List<Proposal>> getProposalsStream(String networkDaoCollection, String daoAddress) {
+    try {
+      final querySnapshot = _db
+          .collection(networkDaoCollection)
+          .doc(daoAddress)
+          .collection('proposals')
+          .orderBy('createdAt', descending: true)
+          .snapshots();
+      
+      return querySnapshot.map((snapshot) => 
+        snapshot.docs.map((doc) => Proposal.fromFirestore(doc)).toList()
+      );
+    } catch (e) {
+      print("Error creating proposals stream: $e");
+      return Stream.error(Exception('Failed to create proposals stream.'));
+    }
+  }
+
   // NEW: Get a single proposal by its ID
   Future<Proposal?> getProposal(String networkDaoCollection, String daoAddress, String proposalId) async {
     try {
@@ -116,3 +135,4 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 }
+// lib/src/services/firestore_service.dart

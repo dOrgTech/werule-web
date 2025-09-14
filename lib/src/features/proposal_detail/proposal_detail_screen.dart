@@ -78,7 +78,12 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
         return FutureBuilder<Org?>(
           future: _orgFuture,
           builder: (context, orgSnapshot) {
-            if (!orgSnapshot.hasData) return const Center(child: CircularProgressIndicator());
+            if (orgSnapshot.connectionState == ConnectionState.waiting || !orgSnapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (orgSnapshot.data == null) {
+               return Center(child: Text('DAO ${widget.daoAddress} not found.'));
+            }
             final org = orgSnapshot.data!;
 
             return StreamBuilder<Proposal?>(
@@ -96,6 +101,8 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
 
                 final proposal = proposalSnapshot.data!;
 
+                // Use a ChangeNotifierProvider.value if the provider already exists,
+                // or create it if it's the first time.
                 return ChangeNotifierProvider(
                   create: (context) => ProposalDetailProvider(
                     blockchainService: context.read<BlockchainService>(),
@@ -106,9 +113,9 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
                   child: _ProposalDetailView(
                     networkName: widget.networkName,
                     daoAddress: widget.daoAddress,
-                    proposal: proposal,
-                    org: org,
-                    network: network, // Pass network down
+                    proposal: proposal, // Pass the latest proposal down
+                    org: org,          // Pass the org down
+                    network: network,
                   ),
                 );
               },
@@ -126,18 +133,22 @@ class _ProposalDetailView extends StatelessWidget {
   final String daoAddress;
   final Proposal proposal;
   final Org org;
-  final Network network; // Added network
+  final Network network;
 
   const _ProposalDetailView({
     required this.networkName,
     required this.daoAddress,
     required this.proposal,
     required this.org,
-    required this.network, // Added network
+    required this.network,
   });
 
   @override
   Widget build(BuildContext context) {
+    // THE FIX: On every build, tell the provider about the latest proposal data.
+    // The provider's internal logic will prevent unnecessary work if the data hasn't changed.
+    context.read<ProposalDetailProvider>().update(proposal, org);
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -233,8 +244,7 @@ class _ProposalHeader extends StatelessWidget {
       children: [
         Consumer<ProposalDetailProvider>(
           builder: (context, provider, child) {
-            if (provider.isLoading) return const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2));
-            if (provider.errorMessage != null) return Tooltip(message: "Could not get on-chain status: ${provider.errorMessage}", child: const Icon(Icons.error_outline, color: Colors.amber));
+            // This Consumer now correctly rebuilds whenever the provider's state changes
             return ProposalStatusWidget(status: provider.status);
           },
         ),

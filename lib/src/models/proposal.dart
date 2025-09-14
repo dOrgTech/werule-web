@@ -1,6 +1,7 @@
 // lib/src/models/proposal.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:web3dart/crypto.dart'; // THE FIX: Import for bytesToHex utility.
+import 'package:collection/collection.dart';
+import 'package:web3dart/crypto.dart'; 
 
 enum ProposalStatus {
   Pending,
@@ -40,6 +41,7 @@ class Proposal {
   final List<String> targets;
   final List<String> callDatas;
   final String? externalResource;
+  final String totalSupply; // ADDED: To hold the totalSupply snapshot
 
   Proposal({
     required this.id,
@@ -54,6 +56,7 @@ class Proposal {
     required this.targets,
     required this.callDatas,
     this.externalResource,
+    required this.totalSupply, // ADDED: To constructor
   });
 
   factory Proposal.fromFirestore(DocumentSnapshot doc) {
@@ -68,15 +71,12 @@ class Proposal {
       });
     }
 
-    // THE FIX: Process `callDatas` to handle both String and Blob types.
     final rawCallDatas = data['callDatas'] as List<dynamic>? ?? [];
     final List<String> processedCallDatas = [];
     for (final item in rawCallDatas) {
       if (item is String) {
         processedCallDatas.add(item);
       } else if (item is Blob) {
-        // A Blob from Firestore contains raw bytes. Convert them to a hex string.
-        // The bytesToHex function from web3dart's crypto utility is perfect for this.
         processedCallDatas.add(bytesToHex(item.bytes, include0x: true));
       }
     }
@@ -92,18 +92,34 @@ class Proposal {
       statusHistory: history,
       type: data['type'],
       targets: List<String>.from(data['targets'] ?? []),
-      callDatas: processedCallDatas, // Use the safely processed list.
+      callDatas: processedCallDatas,
       externalResource: data['externalResource'],
+      totalSupply: data['totalSupply']?.toString() ?? '0', // ADDED: Parse from Firestore
     );
   }
 
-  // Helper to get a sorted timeline
   List<ProposalTimelineEntry> get sortedTimeline {
     final entries = statusHistory.entries
         .map((e) => ProposalTimelineEntry(status: e.key, timestamp: e.value))
         .toList();
     entries.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return entries;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    final mapEquals = const DeepCollectionEquality().equals;
+
+    return other is Proposal &&
+        other.id == id &&
+        other.totalSupply == totalSupply && // ADDED: To equality check
+        mapEquals(other.statusHistory, statusHistory);
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^ statusHistory.hashCode ^ totalSupply.hashCode; // ADDED: To hashcode
   }
 }
 // lib/src/models/proposal.dart
