@@ -152,7 +152,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                       ),
                                       const RegistryTab(),
                                       MembersTab(dao: dao),
-                                      const AccountTab(),
+                                       AccountTab(dao: dao),
                                     ],
                                   ),
                                 ),
@@ -160,7 +160,8 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                             ),
                           ],
                         ),
-                        const Footer(),
+                        (MediaQuery.of(context).size.width > 800)?
+                        const Footer():SizedBox(height: 100),
                       ],
                     ),
                   ),

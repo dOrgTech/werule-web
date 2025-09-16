@@ -3,24 +3,21 @@
 import 'package:flutter_web3/flutter_web3.dart' as web3;
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart' as http;
+import 'package:werule/src/services/erc20_gov_abi.dart';
 import 'package:werule/src/services/governor_abi.dart';
 import '../models/network.dart';
 
 class BlockchainService {
-  // THE FIX: A private helper function to reliably parse chain IDs
-  // whether they come from the wallet as an int or a hex string.
   int _parseChainId(dynamic chainId) {
     if (chainId is int) {
       return chainId;
     }
     if (chainId is String) {
       return int.parse(
-        // Remove '0x' prefix if it exists, then parse as base-16
         chainId.startsWith('0x') ? chainId.substring(2) : chainId,
         radix: 16,
       );
     }
-    // As a fallback for any unexpected type, though this shouldn't happen.
     throw FormatException('Cannot parse chainId: $chainId');
   }
 
@@ -49,7 +46,6 @@ class BlockchainService {
   Future<int?> getChainId() async {
     try {
       final dynamic chainId = await web3.ethereum!.getChainId();
-      // Apply the parsing function here as well for consistency.
       return _parseChainId(chainId);
     } catch (e) {
       return null;
@@ -89,13 +85,9 @@ class BlockchainService {
 
   void onChainChanged(Function(int) callback) {
     web3.ethereum!.on('chainChanged', (chainId) {
-      // Apply the parsing function to the event payload before calling the callback.
-      // This is the core fix for the crash.
       callback(_parseChainId(chainId));
     });
   }
-
-  // --- NEW METHODS for Governor Contract Interaction ---
 
   Future<int> getProposalState(String contractAddress, BigInt proposalId, String rpcUrl) async {
     final client = Web3Client(rpcUrl, http.Client());
@@ -110,7 +102,6 @@ class BlockchainService {
         function: stateFunction,
         params: [proposalId],
       );
-      // The result is a list containing the state enum, which is a uint8.
       if (result.isNotEmpty && result[0] is BigInt) {
         return (result[0] as BigInt).toInt();
       }
@@ -136,7 +127,6 @@ class BlockchainService {
         function: votesFunction,
         params: [proposalId],
       );
-      // result is [againstVotes, forVotes, abstainVotes]
       if (result.length == 3) {
         return result.cast<BigInt>();
       }
@@ -149,13 +139,36 @@ class BlockchainService {
     }
   }
 
-  // --- NEW: Placeholder Action Methods ---
+  Future<BigInt> getVotes(String tokenAddress, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        // THE FIX: Use the ContractAbi object, not the ContractFunction.
+        Erc20GovAbi.abi,
+        EthereumAddress.fromHex(tokenAddress),
+      );
+      final getVotesFunction = contract.function('getVotes');
+      final result = await client.call(
+        contract: contract,
+        function: getVotesFunction,
+        params: [EthereumAddress.fromHex(userAddress)],
+      );
+
+      if (result.isNotEmpty && result[0] is BigInt) {
+        return result[0] as BigInt;
+      }
+      throw Exception('Failed to parse voting weight from token contract.');
+    } catch (e) {
+      print('[BlockchainService] Error getting votes: $e');
+      return BigInt.zero;
+    } finally {
+      await client.dispose();
+    }
+  }
 
   Future<String> castVote(String contractAddress, BigInt proposalId, int support) async {
-    // In a real app, this would use web3.personal!.sendTransaction to vote.
     print('Casting vote for proposal $proposalId with support $support on contract $contractAddress');
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    // throw Exception("User rejected transaction"); // Uncomment to test error case
+    await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_vote_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
 

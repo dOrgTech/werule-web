@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:werule/src/models/account_details.dart';
 import '../models/network.dart';
 import '../models/org.dart';
 import '../models/proposal.dart';
@@ -139,7 +140,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
 
     try {
-      // THE FIX: Order by the correct field name 'cast'.
       final snapshot = await _db.collection(path).orderBy('cast', descending: true).get();
       if (kDebugMode) {
         print('[VOTES_FETCH] Success. Found ${snapshot.docs.length} vote documents.');
@@ -150,6 +150,29 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
         print('[VOTES_FETCH] FAILED. Error: $e');
       }
       return [];
+    }
+  }
+  
+  Future<AccountDetails> getMemberDetails(String networkDaoCollection, String daoAddress, String memberAddress) async {
+    // DEBUG PRINT: Construct and log the full path being queried.
+    final path = '$networkDaoCollection/$daoAddress/members/$memberAddress';
+    print('[FirestoreService] Querying member details at path: $path');
+    
+    try {
+      final doc = await _db.collection(networkDaoCollection).doc(daoAddress).collection('members').doc(memberAddress).get();
+      
+      // DEBUG PRINT: Log whether the document was found and what its data is.
+      print('[FirestoreService] Document exists: ${doc.exists}');
+      if (doc.exists) {
+        print('[FirestoreService] Document data: ${doc.data()}');
+        return AccountDetails.fromFirestore(doc);
+      }
+      
+      return AccountDetails.empty();
+    } catch(e) {
+      // DEBUG PRINT: Log any error during the Firestore query.
+      print('[FirestoreService] Error fetching member details: $e');
+      throw Exception('Failed to load member details from Firestore.');
     }
   }
 }
