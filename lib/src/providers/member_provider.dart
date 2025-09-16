@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:werule/src/models/account_details.dart';
 import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
@@ -38,6 +39,8 @@ class MemberProvider extends ChangeNotifier {
   AccountDetails _accountDetails = AccountDetails.empty();
   BigInt _personalBalance = BigInt.zero;
   BigInt _votingWeight = BigInt.zero;
+  List<Proposal> _createdProposalDetails = [];
+  List<Proposal> _votedProposalDetails = [];
 
   // --- Getters ---
   bool get isLoading => _isLoading;
@@ -46,6 +49,8 @@ class MemberProvider extends ChangeNotifier {
   int get votesCastCount => _accountDetails.proposalsVoted.length;
   BigInt get personalBalance => _personalBalance;
   BigInt get votingWeight => _votingWeight;
+  List<Proposal> get createdProposalDetails => _createdProposalDetails;
+  List<Proposal> get votedProposalDetails => _votedProposalDetails;
 
   Future<void> fetchMemberData() async {
     final userAddress = _authProvider.selectedAccount;
@@ -60,19 +65,15 @@ class MemberProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // THE FIX: Change the order of operations.
-      // 1. Fetch all members first to get the correctly-cased address.
       final membersData = await _membersService.getMembers(_org.govTokenAddress, _network.blockExplorerUrl);
       final items = membersData['items'] as List<dynamic>? ?? [];
       
       String? checksumAddress;
       
-      // 2. Find the user in the list via a case-insensitive search.
       final currentUserData = items.firstWhere(
         (item) {
           final hash = item['address']?['hash'] as String?;
           if (hash != null && hash.toLowerCase() == userAddress.toLowerCase()) {
-            // 3. If found, store the correctly-cased address and their balance.
             checksumAddress = hash;
             _personalBalance = BigInt.tryParse(item['value'] ?? '0') ?? BigInt.zero;
             return true;
@@ -82,17 +83,26 @@ class MemberProvider extends ChangeNotifier {
         orElse: () => null,
       );
 
-      // 4. If the user is a member (found in the list)...
       if (checksumAddress != null) {
-        // ...then fetch their on-chain votes and Firestore details concurrently.
         final results = await Future.wait([
           _firestoreService.getMemberDetails(_network.daoCollectionName, _org.address, checksumAddress!),
           _blockchainService.getVotes(_org.govTokenAddress, userAddress, _network.rpcUrl),
+          // THE FIX: Also fetch all proposals for the DAO.
+          _firestoreService.getProposals(_network.daoCollectionName, _org.address),
         ]);
         _accountDetails = results[0] as AccountDetails;
         _votingWeight = results[1] as BigInt;
+        
+        final allProposals = results[2] as List<Proposal>;
+        
+        // THE FIX: Filter the full list of proposals based on the user's activity IDs.
+        final createdIds = _accountDetails.proposalsCreated.toSet();
+        final votedIds = _accountDetails.proposalsVoted.toSet();
+
+        _createdProposalDetails = allProposals.where((p) => createdIds.contains(p.id)).toList();
+        _votedProposalDetails = allProposals.where((p) => votedIds.contains(p.id)).toList();
+
       } else {
-        // User is not a token holder, so they have no activity.
         _personalBalance = BigInt.zero;
         _votingWeight = BigInt.zero;
         _accountDetails = AccountDetails.empty();

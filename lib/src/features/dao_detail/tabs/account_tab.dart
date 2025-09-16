@@ -1,6 +1,7 @@
 // lib/src/features/dao_detail/tabs/account_tab.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/member_provider.dart';
@@ -9,13 +10,6 @@ import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/services/members_service.dart';
 import 'package:werule/src/utils/reusable.dart';
-
-// A simple data class for our mock proposal list items
-class _ProposalListItemData {
-  final String id;
-  final String title;
-  _ProposalListItemData({required this.id, required this.title});
-}
 
 class AccountTab extends StatelessWidget {
   final Org dao;
@@ -30,7 +24,6 @@ class AccountTab extends StatelessWidget {
       return const _NotConnectedView();
     }
 
-    // THE FIX: Use a provider to fetch and manage member-specific data.
     return ChangeNotifierProvider(
       create: (context) => MemberProvider(
         authProvider: context.read<AuthProvider>(),
@@ -75,7 +68,7 @@ class AccountTab extends StatelessWidget {
 }
 
 // --- Placeholder/Conditional Views ---
-
+// (These widgets remain unchanged)
 class _NotConnectedView extends StatelessWidget {
   const _NotConnectedView();
 
@@ -118,6 +111,7 @@ class _NotAMemberView extends StatelessWidget {
   }
 }
 
+
 // --- Main Account View ---
 
 class _AccountView extends StatelessWidget {
@@ -139,7 +133,8 @@ class _AccountView extends StatelessWidget {
             _TokenBridgeCard(dao: dao),
           ],
           const SizedBox(height: 16),
-          const _ActivityHistoryCard(),
+          // THE FIX: Pass the dao and network name to the activity card
+          _ActivityHistoryCard(dao: dao, networkName: context.read<NetworkProvider>().selectedNetwork!.name),
         ],
       ),
     );
@@ -155,7 +150,6 @@ class _AccountHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    // THE FIX: Get real data from the MemberProvider
     final memberProvider = context.watch<MemberProvider>();
     final address = auth.selectedAccount ?? '0x...';
     final isMobile = MediaQuery.of(context).size.width < 700;
@@ -300,7 +294,9 @@ class _TokenBridgeCard extends StatelessWidget {
 }
 
 class _ActivityHistoryCard extends StatefulWidget {
-  const _ActivityHistoryCard();
+  final Org dao;
+  final String networkName;
+  const _ActivityHistoryCard({required this.dao, required this.networkName});
 
   @override
   State<_ActivityHistoryCard> createState() => _ActivityHistoryCardState();
@@ -311,9 +307,10 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for display
-    final votedProposals = List.generate(3, (i) => _ProposalListItemData(id: '${10 - i}', title: 'Proposal Voted On #${10 - i}'));
-    final createdProposals = List.generate(5, (i) => _ProposalListItemData(id: '${5 - i}', title: 'My Awesome Proposal #${5 - i}'));
+    // THE FIX: Get real data from the MemberProvider
+    final memberProvider = context.watch<MemberProvider>();
+    final votedProposals = memberProvider.votedProposalDetails;
+    final createdProposals = memberProvider.createdProposalDetails;
     final isMobile = MediaQuery.of(context).size.width < 700;
 
     final toggleButtons = ToggleButtons(
@@ -367,9 +364,10 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
                 itemCount: _selectedIndex == 0 ? createdProposals.length : votedProposals.length,
                 itemBuilder: (context, index) {
                   final proposal = _selectedIndex == 0 ? createdProposals[index] : votedProposals[index];
+                  // THE FIX: Use the reusable, real list item widgets
                   return isMobile
-                      ? _MobileProposalListItem(proposal: proposal)
-                      : _DesktopProposalListItem(proposal: proposal);
+                      ? MobileProposalListItem(proposal: proposal, org: widget.dao, networkName: widget.networkName)
+                      : DesktopProposalListItem(proposal: proposal, org: widget.dao, networkName: widget.networkName);
                 },
               ),
           ],
@@ -386,106 +384,15 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
         child: const Row(
           children: [
             SizedBox(width: 60, child: Text("ID #")),
-            Expanded(flex: 4, child: Text("Title")),
-            Expanded(flex: 2, child: Text("Posted")),
-            Expanded(flex: 1, child: Text("Type")),
+            Expanded(flex: 3, child: Text("Title")),
+            Expanded(flex: 2, child: Text("Author")),
+            SizedBox(width: 140, child: Text("Posted")),
+            Spacer(),
+            SizedBox(width: 100, child: Text("Type")),
             SizedBox(width: 110, child: Text("Status", textAlign: TextAlign.center)),
           ],
         ),
       ),
-    );
-  }
-}
-
-// --- List Item Widgets ---
-
-class _DesktopProposalListItem extends StatelessWidget {
-  final _ProposalListItemData proposal;
-  const _DesktopProposalListItem({required this.proposal});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xff3a3a3a),
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Row(
-          children: [
-            SizedBox(width: 60, child: Text(proposal.id)),
-            Expanded(flex: 4, child: Text(proposal.title, overflow: TextOverflow.ellipsis)),
-            const Expanded(flex: 2, child: Text("09/15/2025")),
-            const Expanded(flex: 1, child: Text("Transfer")),
-            const SizedBox(
-              width: 110,
-              child: Center(child: Text("Executed", style: TextStyle(color: Colors.green))),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileProposalListItem extends StatelessWidget {
-  final _ProposalListItemData proposal;
-  const _MobileProposalListItem({required this.proposal});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xff3a3a3a),
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    proposal.title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text("Executed", style: TextStyle(color: Colors.green)),
-              ],
-            ),
-            const Divider(height: 20),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _buildMobileDetailColumn("ID", shortenString(proposal.id), context)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildMobileDetailColumn("Type", "Transfer", context)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildMobileDetailColumn("Posted", "09/15/2025", context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMobileDetailColumn(String label, String value, BuildContext context, {bool isMono = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: isMono ? const TextStyle(fontFamily: 'monospace') : const TextStyle(fontWeight: FontWeight.w500),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 }
