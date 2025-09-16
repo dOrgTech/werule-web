@@ -24,7 +24,10 @@ class AccountTab extends StatelessWidget {
       return const _NotConnectedView();
     }
 
+    // THE FIX: Add a ValueKey to the provider. When the selectedAccount changes,
+    // this key will change, forcing Flutter to create a new MemberProvider instance.
     return ChangeNotifierProvider(
+      key: ValueKey(auth.selectedAccount),
       create: (context) => MemberProvider(
         authProvider: context.read<AuthProvider>(),
         firestoreService: context.read<FirestoreService>(),
@@ -68,7 +71,6 @@ class AccountTab extends StatelessWidget {
 }
 
 // --- Placeholder/Conditional Views ---
-// (These widgets remain unchanged)
 class _NotConnectedView extends StatelessWidget {
   const _NotConnectedView();
 
@@ -133,7 +135,6 @@ class _AccountView extends StatelessWidget {
             _TokenBridgeCard(dao: dao),
           ],
           const SizedBox(height: 16),
-          // THE FIX: Pass the dao and network name to the activity card
           _ActivityHistoryCard(dao: dao, networkName: context.read<NetworkProvider>().selectedNetwork!.name),
         ],
       ),
@@ -231,8 +232,132 @@ class _AccountHeaderCard extends StatelessWidget {
 class _DelegationCard extends StatelessWidget {
   const _DelegationCard();
 
+  void _showSnackbar(BuildContext context, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Center(child: Text(message)),
+      backgroundColor: isError ? Colors.redAccent : Colors.green,
+    ));
+  }
+
+  void _showSetDelegateDialog(BuildContext context) {
+    final provider = context.read<MemberProvider>();
+    final addressController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            bool isSubmitting = false;
+
+            return AlertDialog(
+              backgroundColor: const Color(0xff2c2c2c),
+              title: const Text("Set Delegate"),
+              content: provider.isActionBusy || isSubmitting
+                ? const Center(heightFactor: 2, child: CircularProgressIndicator())
+                : Form(
+                    key: formKey,
+                    child: TextFormField(
+                      controller: addressController,
+                      decoration: const InputDecoration(labelText: "Delegate Address (0x...)"),
+                      validator: (value) {
+                        if (value == null || value.isEmpty || !value.startsWith('0x') || value.length != 42) {
+                          return 'Please enter a valid Ethereum address.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: provider.isActionBusy || isSubmitting ? null : () async {
+                    if (formKey.currentState!.validate()) {
+                      setDialogState(() => isSubmitting = true);
+                      final error = await provider.handleDelegate(addressController.text);
+                      if (dialogContext.mounted) {
+                        if (error == null) {
+                          _showSnackbar(dialogContext, "Delegation successful!");
+                          Navigator.of(dialogContext).pop();
+                        } else {
+                          _showSnackbar(dialogContext, error, isError: true);
+                          setDialogState(() => isSubmitting = false);
+                        }
+                      }
+                    }
+                  },
+                  child: const Text("Submit"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _claimVotingPower(BuildContext context) async {
+    final provider = context.read<MemberProvider>();
+    final userAddress = context.read<AuthProvider>().selectedAccount;
+    if (userAddress == null) return;
+    
+    final error = await provider.handleDelegate(userAddress);
+    if (context.mounted) {
+      if (error == null) {
+        _showSnackbar(context, "Voting power claimed successfully!");
+      } else {
+        _showSnackbar(context, error, isError: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<MemberProvider>();
+    final auth = context.watch<AuthProvider>();
+
+    final userAddress = auth.selectedAccount?.toLowerCase();
+    final delegateAddress = provider.delegateAddress?.toLowerCase();
+    final hasBalance = provider.personalBalance > BigInt.zero;
+    final zeroAddress = "0x0000000000000000000000000000000000000000";
+
+    bool isUndelegated = delegateAddress == null || delegateAddress == zeroAddress;
+    bool isSelfDelegated = !isUndelegated && delegateAddress == userAddress;
+    
+    Widget delegateBottomWidget;
+    Widget voteDirectlyBottomWidget;
+
+    if (!hasBalance) {
+      delegateBottomWidget = const ElevatedButton(onPressed: null, child: Text('Delegate Vote'));
+      voteDirectlyBottomWidget = const ElevatedButton(onPressed: null, child: Text('Claim Voting Power'));
+    } else if (isUndelegated) {
+      delegateBottomWidget = ElevatedButton(onPressed: () => _showSetDelegateDialog(context), child: const Text('Delegate Vote'));
+      voteDirectlyBottomWidget = ElevatedButton(onPressed: () => _claimVotingPower(context), child: const Text('Claim Voting Power'));
+    } else if (isSelfDelegated) {
+      delegateBottomWidget = ElevatedButton(onPressed: () => _showSetDelegateDialog(context), child: const Text('Change Delegate'));
+      voteDirectlyBottomWidget = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Text("You are voting directly.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[400])),
+      );
+    } else { // Delegated to other
+      delegateBottomWidget = Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(shortenString(provider.delegateAddress!), style: const TextStyle(fontFamily: 'monospace')),
+          IconButton(onPressed: () => _showSetDelegateDialog(context), icon: const Icon(Icons.edit)),
+        ],
+      );
+      voteDirectlyBottomWidget = ElevatedButton(onPressed: () => _claimVotingPower(context), child: const Text('Claim Voting Power'));
+    }
+
+    if (provider.isActionBusy) {
+      delegateBottomWidget = voteDirectlyBottomWidget = const Center(child: CircularProgressIndicator());
+    }
+
     return Card(
       color: const Color(0xff2c2c2c),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
@@ -243,22 +368,94 @@ class _DelegationCard extends StatelessWidget {
           children: [
             const Text("Delegation Settings", style: TextStyle(fontSize: 20)),
             const SizedBox(height: 8),
-            Text("You can either delegate your vote or accept delegations, but not both at the same time.", style: TextStyle(color: Colors.grey[400])),
+            Text("To participate in governance, you must claim your voting power for yourself or delegate it to another address.", style: TextStyle(color: Colors.grey[400])),
             const SizedBox(height: 16),
             const Divider(),
-            const SizedBox(height: 16),
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Text("Delegation UI Coming Soon", style: TextStyle(color: Colors.grey)),
-              ),
-            ),
+            const SizedBox(height: 24),
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 850;
+              final children = [
+                _DelegationOptionBox(
+                  icon: Icons.handshake_outlined,
+                  title: "DELEGATE\nYOUR VOTE",
+                  description: "If you can't or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing.",
+                  bottomWidget: delegateBottomWidget,
+                ),
+                if (isMobile) const SizedBox(height: 24),
+                if (!isMobile) const SizedBox(width: 40),
+                _DelegationOptionBox(
+                  icon: Icons.how_to_vote_outlined,
+                  title: "VOTE\nDIRECTLY",
+                  description: "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf.",
+                  bottomWidget: voteDirectlyBottomWidget,
+                ),
+              ];
+              return isMobile 
+                ? Column(children: children)
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: children,
+                  );
+            }),
           ],
         ),
       ),
     );
   }
 }
+
+class _DelegationOptionBox extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final Widget bottomWidget;
+
+  const _DelegationOptionBox({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.bottomWidget,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Flexible(
+      child: Container(
+        height: 300,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.2),
+          border: Border.all(width: 0.3, color: const Color.fromARGB(255, 105, 105, 105)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 50),
+                const SizedBox(width: 16),
+                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.left),
+              ],
+            ),
+            const SizedBox(height: 25),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(description, style: TextStyle(color: Colors.grey[300], fontSize: 15, height: 1.4)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(height: 40, child: Center(child: bottomWidget)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 class _TokenBridgeCard extends StatelessWidget {
   final Org dao;
@@ -307,7 +504,6 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
 
   @override
   Widget build(BuildContext context) {
-    // THE FIX: Get real data from the MemberProvider
     final memberProvider = context.watch<MemberProvider>();
     final votedProposals = memberProvider.votedProposalDetails;
     final createdProposals = memberProvider.createdProposalDetails;
@@ -364,7 +560,6 @@ class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
                 itemCount: _selectedIndex == 0 ? createdProposals.length : votedProposals.length,
                 itemBuilder: (context, index) {
                   final proposal = _selectedIndex == 0 ? createdProposals[index] : votedProposals[index];
-                  // THE FIX: Use the reusable, real list item widgets
                   return isMobile
                       ? MobileProposalListItem(proposal: proposal, org: widget.dao, networkName: widget.networkName)
                       : DesktopProposalListItem(proposal: proposal, org: widget.dao, networkName: widget.networkName);

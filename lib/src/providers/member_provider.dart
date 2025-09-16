@@ -39,16 +39,20 @@ class MemberProvider extends ChangeNotifier {
   AccountDetails _accountDetails = AccountDetails.empty();
   BigInt _personalBalance = BigInt.zero;
   BigInt _votingWeight = BigInt.zero;
+  String? _delegateAddress;
   List<Proposal> _createdProposalDetails = [];
   List<Proposal> _votedProposalDetails = [];
+  bool _isActionBusy = false;
 
   // --- Getters ---
   bool get isLoading => _isLoading;
+  bool get isActionBusy => _isActionBusy;
   String? get errorMessage => _errorMessage;
   int get proposalsCreatedCount => _accountDetails.proposalsCreated.length;
   int get votesCastCount => _accountDetails.proposalsVoted.length;
   BigInt get personalBalance => _personalBalance;
   BigInt get votingWeight => _votingWeight;
+  String? get delegateAddress => _delegateAddress;
   List<Proposal> get createdProposalDetails => _createdProposalDetails;
   List<Proposal> get votedProposalDetails => _votedProposalDetails;
 
@@ -61,8 +65,11 @@ class MemberProvider extends ChangeNotifier {
       return;
     }
 
-    _isLoading = true;
-    notifyListeners();
+    // Set loading state only if it's the initial fetch.
+    if (!_isLoading) {
+      _isActionBusy = true;
+      notifyListeners();
+    }
 
     try {
       final membersData = await _membersService.getMembers(_org.govTokenAddress, _network.blockExplorerUrl);
@@ -70,7 +77,7 @@ class MemberProvider extends ChangeNotifier {
       
       String? checksumAddress;
       
-      final currentUserData = items.firstWhere(
+      items.firstWhere(
         (item) {
           final hash = item['address']?['hash'] as String?;
           if (hash != null && hash.toLowerCase() == userAddress.toLowerCase()) {
@@ -87,15 +94,14 @@ class MemberProvider extends ChangeNotifier {
         final results = await Future.wait([
           _firestoreService.getMemberDetails(_network.daoCollectionName, _org.address, checksumAddress!),
           _blockchainService.getVotes(_org.govTokenAddress, userAddress, _network.rpcUrl),
-          // THE FIX: Also fetch all proposals for the DAO.
           _firestoreService.getProposals(_network.daoCollectionName, _org.address),
+          _blockchainService.getDelegate(_org.govTokenAddress, userAddress, _network.rpcUrl),
         ]);
         _accountDetails = results[0] as AccountDetails;
         _votingWeight = results[1] as BigInt;
-        
         final allProposals = results[2] as List<Proposal>;
+        _delegateAddress = results[3] as String?;
         
-        // THE FIX: Filter the full list of proposals based on the user's activity IDs.
         final createdIds = _accountDetails.proposalsCreated.toSet();
         final votedIds = _accountDetails.proposalsVoted.toSet();
 
@@ -106,6 +112,7 @@ class MemberProvider extends ChangeNotifier {
         _personalBalance = BigInt.zero;
         _votingWeight = BigInt.zero;
         _accountDetails = AccountDetails.empty();
+        _delegateAddress = await _blockchainService.getDelegate(_org.govTokenAddress, userAddress, _network.rpcUrl);
       }
 
     } catch (e) {
@@ -113,7 +120,25 @@ class MemberProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
+    _isActionBusy = false;
     notifyListeners();
+  }
+
+  Future<String?> handleDelegate(String delegateeAddress) async {
+    _isActionBusy = true;
+    notifyListeners();
+    String? error;
+    try {
+      await _blockchainService.delegate(_org.govTokenAddress, delegateeAddress);
+      // Wait a moment for the blockchain to update before re-fetching data.
+      await Future.delayed(const Duration(seconds: 3));
+      await fetchMemberData();
+    } catch (e) {
+      error = e.toString();
+    }
+    _isActionBusy = false;
+    notifyListeners();
+    return error;
   }
 }
 // lib/src/providers/member_provider.dart

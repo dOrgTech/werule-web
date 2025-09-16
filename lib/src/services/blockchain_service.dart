@@ -1,5 +1,6 @@
 // lib/src/services/blockchain_service.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_web3/flutter_web3.dart' as web3;
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart' as http;
@@ -107,7 +108,7 @@ class BlockchainService {
       }
       throw Exception('Failed to parse proposal state from contract.');
     } catch (e) {
-      print('[BlockchainService] Error getting proposal state: $e');
+      if (kDebugMode) print('[BlockchainService] Error getting proposal state: $e');
       rethrow;
     } finally {
       await client.dispose();
@@ -132,7 +133,7 @@ class BlockchainService {
       }
       throw Exception('Failed to parse proposal votes from contract.');
     } catch (e) {
-      print('[BlockchainService] Error getting proposal votes: $e');
+      if (kDebugMode) print('[BlockchainService] Error getting proposal votes: $e');
       rethrow;
     } finally {
       await client.dispose();
@@ -143,7 +144,6 @@ class BlockchainService {
     final client = Web3Client(rpcUrl, http.Client());
     try {
       final contract = DeployedContract(
-        // THE FIX: Use the ContractAbi object, not the ContractFunction.
         Erc20GovAbi.abi,
         EthereumAddress.fromHex(tokenAddress),
       );
@@ -159,27 +159,70 @@ class BlockchainService {
       }
       throw Exception('Failed to parse voting weight from token contract.');
     } catch (e) {
-      print('[BlockchainService] Error getting votes: $e');
+      if (kDebugMode) print('[BlockchainService] Error getting votes: $e');
       return BigInt.zero;
     } finally {
       await client.dispose();
     }
   }
 
+  Future<String?> getDelegate(String tokenAddress, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(Erc20GovAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final delegatesFunction = contract.function('delegates');
+      final result = await client.call(
+        contract: contract,
+        function: delegatesFunction,
+        params: [EthereumAddress.fromHex(userAddress)],
+      );
+
+      if (result.isNotEmpty && result[0] is EthereumAddress) {
+        return (result[0] as EthereumAddress).hex;
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) print('[BlockchainService] Error getting delegate: $e');
+      return null;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  Future<String> delegate(String tokenAddress, String delegateeAddress) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    
+    // THE FIX: Wrap the ethereum provider and get a signer to send the transaction.
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(tokenAddress, Erc20GovAbi.abiJson, signer);
+
+    try {
+      final tx = await contract.send('delegate', [delegateeAddress]);
+      await tx.wait();
+      return tx.hash;
+    } catch (e) {
+      if (kDebugMode) print("Delegation error: $e");
+      throw Exception("Transaction failed. It may have been rejected or encountered an error.");
+    }
+  }
+
   Future<String> castVote(String contractAddress, BigInt proposalId, int support) async {
-    print('Casting vote for proposal $proposalId with support $support on contract $contractAddress');
+    if (kDebugMode) print('Casting vote for proposal $proposalId with support $support on contract $contractAddress');
     await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_vote_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
 
   Future<String> queueProposal(String contractAddress, BigInt proposalId) async {
-    print('Queueing proposal $proposalId on contract $contractAddress');
+    if (kDebugMode) print('Queueing proposal $proposalId on contract $contractAddress');
     await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_queue_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
 
   Future<String> executeProposal(String contractAddress, BigInt proposalId) async {
-    print('Executing proposal $proposalId on contract $contractAddress');
+    if (kDebugMode) print('Executing proposal $proposalId on contract $contractAddress');
     await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_execute_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
