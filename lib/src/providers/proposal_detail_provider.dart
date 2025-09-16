@@ -5,14 +5,15 @@ import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/services/blockchain_service.dart';
-import 'package:werule/src/utils/proposal_status_helper.dart'; // THE FIX: We can use our helper here too
+import 'package:werule/src/utils/proposal_status_helper.dart';
 
 class ProposalDetailProvider extends ChangeNotifier {
   final BlockchainService _blockchainService;
-  late Proposal _proposal; // Make non-final
-  late Org _org; // Make non-final
+  late Proposal _proposal; 
+  late Org _org;
   final Network _network;
   Timer? _countdownTimer;
+  bool _isRecalculating = false;
 
   ProposalDetailProvider({
     required BlockchainService blockchainService,
@@ -21,7 +22,6 @@ class ProposalDetailProvider extends ChangeNotifier {
     required Network network,
   })  : _blockchainService = blockchainService,
         _network = network {
-    // Initialize with the first version of the proposal data
     _proposal = proposal;
     _org = org;
     _initialize();
@@ -40,33 +40,29 @@ class ProposalDetailProvider extends ChangeNotifier {
   bool get isActionBusy => _isActionBusy;
   String? get errorMessage => _errorMessage;
   ProposalStatus get status => _status;
-  Proposal get proposal => _proposal; // Expose the current proposal
+  Proposal get proposal => _proposal;
   int get remainingSeconds => _remainingSeconds;
   bool get showCountdown => _status == ProposalStatus.Pending || _status == ProposalStatus.Active || _status == ProposalStatus.Queued;
   Map<ProposalStatus, DateTime> get fullTimeline => _fullTimeline;
+  Org get org => _org;
+  Network get network => _network;
   
-  // THE FIX: Public method to update the provider with new data from the stream
   void update(Proposal newProposal, Org newOrg) {
-    // Use the equality operator we defined to prevent unnecessary rebuilds
     if (newProposal == _proposal && newOrg == _org) {
       return;
     }
     _proposal = newProposal;
     _org = newOrg;
     
-    // Re-run the entire state calculation and timer logic
     _recalculateStateAndRestartTimer();
   }
 
   Future<void> _initialize() async {
-    // Fetch the absolute on-chain state once for maximum accuracy on first load.
     await _syncWithOnChainState();
     _recalculateStateAndRestartTimer();
     _isLoading = false;
-    notifyListeners();
   }
   
-  // THE FIX: Centralized logic for recalculating state and managing the timer.
   void _recalculateStateAndRestartTimer() {
     _status = ProposalStatusHelper.calculateDisplayStatus(_proposal, _org);
     _calculateFullTimeline(_status);
@@ -74,20 +70,11 @@ class ProposalDetailProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // This method gets the definitive on-chain state enum (0-7)
   Future<void> _syncWithOnChainState() async {
     try {
       final proposalId = BigInt.tryParse(_proposal.id);
       if (proposalId == null) throw Exception("Invalid Proposal ID");
-
-      final onChainStateIndex = await _blockchainService.getProposalState(_org.address, proposalId, _network.rpcUrl);
-      ProposalStatus onChainStatus = ProposalStatus.values[onChainStateIndex];
-      
-      // We can use this to enhance our timeline calculation if needed, but our helper is quite accurate.
-      // For now, the main benefit is ensuring the initial state is perfect.
-      // We still use our helper for the final calculation to include NoQuorum/Defeated logic.
-      _status = ProposalStatusHelper.calculateDisplayStatus(_proposal, _org);
-
+      await _blockchainService.getProposalState(_org.address, proposalId, _network.rpcUrl);
     } catch (e) {
       _errorMessage = "Failed to sync on-chain status: ${e.toString()}";
     }
@@ -95,15 +82,17 @@ class ProposalDetailProvider extends ChangeNotifier {
 
   void _calculateFullTimeline(ProposalStatus currentStatus) {
     final timeline = <ProposalStatus, DateTime>{};
+    final now = DateTime.now();
     final createdAt = _proposal.createdAt;
     final voteStart = createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
-    final now = DateTime.now();
+
     timeline[ProposalStatus.Pending] = createdAt;
-    if (now.isAfter(voteStart)) {
+
+    if (now.isAfter(voteStart) || currentStatus != ProposalStatus.Pending) {
         timeline[ProposalStatus.Active] = voteStart;
     }
-    if (now.isAfter(voteEnd)) {
+    if (now.isAfter(voteEnd) || currentStatus.index > ProposalStatus.Active.index) {
         switch (currentStatus) {
             case ProposalStatus.Succeeded:
             case ProposalStatus.Queued:
@@ -113,7 +102,7 @@ class ProposalDetailProvider extends ChangeNotifier {
             case ProposalStatus.Defeated:
             case ProposalStatus.NoQuorum:
             case ProposalStatus.Rejected:
-                timeline[currentStatus] = voteEnd; // Show the specific failure reason
+                timeline[currentStatus] = voteEnd;
                 break;
             default:
                  break;
@@ -130,11 +119,13 @@ class ProposalDetailProvider extends ChangeNotifier {
 
   void _startCountdown() {
     _countdownTimer?.cancel();
-    _updateRemainingTime(); // Run once immediately
+    _updateRemainingTime();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updateRemainingTime());
   }
 
   void _updateRemainingTime() {
+    if (_isRecalculating) return;
+
     final now = DateTime.now();
     DateTime? targetTime;
 
@@ -148,19 +139,26 @@ class ProposalDetailProvider extends ChangeNotifier {
       targetTime = queuedTime.add(Duration(seconds: _org.executionDelay));
     }
 
+    int oldRemaining = _remainingSeconds;
+    
     if (targetTime != null) {
       final remaining = targetTime.difference(now).inSeconds;
-      if (remaining <= 0 && _remainingSeconds > 0) {
-        // THE FIX: Time's up! Trigger a full state recalculation.
-        _remainingSeconds = 0;
-        _recalculateStateAndRestartTimer();
-      } else {
-        _remainingSeconds = remaining > 0 ? remaining : 0;
-      }
+      _remainingSeconds = remaining > 0 ? remaining : 0;
     } else {
       _remainingSeconds = 0;
     }
-    notifyListeners();
+    
+    if (oldRemaining > 0 && _remainingSeconds <= 0 && !_isRecalculating) {
+      _isRecalculating = true;
+      Future.delayed(const Duration(seconds: 2), () {
+        _recalculateStateAndRestartTimer();
+        _isRecalculating = false;
+      });
+    } else {
+      if (oldRemaining != _remainingSeconds) {
+        notifyListeners();
+      }
+    }
   }
 
   Future<String?> handleAction(Function action) async {

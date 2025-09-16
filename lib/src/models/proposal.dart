@@ -29,7 +29,7 @@ class ProposalTimelineEntry {
 }
 
 class Proposal {
-  final String id; // The document ID
+  final String id;
   final String author;
   final String title;
   final String description;
@@ -41,7 +41,10 @@ class Proposal {
   final List<String> targets;
   final List<String> callDatas;
   final String? externalResource;
-  final String totalSupply; // ADDED: To hold the totalSupply snapshot
+  final String totalSupply;
+  final int votesFor;
+  final int votesAgainst;
+  final String? executionHash;
 
   Proposal({
     required this.id,
@@ -56,7 +59,10 @@ class Proposal {
     required this.targets,
     required this.callDatas,
     this.externalResource,
-    required this.totalSupply, // ADDED: To constructor
+    required this.totalSupply,
+    required this.votesFor,
+    required this.votesAgainst,
+    this.executionHash,
   });
 
   factory Proposal.fromFirestore(DocumentSnapshot doc) {
@@ -94,7 +100,10 @@ class Proposal {
       targets: List<String>.from(data['targets'] ?? []),
       callDatas: processedCallDatas,
       externalResource: data['externalResource'],
-      totalSupply: data['totalSupply']?.toString() ?? '0', // ADDED: Parse from Firestore
+      totalSupply: data['totalSupply']?.toString() ?? '0',
+      votesFor: data['votesFor'] ?? 0,
+      votesAgainst: data['votesAgainst'] ?? 0,
+      executionHash: data['executionHash'],
     );
   }
 
@@ -113,13 +122,25 @@ class Proposal {
 
     return other is Proposal &&
         other.id == id &&
-        other.totalSupply == totalSupply && // ADDED: To equality check
+        other.inFavor == inFavor &&
+        other.against == against &&
+        other.votesFor == votesFor &&
+        other.votesAgainst == votesAgainst &&
+        other.totalSupply == totalSupply &&
+        other.executionHash == executionHash &&
         mapEquals(other.statusHistory, statusHistory);
   }
 
   @override
   int get hashCode {
-    return id.hashCode ^ statusHistory.hashCode ^ totalSupply.hashCode; // ADDED: To hashcode
+    return id.hashCode ^
+        inFavor.hashCode ^
+        against.hashCode ^
+        votesFor.hashCode ^
+        votesAgainst.hashCode ^
+        executionHash.hashCode ^
+        statusHistory.hashCode ^
+        totalSupply.hashCode;
   }
 }
 // lib/src/models/proposal.dart

@@ -54,6 +54,8 @@ class ProposalExecutionDetailsCard extends StatelessWidget {
 
     return Card(
       color: const Color(0xff2c2c2c),
+      // THE FIX: Use straight corners
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Container(
          width: double.infinity,
          padding: const EdgeInsets.all(24.0),

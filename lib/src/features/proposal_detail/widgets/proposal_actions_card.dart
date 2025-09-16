@@ -5,6 +5,8 @@ import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/utils/reusable.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProposalActionsCard extends StatelessWidget {
   const ProposalActionsCard({super.key});
@@ -35,6 +37,7 @@ class ProposalActionsCard extends StatelessWidget {
 
     return Card(
       color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Container(
         height: 280,
         width: double.infinity,
@@ -71,8 +74,46 @@ class _ActionButtons extends StatelessWidget {
       case ProposalStatus.Executable:
         return _buildExecuteButton(context, provider);
       case ProposalStatus.Executed:
-        // In a real app, you would get the execution hash from the proposal model
-        return const Text("Execution TX: 0x_mock_hash...");
+        // THE FIX: Implement the real execution hash link.
+        final hash = provider.proposal.executionHash;
+        final explorerUrl = provider.network.blockExplorerUrl;
+        if (hash == null || hash.isEmpty || explorerUrl.isEmpty) {
+          return const Text("Proposal Executed", style: TextStyle(color: Colors.grey));
+        }
+        
+        String txUrl = "$explorerUrl/tx/$hash";
+        if (!hash.startsWith('0x')) {
+          txUrl = "$explorerUrl/tx/0x$hash";
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Execution Transaction:", style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => launchUrl(Uri.parse(txUrl)),
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      shortenString(hash),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        color: Color.fromARGB(255, 168, 216, 255),
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.open_in_new, size: 16, color: Color.fromARGB(255, 168, 216, 255)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -83,21 +124,20 @@ class _ActionButtons extends StatelessWidget {
     const Color supportColor = Color.fromARGB(255, 20, 78, 49);
     const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
 
+    final proposal = provider.proposal;
+    final org = provider.org;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // SUPPORT BUTTON
         ElevatedButton.icon(
           onPressed: isEnabled ? () async {
             final error = await provider.handleAction(() => 
-              context.read<BlockchainService>().castVote("0xTODO", BigInt.zero, 1)
+              context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 1)
             );
             if (context.mounted) {
-              if (error != null) {
-                _showSnackbar(context, error, isError: true);
-              } else {
-                _showSnackbar(context, "Vote cast successfully!");
-              }
+              if (error != null) _showSnackbar(context, error, isError: true);
+              else _showSnackbar(context, "Vote cast successfully!");
             }
           } : null,
           icon: Icon(Icons.thumb_up, color: isEnabled ? supportColor : Colors.grey),
@@ -107,18 +147,14 @@ class _ActionButtons extends StatelessWidget {
             fixedSize: const Size(140, 40),
           ),
         ),
-        // REJECT BUTTON
         ElevatedButton.icon(
            onPressed: isEnabled ? () async {
             final error = await provider.handleAction(() => 
-              context.read<BlockchainService>().castVote("0xTODO", BigInt.zero, 0)
+              context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 0)
             );
              if (context.mounted) {
-              if (error != null) {
-                _showSnackbar(context, error, isError: true);
-              } else {
-                _showSnackbar(context, "Vote cast successfully!");
-              }
+              if (error != null) _showSnackbar(context, error, isError: true);
+              else _showSnackbar(context, "Vote cast successfully!");
             }
           } : null,
           icon: Icon(Icons.thumb_down, color: isEnabled ? rejectColor : Colors.grey),
@@ -133,17 +169,17 @@ class _ActionButtons extends StatelessWidget {
   }
 
    Widget _buildQueueButton(BuildContext context, ProposalDetailProvider provider) {
+    final proposal = provider.proposal;
+    final org = provider.org;
+
     return ElevatedButton(
       onPressed: () async {
          final error = await provider.handleAction(() => 
-          context.read<BlockchainService>().queueProposal("0xTODO", BigInt.zero)
+          context.read<BlockchainService>().queueProposal(org.address, BigInt.parse(proposal.id))
         );
         if (context.mounted) {
-          if (error != null) {
-            _showSnackbar(context, error, isError: true);
-          } else {
-            _showSnackbar(context, "Proposal queued for execution!");
-          }
+          if (error != null) _showSnackbar(context, error, isError: true);
+          else _showSnackbar(context, "Proposal queued for execution!");
         }
       },
       child: const Text("Queue for Execution"),
@@ -151,17 +187,17 @@ class _ActionButtons extends StatelessWidget {
   }
 
   Widget _buildExecuteButton(BuildContext context, ProposalDetailProvider provider) {
+    final proposal = provider.proposal;
+    final org = provider.org;
+    
      return ElevatedButton(
       onPressed: () async {
         final error = await provider.handleAction(() => 
-          context.read<BlockchainService>().executeProposal("0xTODO", BigInt.zero)
+          context.read<BlockchainService>().executeProposal(org.address, BigInt.parse(proposal.id))
         );
          if (context.mounted) {
-          if (error != null) {
-            _showSnackbar(context, error, isError: true);
-          } else {
-            _showSnackbar(context, "Proposal executed!");
-          }
+          if (error != null) _showSnackbar(context, error, isError: true);
+          else _showSnackbar(context, "Proposal executed!");
         }
       },
       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),

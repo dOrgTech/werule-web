@@ -1,4 +1,5 @@
 // lib/src/features/proposal_detail/proposal_detail_screen.dart
+import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -37,118 +38,90 @@ class ProposalDetailScreen extends StatefulWidget {
 }
 
 class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
-  late Stream<Proposal?> _proposalStream;
-  late Future<Org?> _orgFuture;
+  ProposalDetailProvider? _provider;
+  StreamSubscription? _proposalSubscription;
+  Future<dynamic>? _initializationFuture;
 
   @override
   void initState() {
     super.initState();
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<NetworkProvider>().selectNetworkByName(widget.networkName);
-      }
-    });
+    _initializationFuture = _initialize();
+  }
 
+  Future<void> _initialize() async {
+    final networkProvider = context.read<NetworkProvider>();
+    networkProvider.selectNetworkByName(widget.networkName);
+    
     final firestoreService = context.read<FirestoreService>();
     final collection = 'idaos${widget.networkName}';
-    _proposalStream = firestoreService.getProposalStream(collection, widget.daoAddress, widget.proposalId);
-    _orgFuture = firestoreService.getDao(collection, widget.daoAddress);
+
+    final org = await firestoreService.getDao(collection, widget.daoAddress);
+    final initialProposal = await firestoreService.getProposal(collection, widget.daoAddress, widget.proposalId);
+    final network = networkProvider.networks.firstWhereOrNull((n) => n.name == widget.networkName);
+    
+    if (org == null || initialProposal == null || network == null) {
+      throw Exception("Could not initialize proposal details.");
+    }
+    
+    _provider = ProposalDetailProvider(
+      blockchainService: context.read<BlockchainService>(),
+      proposal: initialProposal,
+      org: org,
+      network: network,
+    );
+
+    _proposalSubscription = firestoreService
+        .getProposalStream(collection, widget.daoAddress, widget.proposalId)
+        .listen((proposalUpdate) {
+      if (proposalUpdate != null && _provider != null) {
+        _provider!.update(proposalUpdate, org);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _proposalSubscription?.cancel();
+    _provider?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final networkProvider = context.watch<NetworkProvider>();
-
     return Scaffold(
       backgroundColor: const Color(0xff222222),
       appBar: const SharedAppBar(),
       endDrawer: const MobileDrawer(isNetworkSelectorEnabled: false),
-      body: Builder(builder: (context) {
-        if (networkProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final network = networkProvider.networks.firstWhereOrNull((n) => n.name == widget.networkName);
-
-        if (network == null) {
-          return Center(child: Text('Network configuration for "${widget.networkName}" not found.'));
-        }
-
-        return FutureBuilder<Org?>(
-          future: _orgFuture,
-          builder: (context, orgSnapshot) {
-            if (orgSnapshot.connectionState == ConnectionState.waiting || !orgSnapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (orgSnapshot.data == null) {
-               return Center(child: Text('DAO ${widget.daoAddress} not found.'));
-            }
-            final org = orgSnapshot.data!;
-
-            return StreamBuilder<Proposal?>(
-              stream: _proposalStream,
-              builder: (context, proposalSnapshot) {
-                if (proposalSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (proposalSnapshot.hasError) {
-                  return Center(child: Text('An error occurred: ${proposalSnapshot.error}'));
-                }
-                if (!proposalSnapshot.hasData || proposalSnapshot.data == null) {
-                  return Center(child: Text('Proposal ${widget.proposalId} not found.'));
-                }
-
-                final proposal = proposalSnapshot.data!;
-
-                // Use a ChangeNotifierProvider.value if the provider already exists,
-                // or create it if it's the first time.
-                return ChangeNotifierProvider(
-                  create: (context) => ProposalDetailProvider(
-                    blockchainService: context.read<BlockchainService>(),
-                    proposal: proposal,
-                    org: org,
-                    network: network,
-                  ),
-                  child: _ProposalDetailView(
-                    networkName: widget.networkName,
-                    daoAddress: widget.daoAddress,
-                    proposal: proposal, // Pass the latest proposal down
-                    org: org,          // Pass the org down
-                    network: network,
-                  ),
-                );
-              },
-            );
-          },
-        );
-      }),
+      body: FutureBuilder(
+        future: _initializationFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || _provider == null) {
+            return Center(child: Text("Error loading proposal: ${snapshot.error ?? 'Provider not initialized.'}"));
+          }
+          
+          return ChangeNotifierProvider.value(
+            value: _provider!,
+            child: const _ProposalDetailView(),
+          );
+        },
+      ),
     );
   }
 }
 
-// --- Main View ---
 class _ProposalDetailView extends StatelessWidget {
-  final String networkName;
-  final String daoAddress;
-  final Proposal proposal;
-  final Org org;
-  final Network network;
-
-  const _ProposalDetailView({
-    required this.networkName,
-    required this.daoAddress,
-    required this.proposal,
-    required this.org,
-    required this.network,
-  });
+  const _ProposalDetailView();
 
   @override
   Widget build(BuildContext context) {
-    // THE FIX: On every build, tell the provider about the latest proposal data.
-    // The provider's internal logic will prevent unnecessary work if the data hasn't changed.
-    context.read<ProposalDetailProvider>().update(proposal, org);
-
+    final provider = context.watch<ProposalDetailProvider>();
+    final proposal = provider.proposal;
+    final org = provider.org;
+    final network = provider.network;
+    
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -162,7 +135,7 @@ class _ProposalDetailView extends StatelessWidget {
                 child: TextButton.icon(
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('Back to DAO'),
-                  onPressed: () => context.go('/$networkName/$daoAddress'),
+                  onPressed: () => context.go('/${network.name}/${org.address}'),
                   style: TextButton.styleFrom(foregroundColor: Colors.white70),
                 ),
               ),
@@ -180,7 +153,7 @@ class _ProposalDetailView extends StatelessWidget {
                         const SizedBox(height: 16),
                         ProposalVotesCard(org: org),
                         const SizedBox(height: 16),
-                        ProposalLifecycleCard(proposal: proposal),
+                        const ProposalLifecycleCard(),
                          const SizedBox(height: 16),
                         SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)),
                       ],
@@ -200,7 +173,7 @@ class _ProposalDetailView extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: ProposalLifecycleCard(proposal: proposal)),
+                            const Expanded(child: ProposalLifecycleCard()),
                             const SizedBox(width: 16),
                             Expanded(child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network))),
                           ],
@@ -219,7 +192,6 @@ class _ProposalDetailView extends StatelessWidget {
   }
 }
 
-// --- Header Widget ---
 class _ProposalHeader extends StatelessWidget {
   final Proposal proposal;
   const _ProposalHeader({required this.proposal});
@@ -244,7 +216,6 @@ class _ProposalHeader extends StatelessWidget {
       children: [
         Consumer<ProposalDetailProvider>(
           builder: (context, provider, child) {
-            // This Consumer now correctly rebuilds whenever the provider's state changes
             return ProposalStatusWidget(status: provider.status);
           },
         ),

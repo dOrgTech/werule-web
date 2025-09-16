@@ -7,16 +7,34 @@
     - src/
       - features/
         - dao_detail/
+          - dao_detail_screen.dart
           - tabs/
+            - account_tab.dart
+            - members_tab.dart
+            - overview_tab.dart
             - proposals_tab.dart
+            - registry_tab.dart
+          - widgets/
+            - dao_members_widget.dart
+            - dao_treasury_widget.dart
+            - footer.dart
+        - explorer/
+          - explorer_screen.dart
+          - widgets/
+            - app_bar_widgets.dart
+            - dao_card.dart
+            - game_of_life.dart
         - proposal_detail/
           - proposal_detail_screen.dart
+          - proposal_detail_screen.dart.errors.txt
           - widgets/
             - proposal_actions_card.dart
+            - proposal_actions_card.dart.errors.txt
             - proposal_execution_details_card.dart
             - proposal_lifecycle_card.dart
             - proposal_status_widget.dart
             - proposal_votes_card.dart
+            - votes_modal.dart
             - details/
               - contract_call_details.dart
               - dao_configuration_details.dart
@@ -25,20 +43,32 @@
               - shared_widgets.dart
               - token_transfer_details.dart
       - models/
+        - human.dart
+        - member.dart
         - network.dart
         - org.dart
         - proposal.dart
+        - token.dart
+        - token_asset.dart
         - vote.dart
       - providers/
         - auth_provider.dart
+        - dao_provider.dart
         - network_provider.dart
         - proposal_detail_provider.dart
+        - treasury_provider.dart
+      - routing/
+        - app_router.dart
       - services/
         - blockchain_service.dart
         - calldata_service.dart
+        - calldata_service.dart.errors.txt
         - firestore_service.dart
         - governor_abi.dart
+        - members_service.dart
+        - treasury_service.dart
       - utils/
+        - proposal_status_helper.dart
         - reusable.dart
         - theme.dart
       - widgets/
@@ -204,27 +234,309 @@ class MyApp extends StatelessWidget {
 // lib/main.dart
 ```
 
+### `lib/src/features/dao_detail/dao_detail_screen.dart`
+```dart
+// lib/src/features/dao_detail/dao_detail_screen.dart
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/tabs/account_tab.dart';
+import 'package:werule/src/features/dao_detail/tabs/members_tab.dart';
+import 'package:werule/src/features/dao_detail/tabs/overview_tab.dart';
+import 'package:werule/src/features/dao_detail/tabs/proposals_tab.dart';
+import 'package:werule/src/features/dao_detail/tabs/registry_tab.dart';
+import 'package:werule/src/features/dao_detail/widgets/footer.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/widgets/shared_app_bar.dart';
+
+class DaoDetailScreen extends StatefulWidget {
+  final String networkName;
+  final String daoAddress;
+
+  const DaoDetailScreen({
+    super.key,
+    required this.networkName,
+    required this.daoAddress,
+  });
+
+  @override
+  State<DaoDetailScreen> createState() => _DaoDetailScreenState();
+}
+
+class _DaoDetailScreenState extends State<DaoDetailScreen> {
+  late Future<Map<String, dynamic>> _daoDetailsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<NetworkProvider>().selectNetworkByName(widget.networkName);
+      }
+    });
+
+    final firestoreService = context.read<FirestoreService>();
+    _daoDetailsFuture = _fetchDetails(firestoreService);
+  }
+
+  Future<Map<String, dynamic>> _fetchDetails(FirestoreService service) async {
+    final collection = 'idaos${widget.networkName}';
+    final dao = await service.getDao(collection, widget.daoAddress);
+    if (dao == null) {
+      return {
+        'error':
+            'DAO ${widget.daoAddress} not found on network ${widget.networkName}.'
+      };
+    }
+    final proposals = await service.getProposals(collection, widget.daoAddress);
+    return {'dao': dao, 'proposals': proposals};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xff222222),
+      appBar: const SharedAppBar(),
+      endDrawer: const MobileDrawer(
+        isNetworkSelectorEnabled: false,
+      ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _daoDetailsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError ||
+              snapshot.data == null ||
+              snapshot.data!.containsKey('error')) {
+            return Center(
+                child: Text(snapshot.data?['error'] ?? 'An error occurred.'));
+          }
+
+          final Org dao = snapshot.data!['dao'];
+          final List<Proposal> proposals = snapshot.data!['proposals'];
+          const tabCount = 5;
+          const double tabBarAreaVerticalPadding = 16.0;
+
+          return DefaultTabController(
+            length: tabCount,
+            child: LayoutBuilder(
+              builder: (context, viewportConstraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: viewportConstraints.maxHeight,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.topCenter,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 1200),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: tabBarAreaVerticalPadding / 2,
+                                    horizontal: 16.0,
+                                  ),
+                                  child: Container(
+                                    height: 40,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xff2c2c2c), // Card background color
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final isMobile = constraints.maxWidth < 600;
+                                        return TabBar(
+                                          // THE FIX: This removes the divider line beneath the tabs.
+                                          dividerColor: Colors.transparent,
+                                          labelColor: Theme.of(context).indicatorColor,
+                                          unselectedLabelColor: const Color.fromARGB(255, 177, 177, 177),
+                                          indicatorColor: Theme.of(context).indicatorColor,
+                                          tabs: [
+                                            _buildTab("Overview", Icons.dashboard, isMobile),
+                                            _buildTab("Proposals", Icons.front_hand, isMobile),
+                                            _buildTab("Registry", Icons.list, isMobile),
+                                            _buildTab("Members", Icons.people, isMobile),
+                                            _buildTab("Account", Icons.person, isMobile),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: viewportConstraints.maxHeight - (kToolbarHeight + tabBarAreaVerticalPadding),
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 1200),
+                                  child: TabBarView(
+                                    children: [
+                                      OverviewTab(dao: dao),
+                                      ProposalsTab(
+                                        org: dao,
+                                       
+                                        networkName: widget.networkName,
+                                      ),
+                                      const RegistryTab(),
+                                      MembersTab(dao: dao),
+                                      const AccountTab(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Footer(),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTab(String text, IconData icon, bool isMobile) {
+    if (isMobile) {
+      return Tab(icon: Icon(icon));
+    }
+    return Tab(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Text(text, style: const TextStyle(fontSize: 16.3),),
+        ],
+      ),
+    );
+  }
+}
+// lib/src/features/dao_detail/dao_detail_screen.dart
+```
+
+### `lib/src/features/dao_detail/tabs/account_tab.dart`
+```dart
+// lib/src/features/dao_detail/tabs/account_tab.dart
+import 'package:flutter/material.dart';
+
+class AccountTab extends StatelessWidget {
+  const AccountTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.person, size: 48, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Account View Coming Soon',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+// lib/src/features/dao_detail/tabs/account_tab.dart
+```
+
+### `lib/src/features/dao_detail/tabs/members_tab.dart`
+```dart
+// lib/src/features/dao_detail/tabs/members_tab.dart
+import 'package:flutter/material.dart';
+import 'package:werule/src/features/dao_detail/widgets/dao_members_widget.dart';
+import 'package:werule/src/models/org.dart';
+
+class MembersTab extends StatelessWidget {
+  final Org dao;
+  const MembersTab({super.key, required this.dao});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: DaoMembersWidget(dao: dao),
+    );
+  }
+}
+// lib/src/features/dao_detail/tabs/members_tab.dart
+```
+
+### `lib/src/features/dao_detail/tabs/overview_tab.dart`
+```dart
+// lib/src/features/dao_detail/tabs/overview_tab.dart
+import 'package:flutter/material.dart';
+import 'package:werule/src/features/dao_detail/widgets/dao_treasury_widget.dart';
+import 'package:werule/src/models/org.dart';
+
+class OverviewTab extends StatelessWidget {
+  final Org dao;
+  const OverviewTab({super.key, required this.dao});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(dao.name, style: Theme.of(context).textTheme.headlineMedium),
+          Text("Registry: ${dao.registryAddress}",
+              style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 16),
+          Text(dao.description),
+          DaoTreasuryWidget(dao: dao),
+        ],
+      ),
+    );
+  }
+}
+// lib/src/features/dao_detail/tabs/overview_tab.dart
+```
+
 ### `lib/src/features/dao_detail/tabs/proposals_tab.dart`
 ```dart
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
+import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/utils/proposal_status_helper.dart';
 import 'package:werule/src/utils/reusable.dart';
 
 class ProposalsTab extends StatefulWidget {
-  final List<Proposal> proposals;
+  final Org org; 
   final String networkName;
-  final String daoAddress;
 
   const ProposalsTab({
     super.key,
-    required this.proposals,
+    required this.org,
     required this.networkName,
-    required this.daoAddress,
   });
 
   @override
@@ -235,34 +547,21 @@ class _ProposalsTabState extends State<ProposalsTab> {
   String _selectedType = 'All';
   String _selectedStatus = 'All';
 
+  late Stream<List<Proposal>> _proposalsStream;
+
   final List<String> _typeOptions = const [
     'All', 'Registry', 'Transfer', 'Contract Call', 'Mint', 'Burn', 'Quorum', 'Voting Delay', 'Voting Period', 'Threshold'
   ];
   final List<String> _statusOptions = const [
     'All', "Active", "Succeeded", "Queued", "Executable", "Executed", "Expired", "No Quorum", "Pending", "Rejected", "Defeated"
   ];
-
-  ProposalStatus _getProposalStatus(Proposal proposal) {
-    if (proposal.statusHistory.isEmpty) {
-      return ProposalStatus.Pending;
-    }
-    var latestEntry = proposal.statusHistory.entries
-        .reduce((a, b) => a.value.isAfter(b.value) ? a : b);
-    
-    switch (latestEntry.key.toLowerCase()) {
-      case 'active': return ProposalStatus.Active;
-      case 'succeeded': return ProposalStatus.Succeeded;
-      case 'passed': return ProposalStatus.Succeeded;
-      case 'queued': return ProposalStatus.Queued;
-      case 'executable': return ProposalStatus.Executable;
-      case 'executed': return ProposalStatus.Executed;
-      case 'expired': return ProposalStatus.Expired;
-      case 'no quorum': return ProposalStatus.NoQuorum;
-      case 'pending': return ProposalStatus.Pending;
-      case 'rejected': return ProposalStatus.Rejected;
-      case 'defeated': return ProposalStatus.Defeated;
-      default: return ProposalStatus.Unknown;
-    }
+  
+  @override
+  void initState() {
+    super.initState();
+    final firestoreService = context.read<FirestoreService>();
+    final collectionName = 'idaos${widget.networkName}';
+    _proposalsStream = firestoreService.getProposalsStream(collectionName, widget.org.address);
   }
 
   String _statusToString(ProposalStatus status) {
@@ -276,58 +575,80 @@ class _ProposalsTabState extends State<ProposalsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredProposals = widget.proposals.where((p) {
-      final typeMatch = _selectedType == 'All' ||
-          (p.type != null && p.type!.toLowerCase().contains(_selectedType.toLowerCase()));
-      final statusMatch = _selectedStatus == 'All' ||
-          _statusToString(_getProposalStatus(p)) == _selectedStatus;
-      return typeMatch && statusMatch;
-    }).toList();
+    return Column(
+      children: [
+        _buildControls(),
+        const SizedBox(height: 20),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 700;
+            return Column(
+              children: [
+                if (!isMobile) _buildHeader(),
+                if (!isMobile) const SizedBox(height: 8),
+                StreamBuilder<List<Proposal>>(
+                  stream: _proposalsStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: Padding(
+                        padding: EdgeInsets.only(top: 148.0),
+                        child: CircularProgressIndicator(),
+                      ));
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                       return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 148.0),
+                            child: Text('No proposals created yet...', style: TextStyle(fontSize: 23, color: Colors.white24),),
+                          ),
+                        );
+                    }
+                    
+                    final allProposals = snapshot.data!;
+                    final filteredProposals = allProposals.where((p) {
+                      final currentStatus = ProposalStatusHelper.calculateDisplayStatus(p, widget.org);
+                      final typeMatch = _selectedType == 'All' ||
+                          (p.type != null && p.type!.toLowerCase().contains(_selectedType.toLowerCase()));
+                      final statusMatch = _selectedStatus == 'All' ||
+                          _statusToString(currentStatus) == _selectedStatus;
+                      return typeMatch && statusMatch;
+                    }).toList();
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 700;
-        return Column(
-          children: [
-            _buildControls(),
-            const SizedBox(height: 20),
-            if (!isMobile) _buildHeader(),
-            if (!isMobile) const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filteredProposals.isEmpty ? 1 : filteredProposals.length,
-                itemBuilder: (context, index) {
-                   if (filteredProposals.isEmpty) {
-                     return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 148.0),
-                          child: Text('No proposals created yet...', style: TextStyle(fontSize: 23, color: Colors.white24),),
-                        ),
-                      );
-                   }
-                   final proposal = filteredProposals[index];
-                   if (isMobile) {
-                      return MobileProposalListItem(
-                        proposal: proposal,
-                        status: _getProposalStatus(proposal),
-                        networkName: widget.networkName,
-                        daoAddress: widget.daoAddress,
-                      );
-                   } else {
-                      return DesktopProposalListItem(
-                        proposal: proposal,
-                        status: _getProposalStatus(proposal),
-                        networkName: widget.networkName,
-                        daoAddress: widget.daoAddress,
-                      );
-                   }
-                },
-              ),
-            ),
-          ],
-        );
-      },
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height - 250, 
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filteredProposals.length,
+                        itemBuilder: (context, index) {
+                           final proposal = filteredProposals[index];
+                           if (isMobile) {
+                              return MobileProposalListItem(
+                                key: ValueKey(proposal.id),
+                                proposal: proposal,
+                                org: widget.org,
+                                networkName: widget.networkName,
+                              );
+                           } else {
+                              return DesktopProposalListItem(
+                                key: ValueKey(proposal.id),
+                                proposal: proposal,
+                                org: widget.org,
+                                networkName: widget.networkName,
+                              );
+                           }
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -426,20 +747,91 @@ class _ProposalsTabState extends State<ProposalsTab> {
   }
 }
 
-class DesktopProposalListItem extends StatelessWidget {
+// --- Stateful Desktop List Item ---
+class DesktopProposalListItem extends StatefulWidget {
   final Proposal proposal;
-  final ProposalStatus status;
+  final Org org;
   final String networkName;
-  final String daoAddress;
 
   const DesktopProposalListItem({
     super.key,
     required this.proposal,
-    required this.status,
+    required this.org,
     required this.networkName,
-    required this.daoAddress,
   });
 
+  @override
+  State<DesktopProposalListItem> createState() => _DesktopProposalListItemState();
+}
+
+class _DesktopProposalListItemState extends State<DesktopProposalListItem> {
+  late ProposalStatus _displayStatus;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStatusAndScheduleNext();
+  }
+
+  // THE FIX: Implement didUpdateWidget to react to data changes from the parent.
+  @override
+  void didUpdateWidget(covariant DesktopProposalListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the proposal data from Firestore has changed, re-run our logic.
+    // A simple check on the status history is a reliable indicator of change.
+    if (widget.proposal.statusHistory != oldWidget.proposal.statusHistory) {
+      _updateStatusAndScheduleNext();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateStatusAndScheduleNext() {
+    // Always cancel any existing timer before setting a new one.
+    _timer?.cancel();
+
+    setState(() {
+      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
+    });
+    
+    _scheduleNextUpdate();
+  }
+
+  void _scheduleNextUpdate() {
+    final now = DateTime.now();
+    DateTime? nextTransitionTime;
+
+    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
+    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
+
+    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
+      nextTransitionTime = voteStart;
+    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
+      nextTransitionTime = voteEnd;
+    } else if (_displayStatus == ProposalStatus.Queued) {
+      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
+      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
+      if (executionETA.isAfter(now)) {
+        nextTransitionTime = executionETA;
+      }
+    }
+
+    if (nextTransitionTime != null) {
+      final duration = nextTransitionTime.difference(now);
+      _timer = Timer(duration, () {
+        if (mounted) {
+          // When the timer fires, re-run the whole logic.
+          _updateStatusAndScheduleNext();
+        }
+      });
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -451,7 +843,7 @@ class DesktopProposalListItem extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          context.go('/$networkName/$daoAddress/proposals/${proposal.id}');
+          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
         },
         borderRadius: BorderRadius.zero,
         child: Container(
@@ -466,7 +858,7 @@ class DesktopProposalListItem extends StatelessWidget {
                   splashRadius: 20,
                   tooltip: 'Copy Proposal ID',
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: proposal.id));
+                    Clipboard.setData(ClipboardData(text: widget.proposal.id));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Center(child: Text('Proposal ID copied to clipboard')),
@@ -478,7 +870,7 @@ class DesktopProposalListItem extends StatelessWidget {
               Expanded(
                 flex: 3,
                 child: Text(
-                  proposal.title,
+                  widget.proposal.title,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
@@ -486,14 +878,14 @@ class DesktopProposalListItem extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: Text(
-                  shortenString(proposal.author),
+                  shortenString(widget.proposal.author),
                   style: const TextStyle(fontFamily: 'monospace'),
                 ),
               ),
               SizedBox(
                 width: 140,
                 child: Text(
-                  DateFormat('M/d/yyyy HH:mm').format(proposal.createdAt),
+                  DateFormat('M/d/yyyy HH:mm').format(widget.proposal.createdAt),
                   style: TextStyle(fontSize: 14, color: Colors.grey[400]),
                 ),
               ),
@@ -501,14 +893,14 @@ class DesktopProposalListItem extends StatelessWidget {
               SizedBox(
                 width: 100,
                 child: Text(
-                  proposal.type ?? 'N/A',
+                  widget.proposal.type ?? 'N/A',
                   textAlign: TextAlign.start,
                   style: const TextStyle(fontSize: 12),
                 ),
               ),
               SizedBox(
                 width: 110,
-                child: Center(child: ProposalStatusWidget(status: status)),
+                child: Center(child: ProposalStatusWidget(status: _displayStatus)),
               ),
             ],
           ),
@@ -518,19 +910,84 @@ class DesktopProposalListItem extends StatelessWidget {
   }
 }
 
-class MobileProposalListItem extends StatelessWidget {
+// --- Stateful Mobile List Item ---
+class MobileProposalListItem extends StatefulWidget {
   final Proposal proposal;
-  final ProposalStatus status;
+  final Org org;
   final String networkName;
-  final String daoAddress;
 
   const MobileProposalListItem({
     super.key,
     required this.proposal,
-    required this.status,
+    required this.org,
     required this.networkName,
-    required this.daoAddress,
   });
+
+  @override
+  State<MobileProposalListItem> createState() => _MobileProposalListItemState();
+}
+
+class _MobileProposalListItemState extends State<MobileProposalListItem> {
+  late ProposalStatus _displayStatus;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStatusAndScheduleNext();
+  }
+
+  // THE FIX: Implement didUpdateWidget to react to data changes from the parent.
+  @override
+  void didUpdateWidget(covariant MobileProposalListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.proposal.statusHistory != oldWidget.proposal.statusHistory) {
+      _updateStatusAndScheduleNext();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateStatusAndScheduleNext() {
+    _timer?.cancel();
+    setState(() {
+      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
+    });
+    _scheduleNextUpdate();
+  }
+
+  void _scheduleNextUpdate() {
+    final now = DateTime.now();
+    DateTime? nextTransitionTime;
+
+    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
+    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
+
+    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
+      nextTransitionTime = voteStart;
+    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
+      nextTransitionTime = voteEnd;
+    } else if (_displayStatus == ProposalStatus.Queued) {
+      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
+      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
+      if (executionETA.isAfter(now)) {
+        nextTransitionTime = executionETA;
+      }
+    }
+
+    if (nextTransitionTime != null) {
+      final duration = nextTransitionTime.difference(now);
+      _timer = Timer(duration, () {
+        if (mounted) {
+          _updateStatusAndScheduleNext();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -543,7 +1000,7 @@ class MobileProposalListItem extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          context.go('/$networkName/$daoAddress/proposals/${proposal.id}');
+          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
         },
         borderRadius: BorderRadius.zero,
         child: Padding(
@@ -556,13 +1013,13 @@ class MobileProposalListItem extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      proposal.title,
+                      widget.proposal.title,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ProposalStatusWidget(status: status),
+                  ProposalStatusWidget(status: _displayStatus),
                 ],
               ),
               const Divider(height: 20),
@@ -570,8 +1027,8 @@ class MobileProposalListItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildMobileDetailColumn("ID", shortenString(proposal.id), context),
-                  _buildMobileDetailColumn("Type", proposal.type ?? 'N/A', context),
+                  _buildMobileDetailColumn("ID", shortenString(widget.proposal.id), context),
+                  _buildMobileDetailColumn("Type", widget.proposal.type ?? 'N/A', context),
                 ],
               ),
               const SizedBox(height: 12),
@@ -579,8 +1036,8 @@ class MobileProposalListItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildMobileDetailColumn("Author", shortenString(proposal.author), context, isMono: true),
-                   _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(proposal.createdAt), context),
+                   _buildMobileDetailColumn("Author", shortenString(widget.proposal.author), context, isMono: true),
+                   _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(widget.proposal.createdAt), context),
                 ],
               ),
             ],
@@ -608,6 +1065,1650 @@ class MobileProposalListItem extends StatelessWidget {
   }
 }
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
+```
+
+### `lib/src/features/dao_detail/tabs/registry_tab.dart`
+```dart
+// lib/src/features/dao_detail/tabs/registry_tab.dart
+import 'package:flutter/material.dart';
+
+class RegistryTab extends StatelessWidget {
+  const RegistryTab({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.list, size: 48, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Registry Coming Soon',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+// lib/src/features/dao_detail/tabs/registry_tab.dart
+```
+
+### `lib/src/features/dao_detail/widgets/dao_members_widget.dart`
+```dart
+// lib/src/features/dao_detail/widgets/dao_members_widget.dart
+
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/models/member.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/services/members_service.dart';
+import 'package:werule/src/utils/reusable.dart';
+
+class _MemberAvatar extends StatefulWidget {
+  final String address;
+  final double size;
+  const _MemberAvatar({required this.address, required this.size});
+
+  @override
+  State<_MemberAvatar> createState() => _MemberAvatarState();
+}
+
+class _MemberAvatarState extends State<_MemberAvatar> {
+  Uint8List? _imageData;
+
+  @override
+  void initState() {
+    super.initState();
+    _generate();
+  }
+
+  void _generate() async {
+    final data = await generateAvatarAsync(hashString(widget.address), size: widget.size.toInt(), pixelSize: 4);
+    if (mounted) {
+      setState(() {
+        _imageData = data;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: _imageData != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(widget.size / 2),
+              child: Image.memory(_imageData!),
+            )
+          : CircleAvatar(
+              radius: widget.size / 2,
+              backgroundColor: Colors.white24,
+            ),
+    );
+  }
+}
+
+
+class DaoMembersWidget extends StatefulWidget {
+  final Org dao;
+  const DaoMembersWidget({super.key, required this.dao});
+
+  @override
+  State<DaoMembersWidget> createState() => _DaoMembersWidgetState();
+}
+
+class _DaoMembersWidgetState extends State<DaoMembersWidget> {
+  bool _isLoading = true;
+  String? _error;
+  List<Member> _allMembers = [];
+  List<Member> _displayedMembers = [];
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchMembers();
+      }
+    });
+  }
+
+  Future<void> _fetchMembers() async {
+    final membersService = context.read<MembersService>();
+    final network = context.read<NetworkProvider>().selectedNetwork;
+
+    if (network == null) {
+      setState(() { _error = "Network not available."; _isLoading = false; });
+      return;
+    }
+
+    try {
+      final membersData = await membersService.getMembers(widget.dao.govTokenAddress, network.blockExplorerUrl);
+      final List<dynamic> items = membersData['items'] ?? [];
+      final members = items.map((data) => Member.fromBlockscout(data)).toList();
+      
+      setState(() { _allMembers = members; _displayedMembers = members; _isLoading = false; });
+    } catch (e) {
+      setState(() { _error = e.toString(); _isLoading = false; });
+    }
+  }
+
+  void _filterMembers(String query) {
+    final filtered = _allMembers.where((member) => member.address.toLowerCase().contains(query.toLowerCase())).toList();
+    setState(() { _searchQuery = query; _displayedMembers = filtered; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xff2c2c2c),
+      margin: const EdgeInsets.only(top: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildControls(),
+            const SizedBox(height: 15),
+            _buildContent(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 58.0), child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Center(child: Text('Error: $_error'));
+    }
+    if (_displayedMembers.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 58.0),
+          child: Text(
+            _searchQuery.isEmpty ? "No members found for this DAO." : "No members found matching '$_searchQuery'.",
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          return _buildMembersList(_displayedMembers);
+        } else {
+          return _buildMembersTable(_displayedMembers);
+        }
+      },
+    );
+  }
+
+  Widget _buildControls() {
+    return Row(
+      children: [
+        Flexible(
+          flex: 2,
+          child: TextField(
+            onChanged: _filterMembers,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+              prefixIcon: Icon(Icons.search),
+              hintText: 'Find member by address...',
+            ),
+          ),
+        ),
+        const Spacer(flex: 1),
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Text("${_allMembers.length} Members", style: const TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+  
+  // --- Mobile View ---
+  Widget _buildMembersList(List<Member> members) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: members.length,
+      itemBuilder: (context, index) {
+        final member = members[index];
+        return Card(
+          color: const Color(0xff3a3a3a),
+          margin: const EdgeInsets.symmetric(vertical: 6.0),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                _buildAvatar(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            shortenString(member.address),
+                            style: const TextStyle(fontSize: 16, fontFamily: 'monospace'),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
+                            iconSize: 18,
+                            splashRadius: 22,
+                            onPressed: () => _copyAddress(member.address),
+                            icon: const Icon(Icons.copy, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        "Balance: ${displayTokenValue(member.balance, widget.dao.decimals)}",
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // --- Desktop View ---
+  Widget _buildMembersTable(List<Member> members) {
+    return Column(
+      children: [
+        Table(
+          columnWidths: const {
+            0: FlexColumnWidth(2.5),
+            1: FlexColumnWidth(1),
+          },
+          children: const [
+            TableRow(
+              children: [
+                Padding(padding: EdgeInsets.all(8.0), child: Text("ADDRESS")),
+                Align(alignment: Alignment.centerRight, child: Padding(padding: EdgeInsets.all(8.0), child: Text("BALANCE"))),
+              ],
+            ),
+          ],
+        ),
+        const Divider(),
+        Table(
+           columnWidths: const {
+            0: FlexColumnWidth(2.5),
+            1: FlexColumnWidth(1),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: members.map((member) => TableRow(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                child: Row(
+                  children: [
+                    _MemberAvatar(address: member.address, size: 36), // THE FIX IS HERE
+                    const SizedBox(width: 12),
+                    Text(member.address, style: const TextStyle(fontFamily: 'monospace', fontSize: 14)),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      iconSize: 16,
+                      splashRadius: 20,
+                      onPressed: () => _copyAddress(member.address),
+                      icon: const Icon(Icons.copy),
+                    ),
+                  ],
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    displayTokenValue(member.balance, widget.dao.decimals),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ]
+          )).toList(),
+        ),
+      ],
+    );
+  }
+
+  // --- Helper Methods ---
+  void _copyAddress(String address) {
+    Clipboard.setData(ClipboardData(text: address));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Center(child: Text('Copied address to clipboard')), duration: Duration(seconds: 1)),
+    );
+  }
+  
+  Widget _buildAvatar() {
+    // THE FIX: The size is changed from 35 to 36 to prevent the crash in reusable.dart
+    return const _MemberAvatar(address: "placeholder", size: 36);
+  }
+  
+  String displayTokenValue(String value, int decimals) {
+    final BigInt intValue = BigInt.tryParse(value) ?? BigInt.zero;
+    if (intValue == BigInt.zero) return '0.00';
+    final double doubleValue = intValue / BigInt.from(pow(10, decimals));
+    if (doubleValue > 0 && doubleValue < 0.01) {
+      return '< 0.01';
+    }
+    return doubleValue.toStringAsFixed(2);
+  }
+}
+// lib/src/features/dao_detail/widgets/dao_members_widget.dart
+```
+
+### `lib/src/features/dao_detail/widgets/dao_treasury_widget.dart`
+```dart
+// lib/src/features/dao_detail/widgets/dao_treasury_widget.dart
+
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/token_asset.dart';
+import 'package:werule/src/providers/dao_provider.dart'; // for DataState
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/providers/treasury_provider.dart';
+import 'package:werule/src/services/treasury_service.dart';
+import 'package:werule/src/utils/reusable.dart';
+
+class DaoTreasuryWidget extends StatelessWidget {
+  final Org dao;
+  const DaoTreasuryWidget({super.key, required this.dao});
+
+  @override
+  Widget build(BuildContext context) {
+    final network = context.watch<NetworkProvider>().selectedNetwork;
+
+    if (network == null) {
+      return const Center(child: Text("Network not selected."));
+    }
+
+    return ChangeNotifierProvider(
+      create: (context) => TreasuryProvider(
+        context.read<TreasuryService>(),
+        dao,
+        network,
+      ),
+      child: const _TreasuryView(),
+    );
+  }
+}
+
+class _TreasuryView extends StatefulWidget {
+  const _TreasuryView();
+
+  @override
+  State<_TreasuryView> createState() => _TreasuryViewState();
+}
+
+class _TreasuryViewState extends State<_TreasuryView> {
+  int _selectedTab = 0;
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xff2c2c2c),
+      margin: const EdgeInsets.only(top: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // THE FIX: "Treasury" text has been removed.
+            _buildControls(),
+            const SizedBox(height: 15),
+            Consumer<TreasuryProvider>(
+              builder: (context, provider, child) {
+                if (provider.state == DataState.loading) {
+                  return const Center(child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 58.0),
+                    child: CircularProgressIndicator(),
+                  ));
+                }
+                if (provider.state == DataState.error) {
+                  return Center(child: Text('Error: ${provider.errorMessage}'));
+                }
+
+                if (_selectedTab == 0) {
+                  final displayedAssets = provider.tokenAssets.where((asset) {
+                    if (_searchQuery.isEmpty) return true;
+                    final query = _searchQuery.toLowerCase();
+                    return asset.token.name.toLowerCase().contains(query) ||
+                           asset.token.symbol.toLowerCase().contains(query) ||
+                           (asset.token.address?.toLowerCase().contains(query) ?? false);
+                  }).toList();
+
+                  if (displayedAssets.isEmpty) {
+                     return Center(
+                        child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 58.0),
+                        child: Text(
+                          _searchQuery.isEmpty
+                            ? "No tokens found in treasury."
+                            : "No tokens found matching '$_searchQuery'.",
+                            style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                      ));
+                  }
+                  
+                  // THE FIX: Use a LayoutBuilder to choose the correct view.
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 700) {
+                        return _buildTokensList(displayedAssets); // Mobile View
+                      } else {
+                        return _buildTokensTable(displayedAssets); // Desktop View
+                      }
+                    },
+                  );
+                } else {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 58.0),
+                      child: Text("NFTs are not yet supported.",
+                          style: TextStyle(fontSize: 16, color: Colors.grey)),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControls() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        final searchBar = TextField(
+            onChanged: (value) {
+              setState(() { _searchQuery = value; });
+            },
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              prefixIcon: Icon(Icons.search),
+              hintText: 'Find token by name, address, or symbol',
+            ),
+          );
+
+        final toggleButtons = ToggleButtons(
+          selectedColor: Theme.of(context).indicatorColor,
+          isSelected: [_selectedTab == 0, _selectedTab == 1],
+          onPressed: (index) { setState(() { _selectedTab = index; }); },
+          borderRadius: BorderRadius.circular(8),
+          children: const [
+            Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('Tokens')),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('NFTs')),
+          ],
+        );
+
+        if (isMobile) {
+          return Column(
+            children: [ searchBar, const SizedBox(height: 16), toggleButtons ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // THE FIX: Use Flexible with a spacer to control search bar width.
+            Flexible(flex: 2, child: searchBar),
+            const Spacer(flex: 1),
+            toggleButtons,
+          ],
+        );
+      }
+    );
+  }
+
+  // --- NEW: Mobile-friendly list view ---
+  Widget _buildTokensList(List<TokenAsset> assets) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: assets.length,
+      itemBuilder: (context, index) {
+        final asset = assets[index];
+        return Card(
+          color: const Color(0xff3a3a3a),
+          margin: const EdgeInsets.symmetric(vertical: 6.0),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        asset.token.name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      displayTokenValue(asset.balance, asset.token.decimals ?? 18),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                Text(
+                  asset.token.symbol,
+                  style: TextStyle(color: Theme.of(context).indicatorColor),
+                ),
+                const Divider(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        asset.token.address == 'native'
+                            ? "Native Token"
+                            : shortenString(asset.token.address ?? ""),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (asset.token.address != 'native')
+                      IconButton(
+                        iconSize: 18,
+                        splashRadius: 22,
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: asset.token.address!));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Center(child: Text('Copied token address to clipboard')),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.copy, color: Colors.white70),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Center(child: Text('Transfers coming soon!')),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    child: const Text("Transfer"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // --- Existing desktop table view ---
+  Widget _buildTokensTable(List<TokenAsset> assets) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Table(
+          columnWidths: const {
+            0: FlexColumnWidth(2.0),
+            1: FlexColumnWidth(0.8),
+            2: FlexColumnWidth(1.2),
+            3: FlexColumnWidth(1.5),
+            4: FlexColumnWidth(1.0),
+          },
+          children: const [
+            TableRow(
+              children: [
+                Padding(padding: EdgeInsets.all(8.0), child: Text("TOKEN NAME")),
+                Center(child: Text("SYMBOL")),
+                Center(child: Text("AMOUNT")),
+                Center(child: Text("ADDRESS")),
+                SizedBox(),
+              ],
+            ),
+          ],
+        ),
+        const Divider(),
+        Table(
+          columnWidths: const {
+            0: FlexColumnWidth(2.0),
+            1: FlexColumnWidth(0.8),
+            2: FlexColumnWidth(1.2),
+            3: FlexColumnWidth(1.5),
+            4: FlexColumnWidth(1.0),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: assets.map((asset) => _buildAssetRow(asset)).toList(),
+        ),
+      ],
+    );
+  }
+
+  TableRow _buildAssetRow(TokenAsset asset) {
+     return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(asset.token.name, style: const TextStyle(fontSize: 14)),
+        ),
+        Center(
+          child: Text(
+            asset.token.symbol,
+            style: TextStyle(color: Theme.of(context).indicatorColor, fontSize: 14),
+          ),
+        ),
+        Center(
+          child: Text(
+            displayTokenValue(asset.balance, asset.token.decimals ?? 18),
+            style: const TextStyle(fontSize: 14),
+          ),
+        ),
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  asset.token.address == 'native'
+                      ? "Native Token"
+                      : shortenString(asset.token.address ?? ""),
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              if (asset.token.address != 'native')
+              IconButton(
+                iconSize: 16,
+                splashRadius: 20,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: asset.token.address!));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Center(child: Text('Copied token address to clipboard')),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.copy),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: ElevatedButton(
+             onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Center(child: Text('Transfers coming soon!')),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+             },
+             child: const Text("Transfer"),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String displayTokenValue(String value, int decimals) {
+    final BigInt intValue = BigInt.tryParse(value) ?? BigInt.zero;
+    if (intValue == BigInt.zero) return '0.0000';
+    final double doubleValue = intValue / BigInt.from(pow(10, decimals));
+    if (doubleValue > 0 && doubleValue < 0.0001) {
+      return '< 0.0001';
+    }
+    return doubleValue.toStringAsFixed(4);
+  }
+}
+// lib/src/features/dao_detail/widgets/dao_treasury_widget.dart
+```
+
+### `lib/src/features/dao_detail/widgets/footer.dart`
+```dart
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class Footer extends StatelessWidget {
+  const Footer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: MediaQuery.of(context).size.width,
+          color: const Color.fromARGB(255, 25, 25, 25),
+          padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 32),
+          child: Center(
+            child: Container(
+              // width: 1200,
+              constraints: const BoxConstraints(maxWidth: 1050),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () {},
+                        child: const Text(
+                          'Terms',
+                          style: TextStyle(
+                            color: Colors.white,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      InkWell(
+                        onTap: () {},
+                        child: const Text(
+                          'Privacy',
+                          style: TextStyle(
+                            color: Colors.white,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      InkWell(
+                        onTap: () {},
+                        child: const Text(
+                          'Contact',
+                          style: TextStyle(
+                            color: Colors.white,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const MediaQuery(
+                          data: MediaQueryData(textScaler: TextScaler.linear(1.7)),
+                          child: Logo()),
+                      const SizedBox(height: 18),
+                      Text(
+                        '© ${DateTime.now().year}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {},
+                            child: const Text(
+                              'Powered by ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: const Text(
+                              'Tezos Commons',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Text(
+                            'Developed by ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: const Text(
+                              'Eight Rice',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+class Logo extends StatelessWidget {
+  const Logo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: InkWell(
+        hoverColor: Colors.transparent,
+        onTap:  () => context.go("/"),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic, // Ensures proper alignment
+          children: [
+            Text(
+              'we',
+              style: TextStyle(
+                fontFamily: 'CascadiaCode',
+                backgroundColor: Color.fromARGB(255, 192, 192, 192),
+                fontSize: 28,
+                color: Color.fromARGB(255, 22, 22, 22),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(width: 2),
+            Text(
+              'R',
+              style: TextStyle(
+                fontFamily: 'CascadiaCode',
+                backgroundColor: Color.fromARGB(255, 26, 26, 26),
+                fontSize: 24, // Match the font size for consistency
+                fontWeight: FontWeight.w100,
+              ),
+            ),
+            Text(
+              'ule',
+              style: TextStyle(
+                fontFamily: 'CascadiaCode',
+                backgroundColor: Color.fromARGB(255, 26, 26, 26),
+                fontSize: 28, // Match the font size for consistency
+                fontWeight: FontWeight.w100,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+### `lib/src/features/explorer/explorer_screen.dart`
+```dart
+// lib/src/features/explorer/explorer_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/features/explorer/widgets/game_of_life.dart';
+import 'package:werule/src/providers/auth_provider.dart';
+
+import '../../providers/dao_provider.dart';
+import '../../providers/network_provider.dart';
+// Import the new shared AppBar
+import 'widgets/dao_card.dart';
+import '../../widgets/shared_app_bar.dart';
+
+class ExplorerScreen extends StatefulWidget {
+  final String? networkName;
+  const ExplorerScreen({super.key, this.networkName});
+
+  @override
+  State<ExplorerScreen> createState() => _ExplorerScreenState();
+}
+
+class _ExplorerScreenState extends State<ExplorerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.networkName != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<NetworkProvider>().selectNetworkByName(widget.networkName!);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final networkProvider = context.watch<NetworkProvider>();
+
+    final isChainSupported = !auth.isConnected || (auth.chainId != null && networkProvider.isChainSupported(auth.chainId!));
+
+    return Scaffold(
+      backgroundColor: const Color(0xff222222),
+      appBar: const SharedAppBar(
+        isNetworkSelectorEnabled: true,
+      ),
+      endDrawer: const MobileDrawer(
+        isNetworkSelectorEnabled: true,
+      ),
+      body: Stack(
+        children: [
+          const Opacity(
+            opacity: 0.03,
+            child: GameOfLife(),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 20.0),
+                      child: _TopBar(),
+                    ),
+                    auth.isAutoConnecting
+                        ? const Center(child: CircularProgressIndicator())
+                        : !isChainSupported
+                            ? const _WrongNetworkScreen()
+                            : Consumer<DaoProvider>(
+                                builder: (context, daoProvider, child) {
+                                  // THE FIX: Use AnimatedSwitcher to fade between states (e.g., loading and loaded).
+                                  return AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 500),
+                                    child: _buildDaoContent(context, daoProvider),
+                                  );
+                                },
+                              ),
+                    const _PaginationControls(),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // THE FIX: Extracted the content logic into a separate method for clarity.
+  Widget _buildDaoContent(BuildContext context, DaoProvider daoProvider) {
+    // A unique key is used for each state, telling AnimatedSwitcher to perform the transition.
+    switch (daoProvider.state) {
+      case DataState.loading:
+        return const Center(
+          key: ValueKey('loading'),
+          child: CircularProgressIndicator(),
+        );
+      case DataState.error:
+        return Center(
+          key: const ValueKey('error'),
+          child: Text('Error: ${daoProvider.errorMessage}'),
+        );
+      case DataState.loaded:
+        if (daoProvider.displayedDaos.isEmpty) {
+          return const Padding(
+            key: ValueKey('empty'),
+            padding: EdgeInsets.all(32.0),
+            child: Center(child: Text('No DAOs found matching your search.')),
+          );
+        }
+        return LayoutBuilder(
+          key: ValueKey('loaded_${daoProvider.totalDaoCount}'), // Key changes when data reloads
+          builder: (context, constraints) {
+            int crossAxisCount;
+            double childAspectRatio;
+            if (constraints.maxWidth < 600) { crossAxisCount = 1; childAspectRatio = 1.8;
+            } else if (constraints.maxWidth < 950) { crossAxisCount = 2; childAspectRatio = 1.6;
+            } else { crossAxisCount = 3; childAspectRatio = 1.7; }
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount, mainAxisSpacing: 16.0, crossAxisSpacing: 16.0, childAspectRatio: childAspectRatio,
+              ),
+              itemCount: daoProvider.displayedDaos.length,
+              itemBuilder: (context, index) {
+                final org = daoProvider.displayedDaos[index];
+                return InkWell(
+                  borderRadius: BorderRadius.circular(8.0),
+                  onTap: () {
+                    final selectedNetwork = context.read<NetworkProvider>().selectedNetwork;
+                    if (selectedNetwork != null) {
+                      context.go('/${selectedNetwork.name}/${org.address}');
+                    }
+                  },
+                  child: DAOCard(org: org),
+                );
+              },
+            );
+          });
+      case DataState.initial:
+        return const Center(
+          key: ValueKey('initial'),
+          child: Text("Select a network to begin."),
+        );
+    }
+  }
+}
+
+class _WrongNetworkScreen extends StatelessWidget {
+  const _WrongNetworkScreen();
+  @override
+  Widget build(BuildContext context) {
+    final networkProvider = context.watch<NetworkProvider>();
+    final authProvider = context.read<AuthProvider>();
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.amber, size: 60),
+          const SizedBox(height: 24),
+          const Text("Network Not Supported", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          const Text("Please switch to one of the following networks in your wallet:"),
+          const SizedBox(height: 24),
+          ...networkProvider.networks.map((network) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: ElevatedButton(
+              onPressed: () => authProvider.switchWalletChain(network),
+              child: Text("Switch to ${network.name}"),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar();
+  @override
+  Widget build(BuildContext context) {
+    final daoProvider = context.watch<DaoProvider>();
+    final isMobile = MediaQuery.of(context).size.width < 700;
+    final searchBar = TextField(onChanged: (value) => daoProvider.search(value), decoration: InputDecoration(hintText: 'Find DAO by name or address', prefixIcon: const Icon(Icons.search), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.grey)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).indicatorColor))));
+    final daoCount = Text('${daoProvider.totalDaoCount} DAOs', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
+    final createDaoButton = ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xffa1d0d0), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Create DAO', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)));
+    if (isMobile) {
+      return Column(children: [searchBar, const SizedBox(height: 16), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [daoCount, createDaoButton])]);
+    } else {
+      return Row(children: [Expanded(flex: 2, child: searchBar), const Spacer(flex: 1), daoCount, const SizedBox(width: 24), createDaoButton]);
+    }
+  }
+}
+
+class _PaginationControls extends StatelessWidget {
+  const _PaginationControls();
+  @override
+  Widget build(BuildContext context) {
+    final daoProvider = context.watch<DaoProvider>();
+    if (daoProvider.state != DataState.loaded || daoProvider.totalPages <= 1) {
+      return const SizedBox.shrink();
+    }
+    final currentPage = daoProvider.currentPage;
+    final totalPages = daoProvider.totalPages;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: SizedBox(height: 52, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [IconButton(icon: const Icon(Icons.first_page), onPressed: currentPage > 1 ? () => daoProvider.changePage(1) : null), IconButton(icon: const Icon(Icons.chevron_left), onPressed: currentPage > 1 ? () => daoProvider.changePage(currentPage - 1) : null), Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Text('Page $currentPage of $totalPages')), IconButton(icon: const Icon(Icons.chevron_right), onPressed: currentPage < totalPages ? () => daoProvider.changePage(currentPage + 1) : null), IconButton(icon: const Icon(Icons.last_page), onPressed: currentPage < totalPages ? () => daoProvider.changePage(totalPages) : null)])),
+    );
+  }
+}
+// lib/src/features/explorer/explorer_screen.dart
+```
+
+### `lib/src/features/explorer/widgets/app_bar_widgets.dart`
+```dart
+// lib/src/features/explorer/widgets/app_bar_widgets.dart
+
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/models/network.dart';
+import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/utils/reusable.dart';
+
+class NetworkSelector extends StatelessWidget {
+  final bool isEnabled;
+  const NetworkSelector({super.key, this.isEnabled = true});
+
+  @override
+  Widget build(BuildContext context) {
+    final networkProvider = context.watch<NetworkProvider>();
+    final authProvider = context.read<AuthProvider>();
+
+    if (networkProvider.isLoading) {
+      return const Center(child: Padding(padding: EdgeInsets.all(12.0), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))));
+    }
+    if (networkProvider.networks.isEmpty || networkProvider.selectedNetwork == null) {
+      return const Center(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text("No Networks")));
+    }
+
+    // THE FIX: The entire button is wrapped in a Tooltip widget.
+    return Tooltip(
+      // The message is conditional: it's empty if enabled, and shows the text if disabled.
+      message: isEnabled ? '' : "Can't change networks while viewing a DAO or a Proposal",
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          border: Border.all(width: 0.1, color: Theme.of(context).indicatorColor),
+          color: Theme.of(context).indicatorColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<Network>(
+            value: networkProvider.selectedNetwork,
+            selectedItemBuilder: (context) {
+              return networkProvider.networks.map<Widget>((network) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.connect_without_contact_sharp,
+                        size: 23,
+                        color: Theme.of(context).indicatorColor.withOpacity(0.7),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        network.name,
+                        style: TextStyle(
+                          fontFamily: 'CascadiaCode',
+                          color: Theme.of(context).indicatorColor.withOpacity(0.7),
+                          fontSize: 15,
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              }).toList();
+            },
+            items: networkProvider.networks.map<DropdownMenuItem<Network>>((Network network) {
+              return DropdownMenuItem<Network>(
+                value: network,
+                child: Text(network.name),
+              );
+            }).toList(),
+            onChanged: isEnabled
+                ? (Network? newNetwork) {
+                    if (newNetwork != null) {
+                      context.go('/${newNetwork.name}');
+                      if (authProvider.isConnected) {
+                        authProvider.switchWalletChain(newNetwork);
+                      }
+                    }
+                  }
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class WalletConnector extends StatelessWidget {
+  const WalletConnector({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    
+    return SizedBox(
+      width: 175,
+      height: 40,
+      child: Center(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: _buildContent(context, auth),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, AuthProvider auth) {
+    // --- LOADING STATE ---
+    if (auth.isLoading || auth.isAutoConnecting) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        child: LinearProgressIndicator(),
+      );
+    }
+    // --- DISCONNECTED STATE ---
+    if (!auth.isConnected) {
+      return TextButton(
+        key: const ValueKey('disconnected'),
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+          minimumSize: const Size(175, 40),
+        ),
+        onPressed: () {
+          if (auth.isWalletAvailable) {
+            context.read<AuthProvider>().connectWallet();
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  backgroundColor: const Color(0xff2c2c2c),
+                  title: const Text('No Wallet Detected'),
+                  content: const SingleChildScrollView(
+                    child: ListBody(
+                      children: <Widget>[
+                        Text('A web3 wallet (like MetaMask or Rabby) is required to connect.'),
+                        SizedBox(height: 8),
+                        Text('Please install a browser extension and refresh the page.'),
+                      ],
+                    ),
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('OK'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        },
+        child: const Text("Connect Wallet"),
+      );
+    }
+    // --- CONNECTED STATE ---
+    return DropdownButtonHideUnderline(
+      key: const ValueKey('connected'),
+      child: DropdownButton<String>(
+        isExpanded: true, 
+        value: auth.selectedAccount,
+        selectedItemBuilder: (context) {
+            return auth.accounts.map<Widget>((account) {
+              return Row(
+                children: [
+                  FutureBuilder<Uint8List>(
+                    future: generateAvatarAsync(hashString(auth.selectedAccount!), size: 32, pixelSize: 4),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                          return ClipOval(child: Image.memory(snapshot.data!));
+                      }
+                      return SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: CircleAvatar(backgroundColor: Colors.grey.shade800),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      shortenString(auth.selectedAccount!),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              );
+            }).toList();
+        },
+        items: auth.accounts.map<DropdownMenuItem<String>>((String account) {
+          return DropdownMenuItem<String>(
+            value: account,
+            child: Text(shortenString(account)),
+          );
+        }).toList(),
+        onChanged: (String? newAccount) {
+          context.read<AuthProvider>().selectAccount(newAccount);
+        },
+      ),
+    );
+  }
+}
+// lib/src/features/explorer/widgets/app_bar_widgets.dart```
+```
+
+### `lib/src/features/explorer/widgets/dao_card.dart`
+```dart
+// lib/widgets/dao_card.dart
+
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/utils/reusable.dart';
+
+class DAOCard extends StatelessWidget {
+  const DAOCard({super.key, required this.org});
+  final Org org;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget typeIcon = org.debatesOnly
+        ? Image.asset("assets/img/debate_tree_icon.png", height: 29)
+        : const Icon(Icons.security, size: 25);
+
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.grey.shade800.withOpacity(0.6),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        SizedBox(
+                          height: 40,
+                          width: 40,
+                          child: FutureBuilder<Uint8List>(
+                            future: generateAvatarAsync(hashString(org.address), size: 40, pixelSize: 5),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return Image.memory(snapshot.data!);
+                              }
+                              return Container(width: 40.0, height: 40.0, color: Colors.grey.shade700);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          org.symbol,
+                          style: TextStyle(color: Theme.of(context).indicatorColor, fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Text(org.holders.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                        const Text("Members", style: TextStyle(fontWeight: FontWeight.w300, fontSize: 13)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        org.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            org.description,
+                            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Text(
+                          getShortAddress(org.address),
+                          style: TextStyle(fontSize: 12, color: Theme.of(context).indicatorColor.withOpacity(0.8)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Top-right icon
+        Positioned(
+          top: 10,
+          right: 10,
+          child: ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return LinearGradient(
+                colors: org.debatesOnly
+                    ? [const Color.fromARGB(255, 156, 214, 229), const Color.fromARGB(255, 206, 206, 206)]
+                    : [const Color.fromARGB(255, 205, 176, 96), const Color.fromARGB(255, 206, 206, 206)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.srcIn,
+            child: Opacity(opacity: 0.5, child: typeIcon),
+          ),
+        ),
+        // Bottom-right icon (if applicable)
+        if (org.underlyingToken != null && org.underlyingToken!.isNotEmpty)
+          const Positioned(
+            bottom: 10,
+            right: 10,
+            child: Opacity(opacity: 0.5, child: Icon(Icons.token)),
+          )
+        else
+          const SizedBox.shrink(),
+      ],
+    );
+  }
+}
+// lib/widgets/dao_card.dart
+```
+
+### `lib/src/features/explorer/widgets/game_of_life.dart`
+```dart
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
+
+
+class GameOfLife extends StatefulWidget {
+  const GameOfLife({super.key});
+
+  @override
+  _GameOfLifeState createState() => _GameOfLifeState();
+}
+
+class _GameOfLifeState extends State<GameOfLife> {
+  // late List<List<int>> grid;
+  List<List<int>> grid = [];
+  Timer? timer;
+  int rows = 10;
+  int cols = 10;
+  final double resolution = 60;
+  final double initialProbability =
+      0.3; // 30% chance for each cell to be alive initially
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize grid in initState to avoid late initialization error
+    _initGrid();
+  }
+
+  void _initGrid() {
+    // Setup grid moved from didChangeDependencies to ensure grid is initialized before build
+    WidgetsBinding.instance.addPostFrameCallback((_) => setupGrid());
+  }
+
+  void setupGrid() {
+    final screenSize = MediaQuery.of(context).size;
+    cols = (screenSize.width / resolution).floor();
+    rows = (screenSize.height / resolution).floor();
+
+    // Adjusted to initialize grid with initial probability correctly
+    grid = List.generate(
+        cols,
+        (_) => List.generate(
+            rows, (_) => Random().nextDouble() < initialProbability ? 1 : 0));
+
+    timer =
+        Timer.periodic(const Duration(milliseconds: 120), (Timer t) => _updateGrid());
+  }
+
+  void _updateGrid() {
+    setState(() {
+      grid = _computeNext(grid);
+    });
+  }
+
+  List<List<int>> _computeNext(List<List<int>> oldGrid) {
+    List<List<int>> newGrid =
+        List.generate(cols, (_) => List.generate(rows, (_) => 0));
+    for (int i = 0; i < cols; i++) {
+      for (int j = 0; j < rows; j++) {
+        int state = oldGrid[i][j];
+        int neighbours = _countNeighbours(oldGrid, i, j);
+
+        if (state == 0 && neighbours == 3) {
+          newGrid[i][j] = 1; // Birth condition
+        } else if (state == 1 && (neighbours < 2 || neighbours > 3)) {
+          newGrid[i][j] = Random().nextDouble() > 0.1
+              ? 0
+              : 1; // Death condition with a small chance to survive
+        } else {
+          newGrid[i][j] = state;
+        }
+      }
+    }
+    return newGrid;
+  }
+
+  int _countNeighbours(List<List<int>> grid, int x, int y) {
+    int sum = 0;
+    for (int i = -1; i < 2; i++) {
+      for (int j = -1; j < 2; j++) {
+        int col = (x + i + cols) % cols;
+        int row = (y + j + rows) % rows;
+        sum += grid[col][row];
+      }
+    }
+    sum -= grid[x][y];
+    return sum;
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Ensure grid is initialized before building the widget
+    return Scaffold(
+      body: CustomPaint(
+        painter: GameOfLifePainter(grid, resolution),
+        child: Container(
+          color: Colors.transparent,
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+        ),
+      ),
+    );
+  }
+}
+
+class GameOfLifePainter extends CustomPainter {
+  final List<List<int>> grid;
+  final double resolution;
+  final Paint cellPaint;
+  final Paint borderPaint;
+
+  GameOfLifePainter(this.grid, this.resolution)
+      : cellPaint = Paint()..color = const Color.fromARGB(255, 109, 109, 109),
+        borderPaint = Paint()
+          ..color = const Color.fromARGB(255, 190, 190, 190); // Border color
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Calculate border size as a fraction of resolution
+    double borderSize = resolution * 0.1; // Example: 10% of the cell size
+
+    for (int i = 0; i < grid.length; i++) {
+      for (int j = 0; j < grid[i].length; j++) {
+        if (grid[i][j] == 1) {
+          // Draw the main cell
+          canvas.drawRect(
+              Rect.fromLTWH(
+                  i * resolution, j * resolution, resolution, resolution),
+              cellPaint);
+
+          // Draw the border (smaller rectangle inside)
+          canvas.drawRect(
+              Rect.fromLTWH(
+                  i * resolution + borderSize,
+                  j * resolution + borderSize,
+                  resolution - borderSize * 2,
+                  resolution - borderSize * 2),
+              borderPaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
 
 ```
 
@@ -624,7 +2725,6 @@ import 'package:werule/src/features/proposal_detail/widgets/proposal_execution_d
 import 'package:werule/src/features/proposal_detail/widgets/proposal_lifecycle_card.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_votes_card.dart';
-import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/network_provider.dart';
@@ -633,7 +2733,6 @@ import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/utils/reusable.dart';
 import 'package:werule/src/widgets/shared_app_bar.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ProposalDetailScreen extends StatefulWidget {
   final String networkName;
@@ -721,9 +2820,6 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
                   child: _ProposalDetailView(
                     networkName: widget.networkName,
                     daoAddress: widget.daoAddress,
-                    proposal: proposal,
-                    org: org,
-                    network: network, // Pass network down
                   ),
                 );
               },
@@ -739,20 +2835,19 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
 class _ProposalDetailView extends StatelessWidget {
   final String networkName;
   final String daoAddress;
-  final Proposal proposal;
-  final Org org;
-  final Network network; // Added network
 
   const _ProposalDetailView({
     required this.networkName,
     required this.daoAddress,
-    required this.proposal,
-    required this.org,
-    required this.network, // Added network
   });
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ProposalDetailProvider>();
+    final proposal = provider.proposal;
+    final org = provider.org;
+    final network = provider.network;
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -784,7 +2879,8 @@ class _ProposalDetailView extends StatelessWidget {
                         const SizedBox(height: 16),
                         ProposalVotesCard(org: org),
                         const SizedBox(height: 16),
-                        ProposalLifecycleCard(proposal: proposal),
+                        // THE FIX: The proposal parameter is no longer needed.
+                        const ProposalLifecycleCard(),
                          const SizedBox(height: 16),
                         SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)),
                       ],
@@ -804,7 +2900,8 @@ class _ProposalDetailView extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: ProposalLifecycleCard(proposal: proposal)),
+                            // THE FIX: The proposal parameter is no longer needed.
+                            const Expanded(child: ProposalLifecycleCard()),
                             const SizedBox(width: 16),
                             Expanded(child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network))),
                           ],
@@ -946,6 +3043,42 @@ class _ProposalHeader extends StatelessWidget {
 // lib/src/features/proposal_detail/proposal_detail_screen.dart
 ```
 
+### `lib/src/features/proposal_detail/proposal_detail_screen.dart.errors.txt`
+```txt
+Problems found in: proposal_detail_screen.dart
+==================================================
+
+ERROR at Line 83:20 (dart)
+   Message: The method 'update' isn't defined for the type 'ProposalDetailProvider'.
+Try correcting the name to the name of an existing method, or defining a method named 'update'.
+
+ERROR at Line 132:31 (dart)
+   Message: The getter 'proposal' isn't defined for the type 'ProposalDetailProvider'.
+Try importing the library that defines 'proposal', correcting the name to the name of an existing getter, or defining a getter or field named 'proposal'.
+
+ERROR at Line 133:26 (dart)
+   Message: The getter 'org' isn't defined for the type 'ProposalDetailProvider'.
+Try importing the library that defines 'org', correcting the name to the name of an existing getter, or defining a getter or field named 'org'.
+
+ERROR at Line 134:30 (dart)
+   Message: The getter 'network' isn't defined for the type 'ProposalDetailProvider'.
+Try importing the library that defines 'network', correcting the name to the name of an existing getter, or defining a getter or field named 'network'.
+
+WARNING at Line 13:8 (dart)
+   Message: Unused import: 'package:werule/src/models/network.dart'.
+Try removing the import directive.
+
+WARNING at Line 14:8 (dart)
+   Message: Unused import: 'package:werule/src/models/org.dart'.
+Try removing the import directive.
+
+WARNING at Line 72:26 (dart)
+   Message: Don't use 'BuildContext's across async gaps.
+Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check.
+
+
+```
+
 ### `lib/src/features/proposal_detail/widgets/proposal_actions_card.dart`
 ```dart
 // lib/src/features/proposal_detail/widgets/proposal_actions_card.dart
@@ -1021,7 +3154,6 @@ class _ActionButtons extends StatelessWidget {
       case ProposalStatus.Executable:
         return _buildExecuteButton(context, provider);
       case ProposalStatus.Executed:
-        // In a real app, you would get the execution hash from the proposal model
         return const Text("Execution TX: 0x_mock_hash...");
       default:
         return const SizedBox.shrink();
@@ -1033,6 +3165,10 @@ class _ActionButtons extends StatelessWidget {
     const Color supportColor = Color.fromARGB(255, 20, 78, 49);
     const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
 
+    // THE FIX: Get proposal and org from the provider to use real data.
+    final proposal = provider.proposal;
+    final org = provider.org;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -1040,7 +3176,7 @@ class _ActionButtons extends StatelessWidget {
         ElevatedButton.icon(
           onPressed: isEnabled ? () async {
             final error = await provider.handleAction(() => 
-              context.read<BlockchainService>().castVote("0xTODO", BigInt.zero, 1)
+              context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 1)
             );
             if (context.mounted) {
               if (error != null) _showSnackbar(context, error, isError: true);
@@ -1058,7 +3194,7 @@ class _ActionButtons extends StatelessWidget {
         ElevatedButton.icon(
            onPressed: isEnabled ? () async {
             final error = await provider.handleAction(() => 
-              context.read<BlockchainService>().castVote("0xTODO", BigInt.zero, 0)
+              context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 0)
             );
              if (context.mounted) {
               if (error != null) _showSnackbar(context, error, isError: true);
@@ -1077,10 +3213,13 @@ class _ActionButtons extends StatelessWidget {
   }
 
    Widget _buildQueueButton(BuildContext context, ProposalDetailProvider provider) {
+    final proposal = provider.proposal;
+    final org = provider.org;
+
     return ElevatedButton(
       onPressed: () async {
          final error = await provider.handleAction(() => 
-          context.read<BlockchainService>().queueProposal("0xTODO", BigInt.zero)
+          context.read<BlockchainService>().queueProposal(org.address, BigInt.parse(proposal.id))
         );
         if (context.mounted) {
           if (error != null) _showSnackbar(context, error, isError: true);
@@ -1092,10 +3231,13 @@ class _ActionButtons extends StatelessWidget {
   }
 
   Widget _buildExecuteButton(BuildContext context, ProposalDetailProvider provider) {
+    final proposal = provider.proposal;
+    final org = provider.org;
+    
      return ElevatedButton(
       onPressed: () async {
         final error = await provider.handleAction(() => 
-          context.read<BlockchainService>().executeProposal("0xTODO", BigInt.zero)
+          context.read<BlockchainService>().executeProposal(org.address, BigInt.parse(proposal.id))
         );
          if (context.mounted) {
           if (error != null) _showSnackbar(context, error, isError: true);
@@ -1180,6 +3322,26 @@ class _Countdown extends StatelessWidget {
 // lib/src/features/proposal_detail/widgets/proposal_actions_card.dart
 ```
 
+### `lib/src/features/proposal_detail/widgets/proposal_actions_card.dart.errors.txt`
+```txt
+Problems found in: proposal_actions_card.dart
+==================================================
+
+ERROR at Line 78:31 (dart)
+   Message: The getter 'proposal' isn't defined for the type 'ProposalDetailProvider'.
+Try importing the library that defines 'proposal', correcting the name to the name of an existing getter, or defining a getter or field named 'proposal'.
+
+ERROR at Line 79:38 (dart)
+   Message: The getter 'network' isn't defined for the type 'ProposalDetailProvider'.
+Try importing the library that defines 'network', correcting the name to the name of an existing getter, or defining a getter or field named 'network'.
+
+WARNING at Line 269:29 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+
+```
+
 ### `lib/src/features/proposal_detail/widgets/proposal_execution_details_card.dart`
 ```dart
 // lib/src/features/proposal_detail/widgets/proposal_execution_details_card.dart
@@ -1238,6 +3400,8 @@ class ProposalExecutionDetailsCard extends StatelessWidget {
 
     return Card(
       color: const Color(0xff2c2c2c),
+      // THE FIX: Use straight corners
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Container(
          width: double.infinity,
          padding: const EdgeInsets.all(24.0),
@@ -1260,12 +3424,12 @@ import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
 
 class ProposalLifecycleCard extends StatelessWidget {
-  final Proposal proposal;
-  const ProposalLifecycleCard({super.key, required this.proposal});
+  // THE FIX: The redundant 'proposal' parameter has been removed.
+  // The widget now correctly gets all its data from the provider.
+  const ProposalLifecycleCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // THE FIX: Read the full, calculated timeline from the provider.
     final timeline = context.select<ProposalDetailProvider, Map<ProposalStatus, DateTime>>((p) => p.fullTimeline);
 
     // Convert map to a list of entries and sort by date.
@@ -1276,9 +3440,7 @@ class ProposalLifecycleCard extends StatelessWidget {
       color: const Color(0xff2c2c2c),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
-        // THE FIX: Use ListView.builder for dynamic content, mimicking the old design.
         child: ListView.builder(
-          // These properties are important when a ListView is inside a SingleChildScrollView
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: sortedEntries.length,
@@ -1480,7 +3642,6 @@ class ProposalVotesCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // THE FIX: Use Row with Spacer to push button to the right
             Row(
               children: [
                 Text("${formatVotes(totalVotes)} Votes", style: Theme.of(context).textTheme.titleLarge),
@@ -1522,7 +3683,6 @@ class ProposalVotesCard extends StatelessWidget {
               againstPercent: 0,
               height: 12,
               quorumPercent: org.quorum.toDouble(),
-              // THE FIX: Use the new fillColor property for the turnout bar
               fillColor: Colors.grey.shade400,
             ),
           ],
@@ -1556,79 +3716,296 @@ class _VoteStat extends StatelessWidget {
   }
 }
 
-class _ProgressBar extends StatelessWidget {
+class _ProgressBar extends StatefulWidget {
   final double forPercent;
   final double againstPercent;
   final double height;
   final double? quorumPercent;
-  final Color? fillColor; // THE FIX: Add optional fillColor
+  final Color? fillColor;
 
   const _ProgressBar({
     required this.forPercent,
     required this.againstPercent,
     this.height = 8.0,
     this.quorumPercent,
-    this.fillColor, // THE FIX: Add to constructor
+    this.fillColor,
   });
+
+  @override
+  State<_ProgressBar> createState() => _ProgressBarState();
+}
+
+class _ProgressBarState extends State<_ProgressBar> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      return Stack(
-        clipBehavior: Clip.none, // Allow quorum marker to draw outside
-        children: [
-          Container(
-            width: double.infinity,
-            height: height,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade800,
-              borderRadius: BorderRadius.circular(height / 2),
-            ),
-          ),
-          // THE FIX: Conditional rendering based on fillColor
-          if (fillColor != null)
-            Container(
-              width: constraints.maxWidth * (forPercent / 100),
-              height: height,
-              decoration: BoxDecoration(
-                color: fillColor,
-                borderRadius: BorderRadius.circular(height / 2),
+      return AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: double.infinity,
+                height: widget.height,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade800,
+                  borderRadius: BorderRadius.circular(widget.height / 2),
+                ),
               ),
-            )
-          else
-            Row(
-              children: [
+              if (widget.fillColor != null)
                 Container(
-                  width: constraints.maxWidth * (forPercent / 100),
-                  height: height,
+                  width: constraints.maxWidth * (widget.forPercent / 100) * _animation.value,
+                  height: widget.height,
                   decoration: BoxDecoration(
-                    color: const Color(0xff00c489),
-                    borderRadius: BorderRadius.circular(height / 2),
+                    color: widget.fillColor,
+                    borderRadius: BorderRadius.circular(widget.height / 2),
                   ),
+                )
+              else
+                Row(
+                  children: [
+                    Container(
+                      width: constraints.maxWidth * (widget.forPercent / 100) * _animation.value,
+                      height: widget.height,
+                      decoration: BoxDecoration(
+                        color: const Color(0xff00c489),
+                        borderRadius: BorderRadius.circular(widget.height / 2),
+                      ),
+                    ),
+                    Container(
+                      width: constraints.maxWidth * (widget.againstPercent / 100) * _animation.value,
+                      height: widget.height,
+                      decoration: BoxDecoration(
+                        color: const Color(0xff86251e),
+                        borderRadius: BorderRadius.circular(widget.height / 2),
+                      ),
+                    ),
+                  ],
                 ),
-                Container(
-                  width: constraints.maxWidth * (againstPercent / 100),
-                  height: height,
-                  decoration: BoxDecoration(
-                    color: const Color(0xff86251e),
-                    borderRadius: BorderRadius.circular(height / 2),
-                  ),
+              if (widget.quorumPercent != null)
+                Positioned(
+                  left: (constraints.maxWidth * (widget.quorumPercent! / 100)) - 1,
+                  top: -4,
+                  bottom: -4,
+                  child: Container(width: 2, color: Colors.black),
                 ),
-              ],
-            ),
-          if (quorumPercent != null)
-            Positioned(
-              left: (constraints.maxWidth * (quorumPercent! / 100)) - 1, // center the marker
-              top: -4,
-              bottom: -4,
-              child: Container(width: 2, color: Colors.black),
-            ),
-        ],
+            ],
+          );
+        },
       );
     });
   }
 }
 // lib/src/features/proposal_detail/widgets/proposal_votes_card.dart
+```
+
+### `lib/src/features/proposal_detail/widgets/votes_modal.dart`
+```dart
+// lib/src/features/proposal_detail/widgets/votes_modal.dart
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:werule/src/models/network.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/vote.dart';
+import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/utils/reusable.dart';
+
+class VotesModal extends StatefulWidget {
+  final String proposalId;
+  final Org org;
+  final Network network;
+
+  const VotesModal({
+    super.key,
+    required this.proposalId,
+    required this.org,
+    required this.network,
+  });
+
+  @override
+  State<VotesModal> createState() => _VotesModalState();
+}
+
+class _VotesModalState extends State<VotesModal> {
+  late Future<List<Vote>> _votesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) {
+      print('[VOTES_MODAL] initState: Fetching votes with the following params:');
+      print('  -> Network Collection: ${widget.network.daoCollectionName}');
+      print('  -> DAO Address: ${widget.org.address}');
+      print('  -> Proposal ID: ${widget.proposalId}');
+    }
+    final firestoreService = context.read<FirestoreService>();
+    _votesFuture = firestoreService.getVotes(
+      widget.network.daoCollectionName,
+      widget.org.address,
+      widget.proposalId,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: FutureBuilder<List<Vote>>(
+        future: _votesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(heightFactor: 5, child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error loading votes: ${snapshot.error}"));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(heightFactor: 5, child: Text("No votes have been cast yet."));
+          }
+          
+          final votes = snapshot.data!;
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                return _buildMobileLayout(votes);
+              } else {
+                return _buildDesktopLayout(votes);
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  // --- Mobile Layout ---
+  Widget _buildMobileLayout(List<Vote> votes) {
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: ListView.builder(
+        itemCount: votes.length,
+        itemBuilder: (context, index) {
+          final vote = votes[index];
+          return Card(
+            color: const Color(0xff3a3a3a),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            child: ListTile(
+              leading: _buildOptionCell(vote.option),
+              title: Text(
+                shortenString(vote.voter),
+                style: const TextStyle(fontFamily: 'monospace'),
+              ),
+              subtitle: Text(
+                'Weight: ${formatTotalSupply(vote.weight, widget.org.decimals)}\n'
+                '${DateFormat("yyyy-MM-dd – HH:mm").format(vote.castAt)}',
+              ),
+              trailing: _buildTxCell(vote.hash),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: vote.voter));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(duration: Duration(seconds: 1), content: Center(child: Text('Voter address copied to clipboard')))
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // --- Desktop Layout ---
+  Widget _buildDesktopLayout(List<Vote> votes) {
+    // THE FIX: The DataTable should scroll horizontally if needed.
+    // The AlertDialog will handle vertical scrolling.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: const [
+          DataColumn(label: Text('Voter')),
+          DataColumn(label: Text('Option')),
+          DataColumn(label: Text('Weight')),
+          DataColumn(label: Text("Cast At")),
+          DataColumn(label: Text('Tx')),
+        ],
+        rows: votes.map((vote) {
+          return DataRow(cells: [
+            DataCell(_buildVoterCell(context, vote.voter)),
+            DataCell(_buildOptionCell(vote.option)),
+            DataCell(Text(formatTotalSupply(vote.weight, widget.org.decimals))),
+            DataCell(Text(DateFormat("yyyy-MM-dd – HH:mm").format(vote.castAt))),
+            DataCell(_buildTxCell(vote.hash)),
+          ]);
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildVoterCell(BuildContext context, String voterAddress) {
+    return Row(
+      children: [
+        Text(shortenString(voterAddress)),
+        const SizedBox(width: 4),
+        IconButton(
+          splashRadius: 20,
+          icon: const Icon(Icons.copy, size: 16),
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: voterAddress));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(duration: Duration(seconds: 1), content: Center(child: Text('Address copied to clipboard')))
+            );
+          },
+        )
+      ],
+    );
+  }
+
+  Widget _buildOptionCell(int option) {
+    return option == 1
+        ? const Icon(Icons.thumb_up, color: Color.fromARGB(255, 93, 223, 162))
+        : const Icon(Icons.thumb_down, color: Color.fromARGB(255, 238, 129, 121));
+  }
+
+  Widget _buildTxCell(String hash) {
+    final explorerUrl = widget.network.blockExplorerUrl;
+    if (hash.isEmpty || explorerUrl.isEmpty) return const SizedBox.shrink();
+    
+    final prefixedHash = hash.startsWith('0x') ? hash : '0x$hash';
+    final txUrl = Uri.parse("$explorerUrl/tx/$prefixedHash");
+
+    return IconButton(
+      splashRadius: 20,
+      icon: const Icon(Icons.open_in_new, size: 20),
+      onPressed: () => launchUrl(txUrl),
+    );
+  }
+}
+// lib/src/features/proposal_detail/widgets/votes_modal.dart
 ```
 
 ### `lib/src/features/proposal_detail/widgets/details/contract_call_details.dart`
@@ -1836,7 +4213,6 @@ class RegistryDetails extends StatelessWidget {
 // lib/src/features/proposal_detail/widgets/details/shared_widgets.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:werule/src/utils/reusable.dart';
 
 Widget buildDetailRow(String label, String value, {bool isCode = false}) {
   return Padding(
@@ -1961,6 +4337,31 @@ class TokenTransferDetails extends StatelessWidget {
   }
 }
 
+```
+
+### `lib/src/models/human.dart`
+```dart
+
+```
+
+### `lib/src/models/member.dart`
+```dart
+// lib/src/models/member.dart
+
+class Member {
+  final String address;
+  final String balance;
+
+  Member({required this.address, required this.balance});
+
+  factory Member.fromBlockscout(Map<String, dynamic> json) {
+    return Member(
+      address: json['address']?['hash'] ?? 'Unknown Address',
+      balance: json['value'] ?? '0',
+    );
+  }
+}
+// lib/src/models/member.dart
 ```
 
 ### `lib/src/models/network.dart`
@@ -2097,7 +4498,8 @@ class Org {
 ```dart
 // lib/src/models/proposal.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:web3dart/crypto.dart'; // THE FIX: Import for bytesToHex utility.
+import 'package:collection/collection.dart';
+import 'package:web3dart/crypto.dart'; 
 
 enum ProposalStatus {
   Pending,
@@ -2125,7 +4527,7 @@ class ProposalTimelineEntry {
 }
 
 class Proposal {
-  final String id; // The document ID
+  final String id;
   final String author;
   final String title;
   final String description;
@@ -2137,6 +4539,10 @@ class Proposal {
   final List<String> targets;
   final List<String> callDatas;
   final String? externalResource;
+  final String totalSupply;
+  final int votesFor;
+  final int votesAgainst;
+  final String? executionHash; // THE FIX: Add executionHash field
 
   Proposal({
     required this.id,
@@ -2151,6 +4557,10 @@ class Proposal {
     required this.targets,
     required this.callDatas,
     this.externalResource,
+    required this.totalSupply,
+    required this.votesFor,
+    required this.votesAgainst,
+    this.executionHash, // THE FIX: Add to constructor
   });
 
   factory Proposal.fromFirestore(DocumentSnapshot doc) {
@@ -2165,15 +4575,12 @@ class Proposal {
       });
     }
 
-    // THE FIX: Process `callDatas` to handle both String and Blob types.
     final rawCallDatas = data['callDatas'] as List<dynamic>? ?? [];
     final List<String> processedCallDatas = [];
     for (final item in rawCallDatas) {
       if (item is String) {
         processedCallDatas.add(item);
       } else if (item is Blob) {
-        // A Blob from Firestore contains raw bytes. Convert them to a hex string.
-        // The bytesToHex function from web3dart's crypto utility is perfect for this.
         processedCallDatas.add(bytesToHex(item.bytes, include0x: true));
       }
     }
@@ -2189,12 +4596,15 @@ class Proposal {
       statusHistory: history,
       type: data['type'],
       targets: List<String>.from(data['targets'] ?? []),
-      callDatas: processedCallDatas, // Use the safely processed list.
+      callDatas: processedCallDatas,
       externalResource: data['externalResource'],
+      totalSupply: data['totalSupply']?.toString() ?? '0',
+      votesFor: data['votesFor'] ?? 0,
+      votesAgainst: data['votesAgainst'] ?? 0,
+      executionHash: data['executionHash'], // THE FIX: Parse from Firestore
     );
   }
 
-  // Helper to get a sorted timeline
   List<ProposalTimelineEntry> get sortedTimeline {
     final entries = statusHistory.entries
         .map((e) => ProposalTimelineEntry(status: e.key, timestamp: e.value))
@@ -2202,8 +4612,98 @@ class Proposal {
     entries.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return entries;
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    final mapEquals = const DeepCollectionEquality().equals;
+
+    return other is Proposal &&
+        other.id == id &&
+        other.inFavor == inFavor &&
+        other.against == against &&
+        other.votesFor == votesFor &&
+        other.votesAgainst == votesAgainst &&
+        other.totalSupply == totalSupply &&
+        other.executionHash == executionHash && // THE FIX: Add to equality check
+        mapEquals(other.statusHistory, statusHistory);
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        inFavor.hashCode ^
+        against.hashCode ^
+        votesFor.hashCode ^
+        votesAgainst.hashCode ^
+        executionHash.hashCode ^ // THE FIX: Add to hashcode
+        statusHistory.hashCode ^
+        totalSupply.hashCode;
+  }
 }
 // lib/src/models/proposal.dart
+```
+
+### `lib/src/models/token.dart`
+```dart
+class Token {
+  Token(
+      {required this.name,
+      required this.symbol,
+      required this.decimals,
+      required this.type,
+      this.address});
+
+  String? address;
+  String? underlyingAddress;
+  int? tokenId;
+  String iconUrl = '';
+  late String name;
+  late String symbol;
+  int? decimals;
+  String? type;
+
+  Token.fromJson(Map<String, dynamic> json) {
+    name = json['name'];
+    symbol = json['symbol'];
+    type = json['type'];
+    decimals = json['decimals'] != null ? json['decimals'] as int : null;
+    address = json['address'];
+  }
+
+  @override
+  String toString() {
+    return 'Token(name: $name, address: $address, symbol: $symbol, type: $type, decimals: $decimals)';
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'symbol': symbol,
+      'type': type,
+      'decimals': decimals,
+      'address': address,
+    };
+  }
+}
+
+```
+
+### `lib/src/models/token_asset.dart`
+```dart
+// lib/src/models/token_asset.dart
+import 'package:werule/src/models/token.dart';
+
+class TokenAsset {
+  final Token token;
+  final String balance;
+
+  TokenAsset({
+    required this.token,
+    required this.balance,
+  });
+}
+// lib/src/models/token_asset.dart
 ```
 
 ### `lib/src/models/vote.dart`
@@ -2213,24 +4713,42 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Vote {
   final String voter;
-  final int option; // e.g., 0 for against, 1 for for
+  final int option;
   final String weight;
   final DateTime castAt;
+  final String hash;
 
   Vote({
     required this.voter,
     required this.option,
     required this.weight,
     required this.castAt,
+    required this.hash,
   });
 
   factory Vote.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
+    DateTime parsedDate;
+    try {
+      // THE FIX: Read the 'cast' field which is a String, and parse it.
+      final dateString = data['cast'] as String?;
+      if (dateString != null) {
+        parsedDate = DateTime.parse(dateString);
+      } else {
+        parsedDate = DateTime.now(); // Fallback if field is missing
+      }
+    } catch (e) {
+      // Fallback if parsing fails for any reason
+      parsedDate = DateTime.now();
+    }
+
     return Vote(
       voter: data['voter'] ?? 'Unknown Voter',
       option: data['option'] ?? -1,
       weight: data['weight']?.toString() ?? '0',
-      castAt: (data['castAt'] as Timestamp? ?? Timestamp.now()).toDate(),
+      castAt: parsedDate,
+      hash: data['hash'] ?? '',
     );
   }
 }
@@ -2338,6 +4856,125 @@ class AuthProvider extends ChangeNotifier {
   }
 }
 // lib/src/providers/auth_provider.dart
+```
+
+### `lib/src/providers/dao_provider.dart`
+```dart
+// lib/src/providers/dao_provider.dart
+
+import 'dart:math';
+import 'package:flutter/material.dart';
+import '../models/network.dart';
+import '../models/org.dart';
+import '../services/firestore_service.dart';
+
+enum DataState { initial, loading, loaded, error }
+
+class DaoProvider extends ChangeNotifier {
+  final FirestoreService _firestoreService;
+  final Network? _currentNetwork;
+
+  // THE FIX: Add a flag to track the provider's disposal status.
+  bool _isDisposed = false;
+
+  DaoProvider(this._firestoreService, this._currentNetwork) {
+    fetchDaosForCurrentNetwork();
+  }
+
+  // --- State and Getters (Unchanged) ---
+  List<Org> _allDaos = [];
+  List<Org> _filteredDaos = [];
+  String _searchQuery = '';
+  int _currentPage = 1;
+  final int _itemsPerPage = 21;
+  List<Org> displayedDaos = [];
+  DataState _state = DataState.initial;
+  DataState get state => _state;
+  String _errorMessage = '';
+  String get errorMessage => _errorMessage;
+  int get totalDaoCount => _allDaos.length;
+  int get currentPage => _currentPage;
+  int get totalPages =>
+      _filteredDaos.isEmpty ? 1 : (_filteredDaos.length / _itemsPerPage).ceil();
+
+  // --- Methods ---
+
+  Future<void> fetchDaosForCurrentNetwork() async {
+    if (_currentNetwork == null) {
+      _state = DataState.loaded;
+      _allDaos = [];
+      _applyFiltersAndPagination();
+      return;
+    }
+
+    _state = DataState.loading;
+    notifyListeners();
+
+    try {
+      _allDaos = await _firestoreService.getDaos(_currentNetwork!.daoCollectionName);
+      _state = DataState.loaded;
+    } catch (e) {
+      _state = DataState.error;
+      _errorMessage = e.toString();
+    }
+    
+    _searchQuery = '';
+    _currentPage = 1;
+    _applyFiltersAndPagination();
+  }
+
+  void search(String query) {
+    _searchQuery = query;
+    _currentPage = 1;
+    _applyFiltersAndPagination();
+  }
+
+  void changePage(int newPage) {
+    if (newPage < 1 || newPage > totalPages) return;
+    _currentPage = newPage;
+    _applyFiltersAndPagination();
+  }
+
+  void _applyFiltersAndPagination() {
+    if (_searchQuery.isEmpty) {
+      _filteredDaos = List.from(_allDaos);
+    } else {
+      final lowerCaseQuery = _searchQuery.toLowerCase();
+      _filteredDaos = _allDaos.where((dao) {
+        return dao.name.toLowerCase().contains(lowerCaseQuery) ||
+            dao.address.toLowerCase().contains(lowerCaseQuery);
+      }).toList();
+    }
+
+    final int startIndex = (_currentPage - 1) * _itemsPerPage;
+    final int endIndex = min(startIndex + _itemsPerPage, _filteredDaos.length);
+    
+    displayedDaos = (startIndex >= _filteredDaos.length)
+        ? []
+        : _filteredDaos.sublist(startIndex, endIndex);
+    
+    notifyListeners();
+  }
+
+  // --- Disposal and Notification Logic ---
+
+  // THE FIX: When the ProxyProvider disposes of this instance, we set our flag.
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  // THE FIX: We override notifyListeners and only call the original method
+  // if this instance has not been disposed.
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
+    }
+  }
+}
+// lib/src/providers/dao_provider.dart
 ```
 
 ### `lib/src/providers/network_provider.dart`
@@ -2485,6 +5122,11 @@ class ProposalDetailProvider extends ChangeNotifier {
   bool get showCountdown => _status == ProposalStatus.Pending || _status == ProposalStatus.Active || _status == ProposalStatus.Queued;
   Map<ProposalStatus, DateTime> get fullTimeline => _fullTimeline;
 
+  // THE FIX: Added public getters to expose necessary data to the UI.
+  Proposal get proposal => _proposal;
+  Org get org => _org;
+  Network get network => _network;
+
   Future<void> _initialize() async {
     await determineProposalStatus();
     await _fetchOnChainVotes();
@@ -2493,7 +5135,6 @@ class ProposalDetailProvider extends ChangeNotifier {
     notifyListeners();
   }
   
-  // --- Logic ---
   Future<void> determineProposalStatus() async {
     _isLoading = true;
     _errorMessage = null;
@@ -2507,7 +5148,6 @@ class ProposalDetailProvider extends ChangeNotifier {
       ProposalStatus onChainStatus = ProposalStatus.values[onChainStateIndex];
       
       final now = DateTime.now();
-      // THE FIX: Use `minutes` for votingDelay and votingDuration.
       final voteStart = _proposal.createdAt.add(Duration(minutes: _org.votingDelay));
       final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
 
@@ -2519,7 +5159,6 @@ class ProposalDetailProvider extends ChangeNotifier {
         _status = ProposalStatus.Succeeded;
       } else if (onChainStatus == ProposalStatus.Queued) {
         final queuedTime = _proposal.statusHistory['queued'] ?? voteEnd;
-        // THE FIX: Use `seconds` for executionDelay.
         final executionETA = queuedTime.add(Duration(seconds: _org.executionDelay));
         _status = now.isAfter(executionETA) ? ProposalStatus.Executable : ProposalStatus.Queued;
       } else {
@@ -2540,7 +5179,6 @@ class ProposalDetailProvider extends ChangeNotifier {
   void _calculateFullTimeline(ProposalStatus onChainStatus) {
     final timeline = <ProposalStatus, DateTime>{};
 
-    // THE FIX: Use the correct time units (minutes) for voting calculations.
     final createdAt = _proposal.createdAt;
     final voteStart = createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
@@ -2601,7 +5239,6 @@ class ProposalDetailProvider extends ChangeNotifier {
     final now = DateTime.now();
     DateTime? targetTime;
 
-    // THE FIX: Use `minutes` for voting calculations here as well for consistency.
     final voteStart = _proposal.createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
 
@@ -2611,7 +5248,6 @@ class ProposalDetailProvider extends ChangeNotifier {
       targetTime = voteEnd;
     } else if (_status == ProposalStatus.Queued) {
       final queuedTime = _proposal.statusHistory['queued'] ?? voteEnd;
-      // THE FIX: Use `seconds` for execution delay.
       targetTime = queuedTime.add(Duration(seconds: _org.executionDelay));
     }
 
@@ -2644,7 +5280,204 @@ class ProposalDetailProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-// lib/src/providers/proposal_detail_provider.dart```
+// lib/src/providers/proposal_detail_provider.dart
+```
+
+### `lib/src/providers/treasury_provider.dart`
+```dart
+// lib/src/providers/treasury_provider.dart
+import 'package:flutter/material.dart';
+import 'package:werule/src/models/network.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/token.dart';
+import 'package:werule/src/models/token_asset.dart';
+import 'package:werule/src/providers/dao_provider.dart'; // For DataState
+import 'package:werule/src/services/treasury_service.dart';
+
+class TreasuryProvider extends ChangeNotifier {
+  final TreasuryService _treasuryService;
+  final Org _org;
+  final Network _network;
+
+  TreasuryProvider(this._treasuryService, this._org, this._network) {
+    fetchTreasury();
+  }
+
+  DataState _state = DataState.initial;
+  DataState get state => _state;
+
+  String _errorMessage = '';
+  String get errorMessage => _errorMessage;
+
+  List<TokenAsset> _tokenAssets = [];
+  List<TokenAsset> get tokenAssets => _tokenAssets;
+  
+  Future<void> fetchTreasury() async {
+    _state = DataState.loading;
+    notifyListeners();
+
+    try {
+      final String registryAddress = _org.registryAddress;
+
+      if (registryAddress.isEmpty) {
+        _errorMessage = "DAO ${_org.name} has no registry address in Firestore model.";
+        print(_errorMessage);
+        _tokenAssets = [];
+        _state = DataState.error;
+        notifyListeners();
+        return;
+      }
+      
+      final assets = <TokenAsset>[];
+      
+      // 1. Fetch Native Balance using the network's RPC URL.
+      final nativeBalance = await _treasuryService.getNativeBalance(registryAddress, _network.rpcUrl);
+      final nativeToken = Token(
+        name: _network.nativeCurrencyName,
+        symbol: _network.nativeCurrencySymbol,
+        decimals: 18,
+        type: 'NATIVE',
+        address: 'native',
+      );
+      assets.add(TokenAsset(token: nativeToken, balance: nativeBalance.toString()));
+
+      // 2. Fetch ERC-20 Balances using the network's Block Explorer URL.
+      final tokenBalancesData = await _treasuryService.getTokenBalances(registryAddress, _network.blockExplorerUrl);
+      
+      for (var item in tokenBalancesData) {
+        final tokenData = item['token'];
+        if (tokenData != null && tokenData['type'] == 'ERC-20') {
+           final token = Token(
+              name: tokenData['name'] ?? 'Unknown Token',
+              symbol: tokenData['symbol'] ?? '???',
+              decimals: int.tryParse(tokenData['decimals']?.toString() ?? '0') ?? 0,
+              type: tokenData['type'],
+              address: tokenData['address_hash'] 
+           );
+           final balance = item['value']?.toString() ?? '0';
+           assets.add(TokenAsset(token: token, balance: balance));
+        }
+      }
+
+      _tokenAssets = assets;
+      _state = DataState.loaded;
+
+    } catch(e) {
+      _errorMessage = e.toString();
+      _state = DataState.error;
+    }
+    notifyListeners();
+  }
+}
+// lib/src/providers/treasury_provider.dart
+```
+
+### `lib/src/routing/app_router.dart`
+```dart
+// lib/src/routing/app_router.dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/dao_detail_screen.dart';
+import 'package:werule/src/features/explorer/explorer_screen.dart';
+import 'package:werule/src/features/proposal_detail/proposal_detail_screen.dart';
+import 'package:werule/src/providers/network_provider.dart';
+
+// THE FIX: A reusable fade transition builder for all routes.
+CustomTransitionPage<T> _buildFadeTransitionPage<T>({
+  required BuildContext context,
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        FadeTransition(opacity: animation, child: child),
+    transitionDuration: const Duration(milliseconds: 500),
+  );
+}
+
+// GoRouter configuration
+final appRouter = GoRouter(
+  routes: [
+    // Root route: '/'
+    GoRoute(
+      path: '/',
+      // THE FIX: Use pageBuilder to apply the custom transition.
+      pageBuilder: (context, state) => _buildFadeTransitionPage(
+        context: context,
+        state: state,
+        child: const ExplorerScreen(),
+      ),
+      redirect: (context, state) {
+        final networkProvider = context.read<NetworkProvider>();
+        if (networkProvider.selectedNetwork != null) {
+          return '/${networkProvider.selectedNetwork!.name}';
+        }
+        if (networkProvider.defaultNetwork != null) {
+          return '/${networkProvider.defaultNetwork!.name}';
+        }
+        return null;
+      },
+    ),
+    // DAO Explorer route: '/:networkName'
+    GoRoute(
+      path: '/:networkName',
+      // THE FIX: Use pageBuilder to apply the custom transition.
+      pageBuilder: (context, state) {
+        final networkName = state.pathParameters['networkName']!;
+        return _buildFadeTransitionPage(
+          context: context,
+          state: state,
+          child: ExplorerScreen(key: ValueKey(networkName), networkName: networkName),
+        );
+      },
+      routes: [
+        // DAO Detail route: '/:networkName/:daoAddress'
+        GoRoute(
+          path: ':daoAddress',
+          // THE FIX: Use pageBuilder to apply the custom transition.
+          pageBuilder: (context, state) {
+            final networkName = state.pathParameters['networkName']!;
+            final daoAddress = state.pathParameters['daoAddress']!;
+            return _buildFadeTransitionPage(
+              context: context,
+              state: state,
+              child: DaoDetailScreen(
+                key: ValueKey('$networkName-$daoAddress'),
+                networkName: networkName,
+                daoAddress: daoAddress,
+              ),
+            );
+          },
+          routes: [
+            // Proposal Detail route: '/:networkName/:daoAddress/proposals/:proposalId'
+            GoRoute(
+              path: 'proposals/:proposalId',
+              // THE FIX: Use pageBuilder to apply the custom transition.
+              pageBuilder: (context, state) {
+                final networkName = state.pathParameters['networkName']!;
+                final daoAddress = state.pathParameters['daoAddress']!;
+                final proposalId = state.pathParameters['proposalId']!;
+                return _buildFadeTransitionPage(
+                  context: context,
+                  state: state,
+                  child: ProposalDetailScreen(
+                    networkName: networkName,
+                    daoAddress: daoAddress,
+                    proposalId: proposalId,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+);
+// lib/src/routing/app_router.dart
 ```
 
 ### `lib/src/services/blockchain_service.dart`
@@ -2931,20 +5764,53 @@ class CalldataService {
 // lib/src/services/calldata_service.dart
 ```
 
+### `lib/src/services/calldata_service.dart.errors.txt`
+```txt
+Problems found in: calldata_service.dart
+==================================================
+
+ERROR at Line 59:28 (dart)
+   Message: The getter 'value' isn't defined for the type 'DecodingResult<dynamic>'.
+Try importing the library that defines 'value', correcting the name to the name of an existing getter, or defining a getter or field named 'value'.
+
+ERROR at Line 61:29 (dart)
+   Message: The getter 'value' isn't defined for the type 'DecodingResult<dynamic>'.
+Try importing the library that defines 'value', correcting the name to the name of an existing getter, or defining a getter or field named 'value'.
+
+ERROR at Line 64:28 (dart)
+   Message: The getter 'value' isn't defined for the type 'DecodingResult<dynamic>'.
+Try importing the library that defines 'value', correcting the name to the name of an existing getter, or defining a getter or field named 'value'.
+
+ERROR at Line 67:23 (dart)
+   Message: The getter 'newOffset' isn't defined for the type 'DecodingResult<dynamic>'.
+Try importing the library that defines 'newOffset', correcting the name to the name of an existing getter, or defining a getter or field named 'newOffset'.
+
+WARNING at Line 3:8 (dart)
+   Message: The import of 'package:web3dart/contracts.dart' is unnecessary because all of the used elements are also provided by the import of 'package:web3dart/web3dart.dart'.
+Try removing the import directive.
+
+WARNING at Line 97:7 (dart)
+   Message: Don't invoke 'print' in production code.
+Try using a logging framework.
+
+
+```
+
 ### `lib/src/services/firestore_service.dart`
 ```dart
 // lib/src/services/firestore_service.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/network.dart';
 import '../models/org.dart';
-import '../models/proposal.dart'; 
+import '../models/proposal.dart';
+import '../models/vote.dart';
 
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // NEW METHOD: Fetches all network configs from the 'contracts' collection
   Future<List<Network>> getNetworks() async {
     try {
       final snapshot = await _db.collection('contracts').get();
@@ -2960,7 +5826,6 @@ class FirestoreService {
     }
   }
 
-  // MODIFIED METHOD: Now takes the specific collection name to query
   Future<List<Org>> getDaos(String networkDaoCollection) async {
     try {
       final snapshot = await _db.collection(networkDaoCollection).get();
@@ -2994,7 +5859,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
-  // NEW: Get all proposals for a given DAO
   Future<List<Proposal>> getProposals(String networkDaoCollection, String daoAddress) async {
     try {
       final snapshot = await _db
@@ -3010,7 +5874,24 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
-  // NEW: Get a single proposal by its ID
+  Stream<List<Proposal>> getProposalsStream(String networkDaoCollection, String daoAddress) {
+    try {
+      final querySnapshot = _db
+          .collection(networkDaoCollection)
+          .doc(daoAddress)
+          .collection('proposals')
+          .orderBy('createdAt', descending: true)
+          .snapshots();
+      
+      return querySnapshot.map((snapshot) => 
+        snapshot.docs.map((doc) => Proposal.fromFirestore(doc)).toList()
+      );
+    } catch (e) {
+      print("Error creating proposals stream: $e");
+      return Stream.error(Exception('Failed to create proposals stream.'));
+    }
+  }
+
   Future<Proposal?> getProposal(String networkDaoCollection, String daoAddress, String proposalId) async {
     try {
       final doc = await _db
@@ -3029,7 +5910,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
-  // NEW: Get a real-time stream for a single proposal
   Stream<Proposal?> getProposalStream(String networkDaoCollection, String daoAddress, String proposalId) {
     try {
       final docStream = _db
@@ -3050,8 +5930,30 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
       return Stream.error(Exception('Failed to create proposal stream.'));
     }
   }
-}
 
+  Future<List<Vote>> getVotes(String networkDaoCollection, String daoAddress, String proposalId) async {
+    final path = '$networkDaoCollection/$daoAddress/proposals/$proposalId/votes';
+    if (kDebugMode) {
+      print('--------------------------------------------------');
+      print('[VOTES_FETCH] Querying Firestore path: $path');
+    }
+
+    try {
+      // THE FIX: Order by the correct field name 'cast'.
+      final snapshot = await _db.collection(path).orderBy('cast', descending: true).get();
+      if (kDebugMode) {
+        print('[VOTES_FETCH] Success. Found ${snapshot.docs.length} vote documents.');
+      }
+      return snapshot.docs.map((doc) => Vote.fromFirestore(doc)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('[VOTES_FETCH] FAILED. Error: $e');
+      }
+      return [];
+    }
+  }
+}
+// lib/src/services/firestore_service.dart
 ```
 
 ### `lib/src/services/governor_abi.dart`
@@ -3112,6 +6014,215 @@ const String governorAbi = '''
 ]
 ''';
 // lib/src/services/governor_abi.dart
+```
+
+### `lib/src/services/members_service.dart`
+```dart
+// lib/src/services/members_service.dart
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class MembersService {
+  Future<Map<String, dynamic>> getMembers(String tokenAddress, String blockExplorerUrl) async {
+    if (blockExplorerUrl.isEmpty) {
+      throw Exception('Block Explorer URL is not configured.');
+    }
+    if (tokenAddress.isEmpty) {
+      throw Exception('Governance token address is not configured for this DAO.');
+    }
+
+    String fullExplorerUrl = blockExplorerUrl;
+    if (!blockExplorerUrl.startsWith('http')) {
+      fullExplorerUrl = 'https://$blockExplorerUrl';
+    }
+
+    final url = Uri.parse('$fullExplorerUrl/api/v2/tokens/$tokenAddress/holders');
+    
+    try {
+      final response = await http.get(url, headers: {'accept': 'application/json'});
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to load members with status: ${response.statusCode}.');
+      }
+    } catch (e) {
+      print('[MembersService] Error fetching members: $e');
+      rethrow;
+    }
+  }
+}
+// lib/src/services/members_service.dart
+```
+
+### `lib/src/services/treasury_service.dart`
+```dart
+// lib/src/services/treasury_service.dart
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_web3/flutter_web3.dart';
+
+class TreasuryService {
+
+  Future<BigInt> getNativeBalance(String address, String rpcUrl) async {
+    if (rpcUrl.isEmpty) {
+      print("[TreasuryService] RPC URL is empty.");
+      return BigInt.zero;
+    }
+
+    String fullRpcUrl = rpcUrl;
+    if (!rpcUrl.startsWith('http')) {
+      fullRpcUrl = 'https://$rpcUrl';
+    }
+
+  
+    final provider = JsonRpcProvider(fullRpcUrl);
+    try {
+      final balance = await provider.getBalance(address);
+      return balance;
+    } catch (e) {
+      print("[TreasuryService] Error getting native balance via RPC: $e");
+      return BigInt.zero;
+    }
+  }
+
+  Future<List<dynamic>> getTokenBalances(String address, String blockExplorerUrl) async {
+    if (blockExplorerUrl.isEmpty) {
+      print("[TreasuryService] Block Explorer URL is empty.");
+      return [];
+    }
+
+    String fullExplorerUrl = blockExplorerUrl;
+    if (!blockExplorerUrl.startsWith('http')) {
+      fullExplorerUrl = 'https://$fullExplorerUrl';
+    }
+
+    final url = Uri.parse('$fullExplorerUrl/api/v2/addresses/$address/token-balances');
+    
+   
+    
+    try {
+      final response = await http.get(url, headers: {'accept': 'application/json'});
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as List<dynamic>;
+      } else {
+        print('[TreasuryService] Blockscout request for tokens failed with status: ${response.statusCode}.');
+        return [];
+      }
+    } catch (e) {
+      print('[TreasuryService] Error fetching token balances: $e');
+      return [];
+    }
+  }
+}
+// lib/src/services/treasury_service.dart
+```
+
+### `lib/src/utils/proposal_status_helper.dart`
+```dart
+// lib/src/utils/proposal_status_helper.dart
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/proposal.dart';
+
+class ProposalStatusHelper {
+  /// Calculates the current display status of a proposal synchronously.
+  /// It uses the last known event-based status from Firestore as a baseline
+  /// and applies time-based logic for transitions like Pending -> Active,
+  /// and vote-based logic for final states like Succeeded or Defeated.
+  static ProposalStatus calculateDisplayStatus(Proposal proposal, Org org) {
+    ProposalStatus lastKnownStatus = _getLatestStatusFromHistory(proposal);
+
+    final now = DateTime.now();
+    final voteStart = proposal.createdAt.add(Duration(minutes: org.votingDelay));
+    final voteEnd = voteStart.add(Duration(minutes: org.votingDuration));
+    
+    // If the last known status is a final one, no more calculation is needed.
+    if (_isFinalStatus(lastKnownStatus)) {
+      return lastKnownStatus;
+    }
+
+    // If the proposal was queued, check if it's become executable.
+    if (lastKnownStatus == ProposalStatus.Queued) {
+      final queuedTime = proposal.statusHistory['queued'] ?? voteEnd;
+      final executionETA = queuedTime.add(Duration(seconds: org.executionDelay));
+      if (now.isAfter(executionETA)) {
+        return ProposalStatus.Executable;
+      }
+      return ProposalStatus.Queued;
+    }
+
+    // If the voting period is over...
+    if (now.isAfter(voteEnd)) {
+      // First, check if the indexer has already given us a more definitive final status.
+      if (lastKnownStatus == ProposalStatus.Succeeded || lastKnownStatus == ProposalStatus.Defeated) {
+          return lastKnownStatus;
+      }
+
+      final totalSupplyAtVoteStart = BigInt.tryParse(proposal.totalSupply) ?? BigInt.zero;
+      
+      // If for some reason we don't have this data, we can't determine the outcome.
+      if (totalSupplyAtVoteStart == BigInt.zero) {
+        return ProposalStatus.Expired;
+      }
+
+      // 1. Check for Quorum
+      final quorumVotes = (totalSupplyAtVoteStart * BigInt.from(org.quorum)) ~/ BigInt.from(100);
+      final totalVotes = proposal.inFavor + proposal.against;
+
+      if (totalVotes < quorumVotes) {
+        return ProposalStatus.NoQuorum;
+      }
+
+      // 2. Check Vote Outcome
+      if (proposal.inFavor > proposal.against) {
+        return ProposalStatus.Succeeded;
+      } else {
+        // A tie or loss is a defeat in the OpenZeppelin Governor model.
+        return ProposalStatus.Defeated;
+      }
+    }
+
+    // If voting is currently active...
+    if (now.isAfter(voteStart)) {
+      return ProposalStatus.Active;
+    }
+
+    // Otherwise, it must still be pending.
+    return ProposalStatus.Pending;
+  }
+
+  /// Finds the latest status from the proposal's history map.
+  static ProposalStatus _getLatestStatusFromHistory(Proposal proposal) {
+    if (proposal.statusHistory.isEmpty) {
+      return ProposalStatus.Pending;
+    }
+    var latestEntry = proposal.statusHistory.entries.reduce((a, b) => a.value.isAfter(b.value) ? a : b);
+    
+    switch (latestEntry.key.toLowerCase()) {
+      case 'active': return ProposalStatus.Active;
+      case 'succeeded': return ProposalStatus.Succeeded;
+      case 'passed': return ProposalStatus.Succeeded;
+      case 'queued': return ProposalStatus.Queued;
+      case 'executable': return ProposalStatus.Executable;
+      case 'executed': return ProposalStatus.Executed;
+      case 'expired': return ProposalStatus.Expired;
+      case 'no quorum': return ProposalStatus.NoQuorum;
+      case 'pending': return ProposalStatus.Pending;
+      case 'rejected': return ProposalStatus.Rejected;
+      case 'defeated': return ProposalStatus.Defeated;
+      default: return ProposalStatus.Pending;
+    }
+  }
+
+  /// Checks if a status is terminal (i.e., it cannot change further).
+  static bool _isFinalStatus(ProposalStatus status) {
+    return status == ProposalStatus.Executed ||
+           status == ProposalStatus.Rejected ||
+           status == ProposalStatus.NoQuorum ||
+           status == ProposalStatus.Defeated ||
+           status == ProposalStatus.Canceled;
+  }
+}
+// lib/src/utils/proposal_status_helper.dart
 ```
 
 ### `lib/src/utils/reusable.dart`
@@ -3504,9 +6615,9 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           // THE FIX: Increased spacing between the buttons.
           const SizedBox(width: 22),
-          Padding(
-            padding: const EdgeInsets.only(top:2.0),
-            child: const WalletConnector(),
+          const Padding(
+            padding: EdgeInsets.only(top:2.0),
+            child: WalletConnector(),
           ),
         ];
 
@@ -3521,8 +6632,8 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
               constraints: const BoxConstraints(maxWidth: 1200),
               child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only (left:22.0, top:2),
+                  const Padding(
+                    padding: EdgeInsets.only (left:22.0, top:2),
                     child: titleWidget,
                   ),
                   const Spacer(),

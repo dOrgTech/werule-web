@@ -1,0 +1,15 @@
+Problems found in: proposal_actions_card.dart
+==================================================
+
+ERROR at Line 78:31 (dart)
+   Message: The getter 'proposal' isn't defined for the type 'ProposalDetailProvider'.
+Try importing the library that defines 'proposal', correcting the name to the name of an existing getter, or defining a getter or field named 'proposal'.
+
+ERROR at Line 79:38 (dart)
+   Message: The getter 'network' isn't defined for the type 'ProposalDetailProvider'.
+Try importing the library that defines 'network', correcting the name to the name of an existing getter, or defining a getter or field named 'network'.
+
+WARNING at Line 269:29 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+

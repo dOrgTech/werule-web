@@ -30,9 +30,9 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           // THE FIX: Increased spacing between the buttons.
           const SizedBox(width: 22),
-          Padding(
-            padding: const EdgeInsets.only(top:2.0),
-            child: const WalletConnector(),
+          const Padding(
+            padding: EdgeInsets.only(top:2.0),
+            child: WalletConnector(),
           ),
         ];
 
@@ -47,8 +47,8 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
               constraints: const BoxConstraints(maxWidth: 1200),
               child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only (left:22.0, top:2),
+                  const Padding(
+                    padding: EdgeInsets.only (left:22.0, top:2),
                     child: titleWidget,
                   ),
                   const Spacer(),

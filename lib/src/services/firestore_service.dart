@@ -1,15 +1,16 @@
 // lib/src/services/firestore_service.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/network.dart';
 import '../models/org.dart';
-import '../models/proposal.dart'; 
+import '../models/proposal.dart';
+import '../models/vote.dart';
 
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // NEW METHOD: Fetches all network configs from the 'contracts' collection
   Future<List<Network>> getNetworks() async {
     try {
       final snapshot = await _db.collection('contracts').get();
@@ -25,7 +26,6 @@ class FirestoreService {
     }
   }
 
-  // MODIFIED METHOD: Now takes the specific collection name to query
   Future<List<Org>> getDaos(String networkDaoCollection) async {
     try {
       final snapshot = await _db.collection(networkDaoCollection).get();
@@ -59,7 +59,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
-  // NEW: Get all proposals for a given DAO
   Future<List<Proposal>> getProposals(String networkDaoCollection, String daoAddress) async {
     try {
       final snapshot = await _db
@@ -75,7 +74,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
-  // THE FIX: New method to get a real-time stream of proposals.
   Stream<List<Proposal>> getProposalsStream(String networkDaoCollection, String daoAddress) {
     try {
       final querySnapshot = _db
@@ -94,7 +92,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
-  // NEW: Get a single proposal by its ID
   Future<Proposal?> getProposal(String networkDaoCollection, String daoAddress, String proposalId) async {
     try {
       final doc = await _db
@@ -113,7 +110,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
 
-  // NEW: Get a real-time stream for a single proposal
   Stream<Proposal?> getProposalStream(String networkDaoCollection, String daoAddress, String proposalId) {
     try {
       final docStream = _db
@@ -132,6 +128,28 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     } catch (e) {
       print("Error creating proposal stream: $e");
       return Stream.error(Exception('Failed to create proposal stream.'));
+    }
+  }
+
+  Future<List<Vote>> getVotes(String networkDaoCollection, String daoAddress, String proposalId) async {
+    final path = '$networkDaoCollection/$daoAddress/proposals/$proposalId/votes';
+    if (kDebugMode) {
+      print('--------------------------------------------------');
+      print('[VOTES_FETCH] Querying Firestore path: $path');
+    }
+
+    try {
+      // THE FIX: Order by the correct field name 'cast'.
+      final snapshot = await _db.collection(path).orderBy('cast', descending: true).get();
+      if (kDebugMode) {
+        print('[VOTES_FETCH] Success. Found ${snapshot.docs.length} vote documents.');
+      }
+      return snapshot.docs.map((doc) => Vote.fromFirestore(doc)).toList();
+    } catch (e) {
+      if (kDebugMode) {
+        print('[VOTES_FETCH] FAILED. Error: $e');
+      }
+      return [];
     }
   }
 }

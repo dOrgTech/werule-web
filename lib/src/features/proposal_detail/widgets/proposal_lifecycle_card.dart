@@ -7,12 +7,12 @@ import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
 
 class ProposalLifecycleCard extends StatelessWidget {
-  final Proposal proposal;
-  const ProposalLifecycleCard({super.key, required this.proposal});
+  // THE FIX: The redundant 'proposal' parameter has been removed.
+  // The widget now correctly gets all its data from the provider.
+  const ProposalLifecycleCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // THE FIX: Read the full, calculated timeline from the provider.
     final timeline = context.select<ProposalDetailProvider, Map<ProposalStatus, DateTime>>((p) => p.fullTimeline);
 
     // Convert map to a list of entries and sort by date.
@@ -23,9 +23,7 @@ class ProposalLifecycleCard extends StatelessWidget {
       color: const Color(0xff2c2c2c),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
-        // THE FIX: Use ListView.builder for dynamic content, mimicking the old design.
         child: ListView.builder(
-          // These properties are important when a ListView is inside a SingleChildScrollView
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: sortedEntries.length,

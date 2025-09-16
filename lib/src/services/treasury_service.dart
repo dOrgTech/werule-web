@@ -16,7 +16,7 @@ class TreasuryService {
       fullRpcUrl = 'https://$rpcUrl';
     }
 
-    print("[DEBUG TreasuryService.getNativeBalance] Calling RPC: '$fullRpcUrl' for address '$address'");
+  
     final provider = JsonRpcProvider(fullRpcUrl);
     try {
       final balance = await provider.getBalance(address);
@@ -40,7 +40,7 @@ class TreasuryService {
 
     final url = Uri.parse('$fullExplorerUrl/api/v2/addresses/$address/token-balances');
     
-    print("[DEBUG TreasuryService.getTokenBalances] Calling Blockscout API: '$url'");
+   
     
     try {
       final response = await http.get(url, headers: {'accept': 'application/json'});
