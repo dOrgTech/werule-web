@@ -261,6 +261,45 @@ class BlockchainService {
     }
   }
   
+  // NEW: Method to send a proposal transaction
+  Future<String> propose(
+    String contractAddress,
+    String signerAddress,
+    List<String> targets,
+    List<BigInt> values,
+    List<String> calldatas,
+    String description,
+  ) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final activeAddress = await signer.getAddress();
+
+    if (kDebugMode) {
+      print("[BlockchainService] Attempting 'propose' transaction.");
+      print("  > App's selected signer: $signerAddress");
+      print("  > Wallet's active signer: $activeAddress");
+    }
+
+    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
+      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
+    }
+    
+    final contract = web3.Contract(contractAddress, governorAbi, signer);
+    try {
+      // Note: `flutter_web3` automatically handles BigInt serialization for uint256
+      final tx = await contract.send('propose', [targets, values, calldatas, description]);
+      await tx.wait();
+      return tx.hash;
+    } catch (e) {
+      if (kDebugMode) print("Proposal creation error: $e");
+      throw Exception("Transaction failed. You may not have enough voting power to create a proposal.");
+    }
+  }
+
   Future<BigInt> getProposalSnapshotTimestamp(String contractAddress, BigInt proposalId, String rpcUrl) async {
     final client = Web3Client(rpcUrl, http.Client());
     try {

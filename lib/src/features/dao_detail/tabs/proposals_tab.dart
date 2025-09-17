@@ -1,16 +1,20 @@
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/utils/proposal_status_helper.dart';
 
 class ProposalsTab extends StatefulWidget {
-  final Org org; 
+  final Org org;
   final String networkName;
 
   const ProposalsTab({
@@ -26,6 +30,7 @@ class ProposalsTab extends StatefulWidget {
 class _ProposalsTabState extends State<ProposalsTab> {
   String _selectedType = 'All';
   String _selectedStatus = 'All';
+  bool _isCreatingProposal = false; // NEW: State to track proposal creation
 
   late Stream<List<Proposal>> _proposalsStream;
 
@@ -50,6 +55,88 @@ class _ProposalsTabState extends State<ProposalsTab> {
       default:
         final String name = status.toString().split('.').last;
         return name[0].toUpperCase() + name.substring(1);
+    }
+  }
+
+  // --- NEW: Helper methods for proposal creation ---
+
+  String _generateRandomString(int length) {
+    final random = Random.secure();
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
+  }
+  
+  void _showSnackbar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Center(child: Text(message)),
+      backgroundColor: isError ? Colors.redAccent : Colors.green,
+    ));
+  }
+
+  void _showAccountMismatchDialog(AccountMismatchException e) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xff2c2c2c),
+        title: const Text("Account Mismatch"),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            child: const Text("OK"),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleCreateProposal() async {
+    setState(() => _isCreatingProposal = true);
+
+    final auth = context.read<AuthProvider>();
+    final blockchain = context.read<BlockchainService>();
+    final calldata = context.read<CalldataService>();
+
+    final signerAddress = auth.selectedAccount;
+    if (signerAddress == null || !auth.isConnected) {
+      _showSnackbar("Please connect your wallet to create a proposal.", isError: true);
+      setState(() => _isCreatingProposal = false);
+      return;
+    }
+
+    // 1. Prepare Proposal Data
+    final randomSuffix = _generateRandomString(6);
+    final title = "Test Registry Proposal $randomSuffix";
+    const type = "registry";
+    const description = "This is a hardcoded test proposal created from the WeRule app.";
+    const link = "";
+    
+    final packedDescription = "$title""0|||0""$type""0|||0""$description""0|||0""$link";
+
+    final key = "testKey-$randomSuffix";
+    const value = "testValue";
+    
+    final targets = [widget.org.registryAddress];
+    final values = [BigInt.zero];
+    final calldatas = [calldata.encodeRegistryCall(key, value)];
+
+    // 2. Send Transaction
+    try {
+      final txHash = await blockchain.propose(
+        widget.org.address,
+        signerAddress,
+        targets,
+        values,
+        calldatas,
+        packedDescription,
+      );
+      _showSnackbar("Proposal submitted successfully! Tx: ${txHash.substring(0,10)}...");
+    } on AccountMismatchException catch(e) {
+      _showAccountMismatchDialog(e);
+    } catch (e) {
+      _showSnackbar(e.toString(), isError: true);
+    } finally {
+      setState(() => _isCreatingProposal = false);
     }
   }
 
@@ -98,7 +185,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
                     }).toList();
 
                     return SizedBox(
-                      height: MediaQuery.of(context).size.height - 250, 
+                      height: MediaQuery.of(context).size.height - 250,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: filteredProposals.length,
@@ -144,21 +231,17 @@ class _ProposalsTabState extends State<ProposalsTab> {
             (val) => setState(() => _selectedStatus = val!));
 
         final createButton = ElevatedButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Center(child: Text('Proposal creation coming soon!')),
-                  duration: Duration(seconds: 2)),
-            );
-          },
+          onPressed: _isCreatingProposal ? null : _handleCreateProposal,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xffa1d0d0),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          child: const Text('Create Proposal',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          child: _isCreatingProposal
+              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+              : const Text('Create Proposal',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         );
 
         if (isMobile) {

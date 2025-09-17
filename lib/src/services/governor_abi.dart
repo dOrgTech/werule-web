@@ -1,6 +1,6 @@
 // lib/src/services/governor_abi.dart
 
-// THE FIX: Added `castVote` and `proposalSnapshot` function definitions.
+// THE FIX: Added `propose`, `castVote`, and `proposalSnapshot` function definitions.
 const String governorAbi = '''
 [
   {
@@ -92,6 +92,40 @@ const String governorAbi = '''
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "targets",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "calldatas",
+        "type": "bytes[]"
+      },
+      {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      }
+    ],
+    "name": "propose",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]
