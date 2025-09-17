@@ -1,1 +1,63 @@
-!lib
+# Ignore everything by default if includes are present.
+
+# -------------------------------------------
+# --- INCLUDE ONLY THE ESSENTIAL FILES ---
+# -------------------------------------------
+
+# 1. Core App Structure
+!lib/main.dart
+!lib/src/routing/app_router.dart
+
+# 2. UI Foundation & Entry Point
+!lib/src/features/dao_detail/tabs/proposals_tab.dart
+!lib/src/widgets/shared_app_bar.dart
+!lib/src/utils/theme.dart
+!lib/src/utils/reusable.dart # General helpers, good for context
+
+# 3. Essential State Management
+!lib/src/providers/auth_provider.dart
+!lib/src/providers/network_provider.dart
+
+# 4. Core Data Models
+!lib/src/models/proposal.dart
+!lib/src/models/org.dart
+!lib/src/models/network.dart
+
+# 5. Blockchain Interaction Layer
+!lib/src/services/blockchain_service.dart
+!lib/src/services/calldata_service.dart
+!lib/src/services/governor_abi.dart
+!lib/src/services/erc20_gov_abi.dart
+
+# -------------------------------------------
+# --- IGNORE EVERYTHING ELSE ---
+# -------------------------------------------
+
+# Explicitly ignore common boilerplate/generated files
+.DS_Store
+.packages
+.pub-cache/
+build/
+ios/
+android/
+web/
+macos/
+windows/
+linux/
+*.iml
+*.lock
+*.metadata
+*.idea/
+*.vscode/
+
+# Ignore all other features and services not listed above
+lib/src/features/explorer/
+lib/src/features/proposal_detail/
+lib/src/features/dao_detail/widgets/
+lib/src/features/dao_detail/tabs/account_tab.dart
+lib/src/features/dao_detail/tabs/members_tab.dart
+lib/src/features/dao_detail/tabs/overview_tab.dart
+lib/src/features/dao_detail/tabs/registry_tab.dart
+lib/src/services/firestore_service.dart
+lib/src/services/members_service.dart
+lib/src/services/treasury_service.dart

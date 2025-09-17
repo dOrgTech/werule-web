@@ -1,9 +1,11 @@
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
@@ -95,7 +97,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
 
     final auth = context.read<AuthProvider>();
     final blockchain = context.read<BlockchainService>();
-    final calldata = context.read<CalldataService>();
+    final calldataService = context.read<CalldataService>();
 
     final signerAddress = auth.selectedAccount;
     if (signerAddress == null || !auth.isConnected) {
@@ -109,7 +111,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
     final title = "Test Registry Proposal $randomSuffix";
     const type = "registry";
     const description = "This is a hardcoded test proposal created from the WeRule app.";
-    const link = "";
+    const link = "(No Link Provided)";
     
     final packedDescription = "$title""0|||0""$type""0|||0""$description""0|||0""$link";
 
@@ -118,7 +120,8 @@ class _ProposalsTabState extends State<ProposalsTab> {
     
     final targets = [widget.org.registryAddress];
     final values = [BigInt.zero];
-    final calldatas = [calldata.encodeRegistryCall(key, value)];
+    // THE FIX: This now correctly returns a Uint8List, and we create a List<Uint8List>.
+    final List<Uint8List> calldatas = [calldataService.encodeRegistryCall(key, value)];
 
     // 2. Send Transaction
     try {
@@ -127,7 +130,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
         signerAddress,
         targets,
         values,
-        calldatas,
+        calldatas, // This is now List<Uint8List>
         packedDescription,
       );
       _showSnackbar("Proposal submitted successfully! Tx: ${txHash.substring(0,10)}...");

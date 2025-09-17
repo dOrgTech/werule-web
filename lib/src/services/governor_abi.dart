@@ -1,6 +1,6 @@
 // lib/src/services/governor_abi.dart
 
-// THE FIX: Added `propose`, `castVote`, and `proposalSnapshot` function definitions.
+// THE FIX: Added `propose`, `castVote`, `proposalSnapshot`, `queue`, and `execute` function definitions.
 const String governorAbi = '''
 [
   {
@@ -127,7 +127,75 @@ const String governorAbi = '''
     ],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "targets",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "calldatas",
+        "type": "bytes[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "descriptionHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "queue",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "targets",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "calldatas",
+        "type": "bytes[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "descriptionHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "execute",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
   }
 ]
 ''';
-// lib/src/services/governor_abi.dart
+// lib/src/services/governor_abi.dart```

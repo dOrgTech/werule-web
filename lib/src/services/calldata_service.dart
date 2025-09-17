@@ -34,17 +34,15 @@ class CalldataService {
     "burn", [ FunctionParameter("from", AddressType()), FunctionParameter("amount", UintType()), ],
   );
   
-  // NEW: Definition for the registry contract's edit function
   static const editRegistryDef = ContractFunction(
     "edit", [ FunctionParameter("key", StringType()), FunctionParameter("value", StringType()), ],
   );
 
   // --- Encoding Logic ---
 
-  // NEW: Helper method to specifically encode the `editRegistry` call
-  String encodeRegistryCall(String key, String value) {
-    final encoded = editRegistryDef.encodeCall([key, value]);
-    return bytesToHex(encoded, include0x: true);
+  // THE FIX: This now returns the raw byte array (Uint8List) as required by the transaction sender.
+  Uint8List encodeRegistryCall(String key, String value) {
+    return editRegistryDef.encodeCall([key, value]);
   }
 
   // --- Decoding Logic ---

@@ -39,6 +39,7 @@ class Proposal {
   final Map<String, DateTime> statusHistory;
   final String? type;
   final List<String> targets;
+  final List<String> values; // THE FIX: Added this missing field.
   final List<String> callDatas;
   final String? externalResource;
   final String totalSupply;
@@ -57,6 +58,7 @@ class Proposal {
     required this.statusHistory,
     this.type,
     required this.targets,
+    required this.values,
     required this.callDatas,
     this.externalResource,
     required this.totalSupply,
@@ -98,6 +100,7 @@ class Proposal {
       statusHistory: history,
       type: data['type'],
       targets: List<String>.from(data['targets'] ?? []),
+      values: List<String>.from(data['values'] ?? []), // THE FIX: Hydrate from Firestore.
       callDatas: processedCallDatas,
       externalResource: data['externalResource'],
       totalSupply: data['totalSupply']?.toString() ?? '0',

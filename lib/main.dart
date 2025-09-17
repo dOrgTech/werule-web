@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
-        title: 'WeRule Refactored',
+        title: 'WeRule rara',
         // THE FIX: Use your custom dark theme instead of the default one.
         theme: dark,
         routerConfig: appRouter,
