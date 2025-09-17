@@ -48,6 +48,7 @@ MaterialColor createMaterialColor(Color color) {
 
         
 ThemeData dark = ThemeData(
+  canvasColor: Color.fromARGB(255, 46, 46, 46),
   splashColor: const Color.fromARGB(255, 133, 133, 133),
   fontFamily: 'CascadiaCode',
   dividerColor: const Color.fromARGB(255, 147, 147, 147),
