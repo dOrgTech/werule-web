@@ -136,8 +136,8 @@ class _VoteStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final supportColor = const Color(0xff00c489);
-    final opposeColor = const Color(0xff86251e);
+    const supportColor = Color(0xff00c489);
+    const opposeColor = Color(0xff86251e);
     final color = isSupport ? supportColor : opposeColor;
 
     if (isMobile) {

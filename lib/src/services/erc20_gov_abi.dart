@@ -2,7 +2,6 @@
 import 'package:web3dart/web3dart.dart';
 
 class Erc20GovAbi {
-  // THE FIX: Add the 'delegate' and 'delegates' functions to the ABI.
   static const _abiJson = '''
   [
     {
@@ -55,13 +54,36 @@ class Erc20GovAbi {
       ],
       "stateMutability": "view",
       "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timepoint",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPastVotes",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
     }
   ]
   ''';
 
   static final abi = ContractAbi.fromJson(_abiJson, 'ERC20Votes');
   
-  // THE FIX: Also expose the raw JSON for flutter_web3 which needs it for write transactions.
   static String get abiJson => _abiJson;
 }
 // lib/src/services/erc20_gov_abi.dart

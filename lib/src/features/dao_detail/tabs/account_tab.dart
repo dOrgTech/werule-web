@@ -321,7 +321,7 @@ class _DelegationCard extends StatelessWidget {
     final userAddress = auth.selectedAccount?.toLowerCase();
     final delegateAddress = provider.delegateAddress?.toLowerCase();
     final hasBalance = provider.personalBalance > BigInt.zero;
-    final zeroAddress = "0x0000000000000000000000000000000000000000";
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     bool isUndelegated = delegateAddress == null || delegateAddress == zeroAddress;
     bool isSelfDelegated = !isUndelegated && delegateAddress == userAddress;

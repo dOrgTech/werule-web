@@ -1,6 +1,6 @@
 // lib/src/services/governor_abi.dart
 
-// A minimal ABI for the OpenZeppelin Governor contract focusing on view functions.
+// THE FIX: Added `castVote` and `proposalSnapshot` function definitions.
 const String governorAbi = '''
 [
   {
@@ -45,6 +45,49 @@ const String governorAbi = '''
       {
         "internalType": "uint256",
         "name": "abstainVotes",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "support",
+        "type": "uint8"
+      }
+    ],
+    "name": "castVote",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "proposalSnapshot",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
         "type": "uint256"
       }
     ],

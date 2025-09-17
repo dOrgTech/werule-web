@@ -2,7 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:werule/src/models/account_details.dart';
+import 'package:werule/src/models/member_activity.dart';
 import '../models/network.dart';
 import '../models/org.dart';
 import '../models/proposal.dart';
@@ -153,26 +153,37 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
   }
   
-  Future<AccountDetails> getMemberDetails(String networkDaoCollection, String daoAddress, String memberAddress) async {
-    // DEBUG PRINT: Construct and log the full path being queried.
+  // THE FIX: Add a new, efficient method to check if a specific user has voted.
+  Future<bool> hasUserVoted(String networkDaoCollection, String daoAddress, String proposalId, String userAddress) async {
+    final path = '$networkDaoCollection/$daoAddress/proposals/$proposalId/votes';
+    try {
+      final snapshot = await _db
+        .collection(path)
+        .where('voter', isEqualTo: userAddress)
+        .limit(1)
+        .get();
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      if (kDebugMode) print('[FirestoreService] Error checking if user has voted: $e');
+      return false; // Assume user has not voted if there's an error.
+    }
+  }
+
+  Future<MemberActivity> getMemberActivity(String networkDaoCollection, String daoAddress, String memberAddress) async {
     final path = '$networkDaoCollection/$daoAddress/members/$memberAddress';
-    print('[FirestoreService] Querying member details at path: $path');
+    if (kDebugMode) print('[FirestoreService] Querying member activity at path: $path');
     
     try {
       final doc = await _db.collection(networkDaoCollection).doc(daoAddress).collection('members').doc(memberAddress).get();
       
-      // DEBUG PRINT: Log whether the document was found and what its data is.
-      print('[FirestoreService] Document exists: ${doc.exists}');
       if (doc.exists) {
-        print('[FirestoreService] Document data: ${doc.data()}');
-        return AccountDetails.fromFirestore(doc);
+        return MemberActivity.fromFirestore(doc);
       }
       
-      return AccountDetails.empty();
+      return MemberActivity.empty();
     } catch(e) {
-      // DEBUG PRINT: Log any error during the Firestore query.
-      print('[FirestoreService] Error fetching member details: $e');
-      throw Exception('Failed to load member details from Firestore.');
+      if (kDebugMode) print('[FirestoreService] Error fetching member activity: $e');
+      throw Exception('Failed to load member activity from Firestore.');
     }
   }
 }

@@ -161,7 +161,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                           ],
                         ),
                         (MediaQuery.of(context).size.width > 800)?
-                        const Footer():SizedBox(height: 100),
+                        const Footer():const SizedBox(height: 100),
                       ],
                     ),
                   ),

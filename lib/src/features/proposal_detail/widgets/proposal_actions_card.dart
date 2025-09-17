@@ -26,10 +26,15 @@ class ProposalActionsCard extends StatelessWidget {
           _ActionLabel(status: provider.status),
           if (provider.showCountdown)
             _Countdown(remainingSeconds: provider.remainingSeconds),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          if (auth.isConnected)
+            _PastVoteWeightDisplay(status: provider.status),
+          const SizedBox(height: 16),
           _ActionButtons(
             status: provider.status,
             isConnected: auth.isConnected,
+            pastVoteWeight: provider.pastVotingWeight ?? BigInt.zero,
+            hasVoted: provider.hasUserVoted,
           ),
         ],
       );
@@ -48,12 +53,64 @@ class ProposalActionsCard extends StatelessWidget {
   }
 }
 
+class _PastVoteWeightDisplay extends StatelessWidget {
+  final ProposalStatus status;
+  const _PastVoteWeightDisplay({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    // THE FIX: Only show content if the proposal is active.
+    if (status != ProposalStatus.Active) {
+      return const SizedBox.shrink();
+    }
+
+    final provider = context.watch<ProposalDetailProvider>();
+    final weight = provider.pastVotingWeight;
+    final org = provider.org;
+    
+    if (weight == null) {
+      return const SizedBox(
+        height: 24, 
+        width: 24, 
+        child: CircularProgressIndicator(strokeWidth: 2)
+      );
+    }
+
+    final displayWeight = formatTotalSupply(weight.toString(), org.decimals);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: const TextStyle(color: Colors.grey, fontFamily: 'CascadiaCode'),
+          children: [
+            const TextSpan(text: "Your voting weight for this proposal is "),
+            TextSpan(
+              text: displayWeight, 
+              style: TextStyle(color: Theme.of(context).indicatorColor, fontWeight: FontWeight.bold)
+            ),
+          ]
+        ),
+      ),
+    );
+  }
+}
+
+
 // --- Action Buttons ---
 class _ActionButtons extends StatelessWidget {
   final ProposalStatus status;
   final bool isConnected;
+  final BigInt pastVoteWeight;
+  final bool hasVoted;
 
-  const _ActionButtons({required this.status, required this.isConnected});
+  const _ActionButtons({
+    required this.status, 
+    required this.isConnected,
+    required this.pastVoteWeight,
+    required this.hasVoted,
+  });
 
   void _showSnackbar(BuildContext context, String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -68,13 +125,16 @@ class _ActionButtons extends StatelessWidget {
 
     switch (status) {
       case ProposalStatus.Active:
+        // THE FIX: If the user has voted, show text instead of buttons.
+        if (hasVoted) {
+          return const Text("You have already voted.", style: TextStyle(color: Colors.grey));
+        }
         return _buildVoteButtons(context, provider);
       case ProposalStatus.Succeeded:
         return _buildQueueButton(context, provider);
       case ProposalStatus.Executable:
         return _buildExecuteButton(context, provider);
       case ProposalStatus.Executed:
-        // THE FIX: Implement the real execution hash link.
         final hash = provider.proposal.executionHash;
         final explorerUrl = provider.network.blockExplorerUrl;
         if (hash == null || hash.isEmpty || explorerUrl.isEmpty) {
@@ -120,7 +180,7 @@ class _ActionButtons extends StatelessWidget {
   }
 
   Widget _buildVoteButtons(BuildContext context, ProposalDetailProvider provider) {
-    final bool isEnabled = isConnected; 
+    final bool isEnabled = isConnected && pastVoteWeight > BigInt.zero; 
     const Color supportColor = Color.fromARGB(255, 20, 78, 49);
     const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
 

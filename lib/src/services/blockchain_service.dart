@@ -194,7 +194,6 @@ class BlockchainService {
       throw Exception("A web3 wallet is required for this action.");
     }
     
-    // THE FIX: Wrap the ethereum provider and get a signer to send the transaction.
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
     final contract = web3.Contract(tokenAddress, Erc20GovAbi.abiJson, signer);
@@ -210,9 +209,47 @@ class BlockchainService {
   }
 
   Future<String> castVote(String contractAddress, BigInt proposalId, int support) async {
-    if (kDebugMode) print('Casting vote for proposal $proposalId with support $support on contract $contractAddress');
-    await Future.delayed(const Duration(seconds: 2));
-    return "0x_mock_vote_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(contractAddress, governorAbi, signer);
+
+    try {
+      final tx = await contract.send('castVote', [proposalId, support]);
+      await tx.wait();
+      return tx.hash;
+    } catch (e) {
+      if (kDebugMode) print("Cast vote error: $e");
+      throw Exception("Transaction failed. You may not have had voting power when this proposal was created.");
+    }
+  }
+  
+  // THE FIX: Renamed from getProposalSnapshotBlock to reflect it returns a timestamp.
+  Future<BigInt> getProposalSnapshotTimestamp(String contractAddress, BigInt proposalId, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(ContractAbi.fromJson(governorAbi, 'Governor'), EthereumAddress.fromHex(contractAddress));
+      final func = contract.function('proposalSnapshot');
+      final result = await client.call(contract: contract, function: func, params: [proposalId]);
+      return result.isNotEmpty ? result[0] as BigInt : BigInt.zero;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // THE FIX: The second parameter is now correctly named `timepoint`.
+  Future<BigInt> getPastVotes(String tokenAddress, String userAddress, BigInt timepoint, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(Erc20GovAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('getPastVotes');
+      final result = await client.call(contract: contract, function: func, params: [EthereumAddress.fromHex(userAddress), timepoint]);
+      return result.isNotEmpty ? result[0] as BigInt : BigInt.zero;
+    } finally {
+      await client.dispose();
+    }
   }
 
   Future<String> queueProposal(String contractAddress, BigInt proposalId) async {

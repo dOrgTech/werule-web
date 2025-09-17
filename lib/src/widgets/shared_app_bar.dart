@@ -1,7 +1,6 @@
 // lib/src/widgets/shared_app_bar.dart
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:werule/src/features/dao_detail/widgets/footer.dart';
 import 'package:werule/src/features/explorer/widgets/app_bar_widgets.dart';
 

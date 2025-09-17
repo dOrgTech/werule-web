@@ -1,6 +1,6 @@
 // lib/src/providers/member_provider.dart
 import 'package:flutter/material.dart';
-import 'package:werule/src/models/account_details.dart';
+import 'package:werule/src/models/member_activity.dart';
 import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
@@ -36,7 +36,8 @@ class MemberProvider extends ChangeNotifier {
   // --- State ---
   bool _isLoading = true;
   String? _errorMessage;
-  AccountDetails _accountDetails = AccountDetails.empty();
+  // THE FIX: Use the new MemberActivity model.
+  MemberActivity _memberActivity = MemberActivity.empty();
   BigInt _personalBalance = BigInt.zero;
   BigInt _votingWeight = BigInt.zero;
   String? _delegateAddress;
@@ -48,8 +49,9 @@ class MemberProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isActionBusy => _isActionBusy;
   String? get errorMessage => _errorMessage;
-  int get proposalsCreatedCount => _accountDetails.proposalsCreated.length;
-  int get votesCastCount => _accountDetails.proposalsVoted.length;
+  // THE FIX: Get counts from the new model.
+  int get proposalsCreatedCount => _memberActivity.proposalsCreated.length;
+  int get votesCastCount => _memberActivity.proposalsVoted.length;
   BigInt get personalBalance => _personalBalance;
   BigInt get votingWeight => _votingWeight;
   String? get delegateAddress => _delegateAddress;
@@ -65,7 +67,6 @@ class MemberProvider extends ChangeNotifier {
       return;
     }
 
-    // Set loading state only if it's the initial fetch.
     if (!_isLoading) {
       _isActionBusy = true;
       notifyListeners();
@@ -92,18 +93,21 @@ class MemberProvider extends ChangeNotifier {
 
       if (checksumAddress != null) {
         final results = await Future.wait([
-          _firestoreService.getMemberDetails(_network.daoCollectionName, _org.address, checksumAddress!),
+          // THE FIX: Call the new service method.
+          _firestoreService.getMemberActivity(_network.daoCollectionName, _org.address, checksumAddress!),
           _blockchainService.getVotes(_org.govTokenAddress, userAddress, _network.rpcUrl),
           _firestoreService.getProposals(_network.daoCollectionName, _org.address),
           _blockchainService.getDelegate(_org.govTokenAddress, userAddress, _network.rpcUrl),
         ]);
-        _accountDetails = results[0] as AccountDetails;
+        // THE FIX: Assign to the new MemberActivity property.
+        _memberActivity = results[0] as MemberActivity;
         _votingWeight = results[1] as BigInt;
         final allProposals = results[2] as List<Proposal>;
         _delegateAddress = results[3] as String?;
         
-        final createdIds = _accountDetails.proposalsCreated.toSet();
-        final votedIds = _accountDetails.proposalsVoted.toSet();
+        // THE FIX: Use the new property to get the proposal IDs.
+        final createdIds = _memberActivity.proposalsCreated.toSet();
+        final votedIds = _memberActivity.proposalsVoted.toSet();
 
         _createdProposalDetails = allProposals.where((p) => createdIds.contains(p.id)).toList();
         _votedProposalDetails = allProposals.where((p) => votedIds.contains(p.id)).toList();
@@ -111,7 +115,7 @@ class MemberProvider extends ChangeNotifier {
       } else {
         _personalBalance = BigInt.zero;
         _votingWeight = BigInt.zero;
-        _accountDetails = AccountDetails.empty();
+        _memberActivity = MemberActivity.empty();
         _delegateAddress = await _blockchainService.getDelegate(_org.govTokenAddress, userAddress, _network.rpcUrl);
       }
 
@@ -130,7 +134,6 @@ class MemberProvider extends ChangeNotifier {
     String? error;
     try {
       await _blockchainService.delegate(_org.govTokenAddress, delegateeAddress);
-      // Wait a moment for the blockchain to update before re-fetching data.
       await Future.delayed(const Duration(seconds: 3));
       await fetchMemberData();
     } catch (e) {

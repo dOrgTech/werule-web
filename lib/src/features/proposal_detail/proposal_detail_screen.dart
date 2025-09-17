@@ -13,6 +13,7 @@ import 'package:werule/src/features/proposal_detail/widgets/proposal_votes_card.
 import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
@@ -63,8 +64,11 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
       throw Exception("Could not initialize proposal details.");
     }
     
+    // THE FIX: The required `firestoreService` argument is now correctly passed.
     _provider = ProposalDetailProvider(
       blockchainService: context.read<BlockchainService>(),
+      firestoreService: firestoreService,
+      authProvider: context.read<AuthProvider>(),
       proposal: initialProposal,
       org: org,
       network: network,
