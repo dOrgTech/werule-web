@@ -18,6 +18,7 @@
             - dao_members_widget.dart
             - dao_treasury_widget.dart
             - footer.dart
+            - proposal_list_item.dart
         - explorer/
           - explorer_screen.dart
           - widgets/
@@ -43,6 +44,7 @@
               - shared_widgets.dart
               - token_transfer_details.dart
       - models/
+        - account_details.dart
         - human.dart
         - member.dart
         - network.dart
@@ -54,6 +56,7 @@
       - providers/
         - auth_provider.dart
         - dao_provider.dart
+        - member_provider.dart
         - network_provider.dart
         - proposal_detail_provider.dart
         - treasury_provider.dart
@@ -63,6 +66,7 @@
         - blockchain_service.dart
         - calldata_service.dart
         - calldata_service.dart.errors.txt
+        - erc20_gov_abi.dart
         - firestore_service.dart
         - governor_abi.dart
         - members_service.dart
@@ -390,7 +394,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                       ),
                                       const RegistryTab(),
                                       MembersTab(dao: dao),
-                                      const AccountTab(),
+                                       AccountTab(dao: dao),
                                     ],
                                   ),
                                 ),
@@ -398,7 +402,8 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                             ),
                           ],
                         ),
-                        const Footer(),
+                        (MediaQuery.of(context).size.width > 800)?
+                        const Footer():SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -434,9 +439,77 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
 ```dart
 // lib/src/features/dao_detail/tabs/account_tab.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/src/providers/member_provider.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/services/members_service.dart';
+import 'package:werule/src/utils/reusable.dart';
 
 class AccountTab extends StatelessWidget {
-  const AccountTab({super.key});
+  final Org dao;
+  const AccountTab({super.key, required this.dao});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final network = context.watch<NetworkProvider>().selectedNetwork;
+
+    if (!auth.isConnected || network == null) {
+      return const _NotConnectedView();
+    }
+
+    return ChangeNotifierProvider(
+      key: ValueKey(auth.selectedAccount),
+      create: (context) => MemberProvider(
+        authProvider: context.read<AuthProvider>(),
+        firestoreService: context.read<FirestoreService>(),
+        blockchainService: context.read<BlockchainService>(),
+        membersService: context.read<MembersService>(),
+        org: dao,
+        network: network,
+      ),
+      child: Consumer<MemberProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.errorMessage != null) {
+            return Center(child: Text("Error: ${provider.errorMessage}"));
+          }
+          
+          final isMember = provider.personalBalance > BigInt.zero;
+          final canShowBridge = dao.underlyingToken != null && dao.underlyingToken!.isNotEmpty;
+
+          if (!isMember) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  if (canShowBridge) ...[
+                    _TokenBridgeCard(dao: dao),
+                    const SizedBox(height: 16),
+                  ],
+                  const _NotAMemberView(),
+                ],
+              ),
+            );
+          }
+
+          return _AccountView(dao: dao, canShowBridge: canShowBridge);
+        },
+      ),
+    );
+  }
+}
+
+// --- Placeholder/Conditional Views ---
+class _NotConnectedView extends StatelessWidget {
+  const _NotConnectedView();
 
   @override
   Widget build(BuildContext context) {
@@ -444,13 +517,522 @@ class AccountTab extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person, size: 48, color: Colors.grey),
+          Icon(Icons.person_off_outlined, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text(
-            'Account View Coming Soon',
+            'Please connect your wallet to view your account details.',
             style: TextStyle(fontSize: 18, color: Colors.grey),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NotAMemberView extends StatelessWidget {
+  const _NotAMemberView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.no_accounts_outlined, size: 48, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'You are not a member of this DAO.',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+// --- Main Account View ---
+
+class _AccountView extends StatelessWidget {
+  final Org dao;
+  final bool canShowBridge;
+  const _AccountView({required this.dao, required this.canShowBridge});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+      child: Column(
+        children: [
+          _AccountHeaderCard(dao: dao),
+          const SizedBox(height: 16),
+          const _DelegationCard(),
+          if (canShowBridge) ...[
+            const SizedBox(height: 16),
+            _TokenBridgeCard(dao: dao),
+          ],
+          const SizedBox(height: 16),
+          _ActivityHistoryCard(dao: dao, networkName: context.read<NetworkProvider>().selectedNetwork!.name),
+        ],
+      ),
+    );
+  }
+}
+
+// --- Individual Cards ---
+
+class _AccountHeaderCard extends StatelessWidget {
+  final Org dao;
+  const _AccountHeaderCard({required this.dao});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final memberProvider = context.watch<MemberProvider>();
+    final address = auth.selectedAccount ?? '0x...';
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    return Card(
+      color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                generateAvatar(hashString(address), size: 50, pixelSize: 5),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    isMobile ? shortenString(address) : address,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 550;
+
+                final stats = [
+                  _buildStatColumn("Voting Weight", formatTotalSupply(memberProvider.votingWeight.toString(), dao.decimals)),
+                  _buildStatColumn("Personal ${dao.symbol} Balance", formatTotalSupply(memberProvider.personalBalance.toString(), dao.decimals)),
+                  _buildStatColumn("Proposals Created", memberProvider.proposalsCreatedCount.toString()),
+                  _buildStatColumn("Votes Cast", memberProvider.votesCastCount.toString()),
+                ];
+
+                if (isNarrow) {
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [stats[0], stats[1]],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [stats[2], stats[3]],
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: stats,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[400])),
+        const SizedBox(height: 8),
+        Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
+
+class _DelegationCard extends StatelessWidget {
+  const _DelegationCard();
+
+  void _showSnackbar(BuildContext context, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Center(child: Text(message)),
+      backgroundColor: isError ? Colors.redAccent : Colors.green,
+    ));
+  }
+
+  void _showSetDelegateDialog(BuildContext context) {
+    final provider = context.read<MemberProvider>();
+    final addressController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            bool isSubmitting = false;
+
+            return AlertDialog(
+              backgroundColor: const Color(0xff2c2c2c),
+              title: const Text("Set Delegate"),
+              content: provider.isActionBusy || isSubmitting
+                ? const Center(heightFactor: 2, child: CircularProgressIndicator())
+                : Form(
+                    key: formKey,
+                    child: TextFormField(
+                      controller: addressController,
+                      decoration: const InputDecoration(labelText: "Delegate Address (0x...)"),
+                      validator: (value) {
+                        if (value == null || value.isEmpty || !value.startsWith('0x') || value.length != 42) {
+                          return 'Please enter a valid Ethereum address.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: provider.isActionBusy || isSubmitting ? null : () async {
+                    if (formKey.currentState!.validate()) {
+                      setDialogState(() => isSubmitting = true);
+                      final error = await provider.handleDelegate(addressController.text);
+                      if (dialogContext.mounted) {
+                        if (error == null) {
+                          _showSnackbar(dialogContext, "Delegation successful!");
+                          Navigator.of(dialogContext).pop();
+                        } else {
+                          _showSnackbar(dialogContext, error, isError: true);
+                          setDialogState(() => isSubmitting = false);
+                        }
+                      }
+                    }
+                  },
+                  child: const Text("Submit"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _claimVotingPower(BuildContext context) async {
+    final provider = context.read<MemberProvider>();
+    final userAddress = context.read<AuthProvider>().selectedAccount;
+    if (userAddress == null) return;
+    
+    final error = await provider.handleDelegate(userAddress);
+    if (context.mounted) {
+      if (error == null) {
+        _showSnackbar(context, "Voting power claimed successfully!");
+      } else {
+        _showSnackbar(context, error, isError: true);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<MemberProvider>();
+    final auth = context.watch<AuthProvider>();
+
+    final userAddress = auth.selectedAccount?.toLowerCase();
+    final delegateAddress = provider.delegateAddress?.toLowerCase();
+    final hasBalance = provider.personalBalance > BigInt.zero;
+    final zeroAddress = "0x0000000000000000000000000000000000000000";
+
+    bool isUndelegated = delegateAddress == null || delegateAddress == zeroAddress;
+    bool isSelfDelegated = !isUndelegated && delegateAddress == userAddress;
+    
+    Widget delegateBottomWidget;
+    Widget voteDirectlyBottomWidget;
+
+    if (!hasBalance) {
+      delegateBottomWidget = const ElevatedButton(onPressed: null, child: Text('Delegate Vote'));
+      voteDirectlyBottomWidget = const ElevatedButton(onPressed: null, child: Text('Claim Voting Power'));
+    } else if (isUndelegated) {
+      delegateBottomWidget = ElevatedButton(onPressed: () => _showSetDelegateDialog(context), child: const Text('Delegate Vote'));
+      voteDirectlyBottomWidget = ElevatedButton(onPressed: () => _claimVotingPower(context), child: const Text('Claim Voting Power'));
+    } else if (isSelfDelegated) {
+      delegateBottomWidget = ElevatedButton(onPressed: () => _showSetDelegateDialog(context), child: const Text('Change Delegate'));
+      voteDirectlyBottomWidget = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Text("You are voting directly.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[400])),
+      );
+    } else { // Delegated to other
+      delegateBottomWidget = Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(shortenString(provider.delegateAddress!), style: const TextStyle(fontFamily: 'monospace')),
+          IconButton(onPressed: () => _showSetDelegateDialog(context), icon: const Icon(Icons.edit)),
+        ],
+      );
+      voteDirectlyBottomWidget = ElevatedButton(onPressed: () => _claimVotingPower(context), child: const Text('Claim Voting Power'));
+    }
+
+    if (provider.isActionBusy) {
+      delegateBottomWidget = voteDirectlyBottomWidget = const Center(child: CircularProgressIndicator());
+    }
+
+    return Card(
+      color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Delegation Settings", style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 8),
+            Text("To participate in governance, you must claim your voting power for yourself or delegate it to another address.", style: TextStyle(color: Colors.grey[400])),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 24),
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 850;
+              
+              final delegateBox = _DelegationOptionBox(
+                icon: Icons.handshake_outlined,
+                title: "DELEGATE\nYOUR VOTE",
+                description: "If you can't or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing.",
+                bottomWidget: delegateBottomWidget,
+              );
+
+              final voteDirectlyBox = _DelegationOptionBox(
+                icon: Icons.how_to_vote_outlined,
+                title: "VOTE\nDIRECTLY",
+                description: "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf.",
+                bottomWidget: voteDirectlyBottomWidget,
+              );
+
+              if (isMobile) {
+                return Column(
+                  children: [
+                    delegateBox,
+                    const SizedBox(height: 24),
+                    voteDirectlyBox,
+                  ],
+                );
+              } else {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Flexible(child: delegateBox),
+                    const SizedBox(width: 40),
+                    Flexible(child: voteDirectlyBox),
+                  ],
+                );
+              }
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DelegationOptionBox extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final Widget bottomWidget;
+
+  const _DelegationOptionBox({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.bottomWidget,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        border: Border.all(width: 0.3, color: const Color.fromARGB(255, 105, 105, 105)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 50),
+              const SizedBox(width: 16),
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.left),
+            ],
+          ),
+          const SizedBox(height: 25),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(description, style: TextStyle(color: Colors.grey[300], fontSize: 15, height: 1.4)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(height: 40, child: Center(child: bottomWidget)),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _TokenBridgeCard extends StatelessWidget {
+  final Org dao;
+  const _TokenBridgeCard({required this.dao});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Token Bridge (${dao.symbol} <-> Underlying)", style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 8),
+            Text("Use this bridge to wrap your underlying tokens into governance tokens, or unwrap them back.", style: TextStyle(color: Colors.grey[400])),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Text("Token Bridge UI Coming Soon", style: TextStyle(color: Colors.grey)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityHistoryCard extends StatefulWidget {
+  final Org dao;
+  final String networkName;
+  const _ActivityHistoryCard({required this.dao, required this.networkName});
+
+  @override
+  State<_ActivityHistoryCard> createState() => _ActivityHistoryCardState();
+}
+
+class _ActivityHistoryCardState extends State<_ActivityHistoryCard> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final memberProvider = context.watch<MemberProvider>();
+    final votedProposals = memberProvider.votedProposalDetails;
+    final createdProposals = memberProvider.createdProposalDetails;
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    final toggleButtons = ToggleButtons(
+      isSelected: [_selectedIndex == 0, _selectedIndex == 1],
+      onPressed: (index) => setState(() => _selectedIndex = index),
+      borderRadius: BorderRadius.circular(8),
+      selectedColor: Theme.of(context).indicatorColor,
+      color: Colors.grey[400],
+      fillColor: Colors.grey.withOpacity(0.2),
+      children: isMobile 
+        ? const [
+            Padding(padding: EdgeInsets.symmetric(horizontal: 24.0), child: Icon(Icons.front_hand)),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 24.0), child: Icon(Icons.how_to_vote)),
+          ]
+        : const [
+            Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('PROPOSALS CREATED')),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 16.0), child: Text('VOTING RECORD')),
+          ],
+    );
+
+    return Card(
+      color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (!isMobile)
+                  const Text("Activity History", style: TextStyle(fontSize: 20)),
+                if (isMobile) const Spacer(),
+                toggleButtons,
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            if (!isMobile) _buildDesktopHeader(),
+            if (!isMobile) const SizedBox(height: 8),
+            if (_selectedIndex == 0 && createdProposals.isEmpty)
+              const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text("No proposals created yet.")))
+            else if (_selectedIndex == 1 && votedProposals.isEmpty)
+              const Center(child: Padding(padding: EdgeInsets.all(24.0), child: Text("No voting history found.")))
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _selectedIndex == 0 ? createdProposals.length : votedProposals.length,
+                itemBuilder: (context, index) {
+                  final proposal = _selectedIndex == 0 ? createdProposals[index] : votedProposals[index];
+                  return isMobile
+                      ? MobileProposalListItem(proposal: proposal, org: widget.dao, networkName: widget.networkName)
+                      : DesktopProposalListItem(proposal: proposal, org: widget.dao, networkName: widget.networkName);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: DefaultTextStyle(
+        style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold),
+        child: const Row(
+          children: [
+            SizedBox(width: 60, child: Text("ID #")),
+            Expanded(flex: 3, child: Text("Title")),
+            Expanded(flex: 2, child: Text("Author")),
+            SizedBox(width: 140, child: Text("Posted")),
+            Spacer(),
+            SizedBox(width: 100, child: Text("Type")),
+            SizedBox(width: 110, child: Text("Status", textAlign: TextAlign.center)),
+          ],
+        ),
       ),
     );
   }
@@ -518,16 +1100,12 @@ class OverviewTab extends StatelessWidget {
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
+import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/utils/proposal_status_helper.dart';
-import 'package:werule/src/utils/reusable.dart';
 
 class ProposalsTab extends StatefulWidget {
   final Org org; 
@@ -742,324 +1320,6 @@ class _ProposalsTabState extends State<ProposalsTab> {
             SizedBox(width: 110, child: Text("Status", textAlign: TextAlign.center)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// --- Stateful Desktop List Item ---
-class DesktopProposalListItem extends StatefulWidget {
-  final Proposal proposal;
-  final Org org;
-  final String networkName;
-
-  const DesktopProposalListItem({
-    super.key,
-    required this.proposal,
-    required this.org,
-    required this.networkName,
-  });
-
-  @override
-  State<DesktopProposalListItem> createState() => _DesktopProposalListItemState();
-}
-
-class _DesktopProposalListItemState extends State<DesktopProposalListItem> {
-  late ProposalStatus _displayStatus;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateStatusAndScheduleNext();
-  }
-
-  // THE FIX: Implement didUpdateWidget to react to data changes from the parent.
-  @override
-  void didUpdateWidget(covariant DesktopProposalListItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // If the proposal data from Firestore has changed, re-run our logic.
-    // A simple check on the status history is a reliable indicator of change.
-    if (widget.proposal.statusHistory != oldWidget.proposal.statusHistory) {
-      _updateStatusAndScheduleNext();
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _updateStatusAndScheduleNext() {
-    // Always cancel any existing timer before setting a new one.
-    _timer?.cancel();
-
-    setState(() {
-      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
-    });
-    
-    _scheduleNextUpdate();
-  }
-
-  void _scheduleNextUpdate() {
-    final now = DateTime.now();
-    DateTime? nextTransitionTime;
-
-    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
-    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
-
-    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
-      nextTransitionTime = voteStart;
-    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
-      nextTransitionTime = voteEnd;
-    } else if (_displayStatus == ProposalStatus.Queued) {
-      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
-      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
-      if (executionETA.isAfter(now)) {
-        nextTransitionTime = executionETA;
-      }
-    }
-
-    if (nextTransitionTime != null) {
-      final duration = nextTransitionTime.difference(now);
-      _timer = Timer(duration, () {
-        if (mounted) {
-          // When the timer fires, re-run the whole logic.
-          _updateStatusAndScheduleNext();
-        }
-      });
-    }
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color.fromARGB(169, 54, 54, 54),
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      elevation: 8,
-      shape:  RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(3.0),
-      ),
-      child: InkWell(
-        onTap: () {
-          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
-        },
-        borderRadius: BorderRadius.zero,
-        child: Container(
-          height: 45,
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 52,
-                child: IconButton(
-                  icon: const Icon(Icons.copy_outlined, size: 20),
-                  splashRadius: 20,
-                  tooltip: 'Copy Proposal ID',
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: widget.proposal.id));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Center(child: Text('Proposal ID copied to clipboard')),
-                          duration: Duration(seconds: 1)),
-                    );
-                  },
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  widget.proposal.title,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  shortenString(widget.proposal.author),
-                  style: const TextStyle(fontFamily: 'monospace'),
-                ),
-              ),
-              SizedBox(
-                width: 140,
-                child: Text(
-                  DateFormat('M/d/yyyy HH:mm').format(widget.proposal.createdAt),
-                  style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: 100,
-                child: Text(
-                  widget.proposal.type ?? 'N/A',
-                  textAlign: TextAlign.start,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-              SizedBox(
-                width: 110,
-                child: Center(child: ProposalStatusWidget(status: _displayStatus)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// --- Stateful Mobile List Item ---
-class MobileProposalListItem extends StatefulWidget {
-  final Proposal proposal;
-  final Org org;
-  final String networkName;
-
-  const MobileProposalListItem({
-    super.key,
-    required this.proposal,
-    required this.org,
-    required this.networkName,
-  });
-
-  @override
-  State<MobileProposalListItem> createState() => _MobileProposalListItemState();
-}
-
-class _MobileProposalListItemState extends State<MobileProposalListItem> {
-  late ProposalStatus _displayStatus;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateStatusAndScheduleNext();
-  }
-
-  // THE FIX: Implement didUpdateWidget to react to data changes from the parent.
-  @override
-  void didUpdateWidget(covariant MobileProposalListItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.proposal.statusHistory != oldWidget.proposal.statusHistory) {
-      _updateStatusAndScheduleNext();
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _updateStatusAndScheduleNext() {
-    _timer?.cancel();
-    setState(() {
-      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
-    });
-    _scheduleNextUpdate();
-  }
-
-  void _scheduleNextUpdate() {
-    final now = DateTime.now();
-    DateTime? nextTransitionTime;
-
-    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
-    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
-
-    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
-      nextTransitionTime = voteStart;
-    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
-      nextTransitionTime = voteEnd;
-    } else if (_displayStatus == ProposalStatus.Queued) {
-      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
-      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
-      if (executionETA.isAfter(now)) {
-        nextTransitionTime = executionETA;
-      }
-    }
-
-    if (nextTransitionTime != null) {
-      final duration = nextTransitionTime.difference(now);
-      _timer = Timer(duration, () {
-        if (mounted) {
-          _updateStatusAndScheduleNext();
-        }
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xff3a3a3a),
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      elevation: 2,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero,
-      ),
-      child: InkWell(
-        onTap: () {
-          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
-        },
-        borderRadius: BorderRadius.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      widget.proposal.title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ProposalStatusWidget(status: _displayStatus),
-                ],
-              ),
-              const Divider(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildMobileDetailColumn("ID", shortenString(widget.proposal.id), context),
-                  _buildMobileDetailColumn("Type", widget.proposal.type ?? 'N/A', context),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   _buildMobileDetailColumn("Author", shortenString(widget.proposal.author), context, isMono: true),
-                   _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(widget.proposal.createdAt), context),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMobileDetailColumn(String label, String value, BuildContext context, {bool isMono = false}) {
-    return Flexible(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: isMono ? const TextStyle(fontFamily: 'monospace') : const TextStyle(fontWeight: FontWeight.w500),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
       ),
     );
   }
@@ -1986,6 +2246,332 @@ class Logo extends StatelessWidget {
 }
 ```
 
+### `lib/src/features/dao_detail/widgets/proposal_list_item.dart`
+```dart
+// lib/src/features/dao_detail/widgets/proposal_list_item.dart
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/utils/proposal_status_helper.dart';
+import 'package:werule/src/utils/reusable.dart';
+
+// --- Stateful Desktop List Item ---
+class DesktopProposalListItem extends StatefulWidget {
+  final Proposal proposal;
+  final Org org;
+  final String networkName;
+
+  const DesktopProposalListItem({
+    super.key,
+    required this.proposal,
+    required this.org,
+    required this.networkName,
+  });
+
+  @override
+  State<DesktopProposalListItem> createState() => _DesktopProposalListItemState();
+}
+
+class _DesktopProposalListItemState extends State<DesktopProposalListItem> {
+  late ProposalStatus _displayStatus;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStatusAndScheduleNext();
+  }
+
+  @override
+  void didUpdateWidget(covariant DesktopProposalListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.proposal != oldWidget.proposal) {
+      _updateStatusAndScheduleNext();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateStatusAndScheduleNext() {
+    _timer?.cancel();
+    setState(() {
+      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
+    });
+    _scheduleNextUpdate();
+  }
+
+  void _scheduleNextUpdate() {
+    final now = DateTime.now();
+    DateTime? nextTransitionTime;
+
+    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
+    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
+
+    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
+      nextTransitionTime = voteStart;
+    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
+      nextTransitionTime = voteEnd;
+    } else if (_displayStatus == ProposalStatus.Queued) {
+      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
+      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
+      if (executionETA.isAfter(now)) {
+        nextTransitionTime = executionETA;
+      }
+    }
+
+    if (nextTransitionTime != null) {
+      final duration = nextTransitionTime.difference(now);
+      _timer = Timer(duration, () {
+        if (mounted) {
+          _updateStatusAndScheduleNext();
+        }
+      });
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color.fromARGB(169, 54, 54, 54),
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      elevation: 8,
+      shape:  RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(3.0),
+      ),
+      child: InkWell(
+        onTap: () {
+          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
+        },
+        borderRadius: BorderRadius.zero,
+        child: Container(
+          height: 45,
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 52,
+                child: IconButton(
+                  icon: const Icon(Icons.copy_outlined, size: 20),
+                  splashRadius: 20,
+                  tooltip: 'Copy Proposal ID',
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: widget.proposal.id));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Center(child: Text('Proposal ID copied to clipboard')),
+                          duration: Duration(seconds: 1)),
+                    );
+                  },
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  widget.proposal.title,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  shortenString(widget.proposal.author),
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
+              ),
+              SizedBox(
+                width: 140,
+                child: Text(
+                  DateFormat('M/d/yyyy HH:mm').format(widget.proposal.createdAt),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: 100,
+                child: Text(
+                  widget.proposal.type ?? 'N/A',
+                  textAlign: TextAlign.start,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+              SizedBox(
+                width: 110,
+                child: Center(child: ProposalStatusWidget(status: _displayStatus)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- Stateful Mobile List Item ---
+class MobileProposalListItem extends StatefulWidget {
+  final Proposal proposal;
+  final Org org;
+  final String networkName;
+
+  const MobileProposalListItem({
+    super.key,
+    required this.proposal,
+    required this.org,
+    required this.networkName,
+  });
+
+  @override
+  State<MobileProposalListItem> createState() => _MobileProposalListItemState();
+}
+
+class _MobileProposalListItemState extends State<MobileProposalListItem> {
+  late ProposalStatus _displayStatus;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStatusAndScheduleNext();
+  }
+
+  @override
+  void didUpdateWidget(covariant MobileProposalListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.proposal != oldWidget.proposal) {
+      _updateStatusAndScheduleNext();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateStatusAndScheduleNext() {
+    _timer?.cancel();
+    setState(() {
+      _displayStatus = ProposalStatusHelper.calculateDisplayStatus(widget.proposal, widget.org);
+    });
+    _scheduleNextUpdate();
+  }
+
+  void _scheduleNextUpdate() {
+    final now = DateTime.now();
+    DateTime? nextTransitionTime;
+
+    final voteStart = widget.proposal.createdAt.add(Duration(minutes: widget.org.votingDelay));
+    final voteEnd = voteStart.add(Duration(minutes: widget.org.votingDuration));
+
+    if (_displayStatus == ProposalStatus.Pending && voteStart.isAfter(now)) {
+      nextTransitionTime = voteStart;
+    } else if (_displayStatus == ProposalStatus.Active && voteEnd.isAfter(now)) {
+      nextTransitionTime = voteEnd;
+    } else if (_displayStatus == ProposalStatus.Queued) {
+      final queuedTime = widget.proposal.statusHistory['queued'] ?? voteEnd;
+      final executionETA = queuedTime.add(Duration(seconds: widget.org.executionDelay));
+      if (executionETA.isAfter(now)) {
+        nextTransitionTime = executionETA;
+      }
+    }
+
+    if (nextTransitionTime != null) {
+      final duration = nextTransitionTime.difference(now);
+      _timer = Timer(duration, () {
+        if (mounted) {
+          _updateStatusAndScheduleNext();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xff3a3a3a),
+      margin: const EdgeInsets.symmetric(vertical: 6.0),
+      elevation: 2,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
+      child: InkWell(
+        onTap: () {
+          context.go('/${widget.networkName}/${widget.org.address}/proposals/${widget.proposal.id}');
+        },
+        borderRadius: BorderRadius.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.proposal.title,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ProposalStatusWidget(status: _displayStatus),
+                ],
+              ),
+              const Divider(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildMobileDetailColumn("ID", shortenString(widget.proposal.id), context),
+                  _buildMobileDetailColumn("Type", widget.proposal.type ?? 'N/A', context),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   _buildMobileDetailColumn("Author", shortenString(widget.proposal.author), context, isMono: true),
+                   _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(widget.proposal.createdAt), context),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileDetailColumn(String label, String value, BuildContext context, {bool isMono = false}) {
+    return Flexible(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: isMono ? const TextStyle(fontFamily: 'monospace') : const TextStyle(fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+// lib/src/features/dao_detail/widgets/proposal_list_item.dart
+```
+
 ### `lib/src/features/explorer/explorer_screen.dart`
 ```dart
 // lib/src/features/explorer/explorer_screen.dart
@@ -2715,6 +3301,7 @@ class GameOfLifePainter extends CustomPainter {
 ### `lib/src/features/proposal_detail/proposal_detail_screen.dart`
 ```dart
 // lib/src/features/proposal_detail/proposal_detail_screen.dart
+import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -2725,6 +3312,7 @@ import 'package:werule/src/features/proposal_detail/widgets/proposal_execution_d
 import 'package:werule/src/features/proposal_detail/widgets/proposal_lifecycle_card.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_votes_card.dart';
+import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/network_provider.dart';
@@ -2733,6 +3321,7 @@ import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/utils/reusable.dart';
 import 'package:werule/src/widgets/shared_app_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProposalDetailScreen extends StatefulWidget {
   final String networkName;
@@ -2751,95 +3340,82 @@ class ProposalDetailScreen extends StatefulWidget {
 }
 
 class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
-  late Stream<Proposal?> _proposalStream;
-  late Future<Org?> _orgFuture;
+  ProposalDetailProvider? _provider;
+  StreamSubscription? _proposalSubscription;
+  Future<dynamic>? _initializationFuture;
 
   @override
   void initState() {
     super.initState();
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<NetworkProvider>().selectNetworkByName(widget.networkName);
-      }
-    });
+    _initializationFuture = _initialize();
+  }
 
+  Future<void> _initialize() async {
+    final networkProvider = context.read<NetworkProvider>();
+    networkProvider.selectNetworkByName(widget.networkName);
+    
     final firestoreService = context.read<FirestoreService>();
     final collection = 'idaos${widget.networkName}';
-    _proposalStream = firestoreService.getProposalStream(collection, widget.daoAddress, widget.proposalId);
-    _orgFuture = firestoreService.getDao(collection, widget.daoAddress);
+
+    final org = await firestoreService.getDao(collection, widget.daoAddress);
+    final initialProposal = await firestoreService.getProposal(collection, widget.daoAddress, widget.proposalId);
+    final network = networkProvider.networks.firstWhereOrNull((n) => n.name == widget.networkName);
+    
+    if (org == null || initialProposal == null || network == null) {
+      throw Exception("Could not initialize proposal details.");
+    }
+    
+    _provider = ProposalDetailProvider(
+      blockchainService: context.read<BlockchainService>(),
+      proposal: initialProposal,
+      org: org,
+      network: network,
+    );
+
+    _proposalSubscription = firestoreService
+        .getProposalStream(collection, widget.daoAddress, widget.proposalId)
+        .listen((proposalUpdate) {
+      if (proposalUpdate != null && _provider != null) {
+        _provider!.update(proposalUpdate, org);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _proposalSubscription?.cancel();
+    _provider?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final networkProvider = context.watch<NetworkProvider>();
-
     return Scaffold(
       backgroundColor: const Color(0xff222222),
       appBar: const SharedAppBar(),
       endDrawer: const MobileDrawer(isNetworkSelectorEnabled: false),
-      body: Builder(builder: (context) {
-        if (networkProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final network = networkProvider.networks.firstWhereOrNull((n) => n.name == widget.networkName);
-
-        if (network == null) {
-          return Center(child: Text('Network configuration for "${widget.networkName}" not found.'));
-        }
-
-        return FutureBuilder<Org?>(
-          future: _orgFuture,
-          builder: (context, orgSnapshot) {
-            if (!orgSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-            final org = orgSnapshot.data!;
-
-            return StreamBuilder<Proposal?>(
-              stream: _proposalStream,
-              builder: (context, proposalSnapshot) {
-                if (proposalSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (proposalSnapshot.hasError) {
-                  return Center(child: Text('An error occurred: ${proposalSnapshot.error}'));
-                }
-                if (!proposalSnapshot.hasData || proposalSnapshot.data == null) {
-                  return Center(child: Text('Proposal ${widget.proposalId} not found.'));
-                }
-
-                final proposal = proposalSnapshot.data!;
-
-                return ChangeNotifierProvider(
-                  create: (context) => ProposalDetailProvider(
-                    blockchainService: context.read<BlockchainService>(),
-                    proposal: proposal,
-                    org: org,
-                    network: network,
-                  ),
-                  child: _ProposalDetailView(
-                    networkName: widget.networkName,
-                    daoAddress: widget.daoAddress,
-                  ),
-                );
-              },
-            );
-          },
-        );
-      }),
+      body: FutureBuilder(
+        future: _initializationFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || _provider == null) {
+            return Center(child: Text("Error loading proposal: ${snapshot.error ?? 'Provider not initialized.'}"));
+          }
+          
+          return ChangeNotifierProvider.value(
+            value: _provider!,
+            child: const _ProposalDetailView(),
+          );
+        },
+      ),
     );
   }
 }
 
-// --- Main View ---
 class _ProposalDetailView extends StatelessWidget {
-  final String networkName;
-  final String daoAddress;
-
-  const _ProposalDetailView({
-    required this.networkName,
-    required this.daoAddress,
-  });
+  const _ProposalDetailView();
 
   @override
   Widget build(BuildContext context) {
@@ -2847,7 +3423,7 @@ class _ProposalDetailView extends StatelessWidget {
     final proposal = provider.proposal;
     final org = provider.org;
     final network = provider.network;
-
+    
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -2861,7 +3437,7 @@ class _ProposalDetailView extends StatelessWidget {
                 child: TextButton.icon(
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('Back to DAO'),
-                  onPressed: () => context.go('/$networkName/$daoAddress'),
+                  onPressed: () => context.go('/${network.name}/${org.address}'),
                   style: TextButton.styleFrom(foregroundColor: Colors.white70),
                 ),
               ),
@@ -2879,7 +3455,6 @@ class _ProposalDetailView extends StatelessWidget {
                         const SizedBox(height: 16),
                         ProposalVotesCard(org: org),
                         const SizedBox(height: 16),
-                        // THE FIX: The proposal parameter is no longer needed.
                         const ProposalLifecycleCard(),
                          const SizedBox(height: 16),
                         SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)),
@@ -2900,7 +3475,6 @@ class _ProposalDetailView extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // THE FIX: The proposal parameter is no longer needed.
                             const Expanded(child: ProposalLifecycleCard()),
                             const SizedBox(width: 16),
                             Expanded(child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network))),
@@ -2920,7 +3494,6 @@ class _ProposalDetailView extends StatelessWidget {
   }
 }
 
-// --- Header Widget ---
 class _ProposalHeader extends StatelessWidget {
   final Proposal proposal;
   const _ProposalHeader({required this.proposal});
@@ -2945,8 +3518,6 @@ class _ProposalHeader extends StatelessWidget {
       children: [
         Consumer<ProposalDetailProvider>(
           builder: (context, provider, child) {
-            if (provider.isLoading) return const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2));
-            if (provider.errorMessage != null) return Tooltip(message: "Could not get on-chain status: ${provider.errorMessage}", child: const Icon(Icons.error_outline, color: Colors.amber));
             return ProposalStatusWidget(status: provider.status);
           },
         ),
@@ -3088,6 +3659,8 @@ import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/utils/reusable.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProposalActionsCard extends StatelessWidget {
   const ProposalActionsCard({super.key});
@@ -3118,6 +3691,7 @@ class ProposalActionsCard extends StatelessWidget {
 
     return Card(
       color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Container(
         height: 280,
         width: double.infinity,
@@ -3154,7 +3728,46 @@ class _ActionButtons extends StatelessWidget {
       case ProposalStatus.Executable:
         return _buildExecuteButton(context, provider);
       case ProposalStatus.Executed:
-        return const Text("Execution TX: 0x_mock_hash...");
+        // THE FIX: Implement the real execution hash link.
+        final hash = provider.proposal.executionHash;
+        final explorerUrl = provider.network.blockExplorerUrl;
+        if (hash == null || hash.isEmpty || explorerUrl.isEmpty) {
+          return const Text("Proposal Executed", style: TextStyle(color: Colors.grey));
+        }
+        
+        String txUrl = "$explorerUrl/tx/$hash";
+        if (!hash.startsWith('0x')) {
+          txUrl = "$explorerUrl/tx/0x$hash";
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Execution Transaction:", style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () => launchUrl(Uri.parse(txUrl)),
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      shortenString(hash),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        color: Color.fromARGB(255, 168, 216, 255),
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.open_in_new, size: 16, color: Color.fromARGB(255, 168, 216, 255)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -3165,14 +3778,12 @@ class _ActionButtons extends StatelessWidget {
     const Color supportColor = Color.fromARGB(255, 20, 78, 49);
     const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
 
-    // THE FIX: Get proposal and org from the provider to use real data.
     final proposal = provider.proposal;
     final org = provider.org;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        // SUPPORT BUTTON
         ElevatedButton.icon(
           onPressed: isEnabled ? () async {
             final error = await provider.handleAction(() => 
@@ -3190,7 +3801,6 @@ class _ActionButtons extends StatelessWidget {
             fixedSize: const Size(140, 40),
           ),
         ),
-        // REJECT BUTTON
         ElevatedButton.icon(
            onPressed: isEnabled ? () async {
             final error = await provider.handleAction(() => 
@@ -3600,6 +4210,7 @@ class ProposalStatusWidget extends StatelessWidget {
 // lib/src/features/proposal_detail/widgets/proposal_votes_card.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/proposal_detail/widgets/votes_modal.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
 import 'package:werule/src/utils/reusable.dart';
@@ -3611,15 +4222,17 @@ class ProposalVotesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProposalDetailProvider>();
+    final proposal = provider.proposal;
 
-    final forVotes = provider.onChainForVotes;
-    final againstVotes = provider.onChainAgainstVotes;
+    final forVotes = proposal.inFavor;
+    final againstVotes = proposal.against;
     final totalVotes = forVotes + againstVotes;
+    final totalVoters = proposal.votesFor + proposal.votesAgainst;
     
     final int forPercentInt = totalVotes > BigInt.zero ? ((forVotes * BigInt.from(100)) ~/ totalVotes).toInt() : 0;
     final int againstPercentInt = totalVotes > BigInt.zero ? 100 - forPercentInt : 0;
     
-    final totalSupply = BigInt.tryParse(org.totalSupply) ?? BigInt.zero;
+    final totalSupply = BigInt.tryParse(proposal.totalSupply) ?? BigInt.zero;
     final double turnoutPercentDouble;
     if (totalSupply > BigInt.zero) {
       final turnoutBigInt = (totalVotes * BigInt.from(10000)) ~/ totalSupply;
@@ -3635,57 +4248,87 @@ class ProposalVotesCard extends StatelessWidget {
 
     return Card(
       color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Container(
         height: 280,
         width: double.infinity,
         padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 450;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("${formatVotes(totalVotes)} Votes", style: Theme.of(context).textTheme.titleLarge),
-                const Spacer(),
-                 ElevatedButton(
-                    onPressed: () { /* TODO: Show votes modal */ },
-                    child: const Text("View")),
-              ],
-            ),
-            const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Text("$totalVoters Voters", style: Theme.of(context).textTheme.titleLarge),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: () {
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final isDialogMobile = screenWidth < 700;
+                        final dialogWidth = isDialogMobile ? screenWidth * 0.9 : 800.0;
 
-            Row(
-              children: [
-                _VoteStat(color: const Color(0xff00c489), label: "Support", votes: formatVotes(forVotes), percentage: "$forPercentInt.00%"),
-                const Spacer(),
-                _VoteStat(color: const Color(0xff86251e), label: "Oppose", votes: formatVotes(againstVotes), percentage: "$againstPercentInt.00%"),
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: const Color(0xff222222),
+                            title: const Text("Vote Details"),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                            content: SizedBox(
+                              width: dialogWidth,
+                              child: VotesModal(
+                                proposalId: proposal.id,
+                                org: provider.org,
+                                network: provider.network,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                child: const Text("Close"),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: const Text("View")),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _VoteStat(isMobile: isMobile, isSupport: true, votes: formatVotes(forVotes), percentage: "$forPercentInt.00%"),
+                    _VoteStat(isMobile: isMobile, isSupport: false, votes: formatVotes(againstVotes), percentage: "$againstPercentInt.00%"),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _ProgressBar(
+                  forPercent: forPercentInt.toDouble(),
+                  againstPercent: againstPercentInt.toDouble(),
+                  height: 12,
+                ),
+                const SizedBox(height: 48),
+                Row(
+                  children: [
+                    const Text("Turnout: ", style: TextStyle(fontSize: 16)),
+                    Text("${formatVotes(totalVotes)} (${turnoutPercentDouble.toStringAsFixed(2)}%)", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Spacer(),
+                    Text(quorumMet ? "Quorum Met" : "Quorum Not Met", style: TextStyle(fontWeight: FontWeight.bold, color: quorumMet ? Colors.green : Colors.grey, fontSize: 16)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _ProgressBar(
+                  forPercent: turnoutPercentDouble,
+                  againstPercent: 0,
+                  height: 12,
+                  quorumPercent: org.quorum.toDouble(),
+                  fillColor: Colors.grey.shade400,
+                ),
               ],
-            ),
-            const SizedBox(height: 12),
-            _ProgressBar(
-              forPercent: forPercentInt.toDouble(),
-              againstPercent: againstPercentInt.toDouble(),
-              height: 12,
-            ),
-
-            const SizedBox(height: 48),
-
-             Row(
-              children: [
-                const Text("Turnout: ", style: TextStyle(fontSize: 16)),
-                Text("${formatVotes(totalVotes)} (${turnoutPercentDouble.toStringAsFixed(2)}%)", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const Spacer(),
-                Text(quorumMet ? "Quorum Met" : "Quorum Not Met", style: TextStyle(fontWeight: FontWeight.bold, color: quorumMet ? Colors.green : Colors.grey, fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _ProgressBar(
-              forPercent: turnoutPercentDouble,
-              againstPercent: 0,
-              height: 12,
-              quorumPercent: org.quorum.toDouble(),
-              fillColor: Colors.grey.shade400,
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -3693,20 +4336,36 @@ class ProposalVotesCard extends StatelessWidget {
 }
 
 class _VoteStat extends StatelessWidget {
-  final Color color;
-  final String label;
+  final bool isMobile;
+  final bool isSupport;
   final String votes;
   final String percentage;
 
-  const _VoteStat({required this.color, required this.label, required this.votes, required this.percentage});
+  const _VoteStat({required this.isMobile, required this.isSupport, required this.votes, required this.percentage});
 
   @override
   Widget build(BuildContext context) {
+    final supportColor = const Color(0xff00c489);
+    final opposeColor = const Color(0xff86251e);
+    final color = isSupport ? supportColor : opposeColor;
+
+    if (isMobile) {
+      return Row(
+        children: [
+          Icon(isSupport ? Icons.thumb_up : Icons.thumb_down, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(width: 8),
+          Text(percentage, style: TextStyle(color: Colors.grey[400])),
+        ],
+      );
+    }
+
     return Row(
       children: [
         Icon(Icons.circle, color: color, size: 12),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 16)),
+        Text(isSupport ? "Support" : "Oppose", style: const TextStyle(fontSize: 16)),
         const SizedBox(width: 16),
         Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(width: 8),
@@ -3716,7 +4375,7 @@ class _VoteStat extends StatelessWidget {
   }
 }
 
-class _ProgressBar extends StatefulWidget {
+class _ProgressBar extends StatelessWidget {
   final double forPercent;
   final double againstPercent;
   final double height;
@@ -3732,87 +4391,45 @@ class _ProgressBar extends StatefulWidget {
   });
 
   @override
-  State<_ProgressBar> createState() => _ProgressBarState();
-}
-
-class _ProgressBarState extends State<_ProgressBar> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      return AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: double.infinity,
-                height: widget.height,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800,
-                  borderRadius: BorderRadius.circular(widget.height / 2),
-                ),
-              ),
-              if (widget.fillColor != null)
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            height: height,
+            decoration: BoxDecoration(color: Colors.grey.shade800),
+          ),
+          if (fillColor != null)
+            Container(
+              width: constraints.maxWidth * (forPercent / 100),
+              height: height,
+              color: fillColor,
+            )
+          else
+            Row(
+              children: [
                 Container(
-                  width: constraints.maxWidth * (widget.forPercent / 100) * _animation.value,
-                  height: widget.height,
-                  decoration: BoxDecoration(
-                    color: widget.fillColor,
-                    borderRadius: BorderRadius.circular(widget.height / 2),
-                  ),
-                )
-              else
-                Row(
-                  children: [
-                    Container(
-                      width: constraints.maxWidth * (widget.forPercent / 100) * _animation.value,
-                      height: widget.height,
-                      decoration: BoxDecoration(
-                        color: const Color(0xff00c489),
-                        borderRadius: BorderRadius.circular(widget.height / 2),
-                      ),
-                    ),
-                    Container(
-                      width: constraints.maxWidth * (widget.againstPercent / 100) * _animation.value,
-                      height: widget.height,
-                      decoration: BoxDecoration(
-                        color: const Color(0xff86251e),
-                        borderRadius: BorderRadius.circular(widget.height / 2),
-                      ),
-                    ),
-                  ],
+                  width: constraints.maxWidth * (forPercent / 100),
+                  height: height,
+                  color: const Color(0xff00c489),
                 ),
-              if (widget.quorumPercent != null)
-                Positioned(
-                  left: (constraints.maxWidth * (widget.quorumPercent! / 100)) - 1,
-                  top: -4,
-                  bottom: -4,
-                  child: Container(width: 2, color: Colors.black),
+                Container(
+                  width: constraints.maxWidth * (againstPercent / 100),
+                  height: height,
+                  color: const Color(0xff86251e),
                 ),
-            ],
-          );
-        },
+              ],
+            ),
+          if (quorumPercent != null)
+            Positioned(
+              left: (constraints.maxWidth * (quorumPercent! / 100)) - 1,
+              top: -4,
+              bottom: -4,
+              child: Container(width: 2, color: Colors.black),
+            ),
+        ],
       );
     });
   }
@@ -4339,6 +4956,36 @@ class TokenTransferDetails extends StatelessWidget {
 
 ```
 
+### `lib/src/models/account_details.dart`
+```dart
+// lib/src/models/account_details.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class AccountDetails {
+  final List<String> proposalsCreated;
+  final List<String> proposalsVoted;
+
+  AccountDetails({
+    required this.proposalsCreated,
+    required this.proposalsVoted,
+  });
+
+  factory AccountDetails.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    return AccountDetails(
+      proposalsCreated: List<String>.from(data['proposalsCreated'] ?? []),
+      proposalsVoted: List<String>.from(data['proposalsVoted'] ?? []),
+    );
+  }
+
+  // A factory for when a member document doesn't exist yet.
+  factory AccountDetails.empty() {
+    return AccountDetails(proposalsCreated: [], proposalsVoted: []);
+  }
+}
+// lib/src/models/account_details.dart
+```
+
 ### `lib/src/models/human.dart`
 ```dart
 
@@ -4542,7 +5189,7 @@ class Proposal {
   final String totalSupply;
   final int votesFor;
   final int votesAgainst;
-  final String? executionHash; // THE FIX: Add executionHash field
+  final String? executionHash;
 
   Proposal({
     required this.id,
@@ -4560,7 +5207,7 @@ class Proposal {
     required this.totalSupply,
     required this.votesFor,
     required this.votesAgainst,
-    this.executionHash, // THE FIX: Add to constructor
+    this.executionHash,
   });
 
   factory Proposal.fromFirestore(DocumentSnapshot doc) {
@@ -4601,7 +5248,7 @@ class Proposal {
       totalSupply: data['totalSupply']?.toString() ?? '0',
       votesFor: data['votesFor'] ?? 0,
       votesAgainst: data['votesAgainst'] ?? 0,
-      executionHash: data['executionHash'], // THE FIX: Parse from Firestore
+      executionHash: data['executionHash'],
     );
   }
 
@@ -4625,7 +5272,7 @@ class Proposal {
         other.votesFor == votesFor &&
         other.votesAgainst == votesAgainst &&
         other.totalSupply == totalSupply &&
-        other.executionHash == executionHash && // THE FIX: Add to equality check
+        other.executionHash == executionHash &&
         mapEquals(other.statusHistory, statusHistory);
   }
 
@@ -4636,7 +5283,7 @@ class Proposal {
         against.hashCode ^
         votesFor.hashCode ^
         votesAgainst.hashCode ^
-        executionHash.hashCode ^ // THE FIX: Add to hashcode
+        executionHash.hashCode ^
         statusHistory.hashCode ^
         totalSupply.hashCode;
   }
@@ -4977,6 +5624,154 @@ class DaoProvider extends ChangeNotifier {
 // lib/src/providers/dao_provider.dart
 ```
 
+### `lib/src/providers/member_provider.dart`
+```dart
+// lib/src/providers/member_provider.dart
+import 'package:flutter/material.dart';
+import 'package:werule/src/models/account_details.dart';
+import 'package:werule/src/models/network.dart';
+import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/proposal.dart';
+import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/services/members_service.dart';
+
+class MemberProvider extends ChangeNotifier {
+  final AuthProvider _authProvider;
+  final FirestoreService _firestoreService;
+  final BlockchainService _blockchainService;
+  final MembersService _membersService;
+  final Org _org;
+  final Network _network;
+
+  MemberProvider({
+    required AuthProvider authProvider,
+    required FirestoreService firestoreService,
+    required BlockchainService blockchainService,
+    required MembersService membersService,
+    required Org org,
+    required Network network,
+  })  : _authProvider = authProvider,
+        _firestoreService = firestoreService,
+        _blockchainService = blockchainService,
+        _membersService = membersService,
+        _org = org,
+        _network = network {
+    fetchMemberData();
+  }
+
+  // --- State ---
+  bool _isLoading = true;
+  String? _errorMessage;
+  AccountDetails _accountDetails = AccountDetails.empty();
+  BigInt _personalBalance = BigInt.zero;
+  BigInt _votingWeight = BigInt.zero;
+  String? _delegateAddress;
+  List<Proposal> _createdProposalDetails = [];
+  List<Proposal> _votedProposalDetails = [];
+  bool _isActionBusy = false;
+
+  // --- Getters ---
+  bool get isLoading => _isLoading;
+  bool get isActionBusy => _isActionBusy;
+  String? get errorMessage => _errorMessage;
+  int get proposalsCreatedCount => _accountDetails.proposalsCreated.length;
+  int get votesCastCount => _accountDetails.proposalsVoted.length;
+  BigInt get personalBalance => _personalBalance;
+  BigInt get votingWeight => _votingWeight;
+  String? get delegateAddress => _delegateAddress;
+  List<Proposal> get createdProposalDetails => _createdProposalDetails;
+  List<Proposal> get votedProposalDetails => _votedProposalDetails;
+
+  Future<void> fetchMemberData() async {
+    final userAddress = _authProvider.selectedAccount;
+    if (userAddress == null) {
+      _errorMessage = "User is not connected.";
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    // Set loading state only if it's the initial fetch.
+    if (!_isLoading) {
+      _isActionBusy = true;
+      notifyListeners();
+    }
+
+    try {
+      final membersData = await _membersService.getMembers(_org.govTokenAddress, _network.blockExplorerUrl);
+      final items = membersData['items'] as List<dynamic>? ?? [];
+      
+      String? checksumAddress;
+      
+      items.firstWhere(
+        (item) {
+          final hash = item['address']?['hash'] as String?;
+          if (hash != null && hash.toLowerCase() == userAddress.toLowerCase()) {
+            checksumAddress = hash;
+            _personalBalance = BigInt.tryParse(item['value'] ?? '0') ?? BigInt.zero;
+            return true;
+          }
+          return false;
+        },
+        orElse: () => null,
+      );
+
+      if (checksumAddress != null) {
+        final results = await Future.wait([
+          _firestoreService.getMemberDetails(_network.daoCollectionName, _org.address, checksumAddress!),
+          _blockchainService.getVotes(_org.govTokenAddress, userAddress, _network.rpcUrl),
+          _firestoreService.getProposals(_network.daoCollectionName, _org.address),
+          _blockchainService.getDelegate(_org.govTokenAddress, userAddress, _network.rpcUrl),
+        ]);
+        _accountDetails = results[0] as AccountDetails;
+        _votingWeight = results[1] as BigInt;
+        final allProposals = results[2] as List<Proposal>;
+        _delegateAddress = results[3] as String?;
+        
+        final createdIds = _accountDetails.proposalsCreated.toSet();
+        final votedIds = _accountDetails.proposalsVoted.toSet();
+
+        _createdProposalDetails = allProposals.where((p) => createdIds.contains(p.id)).toList();
+        _votedProposalDetails = allProposals.where((p) => votedIds.contains(p.id)).toList();
+
+      } else {
+        _personalBalance = BigInt.zero;
+        _votingWeight = BigInt.zero;
+        _accountDetails = AccountDetails.empty();
+        _delegateAddress = await _blockchainService.getDelegate(_org.govTokenAddress, userAddress, _network.rpcUrl);
+      }
+
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+
+    _isLoading = false;
+    _isActionBusy = false;
+    notifyListeners();
+  }
+
+  Future<String?> handleDelegate(String delegateeAddress) async {
+    _isActionBusy = true;
+    notifyListeners();
+    String? error;
+    try {
+      await _blockchainService.delegate(_org.govTokenAddress, delegateeAddress);
+      // Wait a moment for the blockchain to update before re-fetching data.
+      await Future.delayed(const Duration(seconds: 3));
+      await fetchMemberData();
+    } catch (e) {
+      error = e.toString();
+    }
+    _isActionBusy = false;
+    notifyListeners();
+    return error;
+  }
+}
+// lib/src/providers/member_provider.dart
+```
+
 ### `lib/src/providers/network_provider.dart`
 ```dart
 // lib/src/providers/network_provider.dart
@@ -5081,13 +5876,15 @@ import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/utils/proposal_status_helper.dart';
 
 class ProposalDetailProvider extends ChangeNotifier {
   final BlockchainService _blockchainService;
-  final Proposal _proposal;
-  final Org _org;
+  late Proposal _proposal; 
+  late Org _org;
   final Network _network;
   Timer? _countdownTimer;
+  bool _isRecalculating = false;
 
   ProposalDetailProvider({
     required BlockchainService blockchainService,
@@ -5095,9 +5892,9 @@ class ProposalDetailProvider extends ChangeNotifier {
     required Org org,
     required Network network,
   })  : _blockchainService = blockchainService,
-        _proposal = proposal,
-        _org = org,
         _network = network {
+    _proposal = proposal;
+    _org = org;
     _initialize();
   }
 
@@ -5106,8 +5903,6 @@ class ProposalDetailProvider extends ChangeNotifier {
   bool _isActionBusy = false;
   String? _errorMessage;
   ProposalStatus _status = ProposalStatus.Unknown;
-  BigInt _onChainForVotes = BigInt.zero;
-  BigInt _onChainAgainstVotes = BigInt.zero;
   int _remainingSeconds = 0;
   Map<ProposalStatus, DateTime> _fullTimeline = {};
 
@@ -5116,117 +5911,81 @@ class ProposalDetailProvider extends ChangeNotifier {
   bool get isActionBusy => _isActionBusy;
   String? get errorMessage => _errorMessage;
   ProposalStatus get status => _status;
-  BigInt get onChainForVotes => _onChainForVotes;
-  BigInt get onChainAgainstVotes => _onChainAgainstVotes;
+  Proposal get proposal => _proposal;
   int get remainingSeconds => _remainingSeconds;
   bool get showCountdown => _status == ProposalStatus.Pending || _status == ProposalStatus.Active || _status == ProposalStatus.Queued;
   Map<ProposalStatus, DateTime> get fullTimeline => _fullTimeline;
-
-  // THE FIX: Added public getters to expose necessary data to the UI.
-  Proposal get proposal => _proposal;
   Org get org => _org;
   Network get network => _network;
+  
+  void update(Proposal newProposal, Org newOrg) {
+    if (newProposal == _proposal && newOrg == _org) {
+      return;
+    }
+    _proposal = newProposal;
+    _org = newOrg;
+    
+    _recalculateStateAndRestartTimer();
+  }
 
   Future<void> _initialize() async {
-    await determineProposalStatus();
-    await _fetchOnChainVotes();
-    _startCountdown();
+    await _syncWithOnChainState();
+    _recalculateStateAndRestartTimer();
     _isLoading = false;
-    notifyListeners();
   }
   
-  Future<void> determineProposalStatus() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      final proposalId = BigInt.tryParse(_proposal.id);
-      if (proposalId == null) throw Exception("Invalid Proposal ID: ${_proposal.id}");
-
-      final onChainStateIndex = await _blockchainService.getProposalState(_org.address, proposalId, _network.rpcUrl);
-      ProposalStatus onChainStatus = ProposalStatus.values[onChainStateIndex];
-      
-      final now = DateTime.now();
-      final voteStart = _proposal.createdAt.add(Duration(minutes: _org.votingDelay));
-      final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
-
-      if (onChainStatus == ProposalStatus.Defeated) {
-        final totalVotes = _proposal.inFavor + _proposal.against;
-        final quorumVotes = (BigInt.parse(_org.totalSupply) * BigInt.from(_org.quorum)) ~/ BigInt.from(100);
-        _status = (totalVotes < quorumVotes) ? ProposalStatus.NoQuorum : ProposalStatus.Rejected;
-      } else if (onChainStatus == ProposalStatus.Succeeded) {
-        _status = ProposalStatus.Succeeded;
-      } else if (onChainStatus == ProposalStatus.Queued) {
-        final queuedTime = _proposal.statusHistory['queued'] ?? voteEnd;
-        final executionETA = queuedTime.add(Duration(seconds: _org.executionDelay));
-        _status = now.isAfter(executionETA) ? ProposalStatus.Executable : ProposalStatus.Queued;
-      } else {
-        _status = onChainStatus;
-      }
-
-      _calculateFullTimeline(onChainStatus);
-
-    } catch (e) {
-      _errorMessage = "Failed to determine proposal status. ${e.toString()}";
-      _status = ProposalStatus.Unknown;
-    }
-
-    _isLoading = false;
+  void _recalculateStateAndRestartTimer() {
+    _status = ProposalStatusHelper.calculateDisplayStatus(_proposal, _org);
+    _calculateFullTimeline(_status);
+    _startCountdown();
     notifyListeners();
   }
 
-  void _calculateFullTimeline(ProposalStatus onChainStatus) {
-    final timeline = <ProposalStatus, DateTime>{};
+  Future<void> _syncWithOnChainState() async {
+    try {
+      final proposalId = BigInt.tryParse(_proposal.id);
+      if (proposalId == null) throw Exception("Invalid Proposal ID");
+      await _blockchainService.getProposalState(_org.address, proposalId, _network.rpcUrl);
+    } catch (e) {
+      _errorMessage = "Failed to sync on-chain status: ${e.toString()}";
+    }
+  }
 
+  void _calculateFullTimeline(ProposalStatus currentStatus) {
+    final timeline = <ProposalStatus, DateTime>{};
+    final now = DateTime.now();
     final createdAt = _proposal.createdAt;
     final voteStart = createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
 
     timeline[ProposalStatus.Pending] = createdAt;
 
-    if (onChainStatus.index >= ProposalStatus.Active.index) {
+    if (now.isAfter(voteStart) || currentStatus != ProposalStatus.Pending) {
         timeline[ProposalStatus.Active] = voteStart;
     }
-
-    if (onChainStatus.index >= ProposalStatus.Canceled.index) {
-        switch (onChainStatus) {
+    if (now.isAfter(voteEnd) || currentStatus.index > ProposalStatus.Active.index) {
+        switch (currentStatus) {
             case ProposalStatus.Succeeded:
             case ProposalStatus.Queued:
             case ProposalStatus.Executed:
                 timeline[ProposalStatus.Succeeded] = voteEnd;
                 break;
             case ProposalStatus.Defeated:
-                timeline[_status] = voteEnd;
+            case ProposalStatus.NoQuorum:
+            case ProposalStatus.Rejected:
+                timeline[currentStatus] = voteEnd;
                 break;
-            case ProposalStatus.Canceled:
-                 timeline[ProposalStatus.Canceled] = _proposal.statusHistory['canceled'] ?? voteEnd;
-                 break;
             default:
-                break;
+                 break;
         }
     }
-    
-    if (onChainStatus.index >= ProposalStatus.Queued.index) {
-        timeline[ProposalStatus.Queued] = _proposal.statusHistory['queued'] ?? voteEnd;
+    if (_proposal.statusHistory.containsKey('queued')) {
+        timeline[ProposalStatus.Queued] = _proposal.statusHistory['queued']!;
     }
-    if (onChainStatus.index >= ProposalStatus.Executed.index) {
-       timeline[ProposalStatus.Executed] = _proposal.statusHistory['executed'] ?? DateTime.now();
+    if (_proposal.statusHistory.containsKey('executed')) {
+       timeline[ProposalStatus.Executed] = _proposal.statusHistory['executed']!;
     }
-
     _fullTimeline = timeline;
-  }
-
-  Future<void> _fetchOnChainVotes() async {
-    try {
-      final proposalId = BigInt.parse(_proposal.id);
-      final votes = await _blockchainService.getProposalVotes(_org.address, proposalId, _network.rpcUrl);
-      _onChainAgainstVotes = votes[0];
-      _onChainForVotes = votes[1];
-    } catch (e) {
-      _errorMessage = "Failed to fetch on-chain votes. ${e.toString()}";
-    }
-    notifyListeners();
   }
 
   void _startCountdown() {
@@ -5236,28 +5995,41 @@ class ProposalDetailProvider extends ChangeNotifier {
   }
 
   void _updateRemainingTime() {
+    if (_isRecalculating) return;
+
     final now = DateTime.now();
     DateTime? targetTime;
 
     final voteStart = _proposal.createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
 
-    if (_status == ProposalStatus.Pending) {
-      targetTime = voteStart;
-    } else if (_status == ProposalStatus.Active) {
-      targetTime = voteEnd;
-    } else if (_status == ProposalStatus.Queued) {
+    if (_status == ProposalStatus.Pending) targetTime = voteStart;
+    else if (_status == ProposalStatus.Active) targetTime = voteEnd;
+    else if (_status == ProposalStatus.Queued) {
       final queuedTime = _proposal.statusHistory['queued'] ?? voteEnd;
       targetTime = queuedTime.add(Duration(seconds: _org.executionDelay));
     }
 
+    int oldRemaining = _remainingSeconds;
+    
     if (targetTime != null) {
       final remaining = targetTime.difference(now).inSeconds;
       _remainingSeconds = remaining > 0 ? remaining : 0;
     } else {
       _remainingSeconds = 0;
     }
-    notifyListeners();
+    
+    if (oldRemaining > 0 && _remainingSeconds <= 0 && !_isRecalculating) {
+      _isRecalculating = true;
+      Future.delayed(const Duration(seconds: 2), () {
+        _recalculateStateAndRestartTimer();
+        _isRecalculating = false;
+      });
+    } else {
+      if (oldRemaining != _remainingSeconds) {
+        notifyListeners();
+      }
+    }
   }
 
   Future<String?> handleAction(Function action) async {
@@ -5484,27 +6256,25 @@ final appRouter = GoRouter(
 ```dart
 // lib/src/services/blockchain_service.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_web3/flutter_web3.dart' as web3;
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart' as http;
+import 'package:werule/src/services/erc20_gov_abi.dart';
 import 'package:werule/src/services/governor_abi.dart';
 import '../models/network.dart';
 
 class BlockchainService {
-  // THE FIX: A private helper function to reliably parse chain IDs
-  // whether they come from the wallet as an int or a hex string.
   int _parseChainId(dynamic chainId) {
     if (chainId is int) {
       return chainId;
     }
     if (chainId is String) {
       return int.parse(
-        // Remove '0x' prefix if it exists, then parse as base-16
         chainId.startsWith('0x') ? chainId.substring(2) : chainId,
         radix: 16,
       );
     }
-    // As a fallback for any unexpected type, though this shouldn't happen.
     throw FormatException('Cannot parse chainId: $chainId');
   }
 
@@ -5533,7 +6303,6 @@ class BlockchainService {
   Future<int?> getChainId() async {
     try {
       final dynamic chainId = await web3.ethereum!.getChainId();
-      // Apply the parsing function here as well for consistency.
       return _parseChainId(chainId);
     } catch (e) {
       return null;
@@ -5573,13 +6342,9 @@ class BlockchainService {
 
   void onChainChanged(Function(int) callback) {
     web3.ethereum!.on('chainChanged', (chainId) {
-      // Apply the parsing function to the event payload before calling the callback.
-      // This is the core fix for the crash.
       callback(_parseChainId(chainId));
     });
   }
-
-  // --- NEW METHODS for Governor Contract Interaction ---
 
   Future<int> getProposalState(String contractAddress, BigInt proposalId, String rpcUrl) async {
     final client = Web3Client(rpcUrl, http.Client());
@@ -5594,13 +6359,12 @@ class BlockchainService {
         function: stateFunction,
         params: [proposalId],
       );
-      // The result is a list containing the state enum, which is a uint8.
       if (result.isNotEmpty && result[0] is BigInt) {
         return (result[0] as BigInt).toInt();
       }
       throw Exception('Failed to parse proposal state from contract.');
     } catch (e) {
-      print('[BlockchainService] Error getting proposal state: $e');
+      if (kDebugMode) print('[BlockchainService] Error getting proposal state: $e');
       rethrow;
     } finally {
       await client.dispose();
@@ -5620,37 +6384,101 @@ class BlockchainService {
         function: votesFunction,
         params: [proposalId],
       );
-      // result is [againstVotes, forVotes, abstainVotes]
       if (result.length == 3) {
         return result.cast<BigInt>();
       }
       throw Exception('Failed to parse proposal votes from contract.');
     } catch (e) {
-      print('[BlockchainService] Error getting proposal votes: $e');
+      if (kDebugMode) print('[BlockchainService] Error getting proposal votes: $e');
       rethrow;
     } finally {
       await client.dispose();
     }
   }
 
-  // --- NEW: Placeholder Action Methods ---
+  Future<BigInt> getVotes(String tokenAddress, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        Erc20GovAbi.abi,
+        EthereumAddress.fromHex(tokenAddress),
+      );
+      final getVotesFunction = contract.function('getVotes');
+      final result = await client.call(
+        contract: contract,
+        function: getVotesFunction,
+        params: [EthereumAddress.fromHex(userAddress)],
+      );
+
+      if (result.isNotEmpty && result[0] is BigInt) {
+        return result[0] as BigInt;
+      }
+      throw Exception('Failed to parse voting weight from token contract.');
+    } catch (e) {
+      if (kDebugMode) print('[BlockchainService] Error getting votes: $e');
+      return BigInt.zero;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  Future<String?> getDelegate(String tokenAddress, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(Erc20GovAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final delegatesFunction = contract.function('delegates');
+      final result = await client.call(
+        contract: contract,
+        function: delegatesFunction,
+        params: [EthereumAddress.fromHex(userAddress)],
+      );
+
+      if (result.isNotEmpty && result[0] is EthereumAddress) {
+        return (result[0] as EthereumAddress).hex;
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) print('[BlockchainService] Error getting delegate: $e');
+      return null;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  Future<String> delegate(String tokenAddress, String delegateeAddress) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    
+    // THE FIX: Wrap the ethereum provider and get a signer to send the transaction.
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(tokenAddress, Erc20GovAbi.abiJson, signer);
+
+    try {
+      final tx = await contract.send('delegate', [delegateeAddress]);
+      await tx.wait();
+      return tx.hash;
+    } catch (e) {
+      if (kDebugMode) print("Delegation error: $e");
+      throw Exception("Transaction failed. It may have been rejected or encountered an error.");
+    }
+  }
 
   Future<String> castVote(String contractAddress, BigInt proposalId, int support) async {
-    // In a real app, this would use web3.personal!.sendTransaction to vote.
-    print('Casting vote for proposal $proposalId with support $support on contract $contractAddress');
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-    // throw Exception("User rejected transaction"); // Uncomment to test error case
+    if (kDebugMode) print('Casting vote for proposal $proposalId with support $support on contract $contractAddress');
+    await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_vote_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
 
   Future<String> queueProposal(String contractAddress, BigInt proposalId) async {
-    print('Queueing proposal $proposalId on contract $contractAddress');
+    if (kDebugMode) print('Queueing proposal $proposalId on contract $contractAddress');
     await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_queue_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
 
   Future<String> executeProposal(String contractAddress, BigInt proposalId) async {
-    print('Executing proposal $proposalId on contract $contractAddress');
+    if (kDebugMode) print('Executing proposal $proposalId on contract $contractAddress');
     await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_execute_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
@@ -5796,12 +6624,84 @@ Try using a logging framework.
 
 ```
 
+### `lib/src/services/erc20_gov_abi.dart`
+```dart
+// lib/src/services/erc20_gov_abi.dart
+import 'package:web3dart/web3dart.dart';
+
+class Erc20GovAbi {
+  // THE FIX: Add the 'delegate' and 'delegates' functions to the ABI.
+  static const _abiJson = '''
+  [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "getVotes",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "delegatee",
+          "type": "address"
+        }
+      ],
+      "name": "delegate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "delegates",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+  ''';
+
+  static final abi = ContractAbi.fromJson(_abiJson, 'ERC20Votes');
+  
+  // THE FIX: Also expose the raw JSON for flutter_web3 which needs it for write transactions.
+  static String get abiJson => _abiJson;
+}
+// lib/src/services/erc20_gov_abi.dart
+```
+
 ### `lib/src/services/firestore_service.dart`
 ```dart
 // lib/src/services/firestore_service.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:werule/src/models/account_details.dart';
 import '../models/network.dart';
 import '../models/org.dart';
 import '../models/proposal.dart';
@@ -5939,7 +6839,6 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
     }
 
     try {
-      // THE FIX: Order by the correct field name 'cast'.
       final snapshot = await _db.collection(path).orderBy('cast', descending: true).get();
       if (kDebugMode) {
         print('[VOTES_FETCH] Success. Found ${snapshot.docs.length} vote documents.');
@@ -5950,6 +6849,29 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
         print('[VOTES_FETCH] FAILED. Error: $e');
       }
       return [];
+    }
+  }
+  
+  Future<AccountDetails> getMemberDetails(String networkDaoCollection, String daoAddress, String memberAddress) async {
+    // DEBUG PRINT: Construct and log the full path being queried.
+    final path = '$networkDaoCollection/$daoAddress/members/$memberAddress';
+    print('[FirestoreService] Querying member details at path: $path');
+    
+    try {
+      final doc = await _db.collection(networkDaoCollection).doc(daoAddress).collection('members').doc(memberAddress).get();
+      
+      // DEBUG PRINT: Log whether the document was found and what its data is.
+      print('[FirestoreService] Document exists: ${doc.exists}');
+      if (doc.exists) {
+        print('[FirestoreService] Document data: ${doc.data()}');
+        return AccountDetails.fromFirestore(doc);
+      }
+      
+      return AccountDetails.empty();
+    } catch(e) {
+      // DEBUG PRINT: Log any error during the Firestore query.
+      print('[FirestoreService] Error fetching member details: $e');
+      throw Exception('Failed to load member details from Firestore.');
     }
   }
 }

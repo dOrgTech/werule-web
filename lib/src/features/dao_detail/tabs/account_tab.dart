@@ -24,8 +24,6 @@ class AccountTab extends StatelessWidget {
       return const _NotConnectedView();
     }
 
-    // THE FIX: Add a ValueKey to the provider. When the selectedAccount changes,
-    // this key will change, forcing Flutter to create a new MemberProvider instance.
     return ChangeNotifierProvider(
       key: ValueKey(auth.selectedAccount),
       create: (context) => MemberProvider(
@@ -374,29 +372,40 @@ class _DelegationCard extends StatelessWidget {
             const SizedBox(height: 24),
             LayoutBuilder(builder: (context, constraints) {
               final isMobile = constraints.maxWidth < 850;
-              final children = [
-                _DelegationOptionBox(
-                  icon: Icons.handshake_outlined,
-                  title: "DELEGATE\nYOUR VOTE",
-                  description: "If you can't or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing.",
-                  bottomWidget: delegateBottomWidget,
-                ),
-                if (isMobile) const SizedBox(height: 24),
-                if (!isMobile) const SizedBox(width: 40),
-                _DelegationOptionBox(
-                  icon: Icons.how_to_vote_outlined,
-                  title: "VOTE\nDIRECTLY",
-                  description: "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf.",
-                  bottomWidget: voteDirectlyBottomWidget,
-                ),
-              ];
-              return isMobile 
-                ? Column(children: children)
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: children,
-                  );
+              
+              final delegateBox = _DelegationOptionBox(
+                icon: Icons.handshake_outlined,
+                title: "DELEGATE\nYOUR VOTE",
+                description: "If you can't or don't want to take part in the governance process, your voting privilege may be forwarded to another member of your choosing.",
+                bottomWidget: delegateBottomWidget,
+              );
+
+              final voteDirectlyBox = _DelegationOptionBox(
+                icon: Icons.how_to_vote_outlined,
+                title: "VOTE\nDIRECTLY",
+                description: "This also allows other members to delegate their vote to you, so that you may participate in the governance process on their behalf.",
+                bottomWidget: voteDirectlyBottomWidget,
+              );
+
+              if (isMobile) {
+                return Column(
+                  children: [
+                    delegateBox,
+                    const SizedBox(height: 24),
+                    voteDirectlyBox,
+                  ],
+                );
+              } else {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Flexible(child: delegateBox),
+                    const SizedBox(width: 40),
+                    Flexible(child: voteDirectlyBox),
+                  ],
+                );
+              }
             }),
           ],
         ),
@@ -420,37 +429,35 @@ class _DelegationOptionBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Flexible(
-      child: Container(
-        height: 300,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.2),
-          border: Border.all(width: 0.3, color: const Color.fromARGB(255, 105, 105, 105)),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 50),
-                const SizedBox(width: 16),
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.left),
-              ],
-            ),
-            const SizedBox(height: 25),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(description, style: TextStyle(color: Colors.grey[300], fontSize: 15, height: 1.4)),
-                ),
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        border: Border.all(width: 0.3, color: const Color.fromARGB(255, 105, 105, 105)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 50),
+              const SizedBox(width: 16),
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.left),
+            ],
+          ),
+          const SizedBox(height: 25),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(description, style: TextStyle(color: Colors.grey[300], fontSize: 15, height: 1.4)),
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(height: 40, child: Center(child: bottomWidget)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(height: 40, child: Center(child: bottomWidget)),
+        ],
       ),
     );
   }
