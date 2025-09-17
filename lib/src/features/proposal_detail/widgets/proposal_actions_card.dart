@@ -59,7 +59,6 @@ class _PastVoteWeightDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // THE FIX: Only show content if the proposal is active.
     if (status != ProposalStatus.Active) {
       return const SizedBox.shrink();
     }
@@ -119,21 +118,43 @@ class _ActionButtons extends StatelessWidget {
     ));
   }
 
+  void _showAccountMismatchDialog(BuildContext context, AccountMismatchException e) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xff2c2c2c),
+        title: const Text("Account Mismatch"),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            child: const Text("OK"),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.read<ProposalDetailProvider>();
+    final auth = context.read<AuthProvider>();
+    final signerAddress = auth.selectedAccount;
+
+    if (signerAddress == null && (status == ProposalStatus.Active || status == ProposalStatus.Succeeded || status == ProposalStatus.Executable)) {
+      return const SizedBox.shrink();
+    }
 
     switch (status) {
       case ProposalStatus.Active:
-        // THE FIX: If the user has voted, show text instead of buttons.
         if (hasVoted) {
           return const Text("You have already voted.", style: TextStyle(color: Colors.grey));
         }
-        return _buildVoteButtons(context, provider);
+        return _buildVoteButtons(context, provider, signerAddress!);
       case ProposalStatus.Succeeded:
-        return _buildQueueButton(context, provider);
+        return _buildQueueButton(context, provider, signerAddress!);
       case ProposalStatus.Executable:
-        return _buildExecuteButton(context, provider);
+        return _buildExecuteButton(context, provider, signerAddress!);
       case ProposalStatus.Executed:
         final hash = provider.proposal.executionHash;
         final explorerUrl = provider.network.blockExplorerUrl;
@@ -179,11 +200,10 @@ class _ActionButtons extends StatelessWidget {
     }
   }
 
-  Widget _buildVoteButtons(BuildContext context, ProposalDetailProvider provider) {
+  Widget _buildVoteButtons(BuildContext context, ProposalDetailProvider provider, String signerAddress) {
     final bool isEnabled = isConnected && pastVoteWeight > BigInt.zero; 
     const Color supportColor = Color.fromARGB(255, 20, 78, 49);
     const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
-
     final proposal = provider.proposal;
     final org = provider.org;
 
@@ -192,12 +212,15 @@ class _ActionButtons extends StatelessWidget {
       children: [
         ElevatedButton.icon(
           onPressed: isEnabled ? () async {
-            final error = await provider.handleAction(() => 
-              context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 1)
-            );
-            if (context.mounted) {
-              if (error != null) _showSnackbar(context, error, isError: true);
-              else _showSnackbar(context, "Vote cast successfully!");
+            try {
+              await provider.handleAction(() => 
+                context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 1, signerAddress)
+              );
+              if (context.mounted) _showSnackbar(context, "Vote cast successfully!");
+            } on AccountMismatchException catch(e) {
+              if (context.mounted) _showAccountMismatchDialog(context, e);
+            } catch (e) {
+              if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
             }
           } : null,
           icon: Icon(Icons.thumb_up, color: isEnabled ? supportColor : Colors.grey),
@@ -209,12 +232,15 @@ class _ActionButtons extends StatelessWidget {
         ),
         ElevatedButton.icon(
            onPressed: isEnabled ? () async {
-            final error = await provider.handleAction(() => 
-              context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 0)
-            );
-             if (context.mounted) {
-              if (error != null) _showSnackbar(context, error, isError: true);
-              else _showSnackbar(context, "Vote cast successfully!");
+            try {
+              await provider.handleAction(() => 
+                context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 0, signerAddress)
+              );
+              if (context.mounted) _showSnackbar(context, "Vote cast successfully!");
+            } on AccountMismatchException catch(e) {
+              if (context.mounted) _showAccountMismatchDialog(context, e);
+            } catch (e) {
+              if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
             }
           } : null,
           icon: Icon(Icons.thumb_down, color: isEnabled ? rejectColor : Colors.grey),
@@ -228,36 +254,42 @@ class _ActionButtons extends StatelessWidget {
     );
   }
 
-   Widget _buildQueueButton(BuildContext context, ProposalDetailProvider provider) {
+   Widget _buildQueueButton(BuildContext context, ProposalDetailProvider provider, String signerAddress) {
     final proposal = provider.proposal;
     final org = provider.org;
 
     return ElevatedButton(
       onPressed: () async {
-         final error = await provider.handleAction(() => 
-          context.read<BlockchainService>().queueProposal(org.address, BigInt.parse(proposal.id))
-        );
-        if (context.mounted) {
-          if (error != null) _showSnackbar(context, error, isError: true);
-          else _showSnackbar(context, "Proposal queued for execution!");
+        try {
+          await provider.handleAction(() => 
+            context.read<BlockchainService>().queueProposal(org.address, BigInt.parse(proposal.id), signerAddress)
+          );
+          if (context.mounted) _showSnackbar(context, "Proposal queued for execution!");
+        } on AccountMismatchException catch(e) {
+          if (context.mounted) _showAccountMismatchDialog(context, e);
+        } catch (e) {
+          if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
         }
       },
       child: const Text("Queue for Execution"),
     );
   }
 
-  Widget _buildExecuteButton(BuildContext context, ProposalDetailProvider provider) {
+  Widget _buildExecuteButton(BuildContext context, ProposalDetailProvider provider, String signerAddress) {
     final proposal = provider.proposal;
     final org = provider.org;
     
      return ElevatedButton(
       onPressed: () async {
-        final error = await provider.handleAction(() => 
-          context.read<BlockchainService>().executeProposal(org.address, BigInt.parse(proposal.id))
-        );
-         if (context.mounted) {
-          if (error != null) _showSnackbar(context, error, isError: true);
-          else _showSnackbar(context, "Proposal executed!");
+        try {
+          await provider.handleAction(() => 
+            context.read<BlockchainService>().executeProposal(org.address, BigInt.parse(proposal.id), signerAddress)
+          );
+          if (context.mounted) _showSnackbar(context, "Proposal executed!");
+        } on AccountMismatchException catch(e) {
+          if (context.mounted) _showAccountMismatchDialog(context, e);
+        } catch (e) {
+          if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
         }
       },
       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),

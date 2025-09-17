@@ -237,6 +237,23 @@ class _DelegationCard extends StatelessWidget {
     ));
   }
 
+  void _showAccountMismatchDialog(BuildContext context, AccountMismatchException e) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xff2c2c2c),
+        title: const Text("Account Mismatch"),
+        content: Text(e.toString()),
+        actions: [
+          TextButton(
+            child: const Text("OK"),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSetDelegateDialog(BuildContext context) {
     final provider = context.read<MemberProvider>();
     final addressController = TextEditingController();
@@ -276,15 +293,18 @@ class _DelegationCard extends StatelessWidget {
                   onPressed: provider.isActionBusy || isSubmitting ? null : () async {
                     if (formKey.currentState!.validate()) {
                       setDialogState(() => isSubmitting = true);
-                      final error = await provider.handleDelegate(addressController.text);
-                      if (dialogContext.mounted) {
-                        if (error == null) {
+                      try {
+                        await provider.handleDelegate(addressController.text);
+                        if (dialogContext.mounted) {
                           _showSnackbar(dialogContext, "Delegation successful!");
                           Navigator.of(dialogContext).pop();
-                        } else {
-                          _showSnackbar(dialogContext, error, isError: true);
-                          setDialogState(() => isSubmitting = false);
                         }
+                      } on AccountMismatchException catch (e) {
+                        if (dialogContext.mounted) _showAccountMismatchDialog(dialogContext, e);
+                      } catch (e) {
+                        if (dialogContext.mounted) _showSnackbar(dialogContext, e.toString(), isError: true);
+                      } finally {
+                        if(dialogContext.mounted) setDialogState(() => isSubmitting = false);
                       }
                     }
                   },
@@ -303,13 +323,13 @@ class _DelegationCard extends StatelessWidget {
     final userAddress = context.read<AuthProvider>().selectedAccount;
     if (userAddress == null) return;
     
-    final error = await provider.handleDelegate(userAddress);
-    if (context.mounted) {
-      if (error == null) {
-        _showSnackbar(context, "Voting power claimed successfully!");
-      } else {
-        _showSnackbar(context, error, isError: true);
-      }
+    try {
+      await provider.handleDelegate(userAddress);
+      if (context.mounted) _showSnackbar(context, "Voting power claimed successfully!");
+    } on AccountMismatchException catch (e) {
+      if (context.mounted) _showAccountMismatchDialog(context, e);
+    } catch (e) {
+      if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
     }
   }
 

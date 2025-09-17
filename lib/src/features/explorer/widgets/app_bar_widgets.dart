@@ -96,7 +96,7 @@ class WalletConnector extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     
     return SizedBox(
-      width: 175,
+      width: 210,
       height: 40,
       child: Center(
         child: AnimatedSwitcher(
@@ -117,46 +117,49 @@ class WalletConnector extends StatelessWidget {
     }
     // --- DISCONNECTED STATE ---
     if (!auth.isConnected) {
-      return TextButton(
-        key: const ValueKey('disconnected'),
-        style: TextButton.styleFrom(
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-          minimumSize: const Size(175, 40),
+      return SizedBox(
+      
+        child: TextButton(
+          key: const ValueKey('disconnected'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+            minimumSize: const Size(175, 40),
+          ),
+          onPressed: () {
+            if (auth.isWalletAvailable) {
+              context.read<AuthProvider>().connectWallet();
+            } else {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: const Color(0xff2c2c2c),
+                    title: const Text('No Wallet Detected'),
+                    content: const SingleChildScrollView(
+                      child: ListBody(
+                        children: <Widget>[
+                          Text('A web3 wallet (like MetaMask or Rabby) is required to connect.'),
+                          SizedBox(height: 8),
+                          Text('Please install a browser extension and refresh the page.'),
+                        ],
+                      ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text('OK'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
+          },
+          child: const Text("Connect Wallet"),
         ),
-        onPressed: () {
-          if (auth.isWalletAvailable) {
-            context.read<AuthProvider>().connectWallet();
-          } else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  backgroundColor: const Color(0xff2c2c2c),
-                  title: const Text('No Wallet Detected'),
-                  content: const SingleChildScrollView(
-                    child: ListBody(
-                      children: <Widget>[
-                        Text('A web3 wallet (like MetaMask or Rabby) is required to connect.'),
-                        SizedBox(height: 8),
-                        Text('Please install a browser extension and refresh the page.'),
-                      ],
-                    ),
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      child: const Text('OK'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-          }
-        },
-        child: const Text("Connect Wallet"),
       );
     }
     // --- CONNECTED STATE ---

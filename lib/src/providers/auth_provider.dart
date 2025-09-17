@@ -6,7 +6,6 @@ import 'package:werule/src/models/network.dart';
 import '../services/blockchain_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  // REMOVED: The NetworkProvider dependency is gone.
   final BlockchainService _blockchainService;
 
   // State
@@ -25,7 +24,6 @@ class AuthProvider extends ChangeNotifier {
   int? get chainId => _chainId;
   bool get isWalletAvailable => _blockchainService.isWalletAvailable();
 
-  // Constructor is simplified
   AuthProvider(this._blockchainService) {
     if (_blockchainService.isWalletAvailable()) {
       _autoConnect();
@@ -55,12 +53,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // This method is now only responsible for interacting with the wallet
   Future<void> switchWalletChain(Network network) async {
     try {
       await _blockchainService.switchChain(network.chainId);
     } on web3.EthereumException catch (e) {
-      if (e.code == 4902) { // Unrecognized Chain ID
+      if (e.code == 4902) { 
         try {
           await _blockchainService.addChain(network);
         } catch (addError) {
@@ -79,15 +76,16 @@ class AuthProvider extends ChangeNotifier {
     _accounts = newAccounts;
     _chainId = newChainId;
 
+    // THE FIX: Proactively sync the selected account with the wallet's active account.
+    // The active account is always the first one in the list returned by the wallet.
     if (newAccounts.isEmpty) {
       _selectedAccount = null;
     } else {
-      if (!_accounts.contains(_selectedAccount)) {
-        _selectedAccount = _accounts.first;
-      }
+      // If the list isn't empty, always set our app's selected account
+      // to the first one, which reflects the active account in the wallet.
+      _selectedAccount = _accounts.first;
     }
     
-    // REMOVED: The direct call to networkProvider is gone.
     notifyListeners();
   }
 

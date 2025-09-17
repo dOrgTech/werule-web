@@ -110,7 +110,6 @@ class ProposalDetailProvider extends ChangeNotifier {
     }
   }
 
-  // THE FIX: Add a new method to check the user's vote status from Firestore.
   Future<void> _checkIfUserVoted() async {
     final userAddress = _authProvider.selectedAccount;
     if (userAddress == null || _status != ProposalStatus.Active) {
@@ -125,7 +124,6 @@ class ProposalDetailProvider extends ChangeNotifier {
     );
   }
 
-  // THE FIX: Add a small delay before the first attempt to fetch the snapshot.
   Future<void> _fetchPastVotingWeight() async {
     final userAddress = _authProvider.selectedAccount;
     final proposalId = BigInt.tryParse(_proposal.id);
@@ -134,7 +132,6 @@ class ProposalDetailProvider extends ChangeNotifier {
       return;
     }
 
-    // Add a small delay to give the RPC node a moment to sync with the snapshot timestamp.
     await Future.delayed(const Duration(seconds: 1));
     
     int retries = 5;
@@ -246,20 +243,19 @@ class ProposalDetailProvider extends ChangeNotifier {
     }
   }
 
-  Future<String?> handleAction(Function action) async {
+  Future<void> handleAction(Function action) async {
     _isActionBusy = true;
     notifyListeners();
-    String? error;
     try {
       await action();
-      // THE FIX: After a successful vote, update the `hasUserVoted` flag.
       _hasUserVoted = true;
     } catch (e) {
-      error = e.toString();
+      // THE FIX: The exception must be re-thrown so the UI layer can catch it.
+      rethrow;
+    } finally {
+      _isActionBusy = false;
+      notifyListeners();
     }
-    _isActionBusy = false;
-    notifyListeners();
-    return error;
   }
   
   @override

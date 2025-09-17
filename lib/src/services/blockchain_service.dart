@@ -8,6 +8,19 @@ import 'package:werule/src/services/erc20_gov_abi.dart';
 import 'package:werule/src/services/governor_abi.dart';
 import '../models/network.dart';
 
+// THE FIX: A custom exception to identify this specific error case.
+class AccountMismatchException implements Exception {
+  final String requiredAddress;
+  final String activeAddress;
+  AccountMismatchException({required this.requiredAddress, required this.activeAddress});
+
+  @override
+  String toString() {
+    final shortAddress = "${requiredAddress.substring(0, 6)}...${requiredAddress.substring(requiredAddress.length - 4)}";
+    return "Account mismatch. Please set the active wallet account to $shortAddress.";
+  }
+}
+
 class BlockchainService {
   int _parseChainId(dynamic chainId) {
     if (chainId is int) {
@@ -189,15 +202,26 @@ class BlockchainService {
     }
   }
 
-  Future<String> delegate(String tokenAddress, String delegateeAddress) async {
+  Future<String> delegate(String tokenAddress, String delegateeAddress, String signerAddress) async {
     if (!web3.Ethereum.isSupported || web3.ethereum == null) {
       throw Exception("A web3 wallet is required for this action.");
     }
     
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
-    final contract = web3.Contract(tokenAddress, Erc20GovAbi.abiJson, signer);
+    final activeAddress = await signer.getAddress();
 
+    if (kDebugMode) {
+      print("[BlockchainService] Attempting 'delegate' transaction.");
+      print("  > App's selected signer: $signerAddress");
+      print("  > Wallet's active signer: $activeAddress");
+    }
+
+    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
+      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
+    }
+
+    final contract = web3.Contract(tokenAddress, Erc20GovAbi.abiJson, signer);
     try {
       final tx = await contract.send('delegate', [delegateeAddress]);
       await tx.wait();
@@ -208,14 +232,25 @@ class BlockchainService {
     }
   }
 
-  Future<String> castVote(String contractAddress, BigInt proposalId, int support) async {
+  Future<String> castVote(String contractAddress, BigInt proposalId, int support, String signerAddress) async {
     if (!web3.Ethereum.isSupported || web3.ethereum == null) {
       throw Exception("A web3 wallet is required for this action.");
     }
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
-    final contract = web3.Contract(contractAddress, governorAbi, signer);
+    final activeAddress = await signer.getAddress();
 
+    if (kDebugMode) {
+      print("[BlockchainService] Attempting 'castVote' transaction.");
+      print("  > App's selected signer: $signerAddress");
+      print("  > Wallet's active signer: $activeAddress");
+    }
+
+    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
+      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
+    }
+    
+    final contract = web3.Contract(contractAddress, governorAbi, signer);
     try {
       final tx = await contract.send('castVote', [proposalId, support]);
       await tx.wait();
@@ -226,7 +261,6 @@ class BlockchainService {
     }
   }
   
-  // THE FIX: Renamed from getProposalSnapshotBlock to reflect it returns a timestamp.
   Future<BigInt> getProposalSnapshotTimestamp(String contractAddress, BigInt proposalId, String rpcUrl) async {
     final client = Web3Client(rpcUrl, http.Client());
     try {
@@ -239,7 +273,6 @@ class BlockchainService {
     }
   }
 
-  // THE FIX: The second parameter is now correctly named `timepoint`.
   Future<BigInt> getPastVotes(String tokenAddress, String userAddress, BigInt timepoint, String rpcUrl) async {
     final client = Web3Client(rpcUrl, http.Client());
     try {
@@ -252,14 +285,42 @@ class BlockchainService {
     }
   }
 
-  Future<String> queueProposal(String contractAddress, BigInt proposalId) async {
-    if (kDebugMode) print('Queueing proposal $proposalId on contract $contractAddress');
+  Future<String> queueProposal(String contractAddress, BigInt proposalId, String signerAddress) async {
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final activeAddress = await signer.getAddress();
+    
+    if (kDebugMode) {
+      print("[BlockchainService] Attempting 'queue' transaction.");
+      print("  > App's selected signer: $signerAddress");
+      print("  > Wallet's active signer: $activeAddress");
+    }
+
+    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
+      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
+    }
+
+    // Mocking the rest of the call for now
     await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_queue_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }
 
-  Future<String> executeProposal(String contractAddress, BigInt proposalId) async {
-    if (kDebugMode) print('Executing proposal $proposalId on contract $contractAddress');
+  Future<String> executeProposal(String contractAddress, BigInt proposalId, String signerAddress) async {
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final activeAddress = await signer.getAddress();
+
+    if (kDebugMode) {
+      print("[BlockchainService] Attempting 'execute' transaction.");
+      print("  > App's selected signer: $signerAddress");
+      print("  > Wallet's active signer: $activeAddress");
+    }
+
+    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
+      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
+    }
+
+    // Mocking the rest of the call for now
     await Future.delayed(const Duration(seconds: 2));
     return "0x_mock_execute_tx_hash_${DateTime.now().millisecondsSinceEpoch}";
   }

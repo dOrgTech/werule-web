@@ -36,7 +36,6 @@ class MemberProvider extends ChangeNotifier {
   // --- State ---
   bool _isLoading = true;
   String? _errorMessage;
-  // THE FIX: Use the new MemberActivity model.
   MemberActivity _memberActivity = MemberActivity.empty();
   BigInt _personalBalance = BigInt.zero;
   BigInt _votingWeight = BigInt.zero;
@@ -49,7 +48,6 @@ class MemberProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isActionBusy => _isActionBusy;
   String? get errorMessage => _errorMessage;
-  // THE FIX: Get counts from the new model.
   int get proposalsCreatedCount => _memberActivity.proposalsCreated.length;
   int get votesCastCount => _memberActivity.proposalsVoted.length;
   BigInt get personalBalance => _personalBalance;
@@ -93,19 +91,16 @@ class MemberProvider extends ChangeNotifier {
 
       if (checksumAddress != null) {
         final results = await Future.wait([
-          // THE FIX: Call the new service method.
           _firestoreService.getMemberActivity(_network.daoCollectionName, _org.address, checksumAddress!),
           _blockchainService.getVotes(_org.govTokenAddress, userAddress, _network.rpcUrl),
           _firestoreService.getProposals(_network.daoCollectionName, _org.address),
           _blockchainService.getDelegate(_org.govTokenAddress, userAddress, _network.rpcUrl),
         ]);
-        // THE FIX: Assign to the new MemberActivity property.
         _memberActivity = results[0] as MemberActivity;
         _votingWeight = results[1] as BigInt;
         final allProposals = results[2] as List<Proposal>;
         _delegateAddress = results[3] as String?;
         
-        // THE FIX: Use the new property to get the proposal IDs.
         final createdIds = _memberActivity.proposalsCreated.toSet();
         final votedIds = _memberActivity.proposalsVoted.toSet();
 
@@ -128,20 +123,25 @@ class MemberProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> handleDelegate(String delegateeAddress) async {
+  Future<void> handleDelegate(String delegateeAddress) async {
     _isActionBusy = true;
     notifyListeners();
-    String? error;
+    
+    final signerAddress = _authProvider.selectedAccount;
+    if (signerAddress == null) {
+      _isActionBusy = false;
+      notifyListeners();
+      throw Exception("No account selected. Cannot send transaction.");
+    }
+    
     try {
-      await _blockchainService.delegate(_org.govTokenAddress, delegateeAddress);
+      await _blockchainService.delegate(_org.govTokenAddress, delegateeAddress, signerAddress);
       await Future.delayed(const Duration(seconds: 3));
       await fetchMemberData();
-    } catch (e) {
-      error = e.toString();
+    } finally {
+      _isActionBusy = false;
+      notifyListeners();
     }
-    _isActionBusy = false;
-    notifyListeners();
-    return error;
   }
 }
 // lib/src/providers/member_provider.dart
