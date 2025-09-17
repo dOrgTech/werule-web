@@ -270,7 +270,7 @@ class BlockchainService {
     String signerAddress,
     List<String> targets,
     List<BigInt> values,
-    List<Uint8List> calldatas, // THE FIX: Changed to List<Uint8List>
+    List<Uint8List> calldatas,
     String description,
   ) async {
     if (!web3.Ethereum.isSupported || web3.ethereum == null) {
@@ -285,6 +285,13 @@ class BlockchainService {
       print("[BlockchainService] Attempting 'propose' transaction.");
       print("  > App's selected signer: $signerAddress");
       print("  > Wallet's active signer: $activeAddress");
+      // --- START: ADDED FOR FINAL PROOF ---
+      print("  > Parameters for contract.send('propose'):");
+      print("    - targets: $targets");
+      print("    - values: $values");
+      print("    - calldatas: $calldatas");
+      print("    - description: '$description'");
+      // --- END: ADDED FOR FINAL PROOF ---
     }
 
     if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
@@ -312,7 +319,7 @@ class BlockchainService {
     String signerAddress,
     List<String> targets,
     List<BigInt> values,
-    List<Uint8List> calldatas, // THE FIX: Changed to List<Uint8List>
+    List<Uint8List> calldatas,
     String description,
   ) async {
     final provider = web3.Web3Provider(web3.ethereum!);
@@ -358,7 +365,7 @@ class BlockchainService {
     String signerAddress,
     List<String> targets,
     List<BigInt> values,
-    List<Uint8List> calldatas, // THE FIX: Changed to List<Uint8List>
+    List<Uint8List> calldatas,
     String description,
   ) async {
     final provider = web3.Web3Provider(web3.ethereum!);

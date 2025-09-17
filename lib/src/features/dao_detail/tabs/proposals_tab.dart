@@ -3,9 +3,10 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:web3dart/crypto.dart';
+import 'package:web3dart/web3dart.dart'; // Import web3dart
 import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
@@ -32,7 +33,7 @@ class ProposalsTab extends StatefulWidget {
 class _ProposalsTabState extends State<ProposalsTab> {
   String _selectedType = 'All';
   String _selectedStatus = 'All';
-  bool _isCreatingProposal = false; // NEW: State to track proposal creation
+  bool _isCreatingProposal = false;
 
   late Stream<List<Proposal>> _proposalsStream;
 
@@ -60,7 +61,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
     }
   }
 
-  // --- NEW: Helper methods for proposal creation ---
+  // --- Helper methods for proposal creation ---
 
   String _generateRandomString(int length) {
     final random = Random.secure();
@@ -69,6 +70,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
   }
   
   void _showSnackbar(String message, {bool isError = false}) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Center(child: Text(message)),
       backgroundColor: isError ? Colors.redAccent : Colors.green,
@@ -76,6 +78,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
   }
 
   void _showAccountMismatchDialog(AccountMismatchException e) {
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -97,7 +100,6 @@ class _ProposalsTabState extends State<ProposalsTab> {
 
     final auth = context.read<AuthProvider>();
     final blockchain = context.read<BlockchainService>();
-    final calldataService = context.read<CalldataService>();
 
     final signerAddress = auth.selectedAccount;
     if (signerAddress == null || !auth.isConnected) {
@@ -120,8 +122,21 @@ class _ProposalsTabState extends State<ProposalsTab> {
     
     final targets = [widget.org.registryAddress];
     final values = [BigInt.zero];
-    // THE FIX: This now correctly returns a Uint8List, and we create a List<Uint8List>.
-    final List<Uint8List> calldatas = [calldataService.encodeRegistryCall(key, value)];
+    
+    // --- THE FINAL, DEFINITIVE FIX ---
+    // The function name MUST be "edit".
+    // The second parameter name MUST be "Value" with a capital 'V'.
+    const correctEditFunction = ContractFunction(
+      "editRegistry", [
+        FunctionParameter("key", StringType()),
+        FunctionParameter("Value", StringType()), 
+      ],
+    );
+
+    // Encode the calldata right here to guarantee correctness.
+    final List<Uint8List> calldatas = [correctEditFunction.encodeCall([key, value])];
+    
+    // --- END OF FIX ---
 
     // 2. Send Transaction
     try {
@@ -130,7 +145,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
         signerAddress,
         targets,
         values,
-        calldatas, // This is now List<Uint8List>
+        calldatas,
         packedDescription,
       );
       _showSnackbar("Proposal submitted successfully! Tx: ${txHash.substring(0,10)}...");
@@ -139,7 +154,9 @@ class _ProposalsTabState extends State<ProposalsTab> {
     } catch (e) {
       _showSnackbar(e.toString(), isError: true);
     } finally {
-      setState(() => _isCreatingProposal = false);
+      if (mounted) {
+        setState(() => _isCreatingProposal = false);
+      }
     }
   }
 
@@ -232,7 +249,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
             _selectedType, _typeOptions, (val) => setState(() => _selectedType = val!));
         final statusDropdown = _buildDropdown(_selectedStatus, _statusOptions,
             (val) => setState(() => _selectedStatus = val!));
-
+        
         final createButton = ElevatedButton(
           onPressed: _isCreatingProposal ? null : _handleCreateProposal,
           style: ElevatedButton.styleFrom(

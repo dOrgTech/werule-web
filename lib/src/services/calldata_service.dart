@@ -1,11 +1,17 @@
 // lib/src/services/calldata_service.dart
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 class CalldataService {
   // --- Contract Function Definitions ---
 
+  static const _editDef = ContractFunction(
+    "edit", [ FunctionParameter("key", StringType()), FunctionParameter("value", StringType()), ],
+  );
+
+  // Other definitions from old app for correctness
   static const transferNativeDef = ContractFunction(
     "transferETH", [ FunctionParameter("to", AddressType()), FunctionParameter("amount", UintType()), ],
   );
@@ -15,11 +21,11 @@ class CalldataService {
   );
 
   static const changeVotingDelayDef = ContractFunction(
-    "setVotingDelay", [ FunctionParameter("newVotingDelay", UintType()), ],
+    "setVotingDelay", [ FunctionParameter("newVotingDelay", UintType(length: 48)), ],
   );
 
   static const changeVotingPeriodDef = ContractFunction(
-    "setVotingPeriod", [ FunctionParameter("newVotingPeriod", UintType()), ],
+    "setVotingPeriod", [ FunctionParameter("newVotingPeriod", UintType(length: 32)), ],
   );
   
   static const changeProposalThresholdDef = ContractFunction(
@@ -34,15 +40,15 @@ class CalldataService {
     "burn", [ FunctionParameter("from", AddressType()), FunctionParameter("amount", UintType()), ],
   );
   
-  static const editRegistryDef = ContractFunction(
-    "edit", [ FunctionParameter("key", StringType()), FunctionParameter("value", StringType()), ],
-  );
-
   // --- Encoding Logic ---
 
-  // THE FIX: This now returns the raw byte array (Uint8List) as required by the transaction sender.
-  Uint8List encodeRegistryCall(String key, String value) {
-    return editRegistryDef.encodeCall([key, value]);
+  Uint8List encodeEditRegistryCall(String key, String value) {
+    // THE FIX: Manually construct the signature string for debugging, as '.signature' does not exist.
+    final paramTypes = _editDef.parameters.map((p) => p.type.name).join(',');
+    final signatureString = "${_editDef.name}($paramTypes)";
+    debugPrint("[CalldataService] Encoding signature: '$signatureString'");
+    
+    return _editDef.encodeCall([key, value]);
   }
 
   // --- Decoding Logic ---
