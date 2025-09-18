@@ -1,17 +1,19 @@
 // lib/src/services/calldata_service.dart
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 class CalldataService {
   // --- Contract Function Definitions ---
 
-  static const _editDef = ContractFunction(
-    "edit", [ FunctionParameter("key", StringType()), FunctionParameter("value", StringType()), ],
+  // THE FIX: The correct function name is "editRegistry" and the second parameter is "Value".
+  static const editRegistryDef = ContractFunction(
+    "editRegistry", [ 
+      FunctionParameter("key", StringType()), 
+      FunctionParameter("Value", StringType()),
+    ],
   );
 
-  // Other definitions from old app for correctness
   static const transferNativeDef = ContractFunction(
     "transferETH", [ FunctionParameter("to", AddressType()), FunctionParameter("amount", UintType()), ],
   );
@@ -42,13 +44,8 @@ class CalldataService {
   
   // --- Encoding Logic ---
 
-  Uint8List encodeEditRegistryCall(String key, String value) {
-    // THE FIX: Manually construct the signature string for debugging, as '.signature' does not exist.
-    final paramTypes = _editDef.parameters.map((p) => p.type.name).join(',');
-    final signatureString = "${_editDef.name}($paramTypes)";
-    debugPrint("[CalldataService] Encoding signature: '$signatureString'");
-    
-    return _editDef.encodeCall([key, value]);
+  Uint8List encodeRegistryCall(String key, String value) {
+    return editRegistryDef.encodeCall([key, value]);
   }
 
   // --- Decoding Logic ---

@@ -3,10 +3,8 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:web3dart/web3dart.dart'; // Import web3dart
 import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
@@ -100,6 +98,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
 
     final auth = context.read<AuthProvider>();
     final blockchain = context.read<BlockchainService>();
+    final calldataService = context.read<CalldataService>(); // Use the service again
 
     final signerAddress = auth.selectedAccount;
     if (signerAddress == null || !auth.isConnected) {
@@ -123,20 +122,8 @@ class _ProposalsTabState extends State<ProposalsTab> {
     final targets = [widget.org.registryAddress];
     final values = [BigInt.zero];
     
-    // --- THE FINAL, DEFINITIVE FIX ---
-    // The function name MUST be "edit".
-    // The second parameter name MUST be "Value" with a capital 'V'.
-    const correctEditFunction = ContractFunction(
-      "editRegistry", [
-        FunctionParameter("key", StringType()),
-        FunctionParameter("Value", StringType()), 
-      ],
-    );
-
-    // Encode the calldata right here to guarantee correctness.
-    final List<Uint8List> calldatas = [correctEditFunction.encodeCall([key, value])];
-    
-    // --- END OF FIX ---
+    // Use the corrected calldata service
+    final List<Uint8List> calldatas = [calldataService.encodeRegistryCall(key, value)];
 
     // 2. Send Transaction
     try {

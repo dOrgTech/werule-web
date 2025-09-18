@@ -12,7 +12,6 @@ import 'package:werule/src/services/erc20_gov_abi.dart';
 import 'package:werule/src/services/governor_abi.dart';
 import '../models/network.dart';
 
-// THE FIX: A custom exception to identify this specific error case.
 class AccountMismatchException implements Exception {
   final String requiredAddress;
   final String activeAddress;
@@ -285,13 +284,6 @@ class BlockchainService {
       print("[BlockchainService] Attempting 'propose' transaction.");
       print("  > App's selected signer: $signerAddress");
       print("  > Wallet's active signer: $activeAddress");
-      // --- START: ADDED FOR FINAL PROOF ---
-      print("  > Parameters for contract.send('propose'):");
-      print("    - targets: $targets");
-      print("    - values: $values");
-      print("    - calldatas: $calldatas");
-      print("    - description: '$description'");
-      // --- END: ADDED FOR FINAL PROOF ---
     }
 
     if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
