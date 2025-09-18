@@ -18,7 +18,8 @@ class ProposalExecutionDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget detailsContent;
-    final type = proposal.type?.toLowerCase() ?? "unknown";
+    // THE FIX: Replace underscore with space to make the string comparison robust.
+    final type = proposal.type?.toLowerCase().replaceAll('_', ' ') ?? "unknown";
 
     if (type.contains("transfer")) {
       detailsContent = TokenTransferDetails(proposal: proposal, network: network);
@@ -54,7 +55,6 @@ class ProposalExecutionDetailsCard extends StatelessWidget {
 
     return Card(
       color: const Color(0xff2c2c2c),
-      // THE FIX: Use straight corners
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Container(
          width: double.infinity,

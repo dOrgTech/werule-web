@@ -6,7 +6,6 @@ import 'package:web3dart/web3dart.dart';
 class CalldataService {
   // --- Contract Function Definitions ---
 
-  // THE FIX: The correct function name is "editRegistry" and the second parameter is "Value".
   static const editRegistryDef = ContractFunction(
     "editRegistry", [ 
       FunctionParameter("key", StringType()), 
@@ -15,31 +14,48 @@ class CalldataService {
   );
 
   static const transferNativeDef = ContractFunction(
-    "transferETH", [ FunctionParameter("to", AddressType()), FunctionParameter("amount", UintType()), ],
+    "transferETH", [ 
+      FunctionParameter("to", AddressType()), 
+      FunctionParameter("amount", UintType()), 
+    ],
   );
 
   static const changeQuorumDef = ContractFunction(
-    "updateQuorumNumerator", [ FunctionParameter("newQuorumNumerator", UintType()), ],
+    "updateQuorumNumerator", [ 
+      FunctionParameter("newQuorumNumerator", UintType()), 
+    ],
   );
 
   static const changeVotingDelayDef = ContractFunction(
-    "setVotingDelay", [ FunctionParameter("newVotingDelay", UintType(length: 48)), ],
+    "setVotingDelay", [ 
+      FunctionParameter("newVotingDelay", UintType(length: 48)), 
+    ],
   );
 
   static const changeVotingPeriodDef = ContractFunction(
-    "setVotingPeriod", [ FunctionParameter("newVotingPeriod", UintType(length: 32)), ],
+    "setVotingPeriod", [ 
+      FunctionParameter("newVotingPeriod", UintType(length: 32)), 
+    ],
   );
   
   static const changeProposalThresholdDef = ContractFunction(
-    "setProposalThreshold", [ FunctionParameter("newProposalThreshold", UintType()), ],
+    "setProposalThreshold", [ 
+      FunctionParameter("newProposalThreshold", UintType()), 
+    ],
   );
 
   static const mintGovTokensDef = ContractFunction(
-    "mint", [ FunctionParameter("to", AddressType()), FunctionParameter("amount", UintType()), ],
+    "mint", [ 
+      FunctionParameter("to", AddressType()), 
+      FunctionParameter("amount", UintType()), 
+    ],
   );
 
   static const burnGovTokensDef = ContractFunction(
-    "burn", [ FunctionParameter("from", AddressType()), FunctionParameter("amount", UintType()), ],
+    "burn", [ 
+      FunctionParameter("from", AddressType()), 
+      FunctionParameter("amount", UintType()), 
+    ],
   );
   
   // --- Encoding Logic ---
@@ -48,7 +64,42 @@ class CalldataService {
     return editRegistryDef.encodeCall([key, value]);
   }
 
+  Uint8List encodeTransferCall(EthereumAddress to, BigInt amount) {
+    return transferNativeDef.encodeCall([to, amount]);
+  }
+
+  Uint8List encodeMintCall(EthereumAddress to, BigInt amount) {
+    return mintGovTokensDef.encodeCall([to, amount]);
+  }
+  
+  Uint8List encodeBurnCall(EthereumAddress from, BigInt amount) {
+    return burnGovTokensDef.encodeCall([from, amount]);
+  }
+
+  Uint8List encodeQuorumCall(BigInt newQuorum) {
+    return changeQuorumDef.encodeCall([newQuorum]);
+  }
+
+  Uint8List encodeVotingDelayCall(BigInt newDelay) {
+    return changeVotingDelayDef.encodeCall([newDelay]);
+  }
+
+  Uint8List encodeVotingPeriodCall(BigInt newPeriod) {
+    return changeVotingPeriodDef.encodeCall([newPeriod]);
+  }
+
+  Uint8List encodeThresholdCall(BigInt newThreshold) {
+    return changeProposalThresholdDef.encodeCall([newThreshold]);
+  }
+
+
   // --- Decoding Logic ---
+
+  // THE FIX: Add decoders for DAO configuration proposal types.
+  List<dynamic> decodeQuorumCall(String hex) => decodeCalldata(changeQuorumDef, hex);
+  List<dynamic> decodeVotingDelayCall(String hex) => decodeCalldata(changeVotingDelayDef, hex);
+  List<dynamic> decodeVotingPeriodCall(String hex) => decodeCalldata(changeVotingPeriodDef, hex);
+  List<dynamic> decodeThresholdCall(String hex) => decodeCalldata(changeProposalThresholdDef, hex);
   
   List<dynamic> decodeCalldata(ContractFunction functionAbi, String hexCalldata) {
     if (hexCalldata.startsWith('0x')) {
