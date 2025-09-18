@@ -7,7 +7,7 @@ import 'package:werule/src/features/explorer/explorer_screen.dart';
 import 'package:werule/src/features/proposal_detail/proposal_detail_screen.dart';
 import 'package:werule/src/providers/network_provider.dart';
 
-// THE FIX: A reusable fade transition builder for all routes.
+// A reusable fade transition builder for all routes.
 CustomTransitionPage<T> _buildFadeTransitionPage<T>({
   required BuildContext context,
   required GoRouterState state,
@@ -28,7 +28,6 @@ final appRouter = GoRouter(
     // Root route: '/'
     GoRoute(
       path: '/',
-      // THE FIX: Use pageBuilder to apply the custom transition.
       pageBuilder: (context, state) => _buildFadeTransitionPage(
         context: context,
         state: state,
@@ -48,7 +47,6 @@ final appRouter = GoRouter(
     // DAO Explorer route: '/:networkName'
     GoRoute(
       path: '/:networkName',
-      // THE FIX: Use pageBuilder to apply the custom transition.
       pageBuilder: (context, state) {
         final networkName = state.pathParameters['networkName']!;
         return _buildFadeTransitionPage(
@@ -61,7 +59,6 @@ final appRouter = GoRouter(
         // DAO Detail route: '/:networkName/:daoAddress'
         GoRoute(
           path: ':daoAddress',
-          // THE FIX: Use pageBuilder to apply the custom transition.
           pageBuilder: (context, state) {
             final networkName = state.pathParameters['networkName']!;
             final daoAddress = state.pathParameters['daoAddress']!;
@@ -76,10 +73,10 @@ final appRouter = GoRouter(
             );
           },
           routes: [
+            // THE FIX: The '/proposals/create' route has been removed.
             // Proposal Detail route: '/:networkName/:daoAddress/proposals/:proposalId'
             GoRoute(
               path: 'proposals/:proposalId',
-              // THE FIX: Use pageBuilder to apply the custom transition.
               pageBuilder: (context, state) {
                 final networkName = state.pathParameters['networkName']!;
                 final daoAddress = state.pathParameters['daoAddress']!;
@@ -101,4 +98,5 @@ final appRouter = GoRouter(
     ),
   ],
 );
-// lib/src/routing/app_router.dart
+// lib/src/routing/app_router.dart```
+

@@ -1,14 +1,14 @@
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
 import 'dart:async';
-import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/create_proposal/create_proposal_dialog.dart';
 import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/src/providers/create_proposal_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
@@ -31,7 +31,6 @@ class ProposalsTab extends StatefulWidget {
 class _ProposalsTabState extends State<ProposalsTab> {
   String _selectedType = 'All';
   String _selectedStatus = 'All';
-  bool _isCreatingProposal = false;
 
   late Stream<List<Proposal>> _proposalsStream;
 
@@ -59,92 +58,32 @@ class _ProposalsTabState extends State<ProposalsTab> {
     }
   }
 
-  // --- Helper methods for proposal creation ---
-
-  String _generateRandomString(int length) {
-    final random = Random.secure();
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
-  }
-  
-  void _showSnackbar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Center(child: Text(message)),
-      backgroundColor: isError ? Colors.redAccent : Colors.green,
-    ));
-  }
-
-  void _showAccountMismatchDialog(AccountMismatchException e) {
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xff2c2c2c),
-        title: const Text("Account Mismatch"),
-        content: Text(e.toString()),
-        actions: [
-          TextButton(
-            child: const Text("OK"),
-            onPressed: () => Navigator.of(dialogContext).pop(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleCreateProposal() async {
-    setState(() => _isCreatingProposal = true);
-
+  // THE FIX: This function now shows our new modal dialog.
+  void _showCreateProposalDialog() {
     final auth = context.read<AuthProvider>();
-    final blockchain = context.read<BlockchainService>();
-    final calldataService = context.read<CalldataService>(); // Use the service again
-
-    final signerAddress = auth.selectedAccount;
-    if (signerAddress == null || !auth.isConnected) {
-      _showSnackbar("Please connect your wallet to create a proposal.", isError: true);
-      setState(() => _isCreatingProposal = false);
+    if (!auth.isConnected || auth.selectedAccount == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Center(child: Text("Please connect your wallet to create a proposal.")),
+        backgroundColor: Colors.redAccent,
+      ));
       return;
     }
 
-    // 1. Prepare Proposal Data
-    final randomSuffix = _generateRandomString(6);
-    final title = "Test Registry Proposal $randomSuffix";
-    const type = "registry";
-    const description = "This is a hardcoded test proposal created from the WeRule app.";
-    const link = "(No Link Provided)";
-    
-    final packedDescription = "$title""0|||0""$type""0|||0""$description""0|||0""$link";
-
-    final key = "testKey-$randomSuffix";
-    const value = "testValue";
-    
-    final targets = [widget.org.registryAddress];
-    final values = [BigInt.zero];
-    
-    // Use the corrected calldata service
-    final List<Uint8List> calldatas = [calldataService.encodeRegistryCall(key, value)];
-
-    // 2. Send Transaction
-    try {
-      final txHash = await blockchain.propose(
-        widget.org.address,
-        signerAddress,
-        targets,
-        values,
-        calldatas,
-        packedDescription,
-      );
-      _showSnackbar("Proposal submitted successfully! Tx: ${txHash.substring(0,10)}...");
-    } on AccountMismatchException catch(e) {
-      _showAccountMismatchDialog(e);
-    } catch (e) {
-      _showSnackbar(e.toString(), isError: true);
-    } finally {
-      if (mounted) {
-        setState(() => _isCreatingProposal = false);
-      }
-    }
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        // The provider is created here, scoped to the lifecycle of the dialog.
+        return ChangeNotifierProvider(
+          create: (_) => CreateProposalProvider(
+            org: widget.org,
+            signerAddress: auth.selectedAccount!,
+            calldata: context.read<CalldataService>(),
+            blockchain: context.read<BlockchainService>(),
+          ),
+          child: CreateProposalDialog(org: widget.org),
+        );
+      },
+    );
   }
 
   @override
@@ -238,16 +177,14 @@ class _ProposalsTabState extends State<ProposalsTab> {
             (val) => setState(() => _selectedStatus = val!));
         
         final createButton = ElevatedButton(
-          onPressed: _isCreatingProposal ? null : _handleCreateProposal,
+          onPressed: _showCreateProposalDialog,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xffa1d0d0),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          child: _isCreatingProposal
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : const Text('Create Proposal',
+          child: const Text('Create Proposal',
                   style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         );
 
