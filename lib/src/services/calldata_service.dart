@@ -1,5 +1,6 @@
 // lib/src/services/calldata_service.dart
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -19,6 +20,18 @@ class CalldataService {
       FunctionParameter("amount", UintType()), 
     ],
   );
+
+  static const erc20TreasuryTransferDef = ContractFunction(
+    "transferERC20", [
+      FunctionParameter("token", AddressType()),
+      FunctionParameter("to", AddressType()),
+      FunctionParameter("amount", UintType()),
+    ],
+  );
+
+  // THE FIX: Expose function selectors for reliable identification
+  static Uint8List get transferNativeSelector => transferNativeDef.selector;
+  static Uint8List get erc20TreasuryTransferSelector => erc20TreasuryTransferDef.selector;
 
   static const changeQuorumDef = ContractFunction(
     "updateQuorumNumerator", [ 
@@ -68,6 +81,10 @@ class CalldataService {
     return transferNativeDef.encodeCall([to, amount]);
   }
 
+  Uint8List encodeErc20TreasuryTransferCall(EthereumAddress token, EthereumAddress to, BigInt amount) {
+    return erc20TreasuryTransferDef.encodeCall([token, to, amount]);
+  }
+
   Uint8List encodeMintCall(EthereumAddress to, BigInt amount) {
     return mintGovTokensDef.encodeCall([to, amount]);
   }
@@ -95,33 +112,45 @@ class CalldataService {
 
   // --- Decoding Logic ---
 
-  // THE FIX: Add decoders for DAO configuration proposal types.
   List<dynamic> decodeQuorumCall(String hex) => decodeCalldata(changeQuorumDef, hex);
   List<dynamic> decodeVotingDelayCall(String hex) => decodeCalldata(changeVotingDelayDef, hex);
   List<dynamic> decodeVotingPeriodCall(String hex) => decodeCalldata(changeVotingPeriodDef, hex);
   List<dynamic> decodeThresholdCall(String hex) => decodeCalldata(changeProposalThresholdDef, hex);
   
   List<dynamic> decodeCalldata(ContractFunction functionAbi, String hexCalldata) {
+    // Note: This is a simplified decoder and will be updated to be more robust.
     if (hexCalldata.startsWith('0x')) {
       hexCalldata = hexCalldata.substring(2);
     }
     
-    final dataBytes = hexToBytes(hexCalldata).sublist(4);
+    final functionSelector = functionAbi.selector;
+    final calldataBytes = hexToBytes(hexCalldata);
+    
+    // Basic validation
+    if (!listEquals(calldataBytes.sublist(0, 4), functionSelector)) {
+      throw FormatException('Calldata does not match function selector.');
+    }
 
+    final dataBytes = calldataBytes.sublist(4);
     final decoded = <dynamic>[];
     var offset = 0;
 
     for (final param in functionAbi.parameters) {
+      if (offset + 32 > dataBytes.length) {
+        throw FormatException('Calldata is too short for parameter ${param.name}');
+      }
       final chunk = dataBytes.sublist(offset, offset + 32);
 
       if (param.type is AddressType) {
         final address = EthereumAddress(chunk.sublist(12));
-        decoded.add(address.hex);
+        decoded.add(address); // Return the Address object
       } else if (param.type is UintType) {
         final value = bytesToInt(chunk);
         decoded.add(value);
       } else {
-        throw UnsupportedError("This simple decoder only supports Address and Uint types.");
+        // This simple decoder does not support dynamic types like string or bytes.
+        // For this app's purposes, we only decode simple types.
+        throw UnsupportedError("Decoding for type ${param.type.name} is not supported.");
       }
       
       offset += 32;

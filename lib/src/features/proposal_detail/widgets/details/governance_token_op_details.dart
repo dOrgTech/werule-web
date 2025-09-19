@@ -29,8 +29,11 @@ class GovernanceTokenOpDetails extends StatelessWidget {
     try {
       final ContractFunction def = type.contains("mint") ? CalldataService.mintGovTokensDef : CalldataService.burnGovTokensDef;
       final params = calldataService.decodeCalldata(def, calldata);
-      address = params[0] as String;
+      
+      // THE FIX: The decoder now returns an EthereumAddress object. We must get its hex string.
+      address = (params[0] as EthereumAddress).hex;
       final rawAmount = params[1] as BigInt;
+      
       amount = (rawAmount / BigInt.from(pow(10, org.decimals))).toString();
     } catch(e) {
       address = "Error decoding data";

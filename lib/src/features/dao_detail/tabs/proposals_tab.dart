@@ -1,6 +1,7 @@
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/create_proposal/create_proposal_dialog.dart';
@@ -9,9 +10,12 @@ import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/create_proposal_provider.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/providers/treasury_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/services/treasury_service.dart';
 import 'package:werule/src/utils/proposal_status_helper.dart';
 
 class ProposalsTab extends StatefulWidget {
@@ -58,7 +62,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
     }
   }
 
-  // THE FIX: This function now shows our new modal dialog.
+  // THE FIX: The dialog now gets a MultiProvider to supply both the creation and treasury providers.
   void _showCreateProposalDialog() {
     final auth = context.read<AuthProvider>();
     if (!auth.isConnected || auth.selectedAccount == null) {
@@ -69,17 +73,38 @@ class _ProposalsTabState extends State<ProposalsTab> {
       return;
     }
 
+    final network = context.read<NetworkProvider>().networks.firstWhereOrNull((n) => n.name == widget.networkName);
+    if (network == null) {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Center(child: Text("Cannot create proposal: Network details not found.")),
+        backgroundColor: Colors.redAccent,
+      ));
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) {
-        // The provider is created here, scoped to the lifecycle of the dialog.
-        return ChangeNotifierProvider(
-          create: (_) => CreateProposalProvider(
-            org: widget.org,
-            signerAddress: auth.selectedAccount!,
-            calldata: context.read<CalldataService>(),
-            blockchain: context.read<BlockchainService>(),
-          ),
+        // Use MultiProvider to make both providers available to the dialog.
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider(
+              create: (_) => CreateProposalProvider(
+                org: widget.org,
+                signerAddress: auth.selectedAccount!,
+                calldata: context.read<CalldataService>(),
+                blockchain: context.read<BlockchainService>(),
+              ),
+            ),
+            // The missing TreasuryProvider is now provided.
+            ChangeNotifierProvider(
+              create: (_) => TreasuryProvider(
+                context.read<TreasuryService>(),
+                widget.org,
+                network,
+              ),
+            ),
+          ],
           child: CreateProposalDialog(org: widget.org),
         );
       },

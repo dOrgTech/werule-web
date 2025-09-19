@@ -1,63 +1,34 @@
-# Ignore everything by default if includes are present.
+# --- .aiaccess file for WeRule Proposal Features ---
 
-# -------------------------------------------
-# --- INCLUDE ONLY THE ESSENTIAL FILES ---
-# -------------------------------------------
 
-# 1. Core App Structure
-!lib/main.dart
-!lib/src/routing/app_router.dart
+# Include the core proposal creation and detail features.
+# This is where we'll add the UI for new proposal types.
+!lib/src/features/create_proposal/
+!lib/src/features/proposal_detail/
 
-# 2. UI Foundation & Entry Point
+# Include the proposals tab, as it's the entry point for creating a proposal.
 !lib/src/features/dao_detail/tabs/proposals_tab.dart
-!lib/src/widgets/shared_app_bar.dart
-!lib/src/utils/theme.dart
-!lib/src/utils/reusable.dart # General helpers, good for context
+!lib/src/features/dao_detail/widgets/proposal_list_item.dart
 
-# 3. Essential State Management
-!lib/src/providers/auth_provider.dart
-!lib/src/providers/network_provider.dart
+# Include the essential providers that manage the state for these features.
+!lib/src/providers/create_proposal_provider.dart
+!lib/src/providers/treasury_provider.dart
+!lib/src/providers/proposal_detail_provider.dart
+!lib/src/providers/auth_provider.dart # Needed for signer address.
 
-# 4. Core Data Models
+# Include the core services for blockchain interaction and data encoding.
+# These are critical for implementing the new transfer types.
+!lib/src/services/blockchain_service.dart
+!lib/src/services/calldata_service.dart
+!lib/src/services/firestore_service.dart # To see how proposals are stored/retrieved.
+!lib/src/services/governor_abi.dart
+!lib/src/services/treasury_service.dart
+!lib/src/services/erc20_gov_abi.dart
+
+# Include the core data models that define what a proposal, DAO, and network are.
 !lib/src/models/proposal.dart
 !lib/src/models/org.dart
 !lib/src/models/network.dart
 
-# 5. Blockchain Interaction Layer
-!lib/src/services/blockchain_service.dart
-!lib/src/services/calldata_service.dart
-!lib/src/services/governor_abi.dart
-!lib/src/services/erc20_gov_abi.dart
-
-# -------------------------------------------
-# --- IGNORE EVERYTHING ELSE ---
-# -------------------------------------------
-
-# Explicitly ignore common boilerplate/generated files
-.DS_Store
-.packages
-.pub-cache/
-build/
-ios/
-android/
-web/
-macos/
-windows/
-linux/
-*.iml
-*.lock
-*.metadata
-*.idea/
-*.vscode/
-
-# Ignore all other features and services not listed above
-lib/src/features/explorer/
-lib/src/features/proposal_detail/
-lib/src/features/dao_detail/widgets/
-lib/src/features/dao_detail/tabs/account_tab.dart
-lib/src/features/dao_detail/tabs/members_tab.dart
-lib/src/features/dao_detail/tabs/overview_tab.dart
-lib/src/features/dao_detail/tabs/registry_tab.dart
-lib/src/services/firestore_service.dart
-lib/src/services/members_service.dart
-lib/src/services/treasury_service.dart
+# Include the proposal status helper for display logic.
+!lib/src/utils/proposal_status_helper.dart

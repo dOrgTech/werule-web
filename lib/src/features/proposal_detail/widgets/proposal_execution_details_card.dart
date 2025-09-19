@@ -18,11 +18,11 @@ class ProposalExecutionDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget detailsContent;
-    // THE FIX: Replace underscore with space to make the string comparison robust.
     final type = proposal.type?.toLowerCase().replaceAll('_', ' ') ?? "unknown";
 
     if (type.contains("transfer")) {
-      detailsContent = TokenTransferDetails(proposal: proposal, network: network);
+      // THE FIX: Pass the required `org` parameter.
+      detailsContent = TokenTransferDetails(proposal: proposal, network: network, org: org);
     } else if (type.contains("registry")) {
       detailsContent = RegistryDetails(proposal: proposal);
     } else if (type.contains("contract call")) {

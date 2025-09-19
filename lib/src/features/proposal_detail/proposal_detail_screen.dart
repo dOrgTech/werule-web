@@ -10,17 +10,17 @@ import 'package:werule/src/features/proposal_detail/widgets/proposal_execution_d
 import 'package:werule/src/features/proposal_detail/widgets/proposal_lifecycle_card.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_votes_card.dart';
-import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
+import 'package:werule/src/providers/treasury_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/services/treasury_service.dart';
 import 'package:werule/src/utils/reusable.dart';
 import 'package:werule/src/widgets/shared_app_bar.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ProposalDetailScreen extends StatefulWidget {
   final String networkName;
@@ -39,54 +39,84 @@ class ProposalDetailScreen extends StatefulWidget {
 }
 
 class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
-  ProposalDetailProvider? _provider;
+  // THE FIX: Use state variables to hold providers and loading status.
+  bool _isLoading = true;
+  String? _error;
+  ProposalDetailProvider? _proposalDetailProvider;
+  TreasuryProvider? _treasuryProvider;
   StreamSubscription? _proposalSubscription;
-  Future<dynamic>? _initializationFuture;
 
   @override
   void initState() {
     super.initState();
-    _initializationFuture = _initialize();
+    _initialize();
   }
 
   Future<void> _initialize() async {
-    final networkProvider = context.read<NetworkProvider>();
-    networkProvider.selectNetworkByName(widget.networkName);
-    
-    final firestoreService = context.read<FirestoreService>();
-    final collection = 'idaos${widget.networkName}';
+    try {
+      final networkProvider = context.read<NetworkProvider>();
+      final firestoreService = context.read<FirestoreService>();
+      final blockchainService = context.read<BlockchainService>();
+      final authProvider = context.read<AuthProvider>();
+      final treasuryService = context.read<TreasuryService>();
+      
+      networkProvider.selectNetworkByName(widget.networkName);
+      
+      final collection = 'idaos${widget.networkName}';
 
-    final org = await firestoreService.getDao(collection, widget.daoAddress);
-    final initialProposal = await firestoreService.getProposal(collection, widget.daoAddress, widget.proposalId);
-    final network = networkProvider.networks.firstWhereOrNull((n) => n.name == widget.networkName);
-    
-    if (org == null || initialProposal == null || network == null) {
-      throw Exception("Could not initialize proposal details.");
-    }
-    
-    // THE FIX: The required `firestoreService` argument is now correctly passed.
-    _provider = ProposalDetailProvider(
-      blockchainService: context.read<BlockchainService>(),
-      firestoreService: firestoreService,
-      authProvider: context.read<AuthProvider>(),
-      proposal: initialProposal,
-      org: org,
-      network: network,
-    );
-
-    _proposalSubscription = firestoreService
-        .getProposalStream(collection, widget.daoAddress, widget.proposalId)
-        .listen((proposalUpdate) {
-      if (proposalUpdate != null && _provider != null) {
-        _provider!.update(proposalUpdate, org);
+      final org = await firestoreService.getDao(collection, widget.daoAddress);
+      final initialProposal = await firestoreService.getProposal(collection, widget.daoAddress, widget.proposalId);
+      final network = networkProvider.networks.firstWhereOrNull((n) => n.name == widget.networkName);
+      
+      if (org == null || initialProposal == null || network == null) {
+        throw Exception("Could not find DAO, proposal, or network information.");
       }
-    });
+      
+      // Create providers and store them in state variables.
+      _proposalDetailProvider = ProposalDetailProvider(
+        blockchainService: blockchainService,
+        firestoreService: firestoreService,
+        authProvider: authProvider,
+        proposal: initialProposal,
+        org: org,
+        network: network,
+      );
+
+      _treasuryProvider = TreasuryProvider(
+        treasuryService,
+        org,
+        network,
+      );
+
+      // Listen for updates.
+      _proposalSubscription = firestoreService
+          .getProposalStream(collection, widget.daoAddress, widget.proposalId)
+          .listen((proposalUpdate) {
+        if (proposalUpdate != null && mounted) {
+          _proposalDetailProvider?.update(proposalUpdate, org);
+        }
+      });
+
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
     _proposalSubscription?.cancel();
-    _provider?.dispose();
+    _proposalDetailProvider?.dispose();
+    _treasuryProvider?.dispose();
     super.dispose();
   }
 
@@ -96,25 +126,32 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
       backgroundColor: const Color(0xff222222),
       appBar: const SharedAppBar(),
       endDrawer: const MobileDrawer(isNetworkSelectorEnabled: false),
-      body: FutureBuilder(
-        future: _initializationFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError || _provider == null) {
-            return Center(child: Text("Error loading proposal: ${snapshot.error ?? 'Provider not initialized.'}"));
-          }
-          
-          return ChangeNotifierProvider.value(
-            value: _provider!,
-            child: const _ProposalDetailView(),
-          );
-        },
-      ),
+      // THE FIX: Build the UI based on the loading and error state.
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null || _proposalDetailProvider == null || _treasuryProvider == null) {
+      return Center(child: Text("Error loading proposal: ${_error ?? 'Provider not initialized.'}"));
+    }
+
+    // THE FIX: Create the MultiProvider here, wrapping the view.
+    // This is the guaranteed way to make the providers available to the widget tree below.
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _proposalDetailProvider!),
+        ChangeNotifierProvider.value(value: _treasuryProvider!),
+      ],
+      child: const _ProposalDetailView(),
     );
   }
 }
+
 
 class _ProposalDetailView extends StatelessWidget {
   const _ProposalDetailView();

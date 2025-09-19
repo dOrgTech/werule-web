@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:werule/src/models/org.dart';
+import 'package:werule/src/models/token_asset.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/calldata_service.dart';
 
@@ -61,6 +62,7 @@ class CreateProposalProvider extends ChangeNotifier {
   String registryValue = '';
   String transferRecipient = '';
   String transferAmount = '';
+  TokenAsset? selectedAsset;
   String mintRecipient = '';
   String mintAmount = '';
   String burnFromAddress = '';
@@ -74,6 +76,13 @@ class CreateProposalProvider extends ChangeNotifier {
     if (newType == null || newType == selectedType) return;
     selectedType = newType;
     notifyListeners();
+  }
+
+  void setSelectedAsset(TokenAsset? asset) {
+    if (asset != selectedAsset) {
+      selectedAsset = asset;
+      notifyListeners();
+    }
   }
 
   BigInt _parseAmount(String amountStr, int decimals) {
@@ -121,11 +130,35 @@ class CreateProposalProvider extends ChangeNotifier {
 
         case ProposalType.transfer:
           if (transferRecipient.isEmpty || transferAmount.isEmpty) throw Exception("Recipient and Amount are required.");
+          
+          final currentAsset = selectedAsset;
+          if (currentAsset == null) throw Exception("Please select an asset to transfer.");
+
           final recipient = EthereumAddress.fromHex(transferRecipient);
-          final amount = _parseAmount(transferAmount, 18);
+          // THE FIX: Safely handle nullable decimals by providing a default value (18).
+          final decimals = currentAsset.token.decimals;
+          if (decimals == null) {
+            throw Exception("Selected asset '${currentAsset.token.name}' has no decimals information.");
+          }
+          final amount = _parseAmount(transferAmount, decimals);
+          
           targets = [org.registryAddress];
           values = [BigInt.zero];
-          calldatas = [_calldata.encodeTransferCall(recipient, amount)];
+
+          if (currentAsset.token.type == 'NATIVE') {
+            calldatas = [_calldata.encodeTransferCall(recipient, amount)];
+          } else {
+            // THE FIX: Safely handle nullable token address with a proper check.
+            final tokenAddress = currentAsset.token.address;
+            if (tokenAddress == null || tokenAddress.isEmpty) {
+              throw Exception("Selected ERC20 token '${currentAsset.token.name}' has no address.");
+            }
+            calldatas = [_calldata.encodeErc20TreasuryTransferCall(
+              EthereumAddress.fromHex(tokenAddress),
+              recipient,
+              amount
+            )];
+          }
           break;
 
         case ProposalType.mintTokens:
@@ -156,7 +189,6 @@ class CreateProposalProvider extends ChangeNotifier {
         
         case ProposalType.updateVotingDelay:
           if (votingDelayValue.isEmpty) throw Exception("Voting Delay value is required.");
-          // THE FIX: Convert user input (minutes) to seconds for the contract.
           final minutes = int.parse(votingDelayValue);
           final seconds = BigInt.from(minutes * 60);
           targets = [org.address];
@@ -166,7 +198,6 @@ class CreateProposalProvider extends ChangeNotifier {
 
         case ProposalType.updateVotingPeriod:
           if (votingPeriodValue.isEmpty) throw Exception("Voting Period value is required.");
-          // THE FIX: Convert user input (minutes) to seconds for the contract.
           final minutes = int.parse(votingPeriodValue);
           final seconds = BigInt.from(minutes * 60);
           targets = [org.address];
