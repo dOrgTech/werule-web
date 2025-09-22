@@ -1,14 +1,5 @@
-# --- .aiaccess file for WeRule Proposal Features ---
-
-
-# Include the core proposal creation and detail features.
-# This is where we'll add the UI for new proposal types.
-!lib/src/features/create_proposal/
-!lib/src/features/proposal_detail/
-
 # Include the proposals tab, as it's the entry point for creating a proposal.
-!lib/src/features/dao_detail/tabs/proposals_tab.dart
-!lib/src/features/dao_detail/widgets/proposal_list_item.dart
+!lib/src/features/dao_detail/
 
 # Include the essential providers that manage the state for these features.
 !lib/src/providers/create_proposal_provider.dart
@@ -31,4 +22,7 @@
 !lib/src/models/network.dart
 
 # Include the proposal status helper for display logic.
-!lib/src/utils/proposal_status_helper.dart
+!lib/src/utils/
+
+!lib/src/routing/app_router.dart
+!lib/main.dart

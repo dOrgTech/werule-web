@@ -144,7 +144,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                   constraints: const BoxConstraints(maxWidth: 1200),
                                   child: TabBarView(
                                     children: [
-                                      OverviewTab(dao: dao),
+                                      OverviewTab(dao: dao, proposals: proposals),
                                       ProposalsTab(
                                         org: dao,
                                        

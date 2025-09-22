@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/token_asset.dart';
@@ -72,6 +73,12 @@ class CreateProposalProvider extends ChangeNotifier {
   String votingPeriodValue = '';
   String thresholdValue = '';
 
+  // State for prepared transaction data (for review and submit)
+  List<String> preparedTargets = [];
+  List<BigInt> preparedValues = [];
+  List<Uint8List> preparedCalldatas = [];
+  List<String> preparedCallDatasAsHex = [];
+
   void setProposalType(ProposalType? newType) {
     if (newType == null || newType == selectedType) return;
     selectedType = newType;
@@ -105,17 +112,12 @@ class CreateProposalProvider extends ChangeNotifier {
     return wholePart + fractionalPart;
   }
 
-  Future<String?> submitProposal() async {
-    _isLoading = true;
-    notifyListeners();
-    
-    String? error;
+  String? prepareProposalDataForReview() {
     try {
       if (title.isEmpty || description.isEmpty) {
         throw Exception("Title and description are required.");
       }
 
-      final packedDescription = "$title""0|||0""${selectedType.typeString}""0|||0""$description""0|||0""$link";
       List<String> targets = [];
       List<BigInt> values = [];
       List<Uint8List> calldatas = [];
@@ -135,7 +137,6 @@ class CreateProposalProvider extends ChangeNotifier {
           if (currentAsset == null) throw Exception("Please select an asset to transfer.");
 
           final recipient = EthereumAddress.fromHex(transferRecipient);
-          // THE FIX: Safely handle nullable decimals by providing a default value (18).
           final decimals = currentAsset.token.decimals;
           if (decimals == null) {
             throw Exception("Selected asset '${currentAsset.token.name}' has no decimals information.");
@@ -148,7 +149,6 @@ class CreateProposalProvider extends ChangeNotifier {
           if (currentAsset.token.type == 'NATIVE') {
             calldatas = [_calldata.encodeTransferCall(recipient, amount)];
           } else {
-            // THE FIX: Safely handle nullable token address with a proper check.
             final tokenAddress = currentAsset.token.address;
             if (tokenAddress == null || tokenAddress.isEmpty) {
               throw Exception("Selected ERC20 token '${currentAsset.token.name}' has no address.");
@@ -213,8 +213,33 @@ class CreateProposalProvider extends ChangeNotifier {
           calldatas = [_calldata.encodeThresholdCall(threshold)];
           break;
       }
+      
+      preparedTargets = targets;
+      preparedValues = values;
+      preparedCalldatas = calldatas;
+      preparedCallDatasAsHex = calldatas.map((cd) => bytesToHex(cd, include0x: true)).toList();
+      notifyListeners();
+      return null;
 
-      await _blockchain.propose(org.address, signerAddress, targets, values, calldatas, packedDescription);
+    } on FormatException {
+      return "Invalid address or amount format.";
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> submitProposal() async {
+    _isLoading = true;
+    notifyListeners();
+    
+    String? error;
+    try {
+      if (preparedTargets.isEmpty || preparedCalldatas.isEmpty) {
+        throw Exception("Proposal data not prepared. Please complete all steps.");
+      }
+      final packedDescription = "$title""0|||0""${selectedType.typeString}""0|||0""$description""0|||0""$link";
+      
+      await _blockchain.propose(org.address, signerAddress, preparedTargets, preparedValues, preparedCalldatas, packedDescription);
 
     } on FormatException {
       error = "Invalid address or amount format.";
