@@ -11,6 +11,7 @@ import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/services/members_service.dart';
+import 'package:werule/src/services/registry_service.dart';
 import 'package:werule/src/services/treasury_service.dart';
 import 'package:werule/src/utils/theme.dart'; // THE FIX: Import your custom theme.
 import 'firebase_options.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         Provider<TreasuryService>(create: (_) => TreasuryService()),
         Provider<MembersService>(create: (_) => MembersService()),
         Provider<CalldataService>(create: (_) => CalldataService()),
+        Provider<RegistryService>(create: (_) => RegistryService()),
 
         // Independent Providers
         ChangeNotifierProvider<NetworkProvider>(

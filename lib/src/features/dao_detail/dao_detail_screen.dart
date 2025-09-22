@@ -150,7 +150,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                        
                                         networkName: widget.networkName,
                                       ),
-                                      const RegistryTab(),
+                                      RegistryTab(dao: dao),
                                       MembersTab(dao: dao),
                                        AccountTab(dao: dao),
                                     ],
