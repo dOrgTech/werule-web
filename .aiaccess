@@ -1,11 +1,8 @@
-# Include the proposals tab, as it's the entry point for creating a proposal.
-!lib/src/features/dao_detail/
 
-# Include the essential providers that manage the state for these features.
-!lib/src/providers/create_proposal_provider.dart
-!lib/src/providers/treasury_provider.dart
-!lib/src/providers/proposal_detail_provider.dart
 !lib/src/providers/auth_provider.dart # Needed for signer address.
+!lib/src/providers/dao_provider.dart # Needed for signer address.
+!lib/src/providers/member_provider.dart # Needed for signer address.
+!lib/src/providers/network_provider.dart # Needed for signer address.
 
 # Include the core services for blockchain interaction and data encoding.
 # These are critical for implementing the new transfer types.
@@ -17,9 +14,8 @@
 !lib/src/services/erc20_gov_abi.dart
 
 # Include the core data models that define what a proposal, DAO, and network are.
-!lib/src/models/proposal.dart
-!lib/src/models/org.dart
-!lib/src/models/network.dart
+!lib/src/models/
+!lib/src/widgets/
 
 # Include the proposal status helper for display logic.
 !lib/src/utils/

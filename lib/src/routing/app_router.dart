@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_creator/dao_creator_screen.dart';
 import 'package:werule/src/features/dao_detail/dao_detail_screen.dart';
 import 'package:werule/src/features/explorer/explorer_screen.dart';
 import 'package:werule/src/features/proposal_detail/proposal_detail_screen.dart';
@@ -52,10 +53,23 @@ final appRouter = GoRouter(
         return _buildFadeTransitionPage(
           context: context,
           state: state,
-          child: ExplorerScreen(key: ValueKey(networkName), networkName: networkName),
+          child:
+              ExplorerScreen(key: ValueKey(networkName), networkName: networkName),
         );
       },
       routes: [
+        // THE FIX: Added the DAO creator route.
+        GoRoute(
+          path: 'create',
+          pageBuilder: (context, state) {
+            final networkName = state.pathParameters['networkName']!;
+            return _buildFadeTransitionPage(
+              context: context,
+              state: state,
+              child: DaoCreatorScreen(networkName: networkName),
+            );
+          },
+        ),
         // DAO Detail route: '/:networkName/:daoAddress'
         GoRoute(
           path: ':daoAddress',
@@ -73,7 +87,6 @@ final appRouter = GoRouter(
             );
           },
           routes: [
-            // THE FIX: The '/proposals/create' route has been removed.
             // Proposal Detail route: '/:networkName/:daoAddress/proposals/:proposalId'
             GoRoute(
               path: 'proposals/:proposalId',
@@ -98,5 +111,4 @@ final appRouter = GoRouter(
     ),
   ],
 );
-// lib/src/routing/app_router.dart```
-
+// lib/src/routing/app_router.dart
