@@ -289,7 +289,8 @@ class _ActionButtons extends StatelessWidget {
           "Proposal queued successfully!",
         );
       },
-      child: const Text("Queue for Execution"),
+      child: const Text("Queue for Execution", style: TextStyle(color: Colors.black),),
+      style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 196, 196, 196)),
     );
   }
 
@@ -316,8 +317,10 @@ class _ActionButtons extends StatelessWidget {
           "Proposal executed successfully!",
         );
       },
-      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-      child: const Text("EXECUTE"),
+      style: ElevatedButton.styleFrom(
+        elevation: 4,
+        backgroundColor: const Color.fromARGB(255, 121, 240, 248)),
+      child: const Text("EXECUTE", style: TextStyle(color:Colors.black, fontWeight: FontWeight.bold),),
     );
   }
 }

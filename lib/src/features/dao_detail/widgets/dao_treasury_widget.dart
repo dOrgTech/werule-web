@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/tabs/proposals_tab.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/token_asset.dart';
 import 'package:werule/src/providers/dao_provider.dart'; // for DataState
@@ -31,14 +32,14 @@ class DaoTreasuryWidget extends StatelessWidget {
         dao,
         network,
       ),
-      child: const _TreasuryView(),
+      child:  _TreasuryView(dao: dao,),
     );
   }
 }
 
 class _TreasuryView extends StatefulWidget {
-  const _TreasuryView();
-
+  const _TreasuryView({required this.dao});
+   final Org dao;
   @override
   State<_TreasuryView> createState() => _TreasuryViewState();
 }
@@ -233,18 +234,24 @@ class _TreasuryViewState extends State<_TreasuryView> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Center(child: Text('Transfers coming soon!')),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    child: const Text("Transfer"),
+                SizedBox(
+                  height: 30,
+                  width: 120,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 196, 196, 196)),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Center(child: Text('Transfers coming soon!')),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      child: const Text("Transfer", style: TextStyle(color: Colors.black),),
+                      
+                    ),
                   ),
                 ),
               ],
@@ -348,17 +355,25 @@ class _TreasuryViewState extends State<_TreasuryView> {
         ),
         Padding(
           padding: const EdgeInsets.all(4.0),
-          child: ElevatedButton(
-             onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Center(child: Text('Transfers coming soon!')),
-                      duration: Duration(seconds: 2),
+          child:    SizedBox(
+                  height: 30,
+                  width: 120,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      
+                      style: ElevatedButton.styleFrom(
+                        elevation: 2,
+                        backgroundColor: const Color.fromARGB(255, 151, 151, 151)),
+                      onPressed: () {
+                         final networkName = widget.dao.address.contains("Etherlink-Testnet") ? "Etherlink-Testnet" : "Etherlink";
+        ProposalsTab.showCreateProposalDialog(context, widget.dao, networkName);
+                      },
+                      child: const Text("Transfer", style: TextStyle(color: Colors.black),),
+                      
                     ),
-                  );
-             },
-             child: const Text("Transfer"),
-          ),
+                  ),
+                ),
         ),
       ],
     );

@@ -28,6 +28,54 @@ class ProposalsTab extends StatefulWidget {
     required this.networkName,
   });
 
+  // THE FIX: Converted the dialog logic into a public static method.
+  static void showCreateProposalDialog(BuildContext context, Org org, String networkName) {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isConnected || auth.selectedAccount == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Center(child: Text("Please connect your wallet to create a proposal.")),
+        backgroundColor: Colors.redAccent,
+      ));
+      return;
+    }
+
+    final network = context.read<NetworkProvider>().networks.firstWhereOrNull((n) => n.name == networkName);
+    if (network == null) {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Center(child: Text("Cannot create proposal: Network details not found.")),
+        backgroundColor: Colors.redAccent,
+      ));
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        // Use MultiProvider to make both providers available to the dialog.
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider(
+              create: (_) => CreateProposalProvider(
+                org: org,
+                signerAddress: auth.selectedAccount!,
+                calldata: context.read<CalldataService>(),
+                blockchain: context.read<BlockchainService>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => TreasuryProvider(
+                context.read<TreasuryService>(),
+                org,
+                network,
+              ),
+            ),
+          ],
+          child: CreateProposalDialog(org: org),
+        );
+      },
+    );
+  }
+
   @override
   State<ProposalsTab> createState() => _ProposalsTabState();
 }
@@ -61,56 +109,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
         return name[0].toUpperCase() + name.substring(1);
     }
   }
-
-  // THE FIX: The dialog now gets a MultiProvider to supply both the creation and treasury providers.
-  void _showCreateProposalDialog() {
-    final auth = context.read<AuthProvider>();
-    if (!auth.isConnected || auth.selectedAccount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Center(child: Text("Please connect your wallet to create a proposal.")),
-        backgroundColor: Colors.redAccent,
-      ));
-      return;
-    }
-
-    final network = context.read<NetworkProvider>().networks.firstWhereOrNull((n) => n.name == widget.networkName);
-    if (network == null) {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Center(child: Text("Cannot create proposal: Network details not found.")),
-        backgroundColor: Colors.redAccent,
-      ));
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        // Use MultiProvider to make both providers available to the dialog.
-        return MultiProvider(
-          providers: [
-            ChangeNotifierProvider(
-              create: (_) => CreateProposalProvider(
-                org: widget.org,
-                signerAddress: auth.selectedAccount!,
-                calldata: context.read<CalldataService>(),
-                blockchain: context.read<BlockchainService>(),
-              ),
-            ),
-            // The missing TreasuryProvider is now provided.
-            ChangeNotifierProvider(
-              create: (_) => TreasuryProvider(
-                context.read<TreasuryService>(),
-                widget.org,
-                network,
-              ),
-            ),
-          ],
-          child: CreateProposalDialog(org: widget.org),
-        );
-      },
-    );
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -202,7 +201,8 @@ class _ProposalsTabState extends State<ProposalsTab> {
             (val) => setState(() => _selectedStatus = val!));
         
         final createButton = ElevatedButton(
-          onPressed: _showCreateProposalDialog,
+          // THE FIX: Call the static method.
+          onPressed: () => ProposalsTab.showCreateProposalDialog(context, widget.org, widget.networkName),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xffa1d0d0),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),

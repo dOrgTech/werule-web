@@ -22,6 +22,7 @@ class Org {
   final int votingDuration;
   final bool debatesOnly;
   final String description;
+  final Map<String, String> registry; // THE FIX: Added the registry field.
 
   Org({
     required this.name,
@@ -43,6 +44,7 @@ class Org {
     required this.votingDuration,
     this.debatesOnly = false,
     required this.description,
+    required this.registry, // THE FIX: Added to constructor.
   });
 
   factory Org.fromFirestore(Map<String, dynamic> json, String docId) {
@@ -65,7 +67,9 @@ class Org {
       underlyingToken: json['underlying_token'], 
       votingDelay: json['votingDelay'] ?? 0,
       votingDuration: json['votingDuration'] ?? 0,
+      // THE FIX: Populate the registry map from the Firestore document.
+      registry: json['registry'] != null ? Map<String, String>.from(json['registry']) : {},
     );
   }
 }
-// lib/src/models/org.dart```
+// lib/src/models/org.dart

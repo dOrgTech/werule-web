@@ -48,38 +48,40 @@ MaterialColor createMaterialColor(Color color) {
 
         
 ThemeData dark = ThemeData(
-  canvasColor: Color.fromARGB(255, 46, 46, 46),
+  canvasColor: const Color.fromARGB(255, 46, 46, 46),
   splashColor: const Color.fromARGB(255, 133, 133, 133),
   fontFamily: 'CascadiaCode',
-  dividerColor: const Color.fromARGB(255, 147, 147, 147),
+  dividerColor: Colors.white, // make dividers white
   brightness: Brightness.dark,
-  indicatorColor:  const Color(0xffa1d0d0),
+  indicatorColor: const Color(0xffa1d0d0),
   hintColor: Colors.white70,
-  primaryColor: createMaterialColor(const Color(0xff4d4d4d)),
+  primaryColor: createMaterialColor(const Color.fromARGB(255, 194, 194, 194)),
   highlightColor: const Color(0xff6e6e6e),
-   inputDecorationTheme: InputDecorationTheme(
-    // The border color when the field is not focused.
+  inputDecorationTheme: InputDecorationTheme(
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8.0),
       borderSide: BorderSide(color: Colors.grey.shade700),
     ),
-    // The border color when the user taps on the field.
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8.0),
-      // Use the theme's indicator color for a nice accent.
       borderSide: const BorderSide(color: Color(0xffa1d0d0)),
     ),
-    // A fallback border for other states.
-     border: OutlineInputBorder(
-       borderRadius: BorderRadius.circular(8.0),
-       borderSide: BorderSide(color: Colors.grey.shade700),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.0),
+      borderSide: BorderSide(color: Colors.grey.shade700),
     ),
   ),
   colorScheme: ColorScheme.fromSwatch(
     primarySwatch: createMaterialColor(const Color(0xffefefef)),
     brightness: Brightness.dark,
   ).copyWith(
-    primary: const Color.fromARGB(255, 190, 190, 190), // replaces buttonColor
+    primary: const Color.fromARGB(255, 190, 190, 190),
     secondary: createMaterialColor(const Color.fromARGB(255, 116, 116, 116)),
   ),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(
+      foregroundColor: Colors.white, // default text color for buttons
+    ),
+  ),
 );
+

@@ -240,7 +240,7 @@ class _ProposalHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final typeText = proposal.type != null ? proposal.type! : "proposal";
+    final typeText = proposal.type != null ? proposal.type! : "<unknown type>";
     final discussionLink = (proposal.externalResource != null && proposal.externalResource!.isNotEmpty)
       ? OldSchoolLink(text: proposal.externalResource!, url: proposal.externalResource!)
       : const Text("No link provided", style: TextStyle(color: Colors.grey));
@@ -248,7 +248,7 @@ class _ProposalHeader extends StatelessWidget {
     final titleWidget = Text(
       proposal.title,
       textAlign: TextAlign.center,
-      style: textTheme.headlineMedium?.copyWith(fontFamily: 'monospace', fontWeight: FontWeight.bold),
+      style: textTheme.headlineMedium?.copyWith( ),
     );
 
     final statusWidget = Row(
@@ -260,8 +260,8 @@ class _ProposalHeader extends StatelessWidget {
             return ProposalStatusWidget(status: provider.status);
           },
         ),
-        const SizedBox(width: 12),
-        Text(typeText, style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
+        const SizedBox(width: 18),
+        Text(typeText+"  proposal", style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
       ],
     );
 

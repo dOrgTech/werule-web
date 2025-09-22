@@ -295,7 +295,7 @@ class _MetricBox extends StatelessWidget {
         color: const Color(0xff2c2c2c),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 54.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -303,11 +303,11 @@ class _MetricBox extends StatelessWidget {
             value,
             style: TextStyle(
               color: Theme.of(context).indicatorColor,
-              fontSize: 32,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 25),
           Expanded(
             child: Text(
               label,

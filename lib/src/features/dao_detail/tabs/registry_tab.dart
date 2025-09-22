@@ -1,24 +1,19 @@
 // lib/src/features/dao_detail/tabs/registry_tab.dart
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:werule/src/features/create_proposal/create_proposal_dialog.dart';
+import 'package:werule/src/features/dao_detail/tabs/proposals_tab.dart';
 import 'package:werule/src/models/org.dart';
-import 'package:werule/src/models/registry_item.dart';
-import 'package:werule/src/providers/auth_provider.dart';
-import 'package:werule/src/providers/create_proposal_provider.dart';
-import 'package:werule/src/providers/dao_provider.dart';
-import 'package:werule/src/providers/network_provider.dart';
-import 'package:werule/src/providers/registry_provider.dart';
-import 'package:werule/src/providers/treasury_provider.dart';
-import 'package:werule/src/services/blockchain_service.dart';
-import 'package:werule/src/services/calldata_service.dart';
-import 'package:werule/src/services/registry_service.dart';
-import 'package:werule/src/services/treasury_service.dart';
+
+// Simple model for a registry item
+class RegistryItem {
+  final String key;
+  final String value;
+  RegistryItem({required this.key, required this.value});
+}
 
 class RegistryTab extends StatefulWidget {
   final Org dao;
+  // THE FIX: networkName is no longer needed here.
   const RegistryTab({super.key, required this.dao});
 
   @override
@@ -33,7 +28,25 @@ class _RegistryTabState extends State<RegistryTab> {
   @override
   void initState() {
     super.initState();
+    // THE FIX: Load items directly from the dao object, no async needed.
+    _allItems = widget.dao.registry.entries
+        .map((entry) => RegistryItem(key: entry.key, value: entry.value))
+        .toList();
+    _filteredItems = _allItems;
     _searchController.addListener(_filterItems);
+  }
+
+  void _filterItems() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredItems = _allItems;
+      } else {
+        _filteredItems = _allItems
+            .where((item) => item.key.toLowerCase().contains(query))
+            .toList();
+      }
+    });
   }
 
   @override
@@ -43,125 +56,36 @@ class _RegistryTabState extends State<RegistryTab> {
     super.dispose();
   }
 
-  void _filterItems() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredItems = _allItems
-          .where((item) => item.key.toLowerCase().contains(query))
-          .toList();
-    });
-  }
-
-  void _showCreateProposalDialog() {
-    final auth = context.read<AuthProvider>();
-    if (!auth.isConnected || auth.selectedAccount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Center(
-            child: Text("Please connect your wallet to create a proposal.")),
-        backgroundColor: Colors.redAccent,
-      ));
-      return;
-    }
-
-    final network = context
-        .read<NetworkProvider>()
-        .networks
-        .firstWhereOrNull((n) => n.name == widget.dao.name);
-    if (network == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Center(
-            child: Text("Cannot create proposal: Network details not found.")),
-        backgroundColor: Colors.redAccent,
-      ));
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return MultiProvider(
-          providers: [
-            ChangeNotifierProvider(
-              create: (_) => CreateProposalProvider(
-                org: widget.dao,
-                signerAddress: auth.selectedAccount!,
-                calldata: context.read<CalldataService>(),
-                blockchain: context.read<BlockchainService>(),
-              )..setProposalType(ProposalType.registry),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => TreasuryProvider(
-                context.read<TreasuryService>(),
-                widget.dao,
-                network,
-              ),
-            ),
-          ],
-          child: CreateProposalDialog(org: widget.dao),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final network = context.watch<NetworkProvider>().selectedNetwork;
-    if (network == null) {
-      return const Center(child: Text("Please select a network."));
-    }
-
-    return ChangeNotifierProvider(
-      create: (context) => RegistryProvider(
-        context.read<RegistryService>(),
-        widget.dao,
-        network,
-      ),
-      child: Consumer<RegistryProvider>(
-        builder: (context, provider, child) {
-          if (provider.state == DataState.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (provider.state == DataState.error) {
-            return Center(child: Text("Error: ${provider.errorMessage}"));
-          }
-
-          // Update local lists when provider finishes loading
-          if (_allItems != provider.items) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _allItems = provider.items;
-              _filterItems();
-            });
-          }
-
-          return LayoutBuilder(builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 700;
-            return Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-              child: Column(
-                children: [
-                  _buildControls(isMobile),
-                  const SizedBox(height: 24),
-                  if (_filteredItems.isEmpty)
-                    const Expanded(
-                      child: Center(
-                        child: Text("No registry items found.",
-                            style: TextStyle(color: Colors.grey)),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: isMobile
-                          ? _buildMobileList()
-                          : _buildDesktopTable(),
-                    )
-                ],
-              ),
-            );
-          });
-        },
-      ),
-    );
+    // THE FIX: Removed the FutureBuilder and now build the layout directly.
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 700;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+        child: Column(
+          children: [
+            _buildControls(isMobile),
+            const SizedBox(height: 24),
+            if (_filteredItems.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    _allItems.isEmpty
+                        ? "There are no items in this DAO's registry."
+                        : "No registry items match your search.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: isMobile ? _buildMobileList() : _buildDesktopTable(),
+              )
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildControls(bool isMobile) {
@@ -174,32 +98,28 @@ class _RegistryTabState extends State<RegistryTab> {
     );
 
     final editButton = ElevatedButton(
-      onPressed: _showCreateProposalDialog,
+      // THE FIX: Pass the correct network name from the dao object.
+      onPressed: () {
+         // We need to find the networkName from the provider to pass to the dialog
+        final networkName = widget.dao.address.contains("Etherlink-Testnet") ? "Etherlink-Testnet" : "Etherlink";
+        ProposalsTab.showCreateProposalDialog(context, widget.dao, networkName);
+      },
       style: ElevatedButton.styleFrom(
         backgroundColor: Theme.of(context).indicatorColor,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      child: const Text('Add/Edit Item',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+      child: const Text('Add/Edit Item', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
     );
 
     if (isMobile) {
       return Column(
-        children: [
-          searchBar,
-          const SizedBox(height: 16),
-          Align(alignment: Alignment.centerRight, child: editButton),
-        ],
+        children: [ searchBar, const SizedBox(height: 16), Align(alignment: Alignment.centerRight, child: editButton) ],
       );
     }
 
     return Row(
-      children: [
-        Expanded(flex: 2, child: searchBar),
-        const Spacer(flex: 1),
-        editButton,
-      ],
+      children: [ Expanded(flex: 2, child: searchBar), const Spacer(flex: 1), editButton ],
     );
   }
 
@@ -209,8 +129,7 @@ class _RegistryTabState extends State<RegistryTab> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: DefaultTextStyle(
-            style:
-                TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold),
             child: const Row(
               children: [
                 SizedBox(width: 200, child: Text("KEY")),
@@ -244,7 +163,6 @@ class _RegistryTabState extends State<RegistryTab> {
   }
 }
 
-// --- Desktop Item Card ---
 class _RegistryItemCardDesktop extends StatelessWidget {
   final RegistryItem item;
   const _RegistryItemCardDesktop({required this.item});
@@ -259,8 +177,7 @@ class _RegistryItemCardDesktop extends StatelessWidget {
         children: [
           SizedBox(
             width: 200,
-            child: Text(item.key,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(item.key, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: Row(
@@ -291,7 +208,6 @@ class _RegistryItemCardDesktop extends StatelessWidget {
   }
 }
 
-// --- Mobile Item Card ---
 class _RegistryItemCardMobile extends StatelessWidget {
   final RegistryItem item;
   const _RegistryItemCardMobile({required this.item});
@@ -306,9 +222,7 @@ class _RegistryItemCardMobile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item.key,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(item.key, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const Divider(height: 16),
             Text(item.value, style: TextStyle(color: Colors.grey[300])),
             const SizedBox(height: 8),

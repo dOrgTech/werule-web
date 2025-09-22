@@ -117,7 +117,6 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                       builder: (context, constraints) {
                                         final isMobile = constraints.maxWidth < 600;
                                         return TabBar(
-                                          // THE FIX: This removes the divider line beneath the tabs.
                                           dividerColor: Colors.transparent,
                                           labelColor: Theme.of(context).indicatorColor,
                                           unselectedLabelColor: const Color.fromARGB(255, 177, 177, 177),
@@ -147,12 +146,11 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                       OverviewTab(dao: dao, proposals: proposals),
                                       ProposalsTab(
                                         org: dao,
-                                       
                                         networkName: widget.networkName,
                                       ),
                                       RegistryTab(dao: dao),
                                       MembersTab(dao: dao),
-                                       AccountTab(dao: dao),
+                                      AccountTab(dao: dao),
                                     ],
                                   ),
                                 ),
@@ -160,8 +158,8 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                             ),
                           ],
                         ),
-                        (MediaQuery.of(context).size.width > 800)?
-                        const Footer():const SizedBox(height: 100),
+                      
+                        const Footer()
                       ],
                     ),
                   ),
