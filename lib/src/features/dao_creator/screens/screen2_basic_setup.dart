@@ -229,7 +229,7 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                       height: 40,
                       width: 300,
                       child: CheckboxListTile(
-                        title: const Text('Non-transferable Token'),
+                        title: const Text('Non-transferable'),
                         value: _nonTransferrable,
                         activeColor: Theme.of(context).indicatorColor,
                         checkColor: Colors.black,
