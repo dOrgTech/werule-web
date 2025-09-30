@@ -133,6 +133,7 @@ class _RegistryTabState extends State<RegistryTab> {
             child: const Row(
               children: [
                 SizedBox(width: 200, child: Text("KEY")),
+                SizedBox(width: 150),
                 Expanded(child: Text("VALUE")),
               ],
             ),
@@ -176,9 +177,10 @@ class _RegistryItemCardDesktop extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 200,
+            width: 280,
             child: Text(item.key, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
+          SizedBox(width: 66),
           Expanded(
             child: Row(
               children: [
