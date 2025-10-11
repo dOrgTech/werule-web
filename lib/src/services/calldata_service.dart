@@ -128,7 +128,7 @@ class CalldataService {
     
     // Basic validation
     if (!listEquals(calldataBytes.sublist(0, 4), functionSelector)) {
-      throw FormatException('Calldata does not match function selector.');
+      throw const FormatException('Calldata does not match function selector.');
     }
 
     final dataBytes = calldataBytes.sublist(4);

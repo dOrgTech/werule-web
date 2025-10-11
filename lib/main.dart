@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
-        title: 'WeRule rara',
+        title: 'Homebase Etherlink',
         // THE FIX: Use your custom dark theme instead of the default one.
         theme: dark,
         routerConfig: appRouter,

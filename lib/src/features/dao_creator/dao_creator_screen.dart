@@ -12,17 +12,40 @@ import 'package:werule/src/features/dao_creator/screens/screen6_registry.dart';
 import 'package:werule/src/features/dao_creator/screens/screen7_review.dart';
 import 'package:werule/src/features/dao_creator/screens/screen8_deploying.dart';
 import 'package:werule/src/features/dao_creator/screens/screen9_deployment_complete.dart';
+import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/services/firestore_service.dart';
+// THE FIX: Add the import for the new debug function
+import 'package:werule/src/features/dao_creator/utils/debug_deployment.dart';
 
-class DaoCreatorScreen extends StatelessWidget {
+class DaoCreatorScreen extends StatefulWidget {
   final String networkName;
   const DaoCreatorScreen({super.key, required this.networkName});
 
   @override
+  State<DaoCreatorScreen> createState() => _DaoCreatorScreenState();
+}
+
+class _DaoCreatorScreenState extends State<DaoCreatorScreen> {
+  late final DaoCreatorProvider _daoCreatorProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    _daoCreatorProvider = DaoCreatorProvider(
+      blockchainService: context.read<BlockchainService>(),
+      authProvider: context.read<AuthProvider>(),
+      networkProvider: context.read<NetworkProvider>(),
+      firestoreService: context.read<FirestoreService>(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => DaoCreatorProvider(),
+    return ChangeNotifierProvider.value(
+      value: _daoCreatorProvider,
       child: Scaffold(
-        // THE FIX: Removed the AppBar for a cleaner, modal-like feel.
         body: Stack(
           children: [
             Consumer<DaoCreatorProvider>(
@@ -39,7 +62,9 @@ class DaoCreatorScreen extends StatelessWidget {
                   Screen9DeploymentComplete(
                     provider: provider,
                     onGoToDAO: () {
-                      context.go('/$networkName');
+                      if (provider.newDaoAddress != null) {
+                        context.go('/${widget.networkName}/${provider.newDaoAddress}');
+                      }
                     },
                   ),
                 ];
@@ -49,11 +74,9 @@ class DaoCreatorScreen extends StatelessWidget {
                   child: screens[provider.currentStep],
                 );
 
-                // THE FIX: Use LayoutBuilder for a responsive UI with a stepper.
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     if (constraints.maxWidth >= 950) {
-                      // Wide screen: Show stepper on the left
                       return Row(
                         children: [
                           SizedBox(
@@ -67,23 +90,23 @@ class DaoCreatorScreen extends StatelessWidget {
                         ],
                       );
                     } else {
-                      // Narrow screen: Hide stepper
                       return Center(child: currentScreen);
                     }
                   },
                 );
               },
             ),
-            // THE FIX: Added a standalone close button.
             Positioned(
               top: 16,
               right: 16,
               child: IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: () => context.go('/$networkName'),
+                onPressed: () => context.go('/${widget.networkName}'),
                 tooltip: 'Exit Creator',
               ),
             ),
+            // THE FIX: Add a floating debug button for one-click testing.
+        
           ],
         ),
       ),
@@ -91,7 +114,6 @@ class DaoCreatorScreen extends StatelessWidget {
   }
 }
 
-// THE FIX: A new widget for the stepper/overview panel.
 class _CreatorStepper extends StatelessWidget {
   final DaoCreatorProvider provider;
   const _CreatorStepper({required this.provider});
@@ -119,7 +141,6 @@ class _CreatorStepper extends StatelessWidget {
           final isCompleted = index < provider.currentStep;
           final isEnabled = index <= provider.maxStepReached;
 
-          // Don't show the deploying/complete steps in the main list
           if (index > 6) return const SizedBox.shrink();
 
           Color color;
@@ -152,4 +173,3 @@ class _CreatorStepper extends StatelessWidget {
     );
   }
 }
-// lib/src/features/dao_creator/dao_creator_screen.dart

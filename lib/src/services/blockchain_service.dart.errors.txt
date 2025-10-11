@@ -1,0 +1,97 @@
+Problems found in: blockchain_service.dart
+==================================================
+
+ERROR at Line 232:56 (dart)
+   Message: Undefined class 'BigInt'.
+Try changing the name to the name of an existing class, or creating a class with the name 'BigInt'.
+
+ERROR at Line 241:28 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used in an 'as' expression.
+Try changing the name to the name of an existing type, or creating a type with the name 'BigInt'.
+
+ERROR at Line 247:74 (dart)
+   Message: Undefined class 'BigInt'.
+Try changing the name to the name of an existing class, or creating a class with the name 'BigInt'.
+
+ERROR at Line 247:15 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 256:26 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 262:10 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 271:27 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used in an 'as' expression.
+Try changing the name to the name of an existing type, or creating a type with the name 'BigInt'.
+
+ERROR at Line 298:51 (dart)
+   Message: Undefined class 'BigInt'.
+Try changing the name to the name of an existing class, or creating a class with the name 'BigInt'.
+
+ERROR at Line 307:100 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 321:106 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 332:108 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 343:80 (dart)
+   Message: Undefined class 'BigInt'.
+Try changing the name to the name of an existing class, or creating a class with the name 'BigInt'.
+
+ERROR at Line 343:10 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 349:47 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used in an 'as' expression.
+Try changing the name to the name of an existing type, or creating a type with the name 'BigInt'.
+
+ERROR at Line 355:81 (dart)
+   Message: Undefined class 'BigInt'.
+Try changing the name to the name of an existing class, or creating a class with the name 'BigInt'.
+
+ERROR at Line 355:10 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used as a type argument.
+Try correcting the name to an existing type, or defining a type named 'BigInt'.
+
+ERROR at Line 361:47 (dart)
+   Message: The name 'BigInt' isn't a type, so it can't be used in an 'as' expression.
+Try changing the name to the name of an existing type, or creating a type with the name 'BigInt'.
+
+ERROR at Line 97:27 (dart)
+   Message: The getter 'rpcUrls' isn't defined for the type 'Network'.
+Try importing the library that defines 'rpcUrls', correcting the name to the name of an existing getter, or defining a getter or field named 'rpcUrls'.
+
+ERROR at Line 139:35 (dart)
+   Message: The argument type 'Ethereum (where Ethereum is defined in C:\Users\astmo\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_web3-2.1.9\lib\src\ethereum\ethereum.dart)' can't be assigned to the parameter type 'Ethereum (where Ethereum is defined in C:\Users\astmo\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_web3_provider-1.0.6\lib\ethereum.dart)'. 
+
+ERROR at Line 199:66 (dart)
+   Message: The argument type 'Uint8List' can't be assigned to the parameter type 'String'. 
+
+ERROR at Line 349:74 (dart)
+   Message: The name 'BigInt' is being referenced through the prefix 'web3dart', but it isn't defined in any of the libraries imported using that prefix.
+Try correcting the prefix or importing the library that defines 'BigInt'.
+
+ERROR at Line 361:74 (dart)
+   Message: The name 'BigInt' is being referenced through the prefix 'web3dart', but it isn't defined in any of the libraries imported using that prefix.
+Try correcting the prefix or importing the library that defines 'BigInt'.
+
+WARNING at Line 9:1 (dart)
+   Message: 'dart:js_util' is deprecated and shouldn't be used. Use dart:js_interop instead.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 9:1 (dart)
+   Message: Don't use web-only libraries outside Flutter web plugins.
+Try finding a different library for your needs.
+

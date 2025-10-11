@@ -289,8 +289,8 @@ class _ActionButtons extends StatelessWidget {
           "Proposal queued successfully!",
         );
       },
-      child: const Text("Queue for Execution", style: TextStyle(color: Colors.black),),
       style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 196, 196, 196)),
+      child: const Text("Queue for Execution", style: TextStyle(color: Colors.black),),
     );
   }
 

@@ -74,7 +74,7 @@ class _RegistryTabState extends State<RegistryTab> {
                     _allItems.isEmpty
                         ? "There are no items in this DAO's registry."
                         : "No registry items match your search.",
-                    style: TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ),
               )
@@ -180,7 +180,7 @@ class _RegistryItemCardDesktop extends StatelessWidget {
             width: 280,
             child: Text(item.key, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
-          SizedBox(width: 66),
+          const SizedBox(width: 66),
           Expanded(
             child: Row(
               children: [

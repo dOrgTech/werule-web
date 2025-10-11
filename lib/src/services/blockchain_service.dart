@@ -5,9 +5,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_web3/flutter_web3.dart' as web3;
+import 'package:http/http.dart' as http;
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
-import 'package:http/http.dart' as http;
+
 import 'package:werule/src/services/erc20_gov_abi.dart';
 import 'package:werule/src/services/governor_abi.dart';
 import '../models/network.dart';
@@ -26,9 +27,7 @@ class AccountMismatchException implements Exception {
 
 class BlockchainService {
   int _parseChainId(dynamic chainId) {
-    if (chainId is int) {
-      return chainId;
-    }
+    if (chainId is int) return chainId;
     if (chainId is String) {
       return int.parse(
         chainId.startsWith('0x') ? chainId.substring(2) : chainId,
@@ -76,7 +75,7 @@ class BlockchainService {
       rethrow;
     }
   }
-
+  
   Future<void> addChain(Network network) async {
     try {
       await web3.ethereum!.walletAddChain(
@@ -114,18 +113,8 @@ class BlockchainService {
         EthereumAddress.fromHex(contractAddress),
       );
       final stateFunction = contract.function('state');
-      final result = await client.call(
-        contract: contract,
-        function: stateFunction,
-        params: [proposalId],
-      );
-      if (result.isNotEmpty && result[0] is BigInt) {
-        return (result[0] as BigInt).toInt();
-      }
-      throw Exception('Failed to parse proposal state from contract.');
-    } catch (e) {
-      if (kDebugMode) print('[BlockchainService] Error getting proposal state: $e');
-      rethrow;
+      final result = await client.call(contract: contract, function: stateFunction, params: [proposalId]);
+      return (result[0] as BigInt).toInt();
     } finally {
       await client.dispose();
     }
@@ -139,18 +128,8 @@ class BlockchainService {
         EthereumAddress.fromHex(contractAddress),
       );
       final votesFunction = contract.function('proposalVotes');
-      final result = await client.call(
-        contract: contract,
-        function: votesFunction,
-        params: [proposalId],
-      );
-      if (result.length == 3) {
-        return result.cast<BigInt>();
-      }
-      throw Exception('Failed to parse proposal votes from contract.');
-    } catch (e) {
-      if (kDebugMode) print('[BlockchainService] Error getting proposal votes: $e');
-      rethrow;
+      final result = await client.call(contract: contract, function: votesFunction, params: [proposalId]);
+      return result.cast<BigInt>();
     } finally {
       await client.dispose();
     }
@@ -164,19 +143,8 @@ class BlockchainService {
         EthereumAddress.fromHex(tokenAddress),
       );
       final getVotesFunction = contract.function('getVotes');
-      final result = await client.call(
-        contract: contract,
-        function: getVotesFunction,
-        params: [EthereumAddress.fromHex(userAddress)],
-      );
-
-      if (result.isNotEmpty && result[0] is BigInt) {
-        return result[0] as BigInt;
-      }
-      throw Exception('Failed to parse voting weight from token contract.');
-    } catch (e) {
-      if (kDebugMode) print('[BlockchainService] Error getting votes: $e');
-      return BigInt.zero;
+      final result = await client.call(contract: contract, function: getVotesFunction, params: [EthereumAddress.fromHex(userAddress)]);
+      return result[0] as BigInt;
     } finally {
       await client.dispose();
     }
@@ -187,19 +155,8 @@ class BlockchainService {
     try {
       final contract = DeployedContract(Erc20GovAbi.abi, EthereumAddress.fromHex(tokenAddress));
       final delegatesFunction = contract.function('delegates');
-      final result = await client.call(
-        contract: contract,
-        function: delegatesFunction,
-        params: [EthereumAddress.fromHex(userAddress)],
-      );
-
-      if (result.isNotEmpty && result[0] is EthereumAddress) {
-        return (result[0] as EthereumAddress).hex;
-      }
-      return null;
-    } catch (e) {
-      if (kDebugMode) print('[BlockchainService] Error getting delegate: $e');
-      return null;
+      final result = await client.call(contract: contract, function: delegatesFunction, params: [EthereumAddress.fromHex(userAddress)]);
+      return (result[0] as EthereumAddress).hex;
     } finally {
       await client.dispose();
     }
@@ -209,193 +166,69 @@ class BlockchainService {
     if (!web3.Ethereum.isSupported || web3.ethereum == null) {
       throw Exception("A web3 wallet is required for this action.");
     }
-    
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
-    final activeAddress = await signer.getAddress();
-
-    if (kDebugMode) {
-      print("[BlockchainService] Attempting 'delegate' transaction.");
-      print("  > App's selected signer: $signerAddress");
-      print("  > Wallet's active signer: $activeAddress");
-    }
-
-    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
-      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
-    }
-
     final contract = web3.Contract(tokenAddress, Erc20GovAbi.abiJson, signer);
-    try {
-      final tx = await contract.send('delegate', [delegateeAddress]);
-      await tx.wait();
-      return tx.hash;
-    } catch (e) {
-      if (kDebugMode) print("Delegation error: $e");
-      throw Exception("Transaction failed. It may have been rejected or encountered an error.");
-    }
+    final tx = await contract.send('delegate', [delegateeAddress]);
+    await tx.wait();
+    return tx.hash;
   }
-
+  
   Future<String> castVote(String contractAddress, BigInt proposalId, int support, String signerAddress) async {
     if (!web3.Ethereum.isSupported || web3.ethereum == null) {
       throw Exception("A web3 wallet is required for this action.");
     }
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
-    final activeAddress = await signer.getAddress();
-
-    if (kDebugMode) {
-      print("[BlockchainService] Attempting 'castVote' transaction.");
-      print("  > App's selected signer: $signerAddress");
-      print("  > Wallet's active signer: $activeAddress");
-    }
-
-    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
-      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
-    }
-    
     final contract = web3.Contract(contractAddress, governorAbi, signer);
-    try {
-      final tx = await contract.send('castVote', [proposalId, support]);
-      await tx.wait();
-      return tx.hash;
-    } catch (e) {
-      if (kDebugMode) print("Cast vote error: $e");
-      throw Exception("Transaction failed. You may not have had voting power when this proposal was created.");
-    }
+    final tx = await contract.send('castVote', [proposalId, support]);
+    await tx.wait();
+    return tx.hash;
   }
-  
-  Future<String> propose(
-    String contractAddress,
-    String signerAddress,
-    List<String> targets,
-    List<BigInt> values,
-    List<Uint8List> calldatas,
-    String description,
-  ) async {
+
+  Future<String> propose( String contractAddress, String signerAddress, List<String> targets, List<BigInt> values, List<Uint8List> calldatas, String description) async {
     if (!web3.Ethereum.isSupported || web3.ethereum == null) {
       throw Exception("A web3 wallet is required for this action.");
     }
-
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
-    final activeAddress = await signer.getAddress();
-
-    if (kDebugMode) {
-      print("[BlockchainService] Attempting 'propose' transaction.");
-      print("  > App's selected signer: $signerAddress");
-      print("  > Wallet's active signer: $activeAddress");
-    }
-
-    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
-      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
-    }
-    
     final contract = web3.Contract(contractAddress, governorAbi, signer);
-    try {
-      final tx = await contract.send('propose', [targets, values, calldatas, description]);
-      await tx.wait();
-      return tx.hash;
-    } catch (e) {
-      if (kDebugMode) print("Proposal creation error: $e");
-      throw Exception("Transaction failed. You may not have enough voting power to create a proposal.");
-    }
+    final tx = await contract.send('propose', [targets, values, calldatas, description]);
+    await tx.wait();
+    return tx.hash;
   }
 
   Uint8List _getDescriptionHash(String description) {
     final encodedDescription = utf8.encode(description);
-    return keccak256(encodedDescription);
+    return Uint8List.fromList(keccak256(encodedDescription));
   }
 
-  Future<String> queueProposal(
-    String contractAddress,
-    String signerAddress,
-    List<String> targets,
-    List<BigInt> values,
-    List<Uint8List> calldatas,
-    String description,
-  ) async {
+  Future<String> queueProposal( String contractAddress, String signerAddress, List<String> targets, List<BigInt> values, List<Uint8List> calldatas, String description) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
-    final activeAddress = await signer.getAddress();
-    
-    if (kDebugMode) {
-      print("[BlockchainService] Attempting 'queue' transaction.");
-      print("  > App's selected signer: $signerAddress");
-      print("  > Wallet's active signer: $activeAddress");
-    }
-
-    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
-      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
-    }
-
     final descriptionHashBytes = _getDescriptionHash(description);
-    final descriptionHashHex = bytesToHex(descriptionHashBytes, include0x: true);
+    final descriptionHashHex = '0x${bytesToHex(descriptionHashBytes)}';
     final contract = web3.Contract(contractAddress, governorAbi, signer);
-
-    if (kDebugMode) {
-      print("  > Raw Description for Hashing: '$description'");
-      print("  > Keccak256 Hash (bytes32): $descriptionHashHex");
-      print("  > Parameters for contract.send('queue'):");
-      print("    - targets: $targets");
-      print("    - values: $values");
-      print("    - calldatas: $calldatas");
-      print("    - descriptionHash: $descriptionHashHex");
-    }
-
-    try {
-      final tx = await contract.send('queue', [targets, values, calldatas, descriptionHashHex]);
-      await tx.wait();
-      return tx.hash;
-    } catch (e) {
-      if (kDebugMode) print("Queue proposal error: $e");
-      throw Exception("Transaction failed. The proposal may not be in a 'Succeeded' state.");
-    }
+    final tx = await contract.send('queue', [targets, values, calldatas, descriptionHashHex]);
+    await tx.wait();
+    return tx.hash;
   }
 
-  Future<String> executeProposal(
-    String contractAddress,
-    String signerAddress,
-    List<String> targets,
-    List<BigInt> values,
-    List<Uint8List> calldatas,
-    String description,
-  ) async {
+  Future<String> executeProposal( String contractAddress, String signerAddress, List<String> targets, List<BigInt> values, List<Uint8List> calldatas, String description) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
     final provider = web3.Web3Provider(web3.ethereum!);
     final signer = provider.getSigner();
-    final activeAddress = await signer.getAddress();
-
-    if (kDebugMode) {
-      print("[BlockchainService] Attempting 'execute' transaction.");
-      print("  > App's selected signer: $signerAddress");
-      print("  > Wallet's active signer: $activeAddress");
-    }
-
-    if (activeAddress.toLowerCase() != signerAddress.toLowerCase()) {
-      throw AccountMismatchException(requiredAddress: signerAddress, activeAddress: activeAddress);
-    }
-
     final descriptionHashBytes = _getDescriptionHash(description);
-    final descriptionHashHex = bytesToHex(descriptionHashBytes, include0x: true);
+    final descriptionHashHex = '0x${bytesToHex(descriptionHashBytes)}';
     final contract = web3.Contract(contractAddress, governorAbi, signer);
-
-     if (kDebugMode) {
-      print("  > Raw Description for Hashing: '$description'");
-      print("  > Keccak256 Hash (bytes32): $descriptionHashHex");
-      print("  > Parameters for contract.send('execute'):");
-      print("    - targets: $targets");
-      print("    - values: $values");
-      print("    - calldatas: $calldatas");
-      print("    - descriptionHash: $descriptionHashHex");
-    }
-
-    try {
-      final tx = await contract.send('execute', [targets, values, calldatas, descriptionHashHex]);
-      await tx.wait();
-      return tx.hash;
-    } catch (e) {
-      if (kDebugMode) print("Execute proposal error: $e");
-      throw Exception("Transaction failed. The proposal may not be ready for execution.");
-    }
+    final tx = await contract.send('execute', [targets, values, calldatas, descriptionHashHex]);
+    await tx.wait();
+    return tx.hash;
   }
 
   Future<BigInt> getProposalSnapshotTimestamp(String contractAddress, BigInt proposalId, String rpcUrl) async {
@@ -422,4 +255,3 @@ class BlockchainService {
     }
   }
 }
-// lib/src/services/blockchain_service.dart

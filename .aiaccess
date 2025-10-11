@@ -1,24 +1,2 @@
-
-!lib/src/providers/auth_provider.dart # Needed for signer address.
-!lib/src/providers/dao_provider.dart # Needed for signer address.
-!lib/src/providers/member_provider.dart # Needed for signer address.
-!lib/src/providers/network_provider.dart # Needed for signer address.
-
-# Include the core services for blockchain interaction and data encoding.
-# These are critical for implementing the new transfer types.
-!lib/src/services/blockchain_service.dart
-!lib/src/services/calldata_service.dart
-!lib/src/services/firestore_service.dart # To see how proposals are stored/retrieved.
-!lib/src/services/governor_abi.dart
-!lib/src/services/treasury_service.dart
-!lib/src/services/erc20_gov_abi.dart
-
-# Include the core data models that define what a proposal, DAO, and network are.
-!lib/src/models/
-!lib/src/widgets/
-
-# Include the proposal status helper for display logic.
-!lib/src/utils/
-
-!lib/src/routing/app_router.dart
-!lib/main.dart
+!lib/
+lib/src/features/creator

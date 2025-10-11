@@ -14,13 +14,17 @@ class Screen9DeploymentComplete extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Deployment Complete!',
+          const Icon(Icons.check_circle_outline, color: Colors.green, size: 100),
+          const SizedBox(height: 50),
+          Text('DAO Deployed & Indexed!',
               style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 60),
-          ElevatedButton(onPressed: onGoToDAO, child: const Text('Go to DAO')),
+          ElevatedButton(
+            onPressed: onGoToDAO, 
+            child: const Text('Go to DAO')
+          ),
         ],
       ),
     );
   }
 }
-// lib/src/features/dao_creator/screens/screen9_deployment_complete.dart

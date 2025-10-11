@@ -10,6 +10,7 @@ class Network {
   final String name;
   final String rpcUrl;
   final String daoFactory;
+  final String wrapper; // THE FIX: Added the wrapper contract address field.
   final int chainId;
   final String nativeCurrencyName;
   final String nativeCurrencySymbol;
@@ -19,6 +20,7 @@ class Network {
     required this.name,
     required this.rpcUrl,
     required this.daoFactory,
+    required this.wrapper, // THE FIX: Added to the constructor.
     required this.chainId,
     required this.nativeCurrencyName,
     required this.nativeCurrencySymbol,
@@ -30,6 +32,7 @@ class Network {
       name: docId,
       rpcUrl: data['rpc'] ?? '',
       daoFactory: data['daoFactory'] ?? '',
+      wrapper: data['wrapper'] ?? '', // THE FIX: Reading the 'wrapper' field from Firestore.
       chainId: data['chainId'] ?? knownChainIds[docId] ?? 0,
       nativeCurrencyName: data['nativeCurrency'] ?? 'ETH', // Fallback
       nativeCurrencySymbol: data['symbol'] ?? 'ETH', // Fallback
@@ -47,4 +50,3 @@ class Network {
   @override
   int get hashCode => name.hashCode;
 }
-// lib/src/models/network.dart

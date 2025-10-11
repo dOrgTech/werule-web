@@ -97,7 +97,7 @@ class _TreasuryViewState extends State<_TreasuryView> {
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       if (constraints.maxWidth < 700) {
-                        return _buildTokensList(displayedAssets); // Mobile View
+                        return _buildTokensList(displayedAssets); //f Mobile View
                       } else {
                         return _buildTokensTable(displayedAssets); // Desktop View
                       }
@@ -107,7 +107,7 @@ class _TreasuryViewState extends State<_TreasuryView> {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 58.0),
-                      child: Text("NFTs are not yet supported.",
+                      child: Text("No NFTs here...",
                           style: TextStyle(fontSize: 16, color: Colors.grey)),
                     ),
                   );

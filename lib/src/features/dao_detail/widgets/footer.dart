@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+bool werule=true;
 class Footer extends StatelessWidget {
   const Footer({super.key});
 
@@ -92,9 +92,11 @@ class Footer extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const MediaQuery(
-          data: MediaQueryData(textScaler: TextScaler.linear(1.7)),
-          child: Logo(),
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.7)),
+          child: 
+        werule?  
+          Logo():Brand(),
         ),
         const SizedBox(height: 18),
         Text(
@@ -162,6 +164,54 @@ class Footer extends StatelessWidget {
     );
   }
 }
+
+class Brand extends StatelessWidget {
+  const Brand({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (werule){
+      return Logo();
+    }else{
+      return const LogoHB();
+    }
+  }
+}
+class LogoHB extends StatelessWidget {
+  const LogoHB({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      hoverColor: Colors.transparent,
+      onTap: () => context.go("/"),
+      child:  Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+      children: [
+          Padding(
+            padding: const EdgeInsets.only(top:8.0),
+            child: Image.network("https://i.ibb.co/qLYBbs8v/hblogo.png", height: 32,),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(height: 45,
+            child: Center(
+              child: const Text(
+              "Homebase",
+              style: TextStyle(
+                fontSize: 20
+              )
+              ),
+            ),
+          )
+      ],
+      )
+    );
+  }
+}
+
+
 
 class Logo extends StatelessWidget {
   const Logo({super.key});

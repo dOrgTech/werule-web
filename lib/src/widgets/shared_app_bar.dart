@@ -20,7 +20,7 @@ class SharedAppBar extends StatelessWidget implements PreferredSizeWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 650;
 
-        const titleWidget = Logo();
+        const titleWidget = Brand();
         
         final actionsRow = [
           Padding(

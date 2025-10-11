@@ -261,7 +261,7 @@ class _ProposalHeader extends StatelessWidget {
           },
         ),
         const SizedBox(width: 18),
-        Text(typeText+"  proposal", style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
+        Text("$typeText  proposal", style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
       ],
     );
 

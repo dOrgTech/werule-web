@@ -229,6 +229,7 @@ class Screen7Review extends StatelessWidget {
                                 style: valueStyle)),
                           ]));
                         }
+                        // THE FIX: This return statement was missing, causing the UI to crash on rebuild.
                         return displayedRows;
                       }
                     })(),
@@ -301,4 +302,3 @@ class Screen7Review extends StatelessWidget {
     );
   }
 }
-// lib/src/features/dao_creator/screens/screen7_review.dart

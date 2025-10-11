@@ -216,7 +216,9 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                                 int? decimals = int.tryParse(value);
                                 if (decimals == null ||
                                     decimals < 0 ||
-                                    decimals > 18) return '0-18';
+                                    decimals > 18) {
+                                  return '0-18';
+                                }
                               }
                               return null;
                             },

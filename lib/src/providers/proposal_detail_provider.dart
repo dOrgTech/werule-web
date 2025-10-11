@@ -214,8 +214,9 @@ class ProposalDetailProvider extends ChangeNotifier {
     final voteStart = _proposal.createdAt.add(Duration(minutes: _org.votingDelay));
     final voteEnd = voteStart.add(Duration(minutes: _org.votingDuration));
 
-    if (_status == ProposalStatus.Pending) targetTime = voteStart;
-    else if (_status == ProposalStatus.Active) targetTime = voteEnd;
+    if (_status == ProposalStatus.Pending) {
+      targetTime = voteStart;
+    } else if (_status == ProposalStatus.Active) targetTime = voteEnd;
     else if (_status == ProposalStatus.Queued) {
       final queuedTime = _proposal.statusHistory['queued'] ?? voteEnd;
       targetTime = queuedTime.add(Duration(seconds: _org.executionDelay));
