@@ -1,0 +1,47 @@
+Problems found in: calldata_service.dart
+==================================================
+
+ERROR at Line 116:3 (dart)
+   Message: Undefined class 'Tuple2'.
+Try changing the name to the name of an existing class, or creating a class with the name 'Tuple2'.
+
+ERROR at Line 163:17 (dart)
+   Message: The name 'BytesType' isn't defined, so it can't be used in an 'is' expression.
+Try changing the name to the name of an existing type, or creating a type with the name 'BytesType'.
+
+ERROR at Line 163:38 (dart)
+   Message: The name 'FixedBytesType' isn't defined, so it can't be used in an 'is' expression.
+Try changing the name to the name of an existing type, or creating a type with the name 'FixedBytesType'.
+
+ERROR at Line 130:14 (dart)
+   Message: The method 'Tuple2' isn't defined for the type 'CalldataService'.
+Try correcting the name to the name of an existing method, or defining a method named 'Tuple2'.
+
+ERROR at Line 134:12 (dart)
+   Message: The method 'Tuple2' isn't defined for the type 'CalldataService'.
+Try correcting the name to the name of an existing method, or defining a method named 'Tuple2'.
+
+ERROR at Line 152:32 (dart)
+   Message: The method 'FixedBytesType' isn't defined for the type 'CalldataService'.
+Try correcting the name to the name of an existing method, or defining a method named 'FixedBytesType'.
+
+ERROR at Line 153:14 (dart)
+   Message: The method 'BytesType' isn't defined for the type 'CalldataService'.
+Try correcting the name to the name of an existing method, or defining a method named 'BytesType'.
+
+WARNING at Line 139:38 (dart)
+   Message: Use 'const' with the constructor to improve performance.
+Try adding the 'const' keyword to the constructor invocation.
+
+WARNING at Line 140:35 (dart)
+   Message: Use 'const' with the constructor to improve performance.
+Try adding the 'const' keyword to the constructor invocation.
+
+WARNING at Line 141:37 (dart)
+   Message: Use 'const' with the constructor to improve performance.
+Try adding the 'const' keyword to the constructor invocation.
+
+WARNING at Line 260:7 (dart)
+   Message: Don't invoke 'print' in production code.
+Try using a logging framework.
+

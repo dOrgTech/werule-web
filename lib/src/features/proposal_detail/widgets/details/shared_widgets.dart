@@ -34,7 +34,8 @@ Widget buildDetailRow(String label, String value, {bool isCode = false}) {
   );
 }
 
-Widget buildContractCallRow(BuildContext context, String label, String value) {
+// THE FIX: Added an optional `fullValueToCopy` parameter for the copy button's action.
+Widget buildContractCallRow(BuildContext context, String label, String value, {String? fullValueToCopy}) {
    return Padding(
     padding: const EdgeInsets.symmetric(vertical: 4.0),
     child: Row(
@@ -58,7 +59,8 @@ Widget buildContractCallRow(BuildContext context, String label, String value) {
           icon: const Icon(Icons.copy, size: 16),
           splashRadius: 20,
           onPressed: () {
-            Clipboard.setData(ClipboardData(text: value));
+            // THE FIX: Use the `fullValueToCopy` if available, otherwise fall back to the displayed value.
+            Clipboard.setData(ClipboardData(text: fullValueToCopy ?? value));
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 1)),
             );

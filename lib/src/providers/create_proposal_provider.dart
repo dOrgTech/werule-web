@@ -19,6 +19,7 @@ enum ProposalType {
   updateVotingDelay,
   updateVotingPeriod,
   updateThreshold,
+  contractCall, // THE FIX: Added new proposal type
 }
 
 extension ProposalTypeExtension on ProposalType {
@@ -32,6 +33,7 @@ extension ProposalTypeExtension on ProposalType {
       case ProposalType.updateVotingDelay: return 'voting_delay';
       case ProposalType.updateVotingPeriod: return 'voting_period';
       case ProposalType.updateThreshold: return 'threshold';
+      case ProposalType.contractCall: return 'contract_call'; // THE FIX: Added type string
     }
   }
 }
@@ -72,6 +74,14 @@ class CreateProposalProvider extends ChangeNotifier {
   String votingDelayValue = '';
   String votingPeriodValue = '';
   String thresholdValue = '';
+
+  // THE FIX: Added state for the new contract call type
+  String contractCallTargetAddress = '';
+  String contractCallFunctionSignature = '';
+  List<String> contractCallParamValues = [];
+  String contractCallRawCalldata = '';
+  bool isRawCalldataMode = false;
+
 
   // State for prepared transaction data (for review and submit)
   List<String> preparedTargets = [];
@@ -212,6 +222,21 @@ class CreateProposalProvider extends ChangeNotifier {
           values = [BigInt.zero];
           calldatas = [_calldata.encodeThresholdCall(threshold)];
           break;
+
+        // THE FIX: Added logic for the new proposal type
+        case ProposalType.contractCall:
+          if (contractCallTargetAddress.isEmpty) throw Exception("Target Contract Address is required.");
+          targets = [contractCallTargetAddress];
+          values = [BigInt.zero]; // Assume no native value transfer for now
+          
+          if (isRawCalldataMode) {
+            if (contractCallRawCalldata.isEmpty) throw Exception("Raw Calldata is required.");
+            calldatas = [hexToBytes(contractCallRawCalldata)];
+          } else {
+            if (contractCallFunctionSignature.isEmpty) throw Exception("Function Signature is required.");
+            calldatas = [_calldata.encodeArbitraryFunctionCall(contractCallFunctionSignature, contractCallParamValues)];
+          }
+          break;
       }
       
       preparedTargets = targets;
@@ -221,8 +246,8 @@ class CreateProposalProvider extends ChangeNotifier {
       notifyListeners();
       return null;
 
-    } on FormatException {
-      return "Invalid address or amount format.";
+    } on FormatException catch (e) {
+      return "Invalid format: ${e.message}";
     } catch (e) {
       return e.toString();
     }

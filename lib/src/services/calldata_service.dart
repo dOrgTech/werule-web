@@ -1,6 +1,9 @@
 // lib/src/services/calldata_service.dart
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+
+
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -29,7 +32,6 @@ class CalldataService {
     ],
   );
 
-  // THE FIX: Expose function selectors for reliable identification
   static Uint8List get transferNativeSelector => transferNativeDef.selector;
   static Uint8List get erc20TreasuryTransferSelector => erc20TreasuryTransferDef.selector;
 
@@ -108,6 +110,83 @@ class CalldataService {
   Uint8List encodeThresholdCall(BigInt newThreshold) {
     return changeProposalThresholdDef.encodeCall([newThreshold]);
   }
+  
+  // --- NEW: Arbitrary Contract Call Logic (CORRECTED) ---
+
+  /// THE FIX: This function is now public so the UI can use it to build the form.
+  /// It dynamically creates a `ContractFunction` object from a signature string.
+  ContractFunction _parseDynamicFunction(String signature) {
+    final funcNameMatch = RegExp(r'\s*(\w+)\s*\(').firstMatch(signature);
+    if (funcNameMatch == null) throw const FormatException('Invalid signature: cannot find function name');
+    final funcName = funcNameMatch.group(1)!;
+
+    final paramsMatch = RegExp(r'\((.*)\)').firstMatch(signature);
+    if (paramsMatch == null) throw const FormatException('Invalid signature: missing parentheses');
+    
+    final paramsString = paramsMatch.group(1)!.trim();
+    final paramParts = paramsString.isEmpty ? <String>[] : paramsString.split(',').map((p) => p.trim()).toList();
+
+    final inputs = [];
+    for (int i = 0; i < paramParts.length; i++) {
+        final type = paramParts[i].split(' ').last;
+        inputs.add({
+            "name": "param$i",
+            "type": type,
+            "internalType": type,
+        });
+    }
+
+    final abiJson = [{
+        "type": "function",
+        "name": funcName,
+        "inputs": inputs,
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    }];
+
+    final abi = ContractAbi.fromJson(json.encode(abiJson), 'DynamicFunction');
+    return abi.functions.first;
+  }
+  
+  /// Public method for the UI to get the parameter types from a signature.
+  List<FunctionParameter> getParametersFromSignature(String signature) {
+    if (signature.trim().isEmpty) return [];
+    final function = _parseDynamicFunction(signature);
+    return function.parameters;
+  }
+
+  /// Encodes the arbitrary function call using the dynamic parser.
+  Uint8List encodeArbitraryFunctionCall(String signature, List<String> paramValues) {
+    final function = _parseDynamicFunction(signature);
+    
+    if (function.parameters.length != paramValues.length) {
+      throw ArgumentError('Mismatched number of parameters and values.');
+    }
+
+    final convertedValues = [];
+    for (int i = 0; i < paramValues.length; i++) {
+        final paramType = function.parameters[i].type;
+        final stringValue = paramValues[i];
+        final typeName = paramType.name;
+
+        if (typeName == 'address') {
+            convertedValues.add(EthereumAddress.fromHex(stringValue));
+        } else if (typeName.startsWith('uint') || typeName.startsWith('int')) {
+            convertedValues.add(BigInt.parse(stringValue));
+        } else if (typeName == 'bool') {
+            convertedValues.add(stringValue.toLowerCase() == 'true');
+        } else if (typeName == 'string') {
+            convertedValues.add(stringValue);
+        } else if (typeName.startsWith('bytes')) {
+            final hex = stringValue.startsWith('0x') ? stringValue.substring(2) : stringValue;
+            convertedValues.add(hexToBytes(hex));
+        } else {
+            throw ArgumentError('Unsupported ABI type for conversion: $typeName');
+        }
+    }
+
+    return function.encodeCall(convertedValues);
+  }
 
 
   // --- Decoding Logic ---
@@ -118,7 +197,6 @@ class CalldataService {
   List<dynamic> decodeThresholdCall(String hex) => decodeCalldata(changeProposalThresholdDef, hex);
   
   List<dynamic> decodeCalldata(ContractFunction functionAbi, String hexCalldata) {
-    // Note: This is a simplified decoder and will be updated to be more robust.
     if (hexCalldata.startsWith('0x')) {
       hexCalldata = hexCalldata.substring(2);
     }
@@ -126,7 +204,6 @@ class CalldataService {
     final functionSelector = functionAbi.selector;
     final calldataBytes = hexToBytes(hexCalldata);
     
-    // Basic validation
     if (!listEquals(calldataBytes.sublist(0, 4), functionSelector)) {
       throw const FormatException('Calldata does not match function selector.');
     }
@@ -143,13 +220,11 @@ class CalldataService {
 
       if (param.type is AddressType) {
         final address = EthereumAddress(chunk.sublist(12));
-        decoded.add(address); // Return the Address object
+        decoded.add(address);
       } else if (param.type is UintType) {
         final value = bytesToInt(chunk);
         decoded.add(value);
       } else {
-        // This simple decoder does not support dynamic types like string or bytes.
-        // For this app's purposes, we only decode simple types.
         throw UnsupportedError("Decoding for type ${param.type.name} is not supported.");
       }
       
@@ -178,7 +253,9 @@ class CalldataService {
 
       return [str1, str2];
     } catch (e) {
-      print("Error decoding registry calldata: $e");
+      if (kDebugMode) {
+        print("Error decoding registry calldata: $e");
+      }
       return ["<decoding error>", "<decoding error>"];
     }
   }

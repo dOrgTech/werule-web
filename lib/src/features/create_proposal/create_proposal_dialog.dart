@@ -8,7 +8,32 @@ import 'package:werule/src/models/token_asset.dart';
 import 'package:werule/src/providers/create_proposal_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/providers/treasury_provider.dart';
+import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/utils/reusable.dart';
+import 'package:web3dart/web3dart.dart';
+
+// THE FIX: Moved validator functions to the top level to be accessible by all classes in this file.
+String? _validateAddress(String? value) {
+  if (value == null || value.isEmpty) return 'Required';
+  final regex = RegExp(r'^0x[a-fA-F0-9]{40}$');
+  if (!regex.hasMatch(value)) return 'Invalid Ethereum address format';
+  return null;
+}
+
+String? _validateLink(String? value) {
+  if (value == null || value.isEmpty) return null; // Optional field
+
+  // Basic XSS checks
+  if (value.contains('<') || value.contains('>')) return 'Invalid characters detected';
+  if (value.toLowerCase().trim().startsWith('javascript:')) return 'Scripts are not allowed';
+
+  final uri = Uri.tryParse(value);
+  if (uri == null || !uri.isAbsolute) {
+      return 'Please enter a valid URL (e.g., https://example.com)';
+  }
+  return null;
+}
+
 
 class CreateProposalDialog extends StatefulWidget {
   final Org org;
@@ -30,7 +55,7 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
     'Step 4: Review',
   ];
 
-  String _getDialogTitle() {
+  String getDialogTitle() {
     if (_currentStep < 3) return 'Set';
     return 'Review & Submit';
   }
@@ -96,28 +121,6 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
     }
   }
 
-  // --- VALIDATORS ---
-  String? _validateAddress(String? value) {
-    if (value == null || value.isEmpty) return 'Required';
-    final regex = RegExp(r'^0x[a-fA-F0-9]{40}$');
-    if (!regex.hasMatch(value)) return 'Invalid Ethereum address format';
-    return null;
-  }
-
-  String? _validateLink(String? value) {
-    if (value == null || value.isEmpty) return null; // Optional field
-
-    // Basic XSS checks
-    if (value.contains('<') || value.contains('>')) return 'Invalid characters detected';
-    if (value.toLowerCase().trim().startsWith('javascript:')) return 'Scripts are not allowed';
-
-    final uri = Uri.tryParse(value);
-    if (uri == null || !uri.isAbsolute) {
-        return 'Please enter a valid URL (e.g., https://example.com)';
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CreateProposalProvider>();
@@ -127,7 +130,7 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_getDialogTitle()),
+          Text(getDialogTitle()),
           Text(
             _stepSubtitles[_currentStep],
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70, fontSize: 14),
@@ -154,7 +157,6 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
         return FadeTransition(opacity: animation, child: child);
       },
       child: Container(
-        // THE FIX: Enclosed `_currentStep` in curly braces for correct string interpolation.
         key: ValueKey<String>('step_${_currentStep}_$_step2Category'),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -250,6 +252,15 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
           subtitle: "Change an entry or add a new one",
           onTap: () {
             provider.setProposalType(ProposalType.registry);
+            _nextStep();
+          },
+        ),
+        _buildCategoryButton(
+          icon: Icons.code,
+          title: "Custom Contract Call",
+          subtitle: "Interact with any contract on the network",
+          onTap: () {
+            provider.setProposalType(ProposalType.contractCall);
             _nextStep();
           },
         ),
@@ -376,6 +387,7 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
       case ProposalType.updateVotingDelay: return _buildSingleUintForm(provider, "New Voting Delay", (val) => provider.votingDelayValue = val, hint: "Value in minutes");
       case ProposalType.updateVotingPeriod: return _buildSingleUintForm(provider, "New Voting Period", (val) => provider.votingPeriodValue = val, hint: "Value in minutes");
       case ProposalType.updateThreshold: return _buildSingleUintForm(provider, "New Proposal Threshold", (val) => provider.thresholdValue = val, hint: 'Amount in ${widget.org.symbol}');
+      case ProposalType.contractCall: return _ContractCallForm(provider: provider);
     }
   }
 
@@ -555,6 +567,174 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
           Text(value, style: const TextStyle(color: Colors.white)),
         ],
       ),
+    );
+  }
+}
+
+class _ContractCallForm extends StatefulWidget {
+  final CreateProposalProvider provider;
+  const _ContractCallForm({required this.provider});
+
+  @override
+  State<_ContractCallForm> createState() => _ContractCallFormState();
+}
+
+class _ContractCallFormState extends State<_ContractCallForm> {
+  final _targetController = TextEditingController();
+  final _signatureController = TextEditingController();
+  final _calldataController = TextEditingController();
+  
+  List<MapEntry<FunctionParameter, TextEditingController>> _paramControllers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _targetController.text = widget.provider.contractCallTargetAddress;
+    _signatureController.text = widget.provider.contractCallFunctionSignature;
+    _calldataController.text = widget.provider.contractCallRawCalldata;
+
+    _targetController.addListener(() {
+      widget.provider.contractCallTargetAddress = _targetController.text;
+    });
+    _calldataController.addListener(() {
+      widget.provider.contractCallRawCalldata = _calldataController.text;
+    });
+  }
+
+  @override
+  void dispose() {
+    _targetController.dispose();
+    _signatureController.dispose();
+    _calldataController.dispose();
+    for (var entry in _paramControllers) {
+      entry.value.dispose();
+    }
+    super.dispose();
+  }
+
+  void _parseSignature() {
+    final signature = _signatureController.text;
+    final calldataService = context.read<CalldataService>();
+    
+    // Clear old controllers
+    for (var entry in _paramControllers) {
+      entry.value.dispose();
+    }
+    setState(() => _paramControllers = []);
+
+    try {
+      final params = calldataService.getParametersFromSignature(signature);
+      
+      final newControllers = params.map((param) {
+        return MapEntry(param, TextEditingController());
+      }).toList();
+
+      for (int i = 0; i < newControllers.length; i++) {
+        final index = i; // capture index for listener
+        newControllers[i].value.addListener(() {
+          widget.provider.contractCallParamValues[index] = newControllers[index].value.text;
+        });
+      }
+      
+      setState(() {
+        _paramControllers = newControllers;
+        widget.provider.contractCallFunctionSignature = signature;
+        widget.provider.contractCallParamValues = List.filled(newControllers.length, '');
+      });
+
+    } on FormatException catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Error parsing signature: ${e.message}"),
+        backgroundColor: Colors.redAccent,
+      ));
+    } catch (e) {
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("An unexpected error occurred: ${e.toString()}"),
+        backgroundColor: Colors.redAccent,
+      ));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = widget.provider;
+    return Column(
+      children: [
+        TextFormField(
+          controller: _targetController,
+          decoration: const InputDecoration(labelText: 'Target Contract Address'),
+          validator: _validateAddress,
+        ),
+        const SizedBox(height: 16),
+        ToggleButtons(
+          isSelected: [!provider.isRawCalldataMode, provider.isRawCalldataMode],
+          onPressed: (index) => setState(() => provider.isRawCalldataMode = index == 1),
+          borderRadius: BorderRadius.circular(8),
+          children: const [
+            Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Manual Definition')),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Raw Calldata')),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        if (provider.isRawCalldataMode)
+          TextFormField(
+            controller: _calldataController,
+            decoration: const InputDecoration(labelText: 'Raw Calldata (0x...)'),
+            maxLines: 4,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Required';
+              if (!v.startsWith('0x')) return 'Calldata must start with 0x';
+              if (RegExp(r'[^0-9a-fA-Fx]').hasMatch(v)) return 'Invalid hexadecimal characters';
+              return null;
+            },
+          )
+        else
+          Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _signatureController,
+                      decoration: const InputDecoration(
+                        labelText: 'Function Signature',
+                        hintText: 'e.g., transfer(address,uint256)',
+                      ),
+                      validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0), // Align with text field content
+                    child: ElevatedButton(onPressed: _parseSignature, child: const Text('Parse')),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (_paramControllers.isNotEmpty)
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _paramControllers.length,
+                  itemBuilder: (context, index) {
+                    final entry = _paramControllers[index];
+                    final param = entry.key;
+                    final controller = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: TextFormField(
+                        controller: controller,
+                        decoration: InputDecoration(labelText: 'Parameter ${index + 1} (${param.type.name})'),
+                        validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

@@ -19,7 +19,14 @@ class ContractCallDetails extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           buildContractCallRow(context, "Target:", target),
-          buildContractCallRow(context, "Calldata:", shortenString(calldata)),
+          // THE FIX: Pass the full `calldata` to the new parameter for copying,
+          // while still passing the shortened version for display.
+          buildContractCallRow(
+            context,
+            "Calldata:",
+            shortenString(calldata),
+            fullValueToCopy: calldata,
+          ),
         ],
       ),
     );
