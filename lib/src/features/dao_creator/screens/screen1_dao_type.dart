@@ -59,6 +59,10 @@ class Screen1DaoType extends StatelessWidget {
   Widget build(BuildContext context) {
     const TextStyle meniu =
         TextStyle(fontSize: 24, color: Color.fromARGB(255, 178, 178, 178));
+    
+    // Use the theme's default text style to ensure font consistency.
+    final defaultTextStyle = Theme.of(context).textTheme.bodyMedium ??
+        const TextStyle(color: Color.fromARGB(255, 194, 194, 194));
 
     return SingleChildScrollView(
       child: Padding(
@@ -111,7 +115,6 @@ class Screen1DaoType extends StatelessWidget {
                       color: const Color.fromARGB(255, 134, 134, 134)),
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     const SizedBox(height: 22),
                     const FlashingIcon(),
@@ -151,14 +154,25 @@ class Screen1DaoType extends StatelessWidget {
                                   ],
                                 )))),
                     const SizedBox(height: 10),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Text(
-                        'All important operations are secured by the will of the members through voting.\n\nExecutive and Declarative.',
-                        style: TextStyle(height: 1.3),
+                        'All important operations are secured by the will of the members through voting.',
+                        style: defaultTextStyle.copyWith(height: 1.3),
                         textAlign: TextAlign.center,
                       ),
                     ),
+                    const Spacer(), // This pushes the next widget to the bottom
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                      child: Text(
+                        'Executive and Declarative.',
+                        textAlign: TextAlign.center,
+                        style: defaultTextStyle.copyWith(
+                            color: Theme.of(context).indicatorColor),
+                      ),
+                    ),
+                    const SizedBox(height: 16)
                   ],
                 ),
               ),
@@ -194,25 +208,42 @@ class Screen1DaoType extends StatelessWidget {
                   margin: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
                     border: Border.all(
-                        color: const Color.fromARGB(255, 56, 56, 56)),
+                        color: const Color.fromARGB(255, 134, 134, 134)),
                   ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                  child: Column(
                     children: [
-                      SizedBox(height: 26),
-                      Icon(Icons.forum, size: 40),
-                      SizedBox(height: 14),
-                      Text('Debates', style: TextStyle(fontSize: 23.5)),
-                      SizedBox(height: 8),
-                      Padding(
-                        padding: EdgeInsets.only(
-                            left: 13.0, right: 13, top: 9, bottom: 20),
-                        child: Text(
-                          "Tokenized collective debates with fractal topology. \n\nDeclarative only.",
-                          style: TextStyle(height: 1.1),
-                          textAlign: TextAlign.center,
+                      const SizedBox(height: 22),
+                      const Icon(Icons.forum, size: 44, color: Colors.white),
+                      const SizedBox(height: 14),
+                      // Ensure title container has same height for alignment
+                      SizedBox(
+                        width: 150,
+                        height: 30,
+                        child: Center(
+                          child: Text('Debates',
+                              style: meniu.copyWith(fontSize: 23.5)),
                         ),
                       ),
+                      const SizedBox(height: 18),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'Tokenized collective debates with fractal topology.',
+                          textAlign: TextAlign.center,
+                          style: defaultTextStyle.copyWith(height: 1.3),
+                        ),
+                      ),
+                      const Spacer(), // This pushes the next widget to the bottom
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                        child: Text(
+                          'Declarative only.',
+                          textAlign: TextAlign.center,
+                          style: defaultTextStyle.copyWith(
+                              color: Theme.of(context).indicatorColor),
+                        ),
+                      ),
+                      const SizedBox(height: 10)
                     ],
                   ),
                 ),
@@ -231,4 +262,3 @@ class Screen1DaoType extends StatelessWidget {
     );
   }
 }
-// lib/src/features/dao_creator/screens/screen1_dao_type.dart

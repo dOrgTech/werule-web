@@ -19,8 +19,9 @@ class DAOCard extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            boxShadow: [BoxShadow(spreadRadius: 0.1, color: const Color.fromARGB(104, 77, 77, 77), offset:Offset.fromDirection(1))],
-            borderRadius: BorderRadius.circular(8),
+            
+            boxShadow: [BoxShadow(spreadRadius: 0.1, color: const Color.fromARGB(117, 77, 77, 77), offset:Offset.fromDirection(1))],
+            borderRadius: BorderRadius.circular(2),
             
           ),
           child: Padding(

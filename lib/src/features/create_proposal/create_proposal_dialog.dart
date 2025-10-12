@@ -56,7 +56,7 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
   ];
 
   String getDialogTitle() {
-    if (_currentStep < 3) return 'Set';
+    if (_currentStep < 3) return 'Create Proposal';
     return 'Review & Submit';
   }
 
@@ -130,10 +130,13 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(getDialogTitle()),
-          Text(
-            _stepSubtitles[_currentStep],
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70, fontSize: 14),
+          Text(getDialogTitle(), style:TextStyle(color: const Color.fromARGB(255, 219, 219, 219))),
+          Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: Text(
+              _stepSubtitles[_currentStep],
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: const Color.fromARGB(179, 255, 255, 255), fontSize: 14),
+            ),
           ),
         ],
       ),

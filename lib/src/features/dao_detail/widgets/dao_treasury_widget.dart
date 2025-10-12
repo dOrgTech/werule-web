@@ -134,6 +134,7 @@ class _TreasuryViewState extends State<_TreasuryView> {
               ),
               prefixIcon: Icon(Icons.search),
               hintText: 'Find token by name, address, or symbol',
+              hintStyle: TextStyle(color: Colors.grey)
             ),
           );
 
@@ -356,20 +357,33 @@ class _TreasuryViewState extends State<_TreasuryView> {
         Padding(
           padding: const EdgeInsets.all(4.0),
           child:    SizedBox(
-                  height: 30,
+                  height: 24,
                   width: 120,
                   child: Align(
-                    alignment: Alignment.centerRight,
+                    alignment: Alignment.center,
                     child: ElevatedButton(
                       
                       style: ElevatedButton.styleFrom(
                         elevation: 2,
-                        backgroundColor: const Color.fromARGB(255, 151, 151, 151)),
+                        backgroundColor: const Color.fromARGB(255, 51, 51, 51)),
                       onPressed: () {
                          final networkName = widget.dao.address.contains("Etherlink-Testnet") ? "Etherlink-Testnet" : "Etherlink";
-        ProposalsTab.showCreateProposalDialog(context, widget.dao, networkName);
+                            ProposalsTab.showCreateProposalDialog(context, widget.dao, networkName);
                       },
-                      child: const Text("Transfer", style: TextStyle(color: Colors.black),),
+                      child: SizedBox(
+                         height: 28,
+                  width:120,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                             Text("Propose Transfer", style: TextStyle(
+                              fontSize: 12,
+                              color:Theme.of(context).indicatorColor),),
+                          // const SizedBox(width: 14),   
+                          //    Icon(Icons.send_and_archive, color: Theme.of(context).indicatorColor, size: 18,),
+                          ],
+                        ),
+                      ),
                       
                     ),
                   ),

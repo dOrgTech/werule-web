@@ -1,2 +1,2 @@
-!lib/
-lib/src/features/creator
+!lib/src/features/explorer/
+!lib/src/utils/

@@ -46,8 +46,7 @@ MaterialColor createMaterialColor(Color color) {
         splashColor: const Color(0xffffffff),
         canvasColor: const Color(0xfff0f0f0), colorScheme: ColorScheme.fromSwatch(primarySwatch: createMaterialColor(const Color(0xff4d4d4d))).copyWith(secondary: const Color(0xffe0deda)).copyWith(surface: createMaterialColor(const Color(0xeecacaca))));
 
-        
-ThemeData dark = ThemeData(
+ ThemeData dark = ThemeData(
   canvasColor: const Color.fromARGB(255, 46, 46, 46),
   splashColor: const Color.fromARGB(255, 133, 133, 133),
   fontFamily: 'CascadiaCode',
@@ -83,5 +82,12 @@ ThemeData dark = ThemeData(
       foregroundColor: Colors.white, // default text color for buttons
     ),
   ),
-);
 
+  // Add this section to style all ElevatedButton widgets
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.grey[300], // Light grey background
+      foregroundColor: Colors.black, // Black text
+    ),
+  ),
+);

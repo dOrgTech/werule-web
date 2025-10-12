@@ -106,6 +106,7 @@ class OverviewTab extends StatelessWidget {
                   label: 'Treasury',
                   address: dao.registryAddress,
                   isShort: false),
+                  SizedBox(height: 10),
               _AddressLine(
                   label: '${dao.symbol} Token',
                   address: dao.govTokenAddress,
