@@ -1,0 +1,244 @@
+Problems found in: dao_card.dart
+==================================================
+
+ERROR at Line 187:45 (dart)
+   Message: Expected to find ']'.
+
+ERROR at Line 187:60 (dart)
+   Message: Expected to find ';'.
+
+ERROR at Line 187:61 (dart)
+   Message: Expected an identifier.
+
+ERROR at Line 187:61 (dart)
+   Message: Unexpected text ';'.
+Try removing the text.
+
+ERROR at Line 187:102 (dart)
+   Message: Expected to find ';'.
+
+ERROR at Line 187:103 (dart)
+   Message: Expected an identifier.
+
+ERROR at Line 187:103 (dart)
+   Message: Unexpected text ';'.
+Try removing the text.
+
+ERROR at Line 188:17 (dart)
+   Message: Expected an identifier.
+
+ERROR at Line 187:103 (dart)
+   Message: Expected to find ';'.
+
+ERROR at Line 188:17 (dart)
+   Message: Unexpected text ';'.
+Try removing the text.
+
+ERROR at Line 188:57 (dart)
+   Message: Expected to find ';'.
+
+ERROR at Line 188:102 (dart)
+   Message: Expected to find ')'.
+
+ERROR at Line 192:10 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 193:9 (dart)
+   Message: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
+Try adding the name of the type of the variable or the keyword 'var'.
+
+ERROR at Line 193:9 (dart)
+   Message: Expected to find ';'.
+
+ERROR at Line 193:18 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 193:20 (dart)
+   Message: Methods must have an explicit list of parameters.
+Try adding a parameter list.
+
+ERROR at Line 193:35 (dart)
+   Message: A function body must be provided.
+Try adding a function body.
+
+ERROR at Line 193:20 (dart)
+   Message: The name of a constructor must match the name of the enclosing class.
+
+ERROR at Line 193:35 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 194:9 (dart)
+   Message: Variables must be declared using the keywords 'const', 'final', 'var' or a type name.
+Try adding the name of the type of the variable or the keyword 'var'.
+
+ERROR at Line 194:9 (dart)
+   Message: Expected to find ';'.
+
+ERROR at Line 194:14 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 194:31 (dart)
+   Message: Named parameters must be enclosed in curly braces ('{' and '}').
+Try surrounding the named parameters in curly braces.
+
+ERROR at Line 194:43 (dart)
+   Message: Named parameters must be enclosed in curly braces ('{' and '}').
+Try surrounding the named parameters in curly braces.
+
+ERROR at Line 194:54 (dart)
+   Message: A function body must be provided.
+Try adding a function body.
+
+ERROR at Line 194:54 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 195:7 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 195:8 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 196:5 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 196:6 (dart)
+   Message: Expected a class member.
+Try placing this code inside a class member.
+
+ERROR at Line 198:1 (dart)
+   Message: Expected a method, getter, setter or operator declaration.
+This appears to be incomplete code. Try removing it or completing it.
+
+ERROR at Line 187:45 (dart)
+   Message: Expected to find ']'.
+
+ERROR at Line 188:59 (dart)
+   Message: Expected to find ']'.
+
+ERROR at Line 188:59 (dart)
+   Message: Expected to find '}'.
+
+ERROR at Line 188:62 (dart)
+   Message: Too many positional arguments: 0 expected, but 1 found.
+Try removing the extra positional arguments, or specifying the name for named arguments.
+
+ERROR at Line 187:47 (dart)
+   Message: Too many positional arguments: 0 expected, but 3 found.
+Try removing the extra positional arguments, or specifying the name for named arguments.
+
+ERROR at Line 187:19 (dart)
+   Message: The operator '[]' isn't defined for the type 'bool'.
+Try defining the operator '[]'.
+
+ERROR at Line 187:44 (dart)
+   Message: 4 positional arguments expected by 'fromARGB', but 1 found.
+Try adding the missing arguments.
+
+ERROR at Line 188:44 (dart)
+   Message: 4 positional arguments expected by 'fromARGB', but 1 found.
+Try adding the missing arguments.
+
+WARNING at Line 187:61 (dart)
+   Message: Dead code.
+Try removing the code, or fixing the code before it so that it can be reached.
+
+ERROR at Line 191:26 (dart)
+   Message: Undefined name 'bounds'.
+Try correcting the name to one that is defined, or defining the name.
+
+ERROR at Line 191:13 (dart)
+   Message: The method 'createShader' isn't defined for the type 'Positioned'.
+Try correcting the name to the name of an existing method, or defining a method named 'createShader'.
+
+ERROR at Line 194:45 (dart)
+   Message: Undefined name 'typeIcon'.
+Try correcting the name to one that is defined, or defining the name.
+
+ERROR at Line 129:26 (dart)
+   Message: Methods can't be invoked in constant expressions.
+
+ERROR at Line 184:27 (dart)
+   Message: Invalid constant value.
+
+ERROR at Line 10:9 (dart)
+   Message: Can't define a const constructor for a class with non-final fields.
+Try making all of the fields final, or removing the keyword 'const' from the constructor.
+
+ERROR at Line 185:18 (dart)
+   Message: The returned type 'LinearGradient' isn't returnable from a 'Shader' function, as required by the closure's context.
+
+WARNING at Line 187:17 (dart)
+   Message: The receiver can't be null, so the null-aware operator '?[' is unnecessary.
+Try replacing the operator '?[' with '['.
+
+ERROR at Line 193:20 (dart)
+   Message: All final variables must be initialized, but 'org' isn't.
+Try adding an initializer for the field.
+
+WARNING at Line 9:7 (dart)
+   Message: This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: DAOCard.blendMode, DAOCard.child
+
+WARNING at Line 22:33 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 63:58 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 68:36 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 69:36 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 100:65 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 149:53 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+ERROR at Line 194:31 (dart)
+   Message: Using a colon as the separator before a default value is no longer supported.
+Try replacing the colon with an equal sign.
+
+ERROR at Line 194:43 (dart)
+   Message: Using a colon as the separator before a default value is no longer supported.
+Try replacing the colon with an equal sign.
+
+WARNING at Line 176:12 (dart)
+   Message: The value of the local variable 'typeIcon' isn't used.
+Try removing the variable or using it.
+
+WARNING at Line 193:9 (dart)
+   Message: An uninitialized field should have an explicit type annotation.
+Try adding a type annotation.
+
+WARNING at Line 193:35 (dart)
+   Message: Empty constructor bodies should be written using a ';' rather than '{}'.
+Try replacing the constructor body with ';'.
+
+WARNING at Line 193:30 (dart)
+   Message: Constructors for public widgets should have a named 'key' parameter.
+Try adding a named parameter to the constructor.
+
+WARNING at Line 194:9 (dart)
+   Message: An uninitialized field should have an explicit type annotation.
+Try adding a type annotation.
+
+WARNING at Line 194:16 (dart)
+   Message: The variable name 'Opacity' isn't a lowerCamelCase identifier.
+Try changing the name to follow the lowerCamelCase style.
+

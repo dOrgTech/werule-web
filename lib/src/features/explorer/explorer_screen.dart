@@ -1,4 +1,6 @@
 // lib/src/features/explorer/explorer_screen.dart
+import 'dart:ui'; // <-- ADD THIS IMPORT for ImageFilter
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -53,10 +55,18 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       ),
       body: Stack(
         children: [
+          // --- OPTIMIZATION 1: APPLY A SINGLE BLUR OVER THE BACKGROUND ---
           const Opacity(
             opacity: 0.03,
             child: GameOfLife(),
           ),
+          // This single BackdropFilter blurs the GameOfLife animation behind it.
+          // The DAOCards will now sit on top of this already-blurred background.
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+            child: Container(color: Colors.black.withOpacity(0)),
+          ),
+          // --- END OF OPTIMIZATION ---
           Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
