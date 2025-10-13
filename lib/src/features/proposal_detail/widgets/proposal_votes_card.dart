@@ -1,4 +1,5 @@
 // lib/src/features/proposal_detail/widgets/proposal_votes_card.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/proposal_detail/widgets/votes_modal.dart';
@@ -20,8 +21,8 @@ class ProposalVotesCard extends StatelessWidget {
     final totalVotes = forVotes + againstVotes;
     final totalVoters = proposal.votesFor + proposal.votesAgainst;
     
-    final int forPercentInt = totalVotes > BigInt.zero ? ((forVotes * BigInt.from(100)) ~/ totalVotes).toInt() : 0;
-    final int againstPercentInt = totalVotes > BigInt.zero ? 100 - forPercentInt : 0;
+    final double forPercentDouble = totalVotes > BigInt.zero ? (forVotes.toDouble() / totalVotes.toDouble()) * 100 : 0.0;
+    final double againstPercentDouble = totalVotes > BigInt.zero ? (againstVotes.toDouble() / totalVotes.toDouble()) * 100 : 0.0;
     
     final totalSupply = BigInt.tryParse(proposal.totalSupply) ?? BigInt.zero;
     final double turnoutPercentDouble;
@@ -36,6 +37,10 @@ class ProposalVotesCard extends StatelessWidget {
     String formatVotes(BigInt amount) {
       return formatTotalSupply(amount.toString(), org.decimals);
     }
+
+    // THE FIX: Animation timings adjusted.
+    const animationDuration = Duration(milliseconds: 650);
+    const turnoutAnimationDelay = Duration(milliseconds: 110);
 
     return Card(
       color: const Color(0xff2c2c2c),
@@ -90,21 +95,41 @@ class ProposalVotesCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _VoteStat(isMobile: isMobile, isSupport: true, votes: formatVotes(forVotes), percentage: "$forPercentInt.00%"),
-                    _VoteStat(isMobile: isMobile, isSupport: false, votes: formatVotes(againstVotes), percentage: "$againstPercentInt.00%"),
+                    _VoteStat(
+                      isMobile: isMobile, 
+                      isSupport: true, 
+                      votes: formatVotes(forVotes), 
+                      percentage: forPercentDouble,
+                      animationDuration: animationDuration,
+                    ),
+                    _VoteStat(
+                      isMobile: isMobile, 
+                      isSupport: false, 
+                      votes: formatVotes(againstVotes), 
+                      percentage: againstPercentDouble,
+                      animationDuration: animationDuration,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 _ProgressBar(
-                  forPercent: forPercentInt.toDouble(),
-                  againstPercent: againstPercentInt.toDouble(),
+                  forPercent: forPercentDouble,
+                  againstPercent: againstPercentDouble,
                   height: 12,
+                  animationDuration: animationDuration,
                 ),
                 const SizedBox(height: 48),
                 Row(
                   children: [
                     const Text("Turnout: ", style: TextStyle(fontSize: 16)),
-                    Text("${formatVotes(totalVotes)} (${turnoutPercentDouble.toStringAsFixed(2)}%)", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text("${formatVotes(totalVotes)} (", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    _AnimatedPercentage(
+                      value: turnoutPercentDouble,
+                      duration: animationDuration,
+                      delay: turnoutAnimationDelay,
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const Text(")", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const Spacer(),
                     Text(quorumMet ? "Quorum Met" : "Quorum Not Met", style: TextStyle(fontWeight: FontWeight.bold, color: quorumMet ? Colors.green : Colors.grey, fontSize: 16)),
                   ],
@@ -116,6 +141,8 @@ class ProposalVotesCard extends StatelessWidget {
                   height: 12,
                   quorumPercent: org.quorum.toDouble(),
                   fillColor: Colors.grey.shade400,
+                  animationDuration: animationDuration,
+                  animationDelay: turnoutAnimationDelay,
                 ),
               ],
             );
@@ -130,9 +157,16 @@ class _VoteStat extends StatelessWidget {
   final bool isMobile;
   final bool isSupport;
   final String votes;
-  final String percentage;
+  final double percentage;
+  final Duration animationDuration;
 
-  const _VoteStat({required this.isMobile, required this.isSupport, required this.votes, required this.percentage});
+  const _VoteStat({
+    required this.isMobile, 
+    required this.isSupport, 
+    required this.votes, 
+    required this.percentage,
+    required this.animationDuration,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +181,7 @@ class _VoteStat extends StatelessWidget {
           const SizedBox(width: 8),
           Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(width: 8),
-          Text(percentage, style: TextStyle(color: Colors.grey[400])),
+          _AnimatedPercentage(value: percentage, duration: animationDuration, textStyle: TextStyle(color: Colors.grey[400])),
         ],
       );
     }
@@ -160,18 +194,88 @@ class _VoteStat extends StatelessWidget {
         const SizedBox(width: 16),
         Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(width: 8),
-        Text(percentage, style: TextStyle(color: Colors.grey[400])),
+        _AnimatedPercentage(value: percentage, duration: animationDuration, textStyle: TextStyle(color: Colors.grey[400])),
       ],
     );
   }
 }
 
-class _ProgressBar extends StatelessWidget {
+class _AnimatedPercentage extends StatefulWidget {
+  final double value;
+  final Duration duration;
+  final Duration delay;
+  final TextStyle? textStyle;
+
+  const _AnimatedPercentage({
+    required this.value,
+    required this.duration,
+    this.delay = Duration.zero,
+    this.textStyle,
+  });
+
+  @override
+  _AnimatedPercentageState createState() => _AnimatedPercentageState();
+}
+
+class _AnimatedPercentageState extends State<_AnimatedPercentage> {
+  double _animatedValue = 0.0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedPercentage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _scheduleAnimation();
+    }
+  }
+
+  void _scheduleAnimation() {
+    _timer?.cancel();
+    _timer = Timer(widget.delay, () {
+      if (mounted) {
+        setState(() {
+          _animatedValue = widget.value;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: _animatedValue),
+      duration: widget.duration,
+      curve: Curves.easeInOutCubic,
+      builder: (context, value, child) {
+        return Text(
+          "${value.toStringAsFixed(2)}%",
+          style: widget.textStyle,
+        );
+      },
+    );
+  }
+}
+
+class _ProgressBar extends StatefulWidget {
   final double forPercent;
   final double againstPercent;
   final double height;
   final double? quorumPercent;
   final Color? fillColor;
+  final Duration animationDuration;
+  final Duration animationDelay;
 
   const _ProgressBar({
     required this.forPercent,
@@ -179,7 +283,51 @@ class _ProgressBar extends StatelessWidget {
     this.height = 8.0,
     this.quorumPercent,
     this.fillColor,
+    required this.animationDuration,
+    this.animationDelay = Duration.zero,
   });
+
+  @override
+  State<_ProgressBar> createState() => _ProgressBarState();
+}
+
+class _ProgressBarState extends State<_ProgressBar> {
+  double _forFraction = 0.0;
+  double _againstFraction = 0.0;
+  Timer? _animationTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProgressBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.forPercent != oldWidget.forPercent ||
+        widget.againstPercent != oldWidget.againstPercent) {
+      _scheduleAnimation();
+    }
+  }
+
+  void _scheduleAnimation() {
+    _animationTimer?.cancel();
+    _animationTimer = Timer(widget.animationDelay, () {
+      if (mounted) {
+        setState(() {
+          _forFraction = widget.forPercent / 100.0;
+          _againstFraction = widget.againstPercent / 100.0;
+        });
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    _animationTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,33 +337,39 @@ class _ProgressBar extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            height: height,
+            height: widget.height,
             decoration: BoxDecoration(color: Colors.grey.shade800),
           ),
-          if (fillColor != null)
-            Container(
-              width: constraints.maxWidth * (forPercent / 100),
-              height: height,
-              color: fillColor,
+          if (widget.fillColor != null)
+            AnimatedContainer(
+              width: constraints.maxWidth * _forFraction,
+              height: widget.height,
+              color: widget.fillColor,
+              duration: widget.animationDuration,
+              curve: Curves.easeInOutCubic,
             )
           else
             Row(
               children: [
-                Container(
-                  width: constraints.maxWidth * (forPercent / 100),
-                  height: height,
+                AnimatedContainer(
+                  width: constraints.maxWidth * _forFraction,
+                  height: widget.height,
                   color: const Color(0xff00c489),
+                  duration: widget.animationDuration,
+                  curve: Curves.easeInOutCubic,
                 ),
-                Container(
-                  width: constraints.maxWidth * (againstPercent / 100),
-                  height: height,
+                AnimatedContainer(
+                  width: constraints.maxWidth * _againstFraction,
+                  height: widget.height,
                   color: const Color(0xff86251e),
+                  duration: widget.animationDuration,
+                  curve: Curves.easeInOutCubic,
                 ),
               ],
             ),
-          if (quorumPercent != null)
+          if (widget.quorumPercent != null)
             Positioned(
-              left: (constraints.maxWidth * (quorumPercent! / 100)) - 1,
+              left: (constraints.maxWidth * (widget.quorumPercent! / 100)) - 1,
               top: -4,
               bottom: -4,
               child: Container(width: 2, color: Colors.black),
@@ -225,4 +379,3 @@ class _ProgressBar extends StatelessWidget {
     });
   }
 }
-// lib/src/features/proposal_detail/widgets/proposal_votes_card.dart

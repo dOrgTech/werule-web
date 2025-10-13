@@ -39,7 +39,6 @@ class ProposalDetailScreen extends StatefulWidget {
 }
 
 class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
-  // THE FIX: Use state variables to hold providers and loading status.
   bool _isLoading = true;
   String? _error;
   ProposalDetailProvider? _proposalDetailProvider;
@@ -72,7 +71,6 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
         throw Exception("Could not find DAO, proposal, or network information.");
       }
       
-      // Create providers and store them in state variables.
       _proposalDetailProvider = ProposalDetailProvider(
         blockchainService: blockchainService,
         firestoreService: firestoreService,
@@ -88,7 +86,6 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
         network,
       );
 
-      // Listen for updates.
       _proposalSubscription = firestoreService
           .getProposalStream(collection, widget.daoAddress, widget.proposalId)
           .listen((proposalUpdate) {
@@ -126,7 +123,6 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
       backgroundColor: const Color(0xff222222),
       appBar: const SharedAppBar(),
       endDrawer: const MobileDrawer(isNetworkSelectorEnabled: false),
-      // THE FIX: Build the UI based on the loading and error state.
       body: _buildBody(),
     );
   }
@@ -140,8 +136,6 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
       return Center(child: Text("Error loading proposal: ${_error ?? 'Provider not initialized.'}"));
     }
 
-    // THE FIX: Create the MultiProvider here, wrapping the view.
-    // This is the guaranteed way to make the providers available to the widget tree below.
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _proposalDetailProvider!),
@@ -153,8 +147,33 @@ class _ProposalDetailScreenState extends State<ProposalDetailScreen> {
 }
 
 
-class _ProposalDetailView extends StatelessWidget {
+class _ProposalDetailView extends StatefulWidget {
   const _ProposalDetailView();
+
+  @override
+  State<_ProposalDetailView> createState() => _ProposalDetailViewState();
+}
+
+class _ProposalDetailViewState extends State<_ProposalDetailView> {
+  // THE FIX: State flags for each widget we want to animate independently.
+  bool _showHeader = false;
+  bool _showActionsCard = false;
+  bool _showExecutionDetailsCard = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // THE FIX: Set up the staggered animation with refined timings.
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (mounted) setState(() => _showHeader = true);
+    });
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted) setState(() => _showActionsCard = true);
+    });
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) setState(() => _showExecutionDetailsCard = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,31 +201,35 @@ class _ProposalDetailView extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              _ProposalHeader(proposal: proposal),
+              _AnimatedFadeIn(isVisible: _showHeader, child: _ProposalHeader(proposal: proposal)),
               const SizedBox(height: 20),
 
               LayoutBuilder(
                 builder: (context, constraints) {
                   if (constraints.maxWidth < 900) {
+                    // THE FIX: Mobile layout with corrected animation targets.
                     return Column(
                       children: [
-                        const ProposalActionsCard(),
+                        _AnimatedFadeIn(isVisible: _showActionsCard, child: const ProposalActionsCard()),
                         const SizedBox(height: 16),
+                        // No animation wrapper for votes and lifecycle cards.
                         ProposalVotesCard(org: org),
                         const SizedBox(height: 16),
                         const ProposalLifecycleCard(),
-                         const SizedBox(height: 16),
-                        SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)),
+                        const SizedBox(height: 16),
+                        _AnimatedFadeIn(isVisible: _showExecutionDetailsCard, child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network))),
                       ],
                     );
                   } else {
+                    // THE FIX: Desktop layout with corrected animation targets.
                     return Column(
                       children: [
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Expanded(child: ProposalActionsCard()),
+                            Expanded(child: _AnimatedFadeIn(isVisible: _showActionsCard, child: const ProposalActionsCard())),
                             const SizedBox(width: 16),
+                            // No animation wrapper.
                             Expanded(child: ProposalVotesCard(org: org)),
                           ],
                         ),
@@ -214,9 +237,10 @@ class _ProposalDetailView extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // No animation wrapper.
                             const Expanded(child: ProposalLifecycleCard()),
                             const SizedBox(width: 16),
-                            Expanded(child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network))),
+                            Expanded(child: _AnimatedFadeIn(isVisible: _showExecutionDetailsCard, child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)))),
                           ],
                         ),
                       ],
@@ -350,4 +374,33 @@ class _ProposalHeader extends StatelessWidget {
     );
   }
 }
-// lib/src/features/proposal_detail/proposal_detail_screen.dart
+
+class _AnimatedFadeIn extends StatelessWidget {
+  final bool isVisible;
+  final Widget child;
+  final Duration duration;
+
+  const _AnimatedFadeIn({
+    required this.isVisible,
+    required this.child,
+    // THE FIX: Tuned back to a polished, subtle duration.
+    this.duration = const Duration(milliseconds: 400),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: isVisible ? 1.0 : 0.0,
+      duration: duration,
+      curve: Curves.easeOut,
+      child: AnimatedContainer(
+        duration: duration,
+        curve: Curves.easeOut,
+        transform: isVisible
+            ? Matrix4.translationValues(0, 0, 0)
+            : Matrix4.translationValues(0, 20, 0),
+        child: child,
+      ),
+    );
+  }
+}
