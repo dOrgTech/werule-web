@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_status_widget.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
@@ -68,10 +69,14 @@ class _ProposalLifecycleCardState extends State<ProposalLifecycleCard> {
 
   @override
   Widget build(BuildContext context) {
-    context.watch<ProposalDetailProvider>();
+    final provider = context.watch<ProposalDetailProvider>();
+    final proposal = provider.proposal;
+    final network = provider.network;
 
-    return Card(
-      color: const Color(0xff2c2c2c),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xff2c2c2c),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
         child: ListView.builder(
@@ -83,15 +88,53 @@ class _ProposalLifecycleCardState extends State<ProposalLifecycleCard> {
             final status = entry.key;
             final date = entry.value;
 
-            // THE FIX: Animate both opacity and a vertical slide-in for a more noticeable effect.
+            // THE FIX: If the proposal is executed, make the date a link to the transaction.
+            Widget dateWidget;
+            if (status == ProposalStatus.Executed) {
+              final hash = proposal.executionHash;
+              final explorerUrl = network.blockExplorerUrl;
+              if (hash != null && hash.isNotEmpty && explorerUrl.isNotEmpty) {
+                String txUrl = "$explorerUrl/tx/$hash";
+                if (!hash.startsWith('0x')) {
+                  txUrl = "$explorerUrl/tx/0x$hash";
+                }
+                dateWidget = InkWell(
+                  onTap: () => launchUrl(Uri.parse(txUrl)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        DateFormat.yMMMd().add_jm().format(date),
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 168, 216, 255),
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.open_in_new, size: 14, color: Color.fromARGB(255, 168, 216, 255)),
+                    ],
+                  ),
+                );
+              } else {
+                dateWidget = Text(
+                  DateFormat.yMMMd().add_jm().format(date),
+                  style: TextStyle(color: Colors.grey[400]),
+                );
+              }
+            } else {
+              dateWidget = Text(
+                DateFormat.yMMMd().add_jm().format(date),
+                style: TextStyle(color: Colors.grey[400]),
+              );
+            }
+
+
             return TweenAnimationBuilder<double>(
               key: ValueKey(entry.key),
               tween: Tween(begin: 0.0, end: 1.0),
-              // A slightly longer duration for a smoother feel.
               duration: const Duration(milliseconds: 250),
               builder: (context, value, child) {
                 return Transform.translate(
-                  // Starts 15 pixels below its final position and slides up.
                   offset: Offset(0, 15 * (1 - value)),
                   child: Opacity(
                     opacity: value,
@@ -105,10 +148,7 @@ class _ProposalLifecycleCardState extends State<ProposalLifecycleCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ProposalStatusWidget(status: status),
-                    Text(
-                      DateFormat.yMMMd().add_jm().format(date),
-                      style: TextStyle(color: Colors.grey[400]),
-                    ),
+                    dateWidget,
                   ],
                 ),
               ),
@@ -119,3 +159,4 @@ class _ProposalLifecycleCardState extends State<ProposalLifecycleCard> {
     );
   }
 }
+// lib/src/features/proposal_detail/widgets/proposal_lifecycle_card.dart

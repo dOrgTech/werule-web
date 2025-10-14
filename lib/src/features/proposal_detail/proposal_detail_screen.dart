@@ -1,10 +1,13 @@
 // lib/src/features/proposal_detail/proposal_detail_screen.dart
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/widgets/footer.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_actions_card.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_execution_details_card.dart';
 import 'package:werule/src/features/proposal_detail/widgets/proposal_lifecycle_card.dart';
@@ -16,6 +19,7 @@ import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/providers/proposal_detail_provider.dart';
 import 'package:werule/src/providers/treasury_provider.dart';
+import 'package:werule/src/services/avatar_service.dart';
 import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/services/treasury_service.dart';
@@ -155,7 +159,6 @@ class _ProposalDetailView extends StatefulWidget {
 }
 
 class _ProposalDetailViewState extends State<_ProposalDetailView> {
-  // THE FIX: State flags for each widget we want to animate independently.
   bool _showHeader = false;
   bool _showActionsCard = false;
   bool _showExecutionDetailsCard = false;
@@ -163,14 +166,13 @@ class _ProposalDetailViewState extends State<_ProposalDetailView> {
   @override
   void initState() {
     super.initState();
-    // THE FIX: Set up the staggered animation with refined timings.
-    Future.delayed(const Duration(milliseconds: 50), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) setState(() => _showHeader = true);
     });
-    Future.delayed(const Duration(milliseconds: 150), () {
+    Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) setState(() => _showActionsCard = true);
     });
-    Future.delayed(const Duration(milliseconds: 250), () {
+    Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) setState(() => _showExecutionDetailsCard = true);
     });
   }
@@ -181,199 +183,311 @@ class _ProposalDetailViewState extends State<_ProposalDetailView> {
     final proposal = provider.proposal;
     final org = provider.org;
     final network = provider.network;
+    final status = provider.status;
     
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back to DAO'),
-                  onPressed: () => context.go('/${network.name}/${org.address}'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.white70),
+    final isDefinitiveState = status == ProposalStatus.Executed ||
+        status == ProposalStatus.Defeated ||
+        status == ProposalStatus.NoQuorum ||
+        status == ProposalStatus.Expired ||
+        status == ProposalStatus.Canceled;
+
+    const double kCardSpacing = 16.0;
+
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Padding(
+                padding: const EdgeInsets.all(kCardSpacing),
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Back to DAO'),
+                        onPressed: () => context.go('/${network.name}/${org.address}'),
+                        style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                      ),
+                    ),
+                    const SizedBox(height: kCardSpacing),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        // --- MOBILE LAYOUT ---
+                        if (constraints.maxWidth < 900) {
+                          return Column(
+                            children: [
+                              _AnimatedFadeIn(isVisible: _showHeader, child: _ProposalHeader(proposal: proposal, isVertical: false)),
+                              const SizedBox(height: kCardSpacing + 4),
+                              if (!isDefinitiveState) ...[
+                                _AnimatedFadeIn(isVisible: _showActionsCard, child: const ProposalActionsCard()),
+                                const SizedBox(height: kCardSpacing),
+                              ],
+                              ProposalVotesCard(org: org),
+                              const SizedBox(height: kCardSpacing),
+                              _AnimatedFadeIn(isVisible: _showExecutionDetailsCard, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)),
+                              const SizedBox(height: kCardSpacing),
+                              const ProposalLifecycleCard(),
+                            ],
+                          );
+                        } 
+                        // --- DESKTOP/WIDE LAYOUT ---
+                        else {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 10,
+                                child: Column(
+                                  children: [
+                                    _AnimatedFadeIn(
+                                      isVisible: _showHeader,
+                                      child: _ProposalHeader(proposal: proposal, isVertical: true),
+                                    ),
+                                    const SizedBox(height: kCardSpacing),
+                                    _AnimatedFadeIn(
+                                      isVisible: _showExecutionDetailsCard,
+                                      child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: kCardSpacing),
+                              Expanded(
+                                flex: 9,
+                                child: Column(
+                                  children: [
+                                    if (!isDefinitiveState) ...[
+                                      _AnimatedFadeIn(
+                                        isVisible: _showActionsCard,
+                                        child: const ProposalActionsCard(),
+                                      ),
+                                      const SizedBox(height: kCardSpacing),
+                                    ],
+                                    ProposalVotesCard(org: org),
+                                    const SizedBox(height: kCardSpacing),
+                                    const ProposalLifecycleCard(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              
-              _AnimatedFadeIn(isVisible: _showHeader, child: _ProposalHeader(proposal: proposal)),
-              const SizedBox(height: 20),
-
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth < 900) {
-                    // THE FIX: Mobile layout with corrected animation targets.
-                    return Column(
-                      children: [
-                        _AnimatedFadeIn(isVisible: _showActionsCard, child: const ProposalActionsCard()),
-                        const SizedBox(height: 16),
-                        // No animation wrapper for votes and lifecycle cards.
-                        ProposalVotesCard(org: org),
-                        const SizedBox(height: 16),
-                        const ProposalLifecycleCard(),
-                        const SizedBox(height: 16),
-                        _AnimatedFadeIn(isVisible: _showExecutionDetailsCard, child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network))),
-                      ],
-                    );
-                  } else {
-                    // THE FIX: Desktop layout with corrected animation targets.
-                    return Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: _AnimatedFadeIn(isVisible: _showActionsCard, child: const ProposalActionsCard())),
-                            const SizedBox(width: 16),
-                            // No animation wrapper.
-                            Expanded(child: ProposalVotesCard(org: org)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // No animation wrapper.
-                            const Expanded(child: ProposalLifecycleCard()),
-                            const SizedBox(width: 16),
-                            Expanded(child: _AnimatedFadeIn(isVisible: _showExecutionDetailsCard, child: SizedBox(height: 300, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)))),
-                          ],
-                        ),
-                      ],
-                    );
-                  }
-                },
-              ),
-               const SizedBox(height: 100),
-            ],
+            ),
           ),
         ),
-      ),
+        SliverLayoutBuilder(
+          builder: (BuildContext context, SliverConstraints constraints) {
+            final contentHeight = constraints.precedingScrollExtent;
+            final viewportHeight = constraints.viewportMainAxisExtent;
+            const fixedFooterSpacing = 100.0;
+
+            final double topPadding;
+            if (contentHeight < viewportHeight) {
+              topPadding = viewportHeight - contentHeight + fixedFooterSpacing;
+            } else {
+              topPadding = fixedFooterSpacing;
+            }
+
+            return SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(top: topPadding),
+                child: Footer(),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
-class _ProposalHeader extends StatelessWidget {
+class _ProposalHeader extends StatefulWidget {
   final Proposal proposal;
-  const _ProposalHeader({required this.proposal});
+  final bool isVertical;
+  const _ProposalHeader({required this.proposal, required this.isVertical});
+
+  @override
+  State<_ProposalHeader> createState() => _ProposalHeaderState();
+}
+
+class _ProposalHeaderState extends State<_ProposalHeader> {
+  late Future<Uint8List> _avatarFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _avatarFuture = AvatarService.getAvatar(widget.proposal.author);
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final typeText = proposal.type != null ? proposal.type! : "<unknown type>";
-    final discussionLink = (proposal.externalResource != null && proposal.externalResource!.isNotEmpty)
-      ? OldSchoolLink(text: proposal.externalResource!, url: proposal.externalResource!)
+    final typeText = widget.proposal.type != null ? widget.proposal.type! : "<unknown type>";
+    final discussionLink = (widget.proposal.externalResource != null && widget.proposal.externalResource!.isNotEmpty)
+      ? OldSchoolLink(text: widget.proposal.externalResource!, url: widget.proposal.externalResource!)
       : const Text("No link provided", style: TextStyle(color: Colors.grey));
 
     final titleWidget = Text(
-      proposal.title,
-      textAlign: TextAlign.center,
-      style: textTheme.headlineMedium?.copyWith( ),
+      widget.proposal.title,
+      textAlign: widget.isVertical ? TextAlign.left : TextAlign.center,
+      style: textTheme.headlineMedium,
     );
 
-    final statusWidget = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    // THE FIX: The status and author are now combined into a single responsive row.
+    final metadataRow = Row(
       children: [
-        Consumer<ProposalDetailProvider>(
-          builder: (context, provider, child) {
-            return ProposalStatusWidget(status: provider.status);
-          },
+        // Left side group
+        Expanded(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Consumer<ProposalDetailProvider>(
+                builder: (context, provider, child) {
+                  return ProposalStatusWidget(status: provider.status);
+                },
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  "$typeText proposal",
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 15),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(width: 18),
-        Text("$typeText  proposal", style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
-      ],
-    );
-
-    final authorWidget = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text("Posted By: "),
-        Text(shortenString(proposal.author), style: const TextStyle(fontFamily: 'monospace')),
-        IconButton(
-          splashRadius: 20,
-          icon: const Icon(Icons.copy, size: 16),
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: proposal.author));
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Author address copied to clipboard'), duration: Duration(seconds: 1)));
-          },
+        const SizedBox(width: 16), // Gutter space
+        // Right side group
+        Flexible(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const Text("By: ", style: TextStyle(fontSize: 14)),
+              FutureBuilder<Uint8List>(
+                future: _avatarFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                      child: ClipOval(child: Image.memory(snapshot.data!, width: 22, height: 22)),
+                    );
+                  }
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6.0),
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircleAvatar(backgroundColor: Color(0xff3a3a3a)),
+                    ),
+                  );
+                },
+              ),
+              Flexible(
+                child: Text(
+                  shortenString(widget.proposal.author),
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+                ),
+              ),
+              IconButton(
+                padding: const EdgeInsets.only(left: 8),
+                constraints: const BoxConstraints(),
+                splashRadius: 20,
+                icon: const Icon(Icons.copy, size: 15),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: widget.proposal.author));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Author address copied to clipboard'), duration: Duration(seconds: 1)));
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );
 
     final descriptionWidget = Text(
-      proposal.description,
+      widget.proposal.description,
       style: TextStyle(color: Colors.grey[300], fontFamily: 'monospace'),
       textAlign: TextAlign.center,
     );
 
     final discussionWidget = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: widget.isVertical ? MainAxisAlignment.start : MainAxisAlignment.center,
       children: [
          const Text("Discussion: ", style: TextStyle(fontFamily: 'monospace')),
          discussionLink,
       ],
     );
+    
+    // --- Vertical Layout for Desktop ---
+    if (widget.isVertical) {
+      return Container(
+        width: double.infinity,
+        color: const Color(0xff2c2c2c),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 12),
+              child: titleWidget,
+            ),
+            // THE FIX: The new metadataRow is placed here.
+            Container(
+              color: const Color(0xff3a3a3a),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: metadataRow,
+            ),
+            // THE FIX: The old, separate authorWidget has been removed.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50.0, vertical: 32.0),
+              child: Center(
+                child: descriptionWidget,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
+              child: discussionWidget,
+            ),
+          ],
+        ),
+      );
+    }
 
+    // --- Horizontal Layout for Mobile ---
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
       color: const Color(0xff2c2c2c),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 800) {
-            return Column(
-              children: [
-                titleWidget,
-                const SizedBox(height: 12),
-                statusWidget,
-                const SizedBox(height: 12),
-                authorWidget,
-                const SizedBox(height: 24),
-                descriptionWidget,
-                const SizedBox(height: 12),
-                discussionWidget,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    titleWidget,
-                    const SizedBox(height: 12),
-                    statusWidget,
-                    const SizedBox(height: 12),
-                    authorWidget,
-                  ],
-                ),
-              ),
-              const SizedBox(width: 32),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    descriptionWidget,
-                    const SizedBox(height: 12),
-                    discussionWidget,
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
+      child: Column(
+        children: [
+          titleWidget,
+          const SizedBox(height: 12),
+          // THE FIX: The new metadataRow is also used for the mobile layout.
+          metadataRow,
+          // THE FIX: The old, separate authorWidget has been removed.
+          const SizedBox(height: 24),
+          descriptionWidget,
+          const SizedBox(height: 12),
+          discussionWidget,
+        ],
       ),
     );
   }
 }
+
 
 class _AnimatedFadeIn extends StatelessWidget {
   final bool isVisible;
@@ -383,7 +497,6 @@ class _AnimatedFadeIn extends StatelessWidget {
   const _AnimatedFadeIn({
     required this.isVisible,
     required this.child,
-    // THE FIX: Tuned back to a polished, subtle duration.
     this.duration = const Duration(milliseconds: 400),
   });
 
@@ -404,3 +517,4 @@ class _AnimatedFadeIn extends StatelessWidget {
     );
   }
 }
+// lib/src/features/proposal_detail/proposal_detail_screen.dart

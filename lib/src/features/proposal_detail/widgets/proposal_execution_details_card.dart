@@ -21,7 +21,6 @@ class ProposalExecutionDetailsCard extends StatelessWidget {
     final type = proposal.type?.toLowerCase().replaceAll('_', ' ') ?? "unknown";
 
     if (type.contains("transfer")) {
-      // THE FIX: Pass the required `org` parameter.
       detailsContent = TokenTransferDetails(proposal: proposal, network: network, org: org);
     } else if (type.contains("registry")) {
       detailsContent = RegistryDetails(proposal: proposal);
@@ -52,16 +51,14 @@ class ProposalExecutionDetailsCard extends StatelessWidget {
       );
     }
 
-
-    return Card(
-      color: const Color(0xff2c2c2c),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: Container(
-         width: double.infinity,
-         padding: const EdgeInsets.all(24.0),
-         child: detailsContent,
+    // THE FIX: Replaced Card with Container to remove default margin.
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xff2c2c2c),
       ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24.0),
+      child: detailsContent,
     );
   }
 }
-// lib/src/features/proposal_detail/widgets/proposal_execution_details_card.dart

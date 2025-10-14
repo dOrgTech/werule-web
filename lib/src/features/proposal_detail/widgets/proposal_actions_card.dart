@@ -24,13 +24,14 @@ class ProposalActionsCard extends StatelessWidget {
       content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _ActionLabel(status: provider.status),
+          _ActionLabel(status: provider.status, isConnected: auth.isConnected),
           if (provider.showCountdown)
             _Countdown(remainingSeconds: provider.remainingSeconds),
           const SizedBox(height: 16),
           if (auth.isConnected)
             _PastVoteWeightDisplay(status: provider.status),
-          const SizedBox(height: 16),
+          if (provider.status == ProposalStatus.Active)
+            const SizedBox(height: 16),
           _ActionButtons(
             status: provider.status,
             isConnected: auth.isConnected,
@@ -41,15 +42,14 @@ class ProposalActionsCard extends StatelessWidget {
       );
     }
 
-    return Card(
-      color: const Color(0xff2c2c2c),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: Container(
-        height: 280,
-        width: double.infinity,
-        padding: const EdgeInsets.all(16.0),
-        child: content,
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xff2c2c2c),
       ),
+      height: 250,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16.0),
+      child: content,
     );
   }
 }
@@ -142,6 +142,9 @@ class _ActionButtons extends StatelessWidget {
     final auth = context.read<AuthProvider>();
     final signerAddress = auth.selectedAccount;
 
+    // THE FIX: This check is restored. It ensures that if a user is not connected,
+    // they don't see an empty space where the buttons would be. This was a key
+    // part of the original, working logic.
     if (signerAddress == null && (status == ProposalStatus.Active || status == ProposalStatus.Succeeded || status == ProposalStatus.Executable)) {
       return const SizedBox.shrink();
     }
@@ -273,7 +276,6 @@ class _ActionButtons extends StatelessWidget {
         final org = provider.org;
         final packedDescription = "${proposal.title}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
         final valuesAsBigInt = proposal.values.map((v) => BigInt.tryParse(v) ?? BigInt.zero).toList();
-        // THE FIX: Convert List<String> from model to List<Uint8List> for the service call.
         final calldatasAsBytes = proposal.callDatas.map((cd) => hexToBytes(cd)).toList();
 
         await _handleQueueOrExecute(
@@ -301,7 +303,6 @@ class _ActionButtons extends StatelessWidget {
         final org = provider.org;
         final packedDescription = "${proposal.title}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
         final valuesAsBigInt = proposal.values.map((v) => BigInt.tryParse(v) ?? BigInt.zero).toList();
-        // THE FIX: Convert List<String> from model to List<Uint8List> for the service call.
         final calldatasAsBytes = proposal.callDatas.map((cd) => hexToBytes(cd)).toList();
 
         await _handleQueueOrExecute(
@@ -329,7 +330,8 @@ class _ActionButtons extends StatelessWidget {
 // --- Action Label ---
 class _ActionLabel extends StatelessWidget {
   final ProposalStatus status;
-  const _ActionLabel({required this.status});
+  final bool isConnected;
+  const _ActionLabel({required this.status, required this.isConnected});
 
   @override
   Widget build(BuildContext context) {
@@ -343,6 +345,18 @@ class _ActionLabel extends StatelessWidget {
         break;
       case ProposalStatus.Queued:
         text = 'Executable in:';
+        break;
+      
+      // THE FIX: This is the core of the fix. It checks the connection status
+      // to decide whether to show a label or leave space for the action button.
+      case ProposalStatus.Succeeded:
+      case ProposalStatus.Executable:
+        // If connected, the user will see an action button, so no label is needed.
+        if (isConnected) {
+          return const SizedBox.shrink();
+        }
+        // If not connected, the button is hidden, so we show a clear status label.
+        text = 'Voting has ended';
         break;
       default:
         text = 'Voting has ended';

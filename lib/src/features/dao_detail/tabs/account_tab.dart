@@ -162,7 +162,7 @@ class _AccountHeaderCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                generateAvatar(hashString(address), size: 50, pixelSize: 5),
+                generateAvatar(hashString(address), size: 44, pixelSize: 2),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(

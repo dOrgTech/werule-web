@@ -51,6 +51,7 @@ class _TreasuryViewState extends State<_TreasuryView> {
   @override
   Widget build(BuildContext context) {
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
       color: const Color(0xff2c2c2c),
       margin: const EdgeInsets.only(top: 24),
       child: Padding(
@@ -130,7 +131,7 @@ class _TreasuryViewState extends State<_TreasuryView> {
             },
             decoration: const InputDecoration(
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+                borderRadius: BorderRadius.all(Radius.circular(0)),
               ),
               prefixIcon: Icon(Icons.search),
               hintText: 'Find token by name, address, or symbol',

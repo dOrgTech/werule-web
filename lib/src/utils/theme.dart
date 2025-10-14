@@ -52,8 +52,9 @@ MaterialColor createMaterialColor(Color color) {
   fontFamily: 'CascadiaCode',
   dividerColor: Colors.white, // make dividers white
   brightness: Brightness.dark,
-  indicatorColor: const Color(0xffa1d0d0),
+  indicatorColor: const Color.fromARGB(255, 191, 255, 255),
   hintColor: Colors.white70,
+  dividerTheme: DividerThemeData(color: Colors.grey.shade700),
   primaryColor: createMaterialColor(const Color.fromARGB(255, 194, 194, 194)),
   highlightColor: const Color(0xff6e6e6e),
   inputDecorationTheme: InputDecorationTheme(

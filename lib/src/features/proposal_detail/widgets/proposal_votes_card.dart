@@ -38,38 +38,52 @@ class ProposalVotesCard extends StatelessWidget {
       return formatTotalSupply(amount.toString(), org.decimals);
     }
 
-    // THE FIX: Animation timings adjusted.
     const animationDuration = Duration(milliseconds: 650);
     const turnoutAnimationDelay = Duration(milliseconds: 110);
 
-    return Card(
-      color: const Color(0xff2c2c2c),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: Container(
-        height: 280,
-        width: double.infinity,
-        padding: const EdgeInsets.all(24.0),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 450;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text("$totalVoters Voters", style: Theme.of(context).textTheme.titleLarge),
-                    const Spacer(),
-                    ElevatedButton(
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xff2c2c2c),
+      ),
+      height: 250,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical:14.0, horizontal: 34),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 450;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Text("$totalVoters Voters", style: Theme.of(context).textTheme.titleMedium),
+                  const Spacer(),
+                  SizedBox(
+                    height: 27,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade800),
                       onPressed: () {
                         final screenWidth = MediaQuery.of(context).size.width;
                         final isDialogMobile = screenWidth < 700;
                         final dialogWidth = isDialogMobile ? screenWidth * 0.9 : 800.0;
-
+                    
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: const Color(0xff222222),
-                            title: const Text("Vote Details"),
+                            // THE FIX: Title is now a Row with a close button, and the 'actions' property is removed.
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text("Votes:"),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ],
+                            ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
                             content: SizedBox(
                               width: dialogWidth,
@@ -79,75 +93,69 @@ class ProposalVotesCard extends StatelessWidget {
                                 network: provider.network,
                               ),
                             ),
-                            actions: [
-                              TextButton(
-                                child: const Text("Close"),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
                           ),
                         );
                       },
-                      child: const Text("View")),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _VoteStat(
-                      isMobile: isMobile, 
-                      isSupport: true, 
-                      votes: formatVotes(forVotes), 
-                      percentage: forPercentDouble,
-                      animationDuration: animationDuration,
-                    ),
-                    _VoteStat(
-                      isMobile: isMobile, 
-                      isSupport: false, 
-                      votes: formatVotes(againstVotes), 
-                      percentage: againstPercentDouble,
-                      animationDuration: animationDuration,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _ProgressBar(
-                  forPercent: forPercentDouble,
-                  againstPercent: againstPercentDouble,
-                  height: 12,
-                  animationDuration: animationDuration,
-                ),
-                const SizedBox(height: 48),
-                Row(
-                  children: [
-                    const Text("Turnout: ", style: TextStyle(fontSize: 16)),
-                    Text("${formatVotes(totalVotes)} (", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    _AnimatedPercentage(
-                      value: turnoutPercentDouble,
-                      duration: animationDuration,
-                      delay: turnoutAnimationDelay,
-                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const Text(")", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const Spacer(),
-                    Text(quorumMet ? "Quorum Met" : "Quorum Not Met", style: TextStyle(fontWeight: FontWeight.bold, color: quorumMet ? Colors.green : Colors.grey, fontSize: 16)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _ProgressBar(
-                  forPercent: turnoutPercentDouble,
-                  againstPercent: 0,
-                  height: 12,
-                  quorumPercent: org.quorum.toDouble(),
-                  fillColor: Colors.grey.shade400,
-                  animationDuration: animationDuration,
-                  animationDelay: turnoutAnimationDelay,
-                ),
-              ],
-            );
-          },
-        ),
+                      child:  Text("View votes", style: TextStyle(fontSize: 13, color: Theme.of(context).indicatorColor))),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _VoteStat(
+                    isMobile: isMobile, 
+                    isSupport: true, 
+                    votes: formatVotes(forVotes), 
+                    percentage: forPercentDouble,
+                    animationDuration: animationDuration,
+                  ),
+                  _VoteStat(
+                    isMobile: isMobile, 
+                    isSupport: false, 
+                    votes: formatVotes(againstVotes), 
+                    percentage: againstPercentDouble,
+                    animationDuration: animationDuration,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _ProgressBar(
+                forPercent: forPercentDouble,
+                againstPercent: againstPercentDouble,
+                height: 10,
+                animationDuration: animationDuration,
+              ),
+              const SizedBox(height: 36),
+              Row(
+                children: [
+                  const Text("Turnout: ", style: TextStyle(fontSize: 15)),
+                  Text("${formatVotes(totalVotes)} (", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  _AnimatedPercentage(
+                    value: turnoutPercentDouble,
+                    duration: animationDuration,
+                    delay: turnoutAnimationDelay,
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  const Text(")", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const Spacer(),
+                  Text(quorumMet ? "Quorum Met" : "Quorum Not Met", style: TextStyle(fontWeight: FontWeight.bold, color: quorumMet ? Colors.green : Colors.grey, fontSize: 15)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _ProgressBar(
+                forPercent: turnoutPercentDouble,
+                againstPercent: 0,
+                height: 10,
+                quorumPercent: org.quorum.toDouble(),
+                fillColor: Colors.grey.shade400,
+                animationDuration: animationDuration,
+                animationDelay: turnoutAnimationDelay,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -173,28 +181,30 @@ class _VoteStat extends StatelessWidget {
     const supportColor = Color(0xff00c489);
     const opposeColor = Color(0xff86251e);
     final color = isSupport ? supportColor : opposeColor;
+    
+    const double statFontSize = 14;
 
     if (isMobile) {
       return Row(
         children: [
-          Icon(isSupport ? Icons.thumb_up : Icons.thumb_down, color: color, size: 20),
+          Icon(isSupport ? Icons.thumb_up : Icons.thumb_down, color: color, size: 18),
           const SizedBox(width: 8),
-          Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: statFontSize)),
           const SizedBox(width: 8),
-          _AnimatedPercentage(value: percentage, duration: animationDuration, textStyle: TextStyle(color: Colors.grey[400])),
+          _AnimatedPercentage(value: percentage, duration: animationDuration, textStyle: TextStyle(color: Colors.grey[400], fontSize: statFontSize)),
         ],
       );
     }
 
     return Row(
       children: [
-        Icon(Icons.circle, color: color, size: 12),
+        Icon(Icons.circle, color: color, size: 10),
         const SizedBox(width: 8),
-        Text(isSupport ? "Support" : "Oppose", style: const TextStyle(fontSize: 16)),
-        const SizedBox(width: 16),
-        Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(isSupport ? "Support" : "Oppose", style: const TextStyle(fontSize: statFontSize)),
+        const SizedBox(width: 12),
+        Text(votes, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: statFontSize)),
         const SizedBox(width: 8),
-        _AnimatedPercentage(value: percentage, duration: animationDuration, textStyle: TextStyle(color: Colors.grey[400])),
+        _AnimatedPercentage(value: percentage, duration: animationDuration, textStyle: TextStyle(color: Colors.grey[400], fontSize: statFontSize)),
       ],
     );
   }
@@ -379,3 +389,4 @@ class _ProgressBarState extends State<_ProgressBar> {
     });
   }
 }
+// lib/src/features/proposal_detail/widgets/proposal_votes_card.dart

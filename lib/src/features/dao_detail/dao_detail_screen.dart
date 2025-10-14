@@ -111,7 +111,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
                                       color: const Color(0xff2c2c2c), // Card background color
-                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderRadius: BorderRadius.circular(0),
                                     ),
                                     child: LayoutBuilder(
                                       builder: (context, constraints) {

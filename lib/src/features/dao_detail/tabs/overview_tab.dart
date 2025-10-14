@@ -49,6 +49,7 @@ class OverviewTab extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
       color: const Color(0xff2c2c2c),
       elevation: 0,
       child: Padding(
@@ -204,25 +205,25 @@ class _DaoAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 60,
-      height: 60,
+      width: 45,
+      height: 45,
       child: FutureBuilder<Uint8List>(
-        future: generateAvatarAsync(hashString(dao.address)),
+        future: generateAvatarAsync(hashString(dao.address), pixelSize: 2),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting ||
               !snapshot.hasData) {
             return Container(
-              width: 60,
-              height: 60,
+              width: 45,
+              height: 45,
               decoration: BoxDecoration(
                 color: Colors.white24,
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(0),
               ),
             );
           }
           if (snapshot.hasData) {
             return ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(0),
               child: Image.memory(snapshot.data!),
             );
           }
@@ -293,7 +294,7 @@ class _MetricBox extends StatelessWidget {
       height: 120,
       decoration: BoxDecoration(
         color: const Color(0xff2c2c2c),
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(0),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 54.0),
       child: Row(

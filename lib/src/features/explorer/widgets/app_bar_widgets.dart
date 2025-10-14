@@ -173,7 +173,7 @@ class WalletConnector extends StatelessWidget {
               return Row(
                 children: [
                   FutureBuilder<Uint8List>(
-                    future: generateAvatarAsync(hashString(auth.selectedAccount!), size: 32, pixelSize: 4),
+                    future: generateAvatarAsync(hashString(auth.selectedAccount!), size: 32, pixelSize: 2),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                           return ClipOval(child: Image.memory(snapshot.data!));
