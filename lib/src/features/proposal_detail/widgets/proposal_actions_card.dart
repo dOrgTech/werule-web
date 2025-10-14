@@ -10,7 +10,6 @@ import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/utils/reusable.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// An enum to represent the card's self-contained state.
 enum _CardStatus { idle, awaitingWallet, awaitingIndexer }
 
 class ProposalActionsCard extends StatefulWidget {
@@ -30,8 +29,6 @@ class _ProposalActionsCardState extends State<ProposalActionsCard> {
     final auth = context.watch<AuthProvider>();
     final currentProposalVersion = provider.proposal.hashCode;
 
-    // If the proposal data from the provider has changed, the indexer has
-    // delivered an update. We can safely reset our internal state to idle.
     if (currentProposalVersion != _lastSeenProposalVersion) {
       _status = _CardStatus.idle;
       _lastSeenProposalVersion = currentProposalVersion;
@@ -65,7 +62,6 @@ class _ProposalActionsCardState extends State<ProposalActionsCard> {
               status: provider.status,
               isConnected: auth.isConnected,
               pastVoteWeight: provider.pastVotingWeight ?? BigInt.zero,
-              // THE FIX: Correctly referencing the getter from the provided provider file.
               hasVoted: provider.hasUserVoted,
               onStatusChange: (newStatus) {
                 if (mounted) {
@@ -350,7 +346,8 @@ class _ActionButtons extends StatelessWidget {
         if (signerAddress == null) return;
         final proposal = provider.proposal;
         final org = provider.org;
-        final packedDescription = "${proposal.title}0|||0${proposal.author}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
+        // THE FIX: Reverted to the original, correct packedDescription.
+        final packedDescription = "${proposal.title}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
         final valuesAsBigInt = proposal.values.map((v) => BigInt.tryParse(v) ?? BigInt.zero).toList();
         final calldatasAsBytes = proposal.callDatas.map((cd) => hexToBytes(cd)).toList();
 
@@ -389,7 +386,8 @@ class _ActionButtons extends StatelessWidget {
         if (signerAddress == null) return;
         final proposal = provider.proposal;
         final org = provider.org;
-        final packedDescription = "${proposal.title}0|||0${proposal.author}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
+        // THE FIX: Reverted to the original, correct packedDescription.
+        final packedDescription = "${proposal.title}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
         final valuesAsBigInt = proposal.values.map((v) => BigInt.tryParse(v) ?? BigInt.zero).toList();
         final calldatasAsBytes = proposal.callDatas.map((cd) => hexToBytes(cd)).toList();
 
@@ -485,4 +483,4 @@ class _Countdown extends StatelessWidget {
     );
   }
 }
-// lib/src/features/proposal_detail/widgets/proposal_actions_card.dart
+// lib/src/features/proposal_detail/widgets/proposal_actions_card.dart```
