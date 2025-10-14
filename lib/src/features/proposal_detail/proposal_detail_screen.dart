@@ -222,10 +222,15 @@ class _ProposalDetailViewState extends State<_ProposalDetailView> {
                             children: [
                               _AnimatedFadeIn(isVisible: _showHeader, child: _ProposalHeader(proposal: proposal, isVertical: false)),
                               const SizedBox(height: kCardSpacing + 4),
-                              if (!isDefinitiveState) ...[
-                                _AnimatedFadeIn(isVisible: _showActionsCard, child: const ProposalActionsCard()),
-                                const SizedBox(height: kCardSpacing),
-                              ],
+                              _AnimatedFadeIn(
+                                isVisible: _showActionsCard,
+                                child: _AnimatedActionsCardWrapper(
+                                  status: status,
+                                  child: const ProposalActionsCard(),
+                                ),
+                              ),
+                              // THE FIX: The SizedBox is now conditional to prevent the gap when the card is hidden.
+                              if (!isDefinitiveState) const SizedBox(height: kCardSpacing),
                               ProposalVotesCard(org: org),
                               const SizedBox(height: kCardSpacing),
                               _AnimatedFadeIn(isVisible: _showExecutionDetailsCard, child: ProposalExecutionDetailsCard(proposal: proposal, org: org, network: network)),
@@ -260,13 +265,15 @@ class _ProposalDetailViewState extends State<_ProposalDetailView> {
                                 flex: 9,
                                 child: Column(
                                   children: [
-                                    if (!isDefinitiveState) ...[
-                                      _AnimatedFadeIn(
-                                        isVisible: _showActionsCard,
+                                    _AnimatedFadeIn(
+                                      isVisible: _showActionsCard,
+                                      child: _AnimatedActionsCardWrapper(
+                                        status: status,
                                         child: const ProposalActionsCard(),
                                       ),
-                                      const SizedBox(height: kCardSpacing),
-                                    ],
+                                    ),
+                                    // THE FIX: The SizedBox is now conditional to prevent the gap when the card is hidden.
+                                    if (!isDefinitiveState) const SizedBox(height: kCardSpacing),
                                     ProposalVotesCard(org: org),
                                     const SizedBox(height: kCardSpacing),
                                     const ProposalLifecycleCard(),
@@ -310,6 +317,109 @@ class _ProposalDetailViewState extends State<_ProposalDetailView> {
   }
 }
 
+class _AnimatedActionsCardWrapper extends StatefulWidget {
+  final ProposalStatus status;
+  final Widget child;
+  
+  const _AnimatedActionsCardWrapper({required this.status, required this.child});
+
+  @override
+  State<_AnimatedActionsCardWrapper> createState() => _AnimatedActionsCardWrapperState();
+}
+
+class _AnimatedActionsCardWrapperState extends State<_AnimatedActionsCardWrapper> {
+  static const double _kNormalHeight = 250.0;
+  static const double _kExpandedHeight = 330.0;
+  static const double _kHiddenHeight = 0.0;
+  static const Duration _kAnimationDuration = Duration(milliseconds: 800);
+  
+  double _targetHeight = _kNormalHeight;
+  bool _showContent = true;
+  Timer? _contentTimer;
+  // THE FIX: State variable to hold the child widget, preventing flicker during transitions.
+  Widget _childToDisplay; 
+
+  _AnimatedActionsCardWrapperState() : _childToDisplay = const SizedBox.shrink();
+
+  @override
+  void initState() {
+    super.initState();
+    _targetHeight = _calculateTargetHeight(widget.status);
+    _childToDisplay = widget.child;
+    _showContent = _targetHeight > 0;
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedActionsCardWrapper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.status != oldWidget.status) {
+      _contentTimer?.cancel();
+      final newHeight = _calculateTargetHeight(widget.status);
+
+      // Immediately hide the content and start the resize animation.
+      // We keep displaying the OLD child (`_childToDisplay`) so it can fade out.
+      setState(() {
+        _targetHeight = newHeight;
+        _showContent = false;
+      });
+      
+      // Schedule the NEW content to appear after the resize is complete.
+      _contentTimer = Timer(_kAnimationDuration, () {
+        if (mounted) {
+          setState(() {
+            // Only show content if the card is not hidden.
+            _showContent = newHeight > 0;
+            // Now, update to the NEW child so it can fade in.
+            _childToDisplay = widget.child;
+          });
+        }
+      });
+    }
+  }
+  
+  @override
+  void dispose() {
+    _contentTimer?.cancel();
+    super.dispose();
+  }
+
+  double _calculateTargetHeight(ProposalStatus status) {
+    final isDefinitive = status == ProposalStatus.Executed ||
+        status == ProposalStatus.Defeated ||
+        status == ProposalStatus.NoQuorum ||
+        status == ProposalStatus.Expired ||
+        status == ProposalStatus.Canceled;
+
+    if (isDefinitive) {
+      return _kHiddenHeight;
+    } else if (status == ProposalStatus.Active) {
+      return _kExpandedHeight;
+    } else {
+      return _kNormalHeight;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: _kAnimationDuration,
+      curve: Curves.easeInOutCubic,
+      height: _targetHeight,
+      clipBehavior: Clip.hardEdge,
+      // THE FIX: Set the background color here to prevent seeing the page background during animation.
+      decoration: const BoxDecoration(
+        color: Color(0xff2c2c2c),
+      ),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _showContent ? 1.0 : 0.0,
+        // THE FIX: Use the state variable for the child to prevent content flicker.
+        child: _childToDisplay,
+      ),
+    );
+  }
+}
+
 class _ProposalHeader extends StatefulWidget {
   final Proposal proposal;
   final bool isVertical;
@@ -342,10 +452,8 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
       style: textTheme.headlineMedium,
     );
 
-    // THE FIX: The status and author are now combined into a single responsive row.
     final metadataRow = Row(
       children: [
-        // Left side group
         Expanded(
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -367,8 +475,7 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
             ],
           ),
         ),
-        const SizedBox(width: 16), // Gutter space
-        // Right side group
+        const SizedBox(width: 16),
         Flexible(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -431,7 +538,6 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
       ],
     );
     
-    // --- Vertical Layout for Desktop ---
     if (widget.isVertical) {
       return Container(
         width: double.infinity,
@@ -444,13 +550,11 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
               padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 12),
               child: titleWidget,
             ),
-            // THE FIX: The new metadataRow is placed here.
             Container(
               color: const Color(0xff3a3a3a),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: metadataRow,
             ),
-            // THE FIX: The old, separate authorWidget has been removed.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 50.0, vertical: 32.0),
               child: Center(
@@ -466,7 +570,6 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
       );
     }
 
-    // --- Horizontal Layout for Mobile ---
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
@@ -475,9 +578,7 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
         children: [
           titleWidget,
           const SizedBox(height: 12),
-          // THE FIX: The new metadataRow is also used for the mobile layout.
           metadataRow,
-          // THE FIX: The old, separate authorWidget has been removed.
           const SizedBox(height: 24),
           descriptionWidget,
           const SizedBox(height: 12),
@@ -517,4 +618,3 @@ class _AnimatedFadeIn extends StatelessWidget {
     );
   }
 }
-// lib/src/features/proposal_detail/proposal_detail_screen.dart

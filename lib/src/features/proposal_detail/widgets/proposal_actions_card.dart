@@ -1,5 +1,6 @@
 // lib/src/features/proposal_detail/widgets/proposal_actions_card.dart
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:werule/src/models/proposal.dart';
@@ -9,47 +10,104 @@ import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/utils/reusable.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ProposalActionsCard extends StatelessWidget {
+// An enum to represent the card's self-contained state.
+enum _CardStatus { idle, awaitingWallet, awaitingIndexer }
+
+class ProposalActionsCard extends StatefulWidget {
   const ProposalActionsCard({super.key});
+
+  @override
+  State<ProposalActionsCard> createState() => _ProposalActionsCardState();
+}
+
+class _ProposalActionsCardState extends State<ProposalActionsCard> {
+  _CardStatus _status = _CardStatus.idle;
+  int _lastSeenProposalVersion = 0;
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProposalDetailProvider>();
     final auth = context.watch<AuthProvider>();
+    final currentProposalVersion = provider.proposal.hashCode;
+
+    // If the proposal data from the provider has changed, the indexer has
+    // delivered an update. We can safely reset our internal state to idle.
+    if (currentProposalVersion != _lastSeenProposalVersion) {
+      _status = _CardStatus.idle;
+      _lastSeenProposalVersion = currentProposalVersion;
+    }
 
     Widget content;
-    if (provider.isActionBusy) {
-      content = const Center(child: CircularProgressIndicator());
-    } else {
-      content = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _ActionLabel(status: provider.status, isConnected: auth.isConnected),
-          if (provider.showCountdown)
-            _Countdown(remainingSeconds: provider.remainingSeconds),
-          const SizedBox(height: 16),
-          if (auth.isConnected)
-            _PastVoteWeightDisplay(status: provider.status),
-          if (provider.status == ProposalStatus.Active)
+
+    switch (_status) {
+      case _CardStatus.awaitingWallet:
+        content = const _WaitingWidget(
+          message: "Waiting for confirmation in your wallet...",
+        );
+        break;
+      case _CardStatus.awaitingIndexer:
+        content = const _WaitingWidget(
+          message: "Transaction sent. Waiting for update...",
+        );
+        break;
+      case _CardStatus.idle:
+        content = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _ActionLabel(status: provider.status),
+            if (provider.showCountdown)
+              _Countdown(remainingSeconds: provider.remainingSeconds),
             const SizedBox(height: 16),
-          _ActionButtons(
-            status: provider.status,
-            isConnected: auth.isConnected,
-            pastVoteWeight: provider.pastVotingWeight ?? BigInt.zero,
-            hasVoted: provider.hasUserVoted,
-          ),
-        ],
-      );
+            if (auth.isConnected)
+              _PastVoteWeightDisplay(status: provider.status),
+            const SizedBox(height: 16),
+            _ActionButtons(
+              status: provider.status,
+              isConnected: auth.isConnected,
+              pastVoteWeight: provider.pastVotingWeight ?? BigInt.zero,
+              // THE FIX: Correctly referencing the getter from the provided provider file.
+              hasVoted: provider.hasUserVoted,
+              onStatusChange: (newStatus) {
+                if (mounted) {
+                  setState(() {
+                    _status = newStatus;
+                  });
+                }
+              },
+            ),
+          ],
+        );
+        break;
     }
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xff2c2c2c),
-      ),
-      height: 250,
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       child: content,
+    );
+  }
+}
+
+class _WaitingWidget extends StatelessWidget {
+  final String message;
+  const _WaitingWidget({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(message, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 100,
+          width: 100,
+          child: Opacity(
+            opacity: 0.7,
+            child: Lottie.asset("assets/d4.json"),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -104,12 +162,14 @@ class _ActionButtons extends StatelessWidget {
   final bool isConnected;
   final BigInt pastVoteWeight;
   final bool hasVoted;
+  final void Function(_CardStatus) onStatusChange;
 
   const _ActionButtons({
     required this.status, 
     required this.isConnected,
     required this.pastVoteWeight,
     required this.hasVoted,
+    required this.onStatusChange,
   });
 
   void _showSnackbar(BuildContext context, String message, {bool isError = false}) {
@@ -136,29 +196,37 @@ class _ActionButtons extends StatelessWidget {
     );
   }
 
+  Future<void> _handleAction(BuildContext context, Function action) async {
+    onStatusChange(_CardStatus.awaitingWallet);
+    try {
+      await context.read<ProposalDetailProvider>().handleAction(action);
+      onStatusChange(_CardStatus.awaitingIndexer);
+    } on AccountMismatchException catch (e) {
+      onStatusChange(_CardStatus.idle);
+      if (context.mounted) _showAccountMismatchDialog(context, e);
+    } catch (e) {
+      onStatusChange(_CardStatus.idle);
+      if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final provider = context.read<ProposalDetailProvider>();
     final auth = context.read<AuthProvider>();
     final signerAddress = auth.selectedAccount;
 
-    // THE FIX: This check is restored. It ensures that if a user is not connected,
-    // they don't see an empty space where the buttons would be. This was a key
-    // part of the original, working logic.
-    if (signerAddress == null && (status == ProposalStatus.Active || status == ProposalStatus.Succeeded || status == ProposalStatus.Executable)) {
-      return const SizedBox.shrink();
-    }
-
     switch (status) {
       case ProposalStatus.Active:
         if (hasVoted) {
           return const Text("You have already voted.", style: TextStyle(color: Colors.grey));
         }
-        return _buildVoteButtons(context, provider, signerAddress!);
+        return _buildVoteButtons(context, provider, signerAddress);
       case ProposalStatus.Succeeded:
-        return _buildQueueButton(context, provider, signerAddress!);
+        return _buildQueueButton(context, provider, signerAddress);
       case ProposalStatus.Executable:
-        return _buildExecuteButton(context, provider, signerAddress!);
+        return _buildExecuteButton(context, provider, signerAddress);
       case ProposalStatus.Executed:
         final hash = provider.proposal.executionHash;
         final explorerUrl = provider.network.blockExplorerUrl;
@@ -204,81 +272,89 @@ class _ActionButtons extends StatelessWidget {
     }
   }
 
-  Widget _buildVoteButtons(BuildContext context, ProposalDetailProvider provider, String signerAddress) {
+  Widget _buildVoteButtons(BuildContext context, ProposalDetailProvider provider, String? signerAddress) {
     final bool isEnabled = isConnected && pastVoteWeight > BigInt.zero; 
     const Color supportColor = Color.fromARGB(255, 20, 78, 49);
     const Color rejectColor = Color.fromARGB(255, 88, 20, 20);
     final proposal = provider.proposal;
     final org = provider.org;
 
+    final buttonStyle = ElevatedButton.styleFrom(
+      fixedSize: const Size(140, 50),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+    );
+
+    Widget supportButton = ElevatedButton.icon(
+      onPressed: isEnabled ? () async {
+        if (signerAddress == null) return;
+        await _handleAction(
+          context,
+          () => context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 1, signerAddress),
+        );
+      } : null,
+      icon: Icon(Icons.thumb_up, color: isEnabled ? supportColor : Colors.grey),
+      label: Text("Support", style: TextStyle(color: isEnabled ? supportColor : Colors.grey)),
+      style: buttonStyle.copyWith(
+        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled)) return Colors.grey[800];
+            return const Color.fromARGB(255, 141, 255, 244);
+          },
+        ),
+      ),
+    );
+
+    Widget rejectButton = ElevatedButton.icon(
+       onPressed: isEnabled ? () async {
+        if (signerAddress == null) return;
+        await _handleAction(
+          context,
+          () => context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 0, signerAddress),
+        );
+      } : null,
+      icon: Icon(Icons.thumb_down, color: isEnabled ? rejectColor : Colors.grey),
+      label: Text("Reject", style: TextStyle(color: isEnabled ? rejectColor : Colors.grey)),
+      style: buttonStyle.copyWith(
+         backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled)) return Colors.grey[800];
+            return const Color.fromARGB(255, 255, 135, 135);
+          },
+        ),
+      ),
+    );
+
+    if (!isConnected) {
+      supportButton = Tooltip(message: "Connect your wallet", child: supportButton);
+      rejectButton = Tooltip(message: "Connect your wallet", child: rejectButton);
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ElevatedButton.icon(
-          onPressed: isEnabled ? () async {
-            try {
-              await provider.handleAction(() => 
-                context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 1, signerAddress)
-              );
-              if (context.mounted) _showSnackbar(context, "Vote cast successfully!");
-            } on AccountMismatchException catch(e) {
-              if (context.mounted) _showAccountMismatchDialog(context, e);
-            } catch (e) {
-              if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
-            }
-          } : null,
-          icon: Icon(Icons.thumb_up, color: isEnabled ? supportColor : Colors.grey),
-          label: Text("Support", style: TextStyle(color: isEnabled ? supportColor : Colors.grey)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isEnabled ? const Color.fromARGB(255, 141, 255, 244) : Colors.grey[800],
-            fixedSize: const Size(140, 40),
-          ),
-        ),
-        ElevatedButton.icon(
-           onPressed: isEnabled ? () async {
-            try {
-              await provider.handleAction(() => 
-                context.read<BlockchainService>().castVote(org.address, BigInt.parse(proposal.id), 0, signerAddress)
-              );
-              if (context.mounted) _showSnackbar(context, "Vote cast successfully!");
-            } on AccountMismatchException catch(e) {
-              if (context.mounted) _showAccountMismatchDialog(context, e);
-            } catch (e) {
-              if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
-            }
-          } : null,
-          icon: Icon(Icons.thumb_down, color: isEnabled ? rejectColor : Colors.grey),
-          label: Text("Reject", style: TextStyle(color: isEnabled ? rejectColor : Colors.grey)),
-           style: ElevatedButton.styleFrom(
-            backgroundColor: isEnabled ? const Color.fromARGB(255, 255, 135, 135) : Colors.grey[800],
-            fixedSize: const Size(140, 40),
-          ),
-        ),
+        supportButton,
+        rejectButton,
       ],
     );
   }
 
-  Future<void> _handleQueueOrExecute(BuildContext context, Function action, String successMessage) async {
-    try {
-      await context.read<ProposalDetailProvider>().handleAction(action);
-      if (context.mounted) _showSnackbar(context, successMessage);
-    } on AccountMismatchException catch (e) {
-      if (context.mounted) _showAccountMismatchDialog(context, e);
-    } catch (e) {
-      if (context.mounted) _showSnackbar(context, e.toString(), isError: true);
-    }
-  }
-
-   Widget _buildQueueButton(BuildContext context, ProposalDetailProvider provider, String signerAddress) {
-    return ElevatedButton(
-      onPressed: () async {
+   Widget _buildQueueButton(BuildContext context, ProposalDetailProvider provider, String? signerAddress) {
+    final buttonStyle = ElevatedButton.styleFrom(
+      backgroundColor: const Color.fromARGB(255, 196, 196, 196),
+      minimumSize: const Size(180, 50),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+    );
+    
+    Widget button = ElevatedButton(
+      onPressed: isConnected ? () async {
+        if (signerAddress == null) return;
         final proposal = provider.proposal;
         final org = provider.org;
-        final packedDescription = "${proposal.title}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
+        final packedDescription = "${proposal.title}0|||0${proposal.author}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
         final valuesAsBigInt = proposal.values.map((v) => BigInt.tryParse(v) ?? BigInt.zero).toList();
         final calldatasAsBytes = proposal.callDatas.map((cd) => hexToBytes(cd)).toList();
 
-        await _handleQueueOrExecute(
+        await _handleAction(
           context,
           () => context.read<BlockchainService>().queueProposal(
                 org.address,
@@ -288,24 +364,36 @@ class _ActionButtons extends StatelessWidget {
                 calldatasAsBytes,
                 packedDescription,
               ),
-          "Proposal queued successfully!",
         );
-      },
-      style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 196, 196, 196)),
+      } : null,
+      style: buttonStyle,
       child: const Text("Queue for Execution", style: TextStyle(color: Colors.black),),
     );
+
+    if (!isConnected) {
+      return Tooltip(message: "Connect your wallet", child: button);
+    }
+    return button;
   }
 
-  Widget _buildExecuteButton(BuildContext context, ProposalDetailProvider provider, String signerAddress) {
-     return ElevatedButton(
-      onPressed: () async {
+  Widget _buildExecuteButton(BuildContext context, ProposalDetailProvider provider, String? signerAddress) {
+     final buttonStyle = ElevatedButton.styleFrom(
+      elevation: 4,
+      backgroundColor: const Color.fromARGB(255, 121, 240, 248),
+      minimumSize: const Size(180, 50),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+    );
+
+     Widget button = ElevatedButton(
+      onPressed: isConnected ? () async {
+        if (signerAddress == null) return;
         final proposal = provider.proposal;
         final org = provider.org;
-        final packedDescription = "${proposal.title}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
+        final packedDescription = "${proposal.title}0|||0${proposal.author}0|||0${proposal.type ?? ''}0|||0${proposal.description}0|||0${proposal.externalResource ?? ''}";
         final valuesAsBigInt = proposal.values.map((v) => BigInt.tryParse(v) ?? BigInt.zero).toList();
         final calldatasAsBytes = proposal.callDatas.map((cd) => hexToBytes(cd)).toList();
 
-        await _handleQueueOrExecute(
+        await _handleAction(
           context,
           () => context.read<BlockchainService>().executeProposal(
                 org.address,
@@ -315,14 +403,16 @@ class _ActionButtons extends StatelessWidget {
                 calldatasAsBytes,
                 packedDescription,
               ),
-          "Proposal executed successfully!",
         );
-      },
-      style: ElevatedButton.styleFrom(
-        elevation: 4,
-        backgroundColor: const Color.fromARGB(255, 121, 240, 248)),
+      } : null,
+      style: buttonStyle,
       child: const Text("EXECUTE", style: TextStyle(color:Colors.black, fontWeight: FontWeight.bold),),
     );
+
+    if (!isConnected) {
+      return Tooltip(message: "Connect your wallet", child: button);
+    }
+    return button;
   }
 }
 
@@ -330,8 +420,7 @@ class _ActionButtons extends StatelessWidget {
 // --- Action Label ---
 class _ActionLabel extends StatelessWidget {
   final ProposalStatus status;
-  final bool isConnected;
-  const _ActionLabel({required this.status, required this.isConnected});
+  const _ActionLabel({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -345,18 +434,6 @@ class _ActionLabel extends StatelessWidget {
         break;
       case ProposalStatus.Queued:
         text = 'Executable in:';
-        break;
-      
-      // THE FIX: This is the core of the fix. It checks the connection status
-      // to decide whether to show a label or leave space for the action button.
-      case ProposalStatus.Succeeded:
-      case ProposalStatus.Executable:
-        // If connected, the user will see an action button, so no label is needed.
-        if (isConnected) {
-          return const SizedBox.shrink();
-        }
-        // If not connected, the button is hidden, so we show a clear status label.
-        text = 'Voting has ended';
         break;
       default:
         text = 'Voting has ended';
