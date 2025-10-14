@@ -446,10 +446,13 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
       ? OldSchoolLink(text: widget.proposal.externalResource!, url: widget.proposal.externalResource!)
       : const Text("No link provided", style: TextStyle(color: Colors.grey));
 
-    final titleWidget = Text(
-      widget.proposal.title,
-      textAlign: widget.isVertical ? TextAlign.left : TextAlign.center,
-      style: textTheme.headlineMedium,
+    final titleWidget = Padding(
+      padding: const EdgeInsets.only(bottom:10.0),
+      child: Text(
+        widget.proposal.title,
+        textAlign: widget.isVertical ? TextAlign.left : TextAlign.center,
+        style: textTheme.headlineSmall,
+      ),
     );
 
     final metadataRow = Row(

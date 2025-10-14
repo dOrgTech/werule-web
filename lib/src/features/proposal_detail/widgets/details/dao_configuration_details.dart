@@ -1,59 +1,54 @@
 // lib/src/features/proposal_detail/widgets/details/dao_configuration_details.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:werule/src/features/proposal_detail/widgets/details/shared_widgets.dart';
-import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/services/calldata_service.dart';
 
 class DaoConfigurationDetails extends StatelessWidget {
-  final Proposal proposal;
-  const DaoConfigurationDetails({super.key, required this.proposal});
+  final String calldata;
+  const DaoConfigurationDetails({super.key, required this.calldata});
 
   @override
   Widget build(BuildContext context) {
     final calldataService = context.read<CalldataService>();
-    final type = proposal.type?.toLowerCase().replaceAll('_', ' ') ?? "";
-
-    if (proposal.callDatas.isEmpty) {
-      return const Center(child: Text("No configuration data found."));
-    }
     
-    final calldata = proposal.callDatas[0];
-    List<dynamic> params = [];
-    String paramName = "Unknown Parameter";
     String paramValue = "Error decoding value";
+    String title = "DAO Configuration Change";
 
     try {
-      if (type.contains("quorum")) {
-        params = calldataService.decodeCalldata(CalldataService.changeQuorumDef, calldata);
-        paramName = "New Quorum Numerator";
+      final calldataBytes = hexToBytes(calldata);
+      final selector = calldataBytes.sublist(0, 4);
+
+      // THE FIX: Comparing against the correct selectors from your CalldataService.
+      if (listEquals(selector, CalldataService.changeQuorumDef.selector)) {
+        final params = calldataService.decodeQuorumCall(calldata);
         paramValue = params[0].toString();
-      } else if (type.contains("voting delay")) {
-        params = calldataService.decodeCalldata(CalldataService.changeVotingDelayDef, calldata);
-        paramName = "New Voting Delay";
-        // THE FIX: The contract value is in seconds.
+        title = "Change Quorum";
+      } else if (listEquals(selector, CalldataService.changeVotingDelayDef.selector)) {
+        final params = calldataService.decodeVotingDelayCall(calldata);
         paramValue = "${params[0]} Seconds";
-      } else if (type.contains("voting period")) {
-        params = calldataService.decodeCalldata(CalldataService.changeVotingPeriodDef, calldata);
-        paramName = "New Voting Period";
-        // THE FIX: The contract value is in seconds.
+        title = "Change Voting Delay";
+      } else if (listEquals(selector, CalldataService.changeVotingPeriodDef.selector)) {
+        final params = calldataService.decodeVotingPeriodCall(calldata);
         paramValue = "${params[0]} Seconds";
-      } else if (type.contains("threshold")) {
-        params = calldataService.decodeCalldata(CalldataService.changeProposalThresholdDef, calldata);
-        paramName = "New Proposal Threshold";
+        title = "Change Voting Period";
+      } else if (listEquals(selector, CalldataService.changeProposalThresholdDef.selector)) {
+        final params = calldataService.decodeThresholdCall(calldata);
         paramValue = "${params[0].toString()} (in wei)";
+        title = "Change Proposal Threshold";
       }
     } catch (e) {
        paramValue = "Error decoding value: $e";
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          buildDetailRow("Parameter:", paramName),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           buildDetailRow("New Value:", paramValue, isCode: true),
         ],
