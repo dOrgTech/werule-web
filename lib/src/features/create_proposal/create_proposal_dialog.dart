@@ -1,9 +1,9 @@
 // lib/src/features/create_proposal/create_proposal_dialog.dart
+import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:werule/src/features/proposal_detail/widgets/proposal_execution_details_card.dart';
 import 'package:werule/src/models/org.dart';
-import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/models/token_asset.dart';
 import 'package:werule/src/providers/create_proposal_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
@@ -46,13 +46,13 @@ class CreateProposalDialog extends StatefulWidget {
 class _CreateProposalDialogState extends State<CreateProposalDialog> {
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0;
-  String? _step2Category; // Used for sub-selections like 'daoConfig' or 'govToken'
+  String? _step2Category; 
 
   final _stepSubtitles = const [
     'Step 1: Basic Information',
-    'Step 2: Proposal Type',
+    'Step 2: First Action Type',
     'Step 3: Parameters',
-    'Step 4: Review',
+    'Step 4: Review Actions',
   ];
 
   String getDialogTitle() {
@@ -86,12 +86,10 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
   }
 
   void _nextStep() {
-    // For steps with forms
     if (_currentStep == 0 || _currentStep == 2) {
       if (!(_formKey.currentState?.validate() ?? false)) return;
     }
     
-    // If moving to the review step, prepare the transaction data.
     if (_currentStep == 2) {
       final error = context.read<CreateProposalProvider>().prepareProposalDataForReview();
       if (error != null) {
@@ -99,7 +97,7 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
           content: Center(child: Text(error)),
           backgroundColor: Colors.redAccent,
         ));
-        return; // Don't proceed if data preparation fails.
+        return; 
       }
     }
     
@@ -110,14 +108,67 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
 
   void _previousStep() {
     if (_currentStep > 0) {
-      // If we are in a sub-category view in step 2, go back to the main categories first.
       if (_currentStep == 1 && _step2Category != null) {
-        setState(() {
-          _step2Category = null;
-        });
+        setState(() => _step2Category = null);
       } else {
         setState(() => _currentStep--);
       }
+    }
+  }
+
+  void _handleCsvUpload() async {
+    try {
+      // 1. Pick the file
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        withData: true, // Important to get file bytes
+      );
+
+      if (result == null || result.files.first.bytes == null) {
+        return; // User canceled the picker
+      }
+      
+      // 2. Read file content
+      final fileBytes = result.files.first.bytes!;
+      final String csvContent = utf8.decode(fileBytes);
+
+      // 3. Process with the provider
+      if (!mounted) return;
+      final provider = context.read<CreateProposalProvider>();
+      final treasuryProvider = context.read<TreasuryProvider>();
+
+      final error = await provider.processCsvAndPopulateActions(csvContent, treasuryProvider.tokenAssets);
+      
+      // 4. Handle result
+      if (!mounted) return;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Center(child: Text("CSV Error: $error")),
+          backgroundColor: Colors.redAccent,
+        ));
+      } else {
+        // Success! Jump to the review step.
+        // First, ensure proposal data is prepared with the new actions.
+        final prepError = provider.prepareProposalDataForReview();
+        if (prepError != null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Center(child: Text("Error preparing proposal: $prepError")),
+            backgroundColor: Colors.redAccent,
+          ));
+          return;
+        }
+        setState(() {
+          // This skips Step 2 (type) and 3 (params) as they're defined by the CSV
+          _currentStep = 3;
+        });
+      }
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Center(child: Text("An unexpected error occurred: ${e.toString()}")),
+        backgroundColor: Colors.redAccent,
+      ));
     }
   }
 
@@ -166,8 +217,8 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_currentStep == 0) _buildCommonFields(provider),
-            if (_currentStep == 1) _buildProposalTypeSelection(provider),
-            if (_currentStep == 2) _buildParametersForm(provider),
+            if (_currentStep == 1) _buildProposalTypeSelection(provider, isInitial: true),
+            if (_currentStep == 2) _buildParametersForm(provider, provider.actions.first),
             if (_currentStep == 3) _buildReviewStep(provider),
           ],
         ),
@@ -176,7 +227,6 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
   }
 
   List<Widget> _buildActions(CreateProposalProvider provider) {
-    // Hide Next/Submit buttons during step 2, as selections auto-advance.
     final showPrimaryButton = _currentStep != 1;
 
     return [
@@ -231,41 +281,52 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
     );
   }
 
-  Widget _buildProposalTypeSelection(CreateProposalProvider provider) {
-    if (_step2Category == 'daoConfig') return _buildDaoConfigSubcategories(provider);
-    if (_step2Category == 'govToken') return _buildGovTokenSubcategories(provider);
-    return _buildMainCategories(provider);
+  Widget _buildProposalTypeSelection(CreateProposalProvider provider, {bool isInitial = false, Function(ProposalType)? onSelect}) {
+    if (_step2Category == 'daoConfig') return _buildDaoConfigSubcategories(provider, isInitial: isInitial, onSelect: onSelect);
+    if (_step2Category == 'govToken') return _buildGovTokenSubcategories(provider, isInitial: isInitial, onSelect: onSelect);
+    return _buildMainCategories(provider, isInitial: isInitial, onSelect: onSelect);
   }
   
-  Widget _buildMainCategories(CreateProposalProvider provider) {
+  Widget _buildMainCategories(CreateProposalProvider provider, {bool isInitial = false, Function(ProposalType)? onSelect}) {
+    // THE FIX: Watch the treasury provider to disable the upload button while assets are loading.
+    final treasuryProvider = context.watch<TreasuryProvider>();
+    // A safe check for loading is to see if the assets list is empty, assuming it's populated asynchronously.
+    // If your provider has an `isLoading` flag, using `treasuryProvider.isLoading` is even better.
+    final isTreasuryLoading = treasuryProvider.tokenAssets.isEmpty;
+    
+    handleSelect(ProposalType type) {
+      if (onSelect != null) {
+        onSelect(type);
+      } else if (isInitial) {
+        provider.setInitialProposalType(type);
+        _nextStep();
+      }
+    }
     return Column(
       children: [
          _buildCategoryButton(
+          icon: Icons.upload_file,
+          title: "Upload Executions CSV",
+          subtitle: "Batch create transfers, mints, and burns",
+          onTap: isTreasuryLoading ? null : _handleCsvUpload, // Disable if loading
+        ),
+        _buildCategoryButton(
           icon: Icons.attach_money_outlined,
           title: "Transfer Assets",
           subtitle: "From the DAO Treasury to another account",
-          onTap: () {
-            provider.setProposalType(ProposalType.transfer);
-            _nextStep();
-          },
+          onTap: () => handleSelect(ProposalType.transfer),
         ),
         _buildCategoryButton(
           icon: Icons.list_alt_outlined,
           title: "Edit Registry",
           subtitle: "Change an entry or add a new one",
-          onTap: () {
-            provider.setProposalType(ProposalType.registry);
-            _nextStep();
-          },
+          onTap: () => handleSelect(ProposalType.registry),
         ),
         _buildCategoryButton(
           icon: Icons.code,
           title: "Custom Contract Call",
           subtitle: "Interact with any contract on the network",
-          onTap: () {
-            provider.setProposalType(ProposalType.contractCall);
-            _nextStep();
-          },
+          onTap: () => handleSelect(ProposalType.contractCall),
         ),
         _buildCategoryButton(
           icon: Icons.settings_outlined,
@@ -283,71 +344,66 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
     );
   }
 
-  Widget _buildDaoConfigSubcategories(CreateProposalProvider provider) {
+  Widget _buildDaoConfigSubcategories(CreateProposalProvider provider, {bool isInitial = false, Function(ProposalType)? onSelect}) {
+    handleSelect(ProposalType type) {
+      if (onSelect != null) {
+        onSelect(type);
+      } else if (isInitial) {
+        provider.setInitialProposalType(type);
+        _nextStep();
+      }
+    }
     return Column(
       children: [
-        _buildSubCategoryButton(
-          icon: Icons.group_outlined, title: "Update Quorum",
-          onTap: () { provider.setProposalType(ProposalType.updateQuorum); _nextStep(); }
-        ),
-        _buildSubCategoryButton(
-          icon: Icons.hourglass_empty_outlined, title: "Update Voting Delay",
-          onTap: () { provider.setProposalType(ProposalType.updateVotingDelay); _nextStep(); }
-        ),
-        _buildSubCategoryButton(
-          icon: Icons.timer_outlined, title: "Update Voting Period",
-          onTap: () { provider.setProposalType(ProposalType.updateVotingPeriod); _nextStep(); }
-        ),
-        _buildSubCategoryButton(
-          icon: Icons.account_balance_wallet_outlined, title: "Update Proposal Threshold",
-          onTap: () { provider.setProposalType(ProposalType.updateThreshold); _nextStep(); }
-        ),
+        _buildSubCategoryButton(icon: Icons.group_outlined, title: "Update Quorum", onTap: () => handleSelect(ProposalType.updateQuorum)),
+        _buildSubCategoryButton(icon: Icons.hourglass_empty_outlined, title: "Update Voting Delay", onTap: () => handleSelect(ProposalType.updateVotingDelay)),
+        _buildSubCategoryButton(icon: Icons.timer_outlined, title: "Update Voting Period", onTap: () => handleSelect(ProposalType.updateVotingPeriod)),
+        _buildSubCategoryButton(icon: Icons.account_balance_wallet_outlined, title: "Update Proposal Threshold", onTap: () => handleSelect(ProposalType.updateThreshold)),
       ],
     );
   }
 
-  Widget _buildGovTokenSubcategories(CreateProposalProvider provider) {
+  Widget _buildGovTokenSubcategories(CreateProposalProvider provider, {bool isInitial = false, Function(ProposalType)? onSelect}) {
+    handleSelect(ProposalType type) {
+      if (onSelect != null) {
+        onSelect(type);
+      } else if (isInitial) {
+        provider.setInitialProposalType(type);
+        _nextStep();
+      }
+    }
     return Column(
       children: [
-        _buildSubCategoryButton(
-          icon: Icons.add_circle_outline, title: "Mint Tokens",
-          onTap: () { provider.setProposalType(ProposalType.mintTokens); _nextStep(); }
-        ),
-        _buildSubCategoryButton(
-          icon: Icons.remove_circle_outline, title: "Burn Tokens",
-          onTap: () { provider.setProposalType(ProposalType.burnTokens); _nextStep(); }
-        ),
+        _buildSubCategoryButton(icon: Icons.add_circle_outline, title: "Mint Tokens", onTap: () => handleSelect(ProposalType.mintTokens)),
+        _buildSubCategoryButton(icon: Icons.remove_circle_outline, title: "Burn Tokens", onTap: () => handleSelect(ProposalType.burnTokens)),
       ],
     );
   }
 
-  Widget _buildCategoryButton({required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
+  Widget _buildCategoryButton({required IconData icon, required String title, required String subtitle, required VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Material(
-        color: Colors.grey.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Icon(icon, size: 32, color: const Color(0xffa1d0d0)),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Text(subtitle, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-                    ],
+      child: Material( color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(8),
+        child: InkWell( onTap: onTap, borderRadius: BorderRadius.circular(8),
+          child: Opacity(
+            opacity: onTap == null ? 0.5 : 1.0,
+            child: Padding( padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Icon(icon, size: 32, color: const Color(0xffa1d0d0)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column( crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text(subtitle, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(Icons.arrow_forward_ios, size: 16),
-              ],
+                  const Icon(Icons.arrow_forward_ios, size: 16),
+                ],
+              ),
             ),
           ),
         ),
@@ -356,16 +412,10 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
   }
 
   Widget _buildSubCategoryButton({required IconData icon, required String title, required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Material(
-        color: Colors.grey.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+    return Padding( padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Material( color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(8),
+        child: InkWell( onTap: onTap, borderRadius: BorderRadius.circular(8),
+          child: Padding( padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Row(
               children: [
                 Icon(icon, size: 24, color: const Color(0xffa1d0d0)),
@@ -380,123 +430,122 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
     );
   }
 
-  Widget _buildParametersForm(CreateProposalProvider provider) {
-    switch (provider.selectedType) {
-      case ProposalType.registry: return _buildRegistryForm(provider);
-      case ProposalType.transfer: return _buildTransferForm(provider);
-      case ProposalType.mintTokens: return _buildMintForm(provider);
-      case ProposalType.burnTokens: return _buildBurnForm(provider);
-      case ProposalType.updateQuorum: return _buildSingleUintForm(provider, "New Quorum", (val) => provider.quorumValue = val);
-      case ProposalType.updateVotingDelay: return _buildSingleUintForm(provider, "New Voting Delay", (val) => provider.votingDelayValue = val, hint: "Value in minutes");
-      case ProposalType.updateVotingPeriod: return _buildSingleUintForm(provider, "New Voting Period", (val) => provider.votingPeriodValue = val, hint: "Value in minutes");
-      case ProposalType.updateThreshold: return _buildSingleUintForm(provider, "New Proposal Threshold", (val) => provider.thresholdValue = val, hint: 'Amount in ${widget.org.symbol}');
-      case ProposalType.contractCall: return _ContractCallForm(provider: provider);
+  // --- PARAMETER FORMS ---
+  Widget _buildParametersForm(CreateProposalProvider provider, ProposalAction action) {
+    switch (action.type) {
+      case ProposalType.registry: return _buildRegistryForm(action as RegistryAction);
+      case ProposalType.transfer: return _buildTransferForm(action as TransferAction);
+      case ProposalType.mintTokens: return _buildMintForm(action as MintTokensAction);
+      case ProposalType.burnTokens: return _buildBurnForm(action as BurnTokensAction);
+      case ProposalType.updateQuorum: return _buildSingleUintForm("New Quorum", (val) => (action as UpdateQuorumAction).value = val);
+      case ProposalType.updateVotingDelay: return _buildSingleUintForm("New Voting Delay", (val) => (action as UpdateVotingDelayAction).value = val, hint: "Value in minutes");
+      case ProposalType.updateVotingPeriod: return _buildSingleUintForm("New Voting Period", (val) => (action as UpdateVotingPeriodAction).value = val, hint: "Value in minutes");
+      case ProposalType.updateThreshold: return _buildSingleUintForm("New Proposal Threshold", (val) => (action as UpdateThresholdAction).value = val, hint: 'Amount in ${widget.org.symbol}');
+      case ProposalType.contractCall: return _ContractCallForm(action: action as ContractCallAction);
     }
   }
 
-  Widget _buildRegistryForm(CreateProposalProvider provider) {
+  Widget _buildRegistryForm(RegistryAction action) {
     return Column(
       children: [
         TextFormField(
-          initialValue: provider.registryKey,
+          initialValue: action.key,
           decoration: const InputDecoration(labelText: 'Key'),
-          onChanged: (value) => provider.registryKey = value,
+          onChanged: (value) => action.key = value,
           validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
-          initialValue: provider.registryValue,
+          initialValue: action.value,
           decoration: const InputDecoration(labelText: 'Value'),
-          onChanged: (value) => provider.registryValue = value,
+          onChanged: (value) => action.value = value,
           validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
         ),
       ],
     );
   }
 
-  Widget _buildTransferForm(CreateProposalProvider provider) {
+  Widget _buildTransferForm(TransferAction action) {
     final treasuryProvider = context.watch<TreasuryProvider>();
     final assets = treasuryProvider.tokenAssets;
-    final symbol = provider.selectedAsset?.token.symbol ?? 'units';
+    final symbol = action.asset?.token.symbol ?? 'units';
 
     return Column(
       children: [
         DropdownButtonFormField<TokenAsset>(
-          value: provider.selectedAsset,
-          onChanged: (value) => provider.setSelectedAsset(value),
+          value: action.asset,
+          onChanged: (value) => setState(() => action.asset = value),
           decoration: const InputDecoration(labelText: 'Asset to Transfer'),
           validator: (value) => value == null ? 'Please select an asset' : null,
           items: assets.map((asset) {
             final decimals = asset.token.decimals ?? 18;
+            // THE FIX: Pass the String 'asset.balance' directly to formatTotalSupply.
             final balance = formatTotalSupply(asset.balance, decimals);
-            return DropdownMenuItem(
-              value: asset,
-              child: Text('${asset.token.name} ($balance ${asset.token.symbol})'),
-            );
+            return DropdownMenuItem( value: asset, child: Text('${asset.token.name} ($balance ${asset.token.symbol})'));
           }).toList(),
         ),
         const SizedBox(height: 16),
         TextFormField(
-          initialValue: provider.transferRecipient,
+          initialValue: action.recipient,
           decoration: const InputDecoration(labelText: 'Recipient Address'),
-          onChanged: (value) => provider.transferRecipient = value,
+          onChanged: (value) => action.recipient = value,
           validator: _validateAddress,
         ),
         const SizedBox(height: 16),
         TextFormField(
-          initialValue: provider.transferAmount,
+          initialValue: action.amount,
           decoration: InputDecoration(labelText: 'Amount', hintText: 'Amount in $symbol'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onChanged: (value) => provider.transferAmount = value,
+          onChanged: (value) => action.amount = value,
           validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
         ),
       ],
     );
   }
 
-  Widget _buildMintForm(CreateProposalProvider provider) {
+  Widget _buildMintForm(MintTokensAction action) {
     return Column(
       children: [
         TextFormField(
-          initialValue: provider.mintRecipient,
+          initialValue: action.recipient,
           decoration: const InputDecoration(labelText: 'Recipient Address'),
-          onChanged: (value) => provider.mintRecipient = value,
+          onChanged: (value) => action.recipient = value,
           validator: _validateAddress,
         ),
         const SizedBox(height: 16),
         TextFormField(
-          initialValue: provider.mintAmount,
+          initialValue: action.amount,
           decoration: InputDecoration(labelText: 'Amount', hintText: 'Amount in ${widget.org.symbol}'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onChanged: (value) => provider.mintAmount = value,
+          onChanged: (value) => action.amount = value,
           validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
         ),
       ],
     );
   }
 
-  Widget _buildBurnForm(CreateProposalProvider provider) {
+  Widget _buildBurnForm(BurnTokensAction action) {
     return Column(
       children: [
         TextFormField(
-          initialValue: provider.burnFromAddress,
+          initialValue: action.fromAddress,
           decoration: const InputDecoration(labelText: 'From Address'),
-          onChanged: (value) => provider.burnFromAddress = value,
+          onChanged: (value) => action.fromAddress = value,
           validator: _validateAddress,
         ),
         const SizedBox(height: 16),
         TextFormField(
-          initialValue: provider.burnAmount,
+          initialValue: action.amount,
           decoration: InputDecoration(labelText: 'Amount', hintText: 'Amount in ${widget.org.symbol}'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onChanged: (value) => provider.burnAmount = value,
+          onChanged: (value) => action.amount = value,
           validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
         ),
       ],
     );
   }
 
-  Widget _buildSingleUintForm(CreateProposalProvider provider, String label, Function(String) onChanged, {String? hint}) {
+  Widget _buildSingleUintForm(String label, Function(String) onChanged, {String? hint}) {
      return TextFormField(
       decoration: InputDecoration(labelText: label, hintText: hint),
       keyboardType: TextInputType.number,
@@ -508,32 +557,79 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
       },
     );
   }
+  
+  // --- REVIEW STEP ---
 
-  Widget _buildReviewStep(CreateProposalProvider provider) {
-    final dummyProposal = Proposal(
-      id: "PREVIEW",
-      author: "You",
-      title: provider.title,
-      description: provider.description,
-      inFavor: BigInt.zero,
-      against: BigInt.zero,
-      createdAt: DateTime.now(),
-      statusHistory: {},
-      type: provider.selectedType.typeString,
-      targets: provider.preparedTargets,
-      values: provider.preparedValues.map((v) => v.toString()).toList(),
-      callDatas: provider.preparedCallDatasAsHex,
-      externalResource: provider.link,
-      totalSupply: '0',
-      votesFor: 0,
-      votesAgainst: 0,
+  void _showAddActionDialog() async {
+    final provider = context.read<CreateProposalProvider>();
+    // Pass the existing providers to the new dialog's context.
+    final treasuryProvider = context.read<TreasuryProvider>();
+    final networkProvider = context.read<NetworkProvider>();
+    final calldataService = context.read<CalldataService>();
+
+    final newAction = await showDialog<ProposalAction>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: treasuryProvider),
+            ChangeNotifierProvider.value(value: networkProvider),
+            Provider.value(value: calldataService),
+          ],
+          child: _AddActionDialog(org: widget.org),
+        );
+      },
     );
 
-    final network = context.read<NetworkProvider>().selectedNetwork;
-    if (network == null) {
-      return const Center(child: Text("Error: Active network not found."));
+    if (newAction != null) {
+      provider.addAction(newAction);
     }
+  }
 
+  Widget _buildActionReviewItem(ProposalAction action, int index) {
+    final provider = context.read<CreateProposalProvider>();
+    String title = "Unknown Action";
+    String subtitle = "";
+
+    switch (action.type) {
+      case ProposalType.transfer:
+        final act = action as TransferAction;
+        title = "Transfer ${act.amount} ${act.asset?.token.symbol ?? ''}";
+        final recipient = act.recipient;
+        subtitle = "To: ${recipient.length > 10 ? '${recipient.substring(0, 6)}...${recipient.substring(recipient.length - 4)}' : recipient}";
+        break;
+      case ProposalType.registry:
+        final act = action as RegistryAction;
+        title = "Set Registry Key: ${act.key}";
+        subtitle = "Value: ${act.value}";
+        break;
+      // ... Add more cases for human-readable summaries of other action types
+      default:
+        title = "Action: ${action.type.name}";
+        subtitle = "Parameters configured";
+        break;
+    }
+    
+    return Card(
+      color: Colors.grey.withOpacity(0.15),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: CircleAvatar(backgroundColor: Colors.grey.shade700, child: Text('${index + 1}')),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: provider.actions.length > 1
+            ? IconButton(
+                icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
+                tooltip: "Remove Action",
+                onPressed: () => provider.removeActionAt(index),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildReviewStep(CreateProposalProvider provider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -541,18 +637,31 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
         _buildReviewItem("Description", provider.description),
         if (provider.link.isNotEmpty) _buildReviewItem("Discussion Link", provider.link),
         const Divider(height: 32, color: Colors.white24),
-        Text(
-          "Execution Details",
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Actions (${provider.actions.length})",
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            TextButton.icon(
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text("Add Action"),
+              onPressed: _showAddActionDialog,
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xffa1d0d0),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+              ),
+            )
+          ],
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 300,
-          child: ProposalExecutionDetailsCard(
-            proposal: dummyProposal,
-            org: widget.org,
-            network: network,
-          ),
+        const SizedBox(height: 8),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: provider.actions.length,
+          itemBuilder: (context, index) => _buildActionReviewItem(provider.actions[index], index),
         ),
       ],
     );
@@ -575,8 +684,8 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
 }
 
 class _ContractCallForm extends StatefulWidget {
-  final CreateProposalProvider provider;
-  const _ContractCallForm({required this.provider});
+  final ContractCallAction action;
+  const _ContractCallForm({required this.action});
 
   @override
   State<_ContractCallForm> createState() => _ContractCallFormState();
@@ -592,16 +701,12 @@ class _ContractCallFormState extends State<_ContractCallForm> {
   @override
   void initState() {
     super.initState();
-    _targetController.text = widget.provider.contractCallTargetAddress;
-    _signatureController.text = widget.provider.contractCallFunctionSignature;
-    _calldataController.text = widget.provider.contractCallRawCalldata;
+    _targetController.text = widget.action.targetAddress;
+    _signatureController.text = widget.action.functionSignature;
+    _calldataController.text = widget.action.rawCalldata;
 
-    _targetController.addListener(() {
-      widget.provider.contractCallTargetAddress = _targetController.text;
-    });
-    _calldataController.addListener(() {
-      widget.provider.contractCallRawCalldata = _calldataController.text;
-    });
+    _targetController.addListener(() => widget.action.targetAddress = _targetController.text);
+    _calldataController.addListener(() => widget.action.rawCalldata = _calldataController.text);
   }
 
   @override
@@ -609,69 +714,49 @@ class _ContractCallFormState extends State<_ContractCallForm> {
     _targetController.dispose();
     _signatureController.dispose();
     _calldataController.dispose();
-    for (var entry in _paramControllers) {
-      entry.value.dispose();
-    }
+    for (var entry in _paramControllers) { entry.value.dispose(); }
     super.dispose();
   }
 
   void _parseSignature() {
     final signature = _signatureController.text;
     final calldataService = context.read<CalldataService>();
-    
-    // Clear old controllers
-    for (var entry in _paramControllers) {
-      entry.value.dispose();
-    }
+    for (var entry in _paramControllers) { entry.value.dispose(); }
     setState(() => _paramControllers = []);
 
     try {
       final params = calldataService.getParametersFromSignature(signature);
-      
-      final newControllers = params.map((param) {
-        return MapEntry(param, TextEditingController());
-      }).toList();
+      final newControllers = params.map((p) => MapEntry(p, TextEditingController())).toList();
 
       for (int i = 0; i < newControllers.length; i++) {
-        final index = i; // capture index for listener
+        final index = i;
         newControllers[i].value.addListener(() {
-          widget.provider.contractCallParamValues[index] = newControllers[index].value.text;
+          widget.action.paramValues[index] = newControllers[index].value.text;
         });
       }
       
       setState(() {
         _paramControllers = newControllers;
-        widget.provider.contractCallFunctionSignature = signature;
-        widget.provider.contractCallParamValues = List.filled(newControllers.length, '');
+        widget.action.functionSignature = signature;
+        widget.action.paramValues = List.filled(newControllers.length, '');
       });
 
     } on FormatException catch(e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Error parsing signature: ${e.message}"),
-        backgroundColor: Colors.redAccent,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error parsing signature: ${e.message}"), backgroundColor: Colors.redAccent));
     } catch (e) {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("An unexpected error occurred: ${e.toString()}"),
-        backgroundColor: Colors.redAccent,
-      ));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("An unexpected error occurred: ${e.toString()}"), backgroundColor: Colors.redAccent));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = widget.provider;
     return Column(
       children: [
-        TextFormField(
-          controller: _targetController,
-          decoration: const InputDecoration(labelText: 'Target Contract Address'),
-          validator: _validateAddress,
-        ),
+        TextFormField( controller: _targetController, decoration: const InputDecoration(labelText: 'Target Contract Address'), validator: _validateAddress),
         const SizedBox(height: 16),
         ToggleButtons(
-          isSelected: [!provider.isRawCalldataMode, provider.isRawCalldataMode],
-          onPressed: (index) => setState(() => provider.isRawCalldataMode = index == 1),
+          isSelected: [!widget.action.isRawMode, widget.action.isRawMode],
+          onPressed: (index) => setState(() => widget.action.isRawMode = index == 1),
           borderRadius: BorderRadius.circular(8),
           children: const [
             Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Manual Definition')),
@@ -680,7 +765,7 @@ class _ContractCallFormState extends State<_ContractCallForm> {
         ),
         const SizedBox(height: 16),
 
-        if (provider.isRawCalldataMode)
+        if (widget.action.isRawMode)
           TextFormField(
             controller: _calldataController,
             decoration: const InputDecoration(labelText: 'Raw Calldata (0x...)'),
@@ -695,24 +780,17 @@ class _ContractCallFormState extends State<_ContractCallForm> {
         else
           Column(
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row( crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: TextFormField(
                       controller: _signatureController,
-                      decoration: const InputDecoration(
-                        labelText: 'Function Signature',
-                        hintText: 'e.g., transfer(address,uint256)',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Function Signature', hintText: 'e.g., transfer(address,uint256)'),
                       validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0), // Align with text field content
-                    child: ElevatedButton(onPressed: _parseSignature, child: const Text('Parse')),
-                  ),
+                  Padding( padding: const EdgeInsets.only(top: 8.0), child: ElevatedButton(onPressed: _parseSignature, child: const Text('Parse'))),
                 ],
               ),
               const SizedBox(height: 16),
@@ -723,13 +801,11 @@ class _ContractCallFormState extends State<_ContractCallForm> {
                   itemCount: _paramControllers.length,
                   itemBuilder: (context, index) {
                     final entry = _paramControllers[index];
-                    final param = entry.key;
-                    final controller = entry.value;
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4.0),
                       child: TextFormField(
-                        controller: controller,
-                        decoration: InputDecoration(labelText: 'Parameter ${index + 1} (${param.type.name})'),
+                        controller: entry.value,
+                        decoration: InputDecoration(labelText: 'Parameter ${index + 1} (${entry.key.type.name})'),
                         validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
                       ),
                     );
@@ -738,6 +814,298 @@ class _ContractCallFormState extends State<_ContractCallForm> {
             ],
           ),
       ],
+    );
+  }
+}
+
+// A self-contained dialog for adding a new action to a proposal.
+class _AddActionDialog extends StatefulWidget {
+  final Org org;
+  const _AddActionDialog({required this.org});
+
+  @override
+  State<_AddActionDialog> createState() => _AddActionDialogState();
+}
+
+class _AddActionDialogState extends State<_AddActionDialog> {
+  final _formKey = GlobalKey<FormState>();
+  int _step = 0; // 0 for type selection, 1 for parameters
+  String? _category;
+  ProposalAction? _action;
+
+  void _selectActionType(ProposalType type) {
+    setState(() {
+      switch (type) {
+        case ProposalType.registry: _action = RegistryAction(); break;
+        case ProposalType.transfer: _action = TransferAction(); break;
+        case ProposalType.mintTokens: _action = MintTokensAction(); break;
+        case ProposalType.burnTokens: _action = BurnTokensAction(); break;
+        case ProposalType.updateQuorum: _action = UpdateQuorumAction(); break;
+        case ProposalType.updateVotingDelay: _action = UpdateVotingDelayAction(); break;
+        case ProposalType.updateVotingPeriod: _action = UpdateVotingPeriodAction(); break;
+        case ProposalType.updateThreshold: _action = UpdateThresholdAction(); break;
+        case ProposalType.contractCall: _action = ContractCallAction(); break;
+      }
+      _step = 1;
+    });
+  }
+
+  void _handleAdd() {
+    if (_formKey.currentState?.validate() ?? false) {
+      Navigator.of(context).pop(_action);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xff2c2c2c),
+      title: Text(_step == 0 ? 'Select Action Type' : 'Set Parameters'),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.5,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: _step == 0 
+              ? _buildTypeSelection()
+              : _buildParametersForm(_action!),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            if (_step == 1) {
+              setState(() => _step = 0);
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
+          child: Text(_step == 1 ? 'Back' : 'Cancel'),
+        ),
+        if (_step == 1)
+          ElevatedButton(
+            onPressed: _handleAdd,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xffa1d0d0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Add Action', style: TextStyle(color: Colors.black)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTypeSelection() {
+    if (_category == 'daoConfig') return _buildDaoConfigSubcategories();
+    if (_category == 'govToken') return _buildGovTokenSubcategories();
+    return _buildMainCategories();
+  }
+
+  Widget _buildMainCategories() {
+    return Column(
+      children: [
+         _buildCategoryButton(icon: Icons.attach_money_outlined, title: "Transfer Assets", subtitle: "From the DAO Treasury to another account", onTap: () => _selectActionType(ProposalType.transfer)),
+        _buildCategoryButton(icon: Icons.list_alt_outlined, title: "Edit Registry", subtitle: "Change an entry or add a new one", onTap: () => _selectActionType(ProposalType.registry)),
+        _buildCategoryButton(icon: Icons.code, title: "Custom Contract Call", subtitle: "Interact with any contract on the network", onTap: () => _selectActionType(ProposalType.contractCall)),
+        _buildCategoryButton(icon: Icons.settings_outlined, title: "DAO Configuration", subtitle: "Change quorum, voting durations, or threshold", onTap: () => setState(() => _category = 'daoConfig')),
+        _buildCategoryButton(icon: Icons.generating_tokens_outlined, title: "Manage ${widget.org.symbol} Tokens", subtitle: "Mint new tokens or burn existing ones", onTap: () => setState(() => _category = 'govToken')),
+      ],
+    );
+  }
+
+  Widget _buildDaoConfigSubcategories() {
+    return Column(
+      children: [
+        _buildSubCategoryButton(icon: Icons.group_outlined, title: "Update Quorum", onTap: () => _selectActionType(ProposalType.updateQuorum)),
+        _buildSubCategoryButton(icon: Icons.hourglass_empty_outlined, title: "Update Voting Delay", onTap: () => _selectActionType(ProposalType.updateVotingDelay)),
+        _buildSubCategoryButton(icon: Icons.timer_outlined, title: "Update Voting Period", onTap: () => _selectActionType(ProposalType.updateVotingPeriod)),
+        _buildSubCategoryButton(icon: Icons.account_balance_wallet_outlined, title: "Update Proposal Threshold", onTap: () => _selectActionType(ProposalType.updateThreshold)),
+      ],
+    );
+  }
+
+  Widget _buildGovTokenSubcategories() {
+    return Column(
+      children: [
+        _buildSubCategoryButton(icon: Icons.add_circle_outline, title: "Mint Tokens", onTap: () => _selectActionType(ProposalType.mintTokens)),
+        _buildSubCategoryButton(icon: Icons.remove_circle_outline, title: "Burn Tokens", onTap: () => _selectActionType(ProposalType.burnTokens)),
+      ],
+    );
+  }
+
+  Widget _buildParametersForm(ProposalAction action) {
+    // This is now self-contained within the dialog state.
+    switch (action.type) {
+      case ProposalType.registry: return _buildRegistryForm(action as RegistryAction);
+      case ProposalType.transfer: return _buildTransferForm(action as TransferAction);
+      case ProposalType.mintTokens: return _buildMintForm(action as MintTokensAction);
+      case ProposalType.burnTokens: return _buildBurnForm(action as BurnTokensAction);
+      case ProposalType.updateQuorum: return _buildSingleUintForm("New Quorum", (val) => (action as UpdateQuorumAction).value = val);
+      case ProposalType.updateVotingDelay: return _buildSingleUintForm("New Voting Delay", (val) => (action as UpdateVotingDelayAction).value = val, hint: "Value in minutes");
+      case ProposalType.updateVotingPeriod: return _buildSingleUintForm("New Voting Period", (val) => (action as UpdateVotingPeriodAction).value = val, hint: "Value in minutes");
+      case ProposalType.updateThreshold: return _buildSingleUintForm("New Proposal Threshold", (val) => (action as UpdateThresholdAction).value = val, hint: 'Amount in ${widget.org.symbol}');
+      case ProposalType.contractCall: return _ContractCallForm(action: action as ContractCallAction);
+    }
+  }
+
+  Widget _buildRegistryForm(RegistryAction action) {
+    return Column(
+      children: [
+        TextFormField(
+          initialValue: action.key,
+          decoration: const InputDecoration(labelText: 'Key'),
+          onChanged: (value) => action.key = value,
+          validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          initialValue: action.value,
+          decoration: const InputDecoration(labelText: 'Value'),
+          onChanged: (value) => action.value = value,
+          validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTransferForm(TransferAction action) {
+    final treasuryProvider = context.watch<TreasuryProvider>();
+    final assets = treasuryProvider.tokenAssets;
+    final symbol = action.asset?.token.symbol ?? 'units';
+
+    return Column(
+      children: [
+        DropdownButtonFormField<TokenAsset>(
+          value: action.asset,
+          onChanged: (value) => setState(() => action.asset = value),
+          decoration: const InputDecoration(labelText: 'Asset to Transfer'),
+          validator: (value) => value == null ? 'Please select an asset' : null,
+          items: assets.map((asset) {
+            final decimals = asset.token.decimals ?? 18;
+            // THE FIX: Pass the String 'asset.balance' directly to formatTotalSupply.
+            final balance = formatTotalSupply(asset.balance, decimals);
+            return DropdownMenuItem( value: asset, child: Text('${asset.token.name} ($balance ${asset.token.symbol})'));
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          initialValue: action.recipient,
+          decoration: const InputDecoration(labelText: 'Recipient Address'),
+          onChanged: (value) => action.recipient = value,
+          validator: _validateAddress,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          initialValue: action.amount,
+          decoration: InputDecoration(labelText: 'Amount', hintText: 'Amount in $symbol'),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (value) => action.amount = value,
+          validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMintForm(MintTokensAction action) {
+    return Column(
+      children: [
+        TextFormField(
+          initialValue: action.recipient,
+          decoration: const InputDecoration(labelText: 'Recipient Address'),
+          onChanged: (value) => action.recipient = value,
+          validator: _validateAddress,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          initialValue: action.amount,
+          decoration: InputDecoration(labelText: 'Amount', hintText: 'Amount in ${widget.org.symbol}'),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (value) => action.amount = value,
+          validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBurnForm(BurnTokensAction action) {
+    return Column(
+      children: [
+        TextFormField(
+          initialValue: action.fromAddress,
+          decoration: const InputDecoration(labelText: 'From Address'),
+          onChanged: (value) => action.fromAddress = value,
+          validator: _validateAddress,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          initialValue: action.amount,
+          decoration: InputDecoration(labelText: 'Amount', hintText: 'Amount in ${widget.org.symbol}'),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (value) => action.amount = value,
+          validator: (value) => (value?.isEmpty ?? true) ? 'Required' : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSingleUintForm(String label, Function(String) onChanged, {String? hint}) {
+     return TextFormField(
+      decoration: InputDecoration(labelText: label, hintText: hint),
+      keyboardType: TextInputType.number,
+      onChanged: onChanged,
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Required';
+        if (int.tryParse(value) == null) return 'Must be a valid integer';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildCategoryButton({required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Material( color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(8),
+        child: InkWell( onTap: onTap, borderRadius: BorderRadius.circular(8),
+          child: Padding( padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Icon(icon, size: 32, color: const Color(0xffa1d0d0)),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column( crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(subtitle, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubCategoryButton({required IconData icon, required String title, required VoidCallback onTap}) {
+    return Padding( padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Material( color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(8),
+        child: InkWell( onTap: onTap, borderRadius: BorderRadius.circular(8),
+          child: Padding( padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Row(
+              children: [
+                Icon(icon, size: 24, color: const Color(0xffa1d0d0)),
+                const SizedBox(width: 16),
+                Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                const Icon(Icons.arrow_forward_ios, size: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

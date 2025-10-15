@@ -1,71 +1,37 @@
 Problems found in: create_proposal_dialog.dart
 ==================================================
 
-ERROR at Line 262:51 (dart)
-   Message: There's no constant named 'contractCall' in 'ProposalType'.
-Try correcting the name to the name of an existing constant, or defining a constant named 'contractCall'.
+ERROR at Line 293:48 (dart)
+   Message: The getter 'isLoading' isn't defined for the type 'TreasuryProvider'.
+Try importing the library that defines 'isLoading', correcting the name to the name of an existing getter, or defining a getter or field named 'isLoading'.
 
-ERROR at Line 389:25 (dart)
-   Message: There's no constant named 'contractCall' in 'ProposalType'.
-Try correcting the name to the name of an existing constant, or defining a constant named 'contractCall'.
+ERROR at Line 480:47 (dart)
+   Message: The argument type 'BigInt' can't be assigned to the parameter type 'String'. 
 
-ERROR at Line 592:46 (dart)
-   Message: The getter 'contractCallTargetAddress' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallTargetAddress', correcting the name to the name of an existing getter, or defining a getter or field named 'contractCallTargetAddress'.
+ERROR at Line 983:47 (dart)
+   Message: The argument type 'BigInt' can't be assigned to the parameter type 'String'. 
 
-ERROR at Line 593:49 (dart)
-   Message: The getter 'contractCallFunctionSignature' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallFunctionSignature', correcting the name to the name of an existing getter, or defining a getter or field named 'contractCallFunctionSignature'.
-
-ERROR at Line 594:48 (dart)
-   Message: The getter 'contractCallRawCalldata' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallRawCalldata', correcting the name to the name of an existing getter, or defining a getter or field named 'contractCallRawCalldata'.
-
-ERROR at Line 597:23 (dart)
-   Message: The setter 'contractCallTargetAddress' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallTargetAddress', correcting the name to the name of an existing setter, or defining a setter or field named 'contractCallTargetAddress'.
-
-ERROR at Line 600:23 (dart)
-   Message: The setter 'contractCallRawCalldata' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallRawCalldata', correcting the name to the name of an existing setter, or defining a setter or field named 'contractCallRawCalldata'.
-
-ERROR at Line 636:27 (dart)
-   Message: The getter 'contractCallParamValues' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallParamValues', correcting the name to the name of an existing getter, or defining a getter or field named 'contractCallParamValues'.
-
-ERROR at Line 642:25 (dart)
-   Message: The setter 'contractCallFunctionSignature' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallFunctionSignature', correcting the name to the name of an existing setter, or defining a setter or field named 'contractCallFunctionSignature'.
-
-ERROR at Line 643:25 (dart)
-   Message: The setter 'contractCallParamValues' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'contractCallParamValues', correcting the name to the name of an existing setter, or defining a setter or field named 'contractCallParamValues'.
-
-ERROR at Line 667:22 (dart)
-   Message: Undefined name '_validateAddress'.
-Try correcting the name to one that is defined, or defining the name.
-
-ERROR at Line 671:34 (dart)
-   Message: The getter 'isRawCalldataMode' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'isRawCalldataMode', correcting the name to the name of an existing getter, or defining a getter or field named 'isRawCalldataMode'.
-
-ERROR at Line 671:62 (dart)
-   Message: The getter 'isRawCalldataMode' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'isRawCalldataMode', correcting the name to the name of an existing getter, or defining a getter or field named 'isRawCalldataMode'.
-
-ERROR at Line 672:57 (dart)
-   Message: The setter 'isRawCalldataMode' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'isRawCalldataMode', correcting the name to the name of an existing setter, or defining a setter or field named 'isRawCalldataMode'.
-
-ERROR at Line 681:22 (dart)
-   Message: The getter 'isRawCalldataMode' isn't defined for the type 'CreateProposalProvider'.
-Try importing the library that defines 'isRawCalldataMode', correcting the name to the name of an existing getter, or defining a getter or field named 'isRawCalldataMode'.
-
-WARNING at Line 324:28 (dart)
+WARNING at Line 384:43 (dart)
    Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
 Try replacing the use of the deprecated member with the replacement.
 
-WARNING at Line 358:28 (dart)
+WARNING at Line 414:43 (dart)
    Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
 Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 612:26 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 1064:43 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 1091:43 (dart)
+   Message: 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss.
+Try replacing the use of the deprecated member with the replacement.
+
+WARNING at Line 184:40 (dart)
+   Message: Use 'const' with the constructor to improve performance.
+Try adding the 'const' keyword to the constructor invocation.
 

@@ -1,7 +1,0 @@
-Problems found in: governance_token_op_details.dart
-==================================================
-
-ERROR at Line 32:38 (dart)
-   Message: The method 'decodeCalldata' isn't defined for the type 'CalldataService'.
-Try correcting the name to the name of an existing method, or defining a method named 'decodeCalldata'.
-
