@@ -50,7 +50,8 @@ class GovernanceTokenOpDetails extends StatelessWidget {
         children: [
           Text("$opType ${org.symbol} Tokens", style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          buildDetailRow(addressLabel, address, isCode: true),
+          // THE FIX: Use buildContractCallRow for addresses to add a copy button and maintain style consistency.
+          buildContractCallRow(context, addressLabel, address),
           buildDetailRow("Amount:", amount, isCode: true),
         ],
       ),

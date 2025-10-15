@@ -403,8 +403,8 @@ class CreateProposalProvider extends ChangeNotifier {
       if (preparedTargets.isEmpty || preparedCalldatas.isEmpty) {
         throw Exception("Proposal data not prepared. Please complete all steps.");
       }
-      // Using the type of the first action for the packed description
-      final typeString = actions.first.type.typeString;
+      // THE FIX: Use 'batch' as the type if there are multiple actions.
+      final typeString = actions.length > 1 ? 'batch' : actions.first.type.typeString;
       final packedDescription = "$title""0|||0""$typeString""0|||0""$description""0|||0""$link";
       
       await _blockchain.propose(org.address, signerAddress, preparedTargets, preparedValues, preparedCalldatas, packedDescription);

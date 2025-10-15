@@ -21,16 +21,16 @@ String? _validateAddress(String? value) {
 }
 
 String? _validateLink(String? value) {
-  if (value == null || value.isEmpty) return null; // Optional field
+  if (value == null || value.isEmpty) return "This can't be empty.\n Just put anything if you don't have a link."; // Optional field
 
   // Basic XSS checks
   if (value.contains('<') || value.contains('>')) return 'Invalid characters detected';
   if (value.toLowerCase().trim().startsWith('javascript:')) return 'Scripts are not allowed';
 
-  final uri = Uri.tryParse(value);
-  if (uri == null || !uri.isAbsolute) {
-      return 'Please enter a valid URL (e.g., https://example.com)';
-  }
+  // final uri = Uri.tryParse(value);
+  // if (uri == null || !uri.isAbsolute) {
+  //     return 'Please enter a valid URL (e.g., https://example.com)';
+  // }
   return null;
 }
 
@@ -273,7 +273,7 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
         const SizedBox(height: 16),
         TextFormField(
           initialValue: provider.link,
-          decoration: const InputDecoration(labelText: 'Discussion Link (Optional)'),
+          decoration: const InputDecoration(labelText: 'Discussion Link'),
           onChanged: (value) => provider.link = value,
           validator: _validateLink,
         ),
@@ -284,14 +284,14 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
   Widget _buildProposalTypeSelection(CreateProposalProvider provider, {bool isInitial = false, Function(ProposalType)? onSelect}) {
     if (_step2Category == 'daoConfig') return _buildDaoConfigSubcategories(provider, isInitial: isInitial, onSelect: onSelect);
     if (_step2Category == 'govToken') return _buildGovTokenSubcategories(provider, isInitial: isInitial, onSelect: onSelect);
+    // THE FIX: Added a new state for showing CSV upload instructions.
+    if (_step2Category == 'uploadCsv') return _buildCsvUploadStep();
     return _buildMainCategories(provider, isInitial: isInitial, onSelect: onSelect);
   }
   
   Widget _buildMainCategories(CreateProposalProvider provider, {bool isInitial = false, Function(ProposalType)? onSelect}) {
     // THE FIX: Watch the treasury provider to disable the upload button while assets are loading.
     final treasuryProvider = context.watch<TreasuryProvider>();
-    // A safe check for loading is to see if the assets list is empty, assuming it's populated asynchronously.
-    // If your provider has an `isLoading` flag, using `treasuryProvider.isLoading` is even better.
     final isTreasuryLoading = treasuryProvider.tokenAssets.isEmpty;
     
     handleSelect(ProposalType type) {
@@ -304,12 +304,7 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
     }
     return Column(
       children: [
-         _buildCategoryButton(
-          icon: Icons.upload_file,
-          title: "Upload Executions CSV",
-          subtitle: "Batch create transfers, mints, and burns",
-          onTap: isTreasuryLoading ? null : _handleCsvUpload, // Disable if loading
-        ),
+        // THE FIX: Reordered proposal types as requested.
         _buildCategoryButton(
           icon: Icons.attach_money_outlined,
           title: "Transfer Assets",
@@ -323,12 +318,6 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
           onTap: () => handleSelect(ProposalType.registry),
         ),
         _buildCategoryButton(
-          icon: Icons.code,
-          title: "Custom Contract Call",
-          subtitle: "Interact with any contract on the network",
-          onTap: () => handleSelect(ProposalType.contractCall),
-        ),
-        _buildCategoryButton(
           icon: Icons.settings_outlined,
           title: "DAO Configuration",
           subtitle: "Change quorum, voting durations, or threshold",
@@ -340,7 +329,77 @@ class _CreateProposalDialogState extends State<CreateProposalDialog> {
           subtitle: "Mint new tokens or burn existing ones",
           onTap: () => setState(() => _step2Category = 'govToken'),
         ),
+        _buildCategoryButton(
+          icon: Icons.code,
+          title: "Custom Contract Call",
+          subtitle: "Interact with any contract on the network",
+          onTap: () => handleSelect(ProposalType.contractCall),
+        ),
+        _buildCategoryButton(
+          icon: Icons.upload_file,
+          title: "Upload Executions CSV",
+          subtitle: "Batch create transfers, mints, and burns",
+          // THE FIX: Show an intermediary step instead of directly opening file picker.
+          onTap: isTreasuryLoading ? null : () => setState(() => _step2Category = 'uploadCsv'),
+        ),
       ],
+    );
+  }
+
+  // THE FIX: New widget to show CSV format instructions before upload.
+  Widget _buildCsvUploadStep() {
+    final textTheme = Theme.of(context).textTheme;
+    const monoStyle = TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.white);
+    const exampleCsv = '''type,asset,to,amount
+transfer,0x615954Ada818a757030c57217B6395847eF1172d,0x6E147e1D239bF49c88d64505e746e8522845D8D3,0.5
+transfer,native,0x6E147e1D239bF49c88d64505e746e8522845D8D3,13
+mint,,0x6A9Cbf5d01B9760CA99c3C27db0B23e3b8Bd454b,44
+burn,,0x06E5b15Bc39f921e1503073dBb8A5dA2Fc6220E9,3''';
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('CSV File Format Instructions', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          const Text('Your CSV file must have a header row with the following four columns in this exact order:'),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            color: Colors.black.withOpacity(0.3),
+            child: const SelectableText('type,asset,to,amount', style: monoStyle),
+          ),
+          const SizedBox(height: 24),
+          const Text('Column Details:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const ListTile( dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.arrow_right, size: 18), title: Text('type'), subtitle: Text("Can be 'transfer', 'mint', or 'burn'."), ),
+          const ListTile( dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.arrow_right, size: 18), title: Text('asset'), subtitle: Text("For 'transfer', use the ERC20 token address or the word 'native' for the chain's native currency. For 'mint' and 'burn', this column can be left empty."),),
+          const ListTile( dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.arrow_right, size: 18), title: Text('to'), subtitle: Text("The recipient address for 'transfer' and 'mint', or the address to burn from for 'burn'."), ),
+          const ListTile( dense: true, contentPadding: EdgeInsets.zero, leading: Icon(Icons.arrow_right, size: 18), title: Text('amount'), subtitle: Text("The amount of tokens to be transferred, minted, or burned."), ),
+          const SizedBox(height: 24),
+          const Text('Example:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Card(
+            color: Colors.black.withOpacity(0.2),
+            child: const Padding(
+              padding: EdgeInsets.all(12.0),
+              child: SelectableText(exampleCsv, style: monoStyle),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.upload_file),
+              label: const Text('Select CSV File'),
+              onPressed: _handleCsvUpload,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xffa1d0d0),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1109,4 +1168,4 @@ class _AddActionDialogState extends State<_AddActionDialog> {
     );
   }
 }
-// lib/src/features/create_proposal/create_proposal_dialog.dart
+// lib/src/features/create_proposal/create_proposal_dialog.dart```

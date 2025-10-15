@@ -1,1 +1,3 @@
-!lib/src/features/proposal_detail/
+!lib/src/features/create_proposal/
+!lib/src/providers/create_proposal_provider.dart
+

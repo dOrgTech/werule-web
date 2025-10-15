@@ -87,14 +87,14 @@ class _DesktopProposalListItemState extends State<DesktopProposalListItem> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(
       color: const Color.fromARGB(169, 54, 54, 54),
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       elevation: 8,
-      shape:  RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(3.0),
       ),
       child: InkWell(
@@ -147,11 +147,20 @@ class _DesktopProposalListItemState extends State<DesktopProposalListItem> {
               ),
               const Spacer(),
               SizedBox(
-                width: 100,
-                child: Text(
-                  widget.proposal.type ?? 'N/A',
-                  textAlign: TextAlign.start,
-                  style: const TextStyle(fontSize: 12),
+                width: 150, // Increased width to fit icon and text
+                child: Row(
+                  children: [
+                    _getIconForProposalType(widget.proposal.type),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _getTextForProposalType(widget.proposal.type),
+                        textAlign: TextAlign.start,
+                        style: const TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -283,7 +292,7 @@ class _MobileProposalListItemState extends State<MobileProposalListItem> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildMobileDetailColumn("ID", shortenString(widget.proposal.id), context),
-                  _buildMobileDetailColumn("Type", widget.proposal.type ?? 'N/A', context),
+                  _buildMobileTypeWidget(widget.proposal.type, context),
                 ],
               ),
               const SizedBox(height: 12),
@@ -291,13 +300,38 @@ class _MobileProposalListItemState extends State<MobileProposalListItem> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildMobileDetailColumn("Author", shortenString(widget.proposal.author), context, isMono: true),
-                   _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(widget.proposal.createdAt), context),
+                  _buildMobileDetailColumn("Author", shortenString(widget.proposal.author), context, isMono: true),
+                  _buildMobileDetailColumn("Posted", DateFormat('M/d/yy HH:mm').format(widget.proposal.createdAt), context),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileTypeWidget(String? type, BuildContext context) {
+    return Flexible(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Type", style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              _getIconForProposalType(type),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _getTextForProposalType(type),
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -319,4 +353,57 @@ class _MobileProposalListItemState extends State<MobileProposalListItem> {
     );
   }
 }
-// lib/src/features/dao_detail/widgets/proposal_list_item.dart
+
+// --- Helper Functions ---
+
+/// Returns an Icon widget based on the proposal type string.
+Icon _getIconForProposalType(String? type) {
+  IconData iconData;
+  switch (type?.toLowerCase().replaceAll('_', ' ')) {
+    case 'registry':
+      iconData = Icons.list;
+      break;
+    case 'transfer':
+      iconData = Icons.swap_horiz;
+      break;
+    case 'mint':
+      iconData = Icons.add;
+      break;
+    case 'burn':
+      iconData = Icons.local_fire_department;
+      break;
+    case 'quorum':
+      iconData = Icons.people;
+      break;
+    case 'voting delay':
+      iconData = Icons.timer_outlined;
+      break;
+    case 'voting period':
+      iconData = Icons.schedule;
+      break;
+    case 'threshold':
+      iconData = Icons.trending_up;
+      break;
+    case 'contract call':
+      iconData = Icons.code;
+      break;
+    case 'batch':
+      iconData = Icons.inbox_sharp; // Changed to a more fitting 'group' icon
+      break;
+    default:
+      iconData = Icons.help_outline;
+  }
+  return Icon(iconData, size: 20);
+}
+
+/// Returns a display-friendly string for the proposal type.
+String _getTextForProposalType(String? type) {
+  if (type == null || type.isEmpty) {
+    return 'N/A';
+  }
+  // Capitalize the first letter of each word
+  return type.replaceAll('_', ' ').split(' ').map((word) {
+    if (word.isEmpty) return '';
+    return word[0].toUpperCase() + word.substring(1);
+  }).join(' ');
+}

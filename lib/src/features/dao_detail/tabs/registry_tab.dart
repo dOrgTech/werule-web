@@ -91,9 +91,10 @@ class _RegistryTabState extends State<RegistryTab> {
   Widget _buildControls(bool isMobile) {
     final searchBar = TextField(
       controller: _searchController,
-      decoration: const InputDecoration(
+      decoration:  InputDecoration(
         prefixIcon: Icon(Icons.search),
         hintText: 'Search by Key',
+   hintStyle: TextStyle(color: Colors.grey[400]),
       ),
     );
 

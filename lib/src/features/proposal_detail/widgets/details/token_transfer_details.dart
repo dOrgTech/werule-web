@@ -7,6 +7,7 @@ import 'package:werule/src/models/network.dart';
 import 'package:werule/src/providers/treasury_provider.dart';
 import 'package:werule/src/services/calldata_service.dart';
 import 'package:werule/src/utils/reusable.dart';
+import 'package:werule/src/features/proposal_detail/widgets/details/shared_widgets.dart';
 
 class TokenTransferDetails extends StatelessWidget {
   final String? to;
@@ -27,25 +28,29 @@ class TokenTransferDetails extends StatelessWidget {
     String displayTo = to ?? 'N/A';
     String displayAmount;
     String symbol;
+    String title;
+    String? tokenAddressHex;
 
+    // Native currency transfer (e.g., ETH)
     if (calldata == null && amount != null) {
       displayAmount = formatTotalSupply(amount.toString(), 18);
       symbol = network.nativeCurrencySymbol;
+      title = "Transfer Native Currency";
     } 
+    // ERC20 token transfer
     else if (calldata != null) {
+      title = "Transfer ERC20 Token";
       try {
         final calldataService = context.read<CalldataService>();
         final treasuryProvider = context.watch<TreasuryProvider>();
 
-        // THE FIX: Decoding the calldata according to the correct function definition
-        // which returns a list of three separate parameters.
         final params = calldataService.decodeCalldata(CalldataService.erc20TreasuryTransferDef, calldata!);
-        final tokenAddressHex = (params[0] as EthereumAddress).hex;
+        tokenAddressHex = (params[0] as EthereumAddress).hex;
         displayTo = (params[1] as EthereumAddress).hex;
         final erc20Amount = params[2] as BigInt;
         
         final tokenAsset = treasuryProvider.tokenAssets.firstWhereOrNull(
-          (asset) => asset.token.address?.toLowerCase() == tokenAddressHex.toLowerCase()
+          (asset) => asset.token.address?.toLowerCase() == tokenAddressHex?.toLowerCase()
         );
 
         if (tokenAsset != null) {
@@ -57,27 +62,46 @@ class TokenTransferDetails extends StatelessWidget {
           symbol = 'tokens (wei)';
         }
       } catch (e) {
-        return ListTile(
-          leading: const Icon(Icons.error, color: Colors.red),
-          title: const Text('Error decoding ERC20 transfer'),
-          subtitle: Text(e.toString()),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Error Decoding Transfer", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+              const SizedBox(height: 12),
+              buildDetailRow("Details:", e.toString()),
+            ],
+          ),
         );
       }
     } 
     else {
-      return const ListTile(
-        leading: Icon(Icons.error, color: Colors.red),
-        title: Text('Invalid transfer data provided'),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Invalid Transfer Data", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
+            const SizedBox(height: 12),
+            buildDetailRow("Details:", "No valid transfer data was provided to the widget."),
+          ],
+        ),
       );
     }
 
-    return ListTile(
-      leading: const Padding(
-        padding: EdgeInsets.only(left: 8.0),
-        child: Icon(Icons.arrow_forward),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          if (tokenAddressHex != null)
+            buildContractCallRow(context, "Token:", tokenAddressHex),
+          buildContractCallRow(context, "To:", displayTo),
+          buildDetailRow("Amount:", "$displayAmount $symbol", isCode: true),
+        ],
       ),
-      title: Text('$displayAmount $symbol'),
-      subtitle: Text('To: $displayTo', style: const TextStyle(fontFamily: 'monospace')),
     );
   }
 }

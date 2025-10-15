@@ -83,6 +83,8 @@ class ProposalsTab extends StatefulWidget {
 class _ProposalsTabState extends State<ProposalsTab> {
   String _selectedType = 'All';
   String _selectedStatus = 'All';
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   late Stream<List<Proposal>> _proposalsStream;
 
@@ -101,6 +103,12 @@ class _ProposalsTabState extends State<ProposalsTab> {
     _proposalsStream = firestoreService.getProposalsStream(collectionName, widget.org.address);
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   String _statusToString(ProposalStatus status) {
     switch (status) {
       case ProposalStatus.NoQuorum: return "No Quorum";
@@ -112,88 +120,108 @@ class _ProposalsTabState extends State<ProposalsTab> {
   
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildControls(),
-        const SizedBox(height: 20),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 700;
-            return Column(
-              children: [
-                if (!isMobile) _buildHeader(),
-                if (!isMobile) const SizedBox(height: 8),
-                StreamBuilder<List<Proposal>>(
-                  stream: _proposalsStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: Padding(
-                        padding: EdgeInsets.only(top: 148.0),
-                        child: CircularProgressIndicator(),
-                      ));
-                    }
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    }
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                       return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 148.0),
-                            child: Text('No proposals created yet...', style: TextStyle(fontSize: 23, color: Colors.white24),),
-                          ),
-                        );
-                    }
-                    
-                    final allProposals = snapshot.data!;
-                    final filteredProposals = allProposals.where((p) {
-                      final currentStatus = ProposalStatusHelper.calculateDisplayStatus(p, widget.org);
-                      final typeMatch = _selectedType == 'All' ||
-                          (p.type != null && p.type!.toLowerCase().contains(_selectedType.toLowerCase()));
-                      final statusMatch = _selectedStatus == 'All' ||
-                          _statusToString(currentStatus) == _selectedStatus;
-                      return typeMatch && statusMatch;
-                    }).toList();
+    return StreamBuilder<List<Proposal>>(
+      stream: _proposalsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(
+            padding: EdgeInsets.only(top: 148.0),
+            child: CircularProgressIndicator(),
+          ));
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
 
-                    return SizedBox(
-                      height: MediaQuery.of(context).size.height - 250,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: filteredProposals.length,
-                        itemBuilder: (context, index) {
-                           final proposal = filteredProposals[index];
-                           if (isMobile) {
-                              return MobileProposalListItem(
-                                key: ValueKey(proposal.id),
-                                proposal: proposal,
-                                org: widget.org,
-                                networkName: widget.networkName,
-                              );
-                           } else {
-                              return DesktopProposalListItem(
-                                key: ValueKey(proposal.id),
-                                proposal: proposal,
-                                org: widget.org,
-                                networkName: widget.networkName,
-                              );
-                           }
-                        },
+        final allProposals = snapshot.data ?? [];
+        final filteredProposals = allProposals.where((p) {
+          final titleMatch = _searchQuery.isEmpty || 
+                             (p.title?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+          final currentStatus = ProposalStatusHelper.calculateDisplayStatus(p, widget.org);
+          final typeMatch = _selectedType == 'All' ||
+              (p.type != null && p.type!.toLowerCase().contains(_selectedType.toLowerCase()));
+          final statusMatch = _selectedStatus == 'All' ||
+              _statusToString(currentStatus) == _selectedStatus;
+          return titleMatch && typeMatch && statusMatch;
+        }).toList();
+
+        return Column(
+          children: [
+            _buildControls(allProposals.length),
+            const SizedBox(height: 20),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 700;
+                return Column(
+                  children: [
+                    if (!isMobile) _buildHeader(),
+                    if (!isMobile) const SizedBox(height: 8),
+                    if (allProposals.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 148.0),
+                          child: Text('No proposals created yet...', style: TextStyle(fontSize: 23, color: Colors.white24)),
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height - 250,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: filteredProposals.length,
+                          itemBuilder: (context, index) {
+                             final proposal = filteredProposals[index];
+                             if (isMobile) {
+                                return MobileProposalListItem(
+                                  key: ValueKey(proposal.id),
+                                  proposal: proposal,
+                                  org: widget.org,
+                                  networkName: widget.networkName,
+                                );
+                             } else {
+                                return DesktopProposalListItem(
+                                  key: ValueKey(proposal.id),
+                                  proposal: proposal,
+                                  org: widget.org,
+                                  networkName: widget.networkName,
+                                );
+                             }
+                          },
+                        ),
                       ),
-                    );
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ],
+                  ],
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildControls() {
+  Widget _buildControls(int totalProposals) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: LayoutBuilder(builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 700;
+
+        final searchBar = SizedBox(
+          width: isMobile ? double.infinity : 400,
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search by proposal title...',
+              hintStyle: TextStyle(color: Colors.grey[400]),
+              prefixIcon: const Icon(Icons.search),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(width: 0.5),
+              ),
+            ),
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+        );
 
         final typeDropdown = _buildDropdown(
             _selectedType, _typeOptions, (val) => setState(() => _selectedType = val!));
@@ -201,7 +229,6 @@ class _ProposalsTabState extends State<ProposalsTab> {
             (val) => setState(() => _selectedStatus = val!));
         
         final createButton = ElevatedButton(
-          // THE FIX: Call the static method.
           onPressed: () => ProposalsTab.showCreateProposalDialog(context, widget.org, widget.networkName),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xffa1d0d0),
@@ -213,9 +240,13 @@ class _ProposalsTabState extends State<ProposalsTab> {
                   style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         );
 
+        final proposalCountLabel = Text('$totalProposals items');
+
         if (isMobile) {
           return Column(
             children: [
+              searchBar,
+              const SizedBox(height: 16),
               Row(
                 children: [
                   const Text("Type: "), Expanded(child: typeDropdown),
@@ -224,17 +255,28 @@ class _ProposalsTabState extends State<ProposalsTab> {
                 ],
               ),
               const SizedBox(height: 16),
-              Align(alignment: Alignment.centerRight, child: createButton),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  proposalCountLabel,
+                  const SizedBox(width: 16),
+                  createButton,
+                ],
+              ),
             ],
           );
         }
 
         return Row(
           children: [
-            const Text("Type: "), const SizedBox(width: 8), typeDropdown,
-            const SizedBox(width: 24),
-            const Text("Status: "), const SizedBox(width: 8), statusDropdown,
+            searchBar,
             const Spacer(),
+            const Text("Type: ", style: TextStyle(fontSize: 12),), const SizedBox(width: 8), typeDropdown,
+            const SizedBox(width: 24),
+            const Text("Status: ",style: TextStyle(fontSize: 12)), const SizedBox(width: 8), statusDropdown,
+            const SizedBox(width: 24),
+            proposalCountLabel,
+            const SizedBox(width: 16),
             createButton,
           ],
         );
@@ -247,11 +289,11 @@ class _ProposalsTabState extends State<ProposalsTab> {
     return DropdownButton<String>(
       value: value,
       focusColor: Colors.transparent,
-      underline: const SizedBox.shrink(),
+    
       items: items.map((String value) {
         return DropdownMenuItem<String>(
           value: value,
-          child: Text(value),
+          child: Text(value, style: TextStyle(fontSize: 12)),
         );
       }).toList(),
       onChanged: onChanged,
@@ -278,4 +320,3 @@ class _ProposalsTabState extends State<ProposalsTab> {
     );
   }
 }
-// lib/src/features/dao_detail/tabs/proposals_tab.dart
