@@ -1,6 +1,5 @@
 // lib/src/features/dao_detail/tabs/proposals_tab.dart
 import 'dart:async';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -313,6 +312,7 @@ class _ProposalsTabState extends State<ProposalsTab> {
             SizedBox(width: 140, child: Text("Posted")),
             Spacer(),
             SizedBox(width: 100, child: Text("Type")),
+            SizedBox(width: 40),
             SizedBox(width: 110, child: Text("Status", textAlign: TextAlign.center)),
           ],
         ),

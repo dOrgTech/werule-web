@@ -47,26 +47,48 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-      color: const Color(0xff2c2c2c),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 700;
-            if (isWide) {
-              return _buildWideHeader(context);
-            } else {
-              return _buildTallHeader(context);
-            }
-          },
+Widget _buildHeader(BuildContext context) {
+  return Card(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+    color: const Color(0xff2c2c2c),
+    elevation: 0,
+    child: Stack(
+      children: [
+        // Content keeps its 24px padding
+        Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 700;
+              return isWide ? _buildWideHeader(context) : _buildTallHeader(context);
+            },
+          ),
         ),
-      ),
-    );
-  }
+        // Button is positioned relative to the Card edges, not the padded content
+        Positioned(
+          top: 8,
+          right: 12,
+          child: Opacity(
+            opacity: 0.67,
+            child: IconButton(
+              tooltip: "DAO Settings",
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => showDialog(
+                context: context,
+                builder: (_) => _DaoConfigModal(org: dao),
+              ),
+              splashRadius: 18,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
 
   Widget _buildWideHeader(BuildContext context) {
     return Row(
@@ -89,16 +111,7 @@ class OverviewTab extends StatelessWidget {
                       child: Text(dao.name,
                           style: Theme.of(context).textTheme.headlineMedium),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: "DAO Settings",
-                      icon: const Icon(Icons.settings_outlined),
-                      onPressed: () => showDialog(
-                        context: context,
-                        builder: (_) => _DaoConfigModal(org: dao),
-                      ),
-                      splashRadius: 20,
-                    ),
+                  
                   ],
                 ),
               ),
@@ -142,16 +155,7 @@ class OverviewTab extends StatelessWidget {
               child: Text(dao.name,
                   style: Theme.of(context).textTheme.headlineMedium),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: "DAO Settings",
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => showDialog(
-                context: context,
-                builder: (_) => _DaoConfigModal(org: dao),
-              ),
-              splashRadius: 20,
-            ),
+     
           ],
         ),
         const SizedBox(height: 16),

@@ -32,7 +32,7 @@ class NetworkProvider extends ChangeNotifier {
     }
     try {
       _networks = await _firestoreService.getNetworks();
-      
+      _networks= _networks.reversed.toList();
       // THE FIX: After loading, check if a network was requested before the list was ready.
       if (_pendingNetworkName != null) {
         final pendingName = _pendingNetworkName!;
