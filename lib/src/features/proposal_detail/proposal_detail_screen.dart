@@ -24,7 +24,7 @@ import 'package:werule/src/services/blockchain_service.dart';
 import 'package:werule/src/services/firestore_service.dart';
 import 'package:werule/src/services/treasury_service.dart';
 import 'package:werule/src/utils/reusable.dart';
-import 'package:werule/src/widgets/shared_app_bar.dart';
+import 'package:werule/src/shared_widgets/shared_app_bar.dart';
 
 class ProposalDetailScreen extends StatefulWidget {
   final String networkName;

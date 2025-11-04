@@ -1,3 +1,1 @@
-!lib/src/features/create_proposal/
-!lib/src/providers/create_proposal_provider.dart
-
+!lib/src/features/dao_creator

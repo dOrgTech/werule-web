@@ -11,7 +11,7 @@ import 'package:werule/src/models/org.dart';
 import 'package:werule/src/models/proposal.dart';
 import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/services/firestore_service.dart';
-import 'package:werule/src/widgets/shared_app_bar.dart';
+import 'package:werule/src/shared_widgets/shared_app_bar.dart';
 
 class DaoDetailScreen extends StatefulWidget {
   final String networkName;

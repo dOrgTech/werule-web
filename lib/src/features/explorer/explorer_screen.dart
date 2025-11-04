@@ -11,7 +11,7 @@ import '../../providers/dao_provider.dart';
 import '../../providers/network_provider.dart';
 // Import the new shared AppBar
 import 'widgets/dao_card.dart';
-import '../../widgets/shared_app_bar.dart';
+import '../../shared_widgets/shared_app_bar.dart';
 
 class ExplorerScreen extends StatefulWidget {
   final String? networkName;
