@@ -11,11 +11,13 @@ enum BridgeAction { wrap, unwrap }
 class TokenBridgeWidget extends StatefulWidget {
   final Org dao;
   final String userAddress;
+  final VoidCallback? onTransactionComplete;
 
   const TokenBridgeWidget({
     super.key,
     required this.dao,
     required this.userAddress,
+    this.onTransactionComplete,
   });
 
   @override
@@ -125,6 +127,9 @@ class _TokenBridgeWidgetState extends State<TokenBridgeWidget> {
       // Refresh balances after successful transaction
       await _fetchBalancesAndMetadata();
       _amountController.clear();
+
+      // Notify parent to refresh (e.g., MemberProvider in Account tab)
+      widget.onTransactionComplete?.call();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

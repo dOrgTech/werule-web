@@ -495,6 +495,7 @@ class _TokenBridgeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final memberProvider = context.read<MemberProvider>();
     final userAddress = auth.selectedAccount;
 
     if (userAddress == null) {
@@ -518,6 +519,10 @@ class _TokenBridgeCard extends StatelessWidget {
             TokenBridgeWidget(
               dao: dao,
               userAddress: userAddress,
+              onTransactionComplete: () {
+                // Refresh the member data to update balances and voting power
+                memberProvider.fetchMemberData();
+              },
             ),
           ],
         ),

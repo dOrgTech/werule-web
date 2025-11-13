@@ -94,10 +94,16 @@ class _DaoMembersWidgetState extends State<DaoMembersWidget> {
       final membersData = await membersService.getMembers(widget.dao.govTokenAddress, network.blockExplorerUrl);
       final List<dynamic> items = membersData['items'] ?? [];
       final members = items.map((data) => Member.fromBlockscout(data)).toList();
-      
+
       setState(() { _allMembers = members; _displayedMembers = members; _isLoading = false; });
     } catch (e) {
-      setState(() { _error = e.toString(); _isLoading = false; });
+      // Handle 404 error gracefully - this is expected for DAOs with no token holders yet
+      // (especially wrapped token DAOs which start with 0 supply)
+      if (e.toString().contains('status: 404')) {
+        setState(() { _allMembers = []; _displayedMembers = []; _isLoading = false; });
+      } else {
+        setState(() { _error = e.toString(); _isLoading = false; });
+      }
     }
   }
 

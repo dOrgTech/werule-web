@@ -206,76 +206,78 @@ class Screen1DaoType extends StatelessWidget {
                       height: 400,
                       child: Padding(
                         padding: const EdgeInsets.all(18.0),
-                        child: TextButton(
-                          style: ButtonStyle(
-                            overlayColor: WidgetStateProperty.all(
-                              const Color.fromARGB(
-                                  40, 36, 36, 36), // Corrected hover color
-                            ),
-                            shape: WidgetStateProperty.all(
-                              const RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.zero, // no rounded corners
+                        child: Tooltip(
+                          message: 'Coming soon...',
+                          child: Opacity(
+                            opacity: 0.5, // Grey out to show it's disabled
+                            child: TextButton(
+                              style: ButtonStyle(
+                                overlayColor: WidgetStateProperty.all(
+                                  Colors.transparent, // No hover effect when disabled
+                                ),
+                                shape: WidgetStateProperty.all(
+                                  const RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.zero, // no rounded corners
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          onPressed: () {
-                            provider.daoType = 'Economy DAO';
-                            provider.nextStep();
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.all(12.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color:
-                                      const Color.fromARGB(255, 134, 134, 134)),
-                            ),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 22),
-                                const Icon(Icons.monetization_on,
-                                    size: 44, color: Colors.white),
-                                const SizedBox(height: 14),
-                                SizedBox(
-                                  height: 70,
-                                  child: Center(
-                                    child: AnimatedTextKit(
-                                      onTap: () {},
-                                      isRepeatingAnimation: false,
-                                      repeatForever: false,
-                                      animatedTexts: [
-                                        ColorizeAnimatedText(
-                                            'Trustless\nEconomy',
-                                            textAlign: TextAlign.center,
-                                            textStyle: titleTextStyle,
-                                            speed: const Duration(
-                                                milliseconds: 700),
-                                            colors: colorizeColors),
-                                      ],
+                              onPressed: null, // Disabled
+                              child: Container(
+                                margin: const EdgeInsets.all(12.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color:
+                                          const Color.fromARGB(255, 134, 134, 134)),
+                                ),
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 22),
+                                    const Icon(Icons.monetization_on,
+                                        size: 44, color: Colors.white),
+                                    const SizedBox(height: 14),
+                                    SizedBox(
+                                      height: 70,
+                                      child: Center(
+                                        child: AnimatedTextKit(
+                                          onTap: () {},
+                                          isRepeatingAnimation: false,
+                                          repeatForever: false,
+                                          animatedTexts: [
+                                            ColorizeAnimatedText(
+                                                'Trustless\nEconomy',
+                                                textAlign: TextAlign.center,
+                                                textStyle: titleTextStyle,
+                                                speed: const Duration(
+                                                    milliseconds: 700),
+                                                colors: colorizeColors),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 15),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          _buildFeatureItem(
+                                              context, 'Secure Treasury'),
+                                          _buildFeatureItem(
+                                              context, 'Passive Income'),
+                                          _buildFeatureItem(
+                                              context, 'Paid Representation'),
+                                          _buildFeatureItem(
+                                              context, 'Economic Layer'),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16)
+                                  ],
                                 ),
-                                const SizedBox(height: 15),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      _buildFeatureItem(
-                                          context, 'Secure Treasury'),
-                                      _buildFeatureItem(
-                                          context, 'Passive Income'),
-                                      _buildFeatureItem(
-                                          context, 'Paid Representation'),
-                                      _buildFeatureItem(
-                                          context, 'Economic Layer'),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16)
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -303,7 +305,7 @@ class Screen1DaoType extends StatelessWidget {
                     ),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () {
-                        launchUrl(Uri.parse('https://example.com'));
+                        launchUrl(Uri.parse('https://github.com/dOrgTech/trustless-business/blob/master/README.md'));
                       },
                   ),
                   const TextSpan(text: '.'),

@@ -71,11 +71,24 @@ class MemberProvider extends ChangeNotifier {
     }
 
     try {
-      final membersData = await _membersService.getMembers(_org.govTokenAddress, _network.blockExplorerUrl);
-      final items = membersData['items'] as List<dynamic>? ?? [];
-      
+      Map<String, dynamic>? membersData;
+      List<dynamic> items = [];
+
+      try {
+        membersData = await _membersService.getMembers(_org.govTokenAddress, _network.blockExplorerUrl);
+        items = membersData['items'] as List<dynamic>? ?? [];
+      } catch (e) {
+        // Handle 404 error gracefully - this is expected for DAOs with no token holders yet
+        // (especially wrapped token DAOs which start with 0 supply)
+        if (e.toString().contains('status: 404')) {
+          items = [];
+        } else {
+          rethrow;
+        }
+      }
+
       String? checksumAddress;
-      
+
       items.firstWhere(
         (item) {
           final hash = item['address']?['hash'] as String?;
@@ -100,7 +113,7 @@ class MemberProvider extends ChangeNotifier {
         _votingWeight = results[1] as BigInt;
         final allProposals = results[2] as List<Proposal>;
         _delegateAddress = results[3] as String?;
-        
+
         final createdIds = _memberActivity.proposalsCreated.toSet();
         final votedIds = _memberActivity.proposalsVoted.toSet();
 

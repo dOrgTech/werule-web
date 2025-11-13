@@ -131,102 +131,111 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  // Conditional fields based on token type
-                  if (_useWrappedToken) ...[
-                    // Wrapped token fields
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: TextFormField(
-                            controller: _underlyingTokenAddressController,
-                            decoration: const InputDecoration(
-                              labelText: 'Underlying Token Address',
-                              hintText: '0x...',
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter the underlying token address';
-                              }
-                              // Basic Ethereum address validation
-                              if (!RegExp(r'^0x[a-fA-F0-9]{40}$').hasMatch(value)) {
-                                return 'Invalid Ethereum address';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 1,
-                          child: TextFormField(
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[a-zA-Z0-9]')),
-                              UpperCaseTextFormatter(),
+                  // Conditional fields based on token type - with fixed height to prevent jumping
+                  SizedBox(
+                    height: 135, // Fixed height to accommodate the taller option (standard token with checkbox)
+                    child: _useWrappedToken
+                        ? // Wrapped token fields
+                        Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: TextFormField(
+                                  controller: _underlyingTokenAddressController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Underlying Token Address',
+                                    hintText: '0x...',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter the underlying token address';
+                                    }
+                                    // Basic Ethereum address validation
+                                    if (!RegExp(r'^0x[a-fA-F0-9]{40}$')
+                                        .hasMatch(value)) {
+                                      return 'Invalid Ethereum address';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 1,
+                                child: TextFormField(
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'[a-zA-Z0-9]')),
+                                    UpperCaseTextFormatter(),
+                                  ],
+                                  maxLength: 5,
+                                  controller: _tokenSymbolController,
+                                  decoration: const InputDecoration(
+                                    counterText: "",
+                                    labelText: 'Symbol',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Required';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
                             ],
-                            maxLength: 5,
-                            controller: _tokenSymbolController,
-                            decoration: const InputDecoration(
-                              counterText: "",
-                              labelText: 'Symbol',
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Required';
-                              }
-                              return null;
-                            },
+                          )
+                        : // Standard token field
+                        Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 150,
+                                child: TextFormField(
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'[a-zA-Z0-9]')),
+                                    UpperCaseTextFormatter(),
+                                  ],
+                                  maxLength: 5,
+                                  controller: _tokenSymbolController,
+                                  decoration: const InputDecoration(
+                                      counterText: "",
+                                      labelText: 'Ticker Symbol'),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Ticker required';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                height: 40,
+                                width: 300,
+                                child: CheckboxListTile(
+                                  title: const Text('Transferable'),
+                                  subtitle: Text(
+                                    _isTransferrable
+                                        ? 'Members can transfer tokens freely'
+                                        : 'Tokens are soulbound (non-transferable)',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey[600]),
+                                  ),
+                                  value: _isTransferrable,
+                                  activeColor: Theme.of(context).indicatorColor,
+                                  checkColor: Colors.black,
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      _isTransferrable = value ?? false;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ] else ...[
-                    // Standard token field
-                    SizedBox(
-                      width: 150,
-                      child: TextFormField(
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'[a-zA-Z0-9]')),
-                          UpperCaseTextFormatter(),
-                        ],
-                        maxLength: 5,
-                        controller: _tokenSymbolController,
-                        decoration: const InputDecoration(
-                            counterText: "", labelText: 'Ticker Symbol'),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Ticker required';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      height: 40,
-                      width: 300,
-                      child: CheckboxListTile(
-                        title: const Text('Transferable'),
-                        subtitle: Text(
-                          _isTransferrable
-                            ? 'Members can transfer tokens freely'
-                            : 'Tokens are soulbound (non-transferable)',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                        ),
-                        value: _isTransferrable,
-                        activeColor: Theme.of(context).indicatorColor,
-                        checkColor: Colors.black,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            _isTransferrable = value ?? false;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                   const SizedBox(height: 56),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
