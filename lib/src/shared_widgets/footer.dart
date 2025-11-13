@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-bool werule=true;
+bool werule=false;
 class Footer extends StatelessWidget {
   const Footer({super.key});
 

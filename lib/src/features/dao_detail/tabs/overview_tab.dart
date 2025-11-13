@@ -351,7 +351,7 @@ class _DaoConfigModal extends StatelessWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const Divider(),
             _buildConfigRow('Proposal Threshold',
-                '${formatTotalSupply(org.proposalThreshold, org.decimals)} ${org.symbol}'),
+                '${_formatNominalValue(org.proposalThreshold)} ${org.symbol}'),
             _buildConfigRow('Quorum', '${org.quorum}%'),
           ],
         ),
@@ -376,6 +376,20 @@ class _DaoConfigModal extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Formats a nominal token value (already in human-readable units, not wei)
+  /// Firestore stores proposal threshold as a string like "23" representing 23 tokens
+  String _formatNominalValue(String nominalValue) {
+    try {
+      final num = BigInt.parse(nominalValue);
+      // Add commas for thousands separator
+      final formatter = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+      return num.toString().replaceAllMapped(formatter, (match) => '${match[1]},');
+    } catch (e) {
+      // If parsing fails, return the original value
+      return nominalValue;
+    }
   }
 }
 // lib/src/features/dao_detail/tabs/overview_tab.dart

@@ -1,6 +1,8 @@
 // lib/src/features/dao_creator/screens/screen1_dao_type.dart
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:werule/src/features/dao_creator/providers/dao_creator_provider.dart';
 
 class FlashingIcon extends StatefulWidget {
@@ -55,210 +57,263 @@ class Screen1DaoType extends StatelessWidget {
 
   const Screen1DaoType({super.key, required this.provider});
 
+  Widget _buildFeatureItem(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Icon(Icons.check_circle_outline,
+              color: Theme.of(context).indicatorColor.withOpacity(0.8),
+              size: 16),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Text(text,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontSize: 15, height: 1.4))),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const TextStyle meniu =
         TextStyle(fontSize: 24, color: Color.fromARGB(255, 178, 178, 178));
-    
-    // Use the theme's default text style to ensure font consistency.
-    final defaultTextStyle = Theme.of(context).textTheme.bodyMedium ??
-        const TextStyle(color: Color.fromARGB(255, 194, 194, 194));
+
+    const colorizeColors = [
+      Color.fromARGB(255, 219, 219, 219),
+      Color.fromARGB(255, 251, 251, 251),
+      Color.fromARGB(255, 255, 180, 110),
+      Colors.yellow,
+      Color.fromARGB(255, 255, 169, 163),
+      Color.fromARGB(255, 255, 243, 139),
+      Colors.amber,
+      Color(0xff343434)
+    ];
+
+    final titleTextStyle = meniu.copyWith(height: 1.2);
 
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text('Will you be needing a treasury?',
+            Text('Choose your operational framework',
                 style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 26),
             const SizedBox(
                 width: 510,
                 child: Text(
-                    "For distributed management of collective assets, you will need to deploy a Full DAO. If you just want collective ideation and large-scale brainstorming, pick Debates.\n\nThe Full DAO includes the Tokenized Debates system.\n\nThe Debates instance can be upgraded to a Full DAO at a later time, should the fear subside.",
+                    "Start with a foundational template. The Standard DAO is perfect for governance and treasury management. The Economy DAO extends this with powerful tools for on-chain project execution and dispute resolution.",
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 14,
                         color: Color.fromARGB(255, 194, 194, 194)))),
             const SizedBox(height: 21),
-           LayoutBuilder(
-  builder: (context, constraints) {
-    bool isNarrow = constraints.maxWidth < 750; // threshold for stacking
+            LayoutBuilder(
+              builder: (context, constraints) {
+                bool isNarrow =
+                    constraints.maxWidth < 750; // threshold for stacking
 
-    return Flex(
-      direction: isNarrow ? Axis.vertical : Axis.horizontal,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 340,
-          height: 310,
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: TextButton(
-                style: ButtonStyle(
-    overlayColor: WidgetStateProperty.all(
-      const Color.fromARGB(40, 36, 36, 36), // custom hover highlight
-    ),
-    shape: WidgetStateProperty.all(
-      const RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero, // no rounded corners
-      ),
-    ),
-  ),
-              onPressed: () {
-                provider.daoType = 'On-chain';
-                provider.nextStep();
-              },
-              child: Container(
-                margin: const EdgeInsets.all(12.0),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: const Color.fromARGB(255, 134, 134, 134)),
-                ),
-                child: Column(
+                return Flex(
+                  direction: isNarrow ? Axis.vertical : Axis.horizontal,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 22),
-                    const FlashingIcon(),
-                    const SizedBox(height: 14),
                     SizedBox(
-                        width: 150,
-                        height: 30,
-                        child: Center(
-                            child: AnimatedContainer(
-                                duration:
-                                    const Duration(milliseconds: 489),
-                                child: AnimatedTextKit(
-                                  onTap: () {},
-                                  isRepeatingAnimation: false,
-                                  repeatForever: false,
-                                  animatedTexts: [
-                                    ColorizeAnimatedText('Full DAO',
-                                        textStyle: meniu,
-                                        textDirection: TextDirection.ltr,
-                                        speed: const Duration(
-                                            milliseconds: 700),
-                                        colors: [
-                                          const Color.fromARGB(
-                                              255, 219, 219, 219),
-                                          const Color.fromARGB(
-                                              255, 251, 251, 251),
-                                          const Color.fromARGB(
-                                              255, 255, 180, 110),
-                                          Colors.yellow,
-                                          const Color.fromARGB(
-                                              255, 255, 169, 163),
-                                          const Color.fromARGB(
-                                              255, 255, 243, 139),
-                                          Colors.amber,
-                                          const Color(0xff343434)
-                                        ]),
-                                  ],
-                                )))),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        'All important operations are secured by the will of the members through voting.',
-                        style: defaultTextStyle.copyWith(height: 1.3),
-                        textAlign: TextAlign.center,
+                      width: 340,
+                      height: 400,
+                      child: Padding(
+                        padding: const EdgeInsets.all(18.0),
+                        child: TextButton(
+                          style: ButtonStyle(
+                            overlayColor: WidgetStateProperty.all(
+                              const Color.fromARGB(
+                                  40, 36, 36, 36), // custom hover highlight
+                            ),
+                            shape: WidgetStateProperty.all(
+                              const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.zero, // no rounded corners
+                              ),
+                            ),
+                          ),
+                          onPressed: () {
+                            provider.daoType = 'Standard DAO';
+                            provider.nextStep();
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.all(12.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color:
+                                      const Color.fromARGB(255, 134, 134, 134)),
+                            ),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 22),
+                                const FlashingIcon(),
+                                const SizedBox(height: 14),
+                                SizedBox(
+                                  height: 70,
+                                  child: Center(
+                                    child: AnimatedTextKit(
+                                      onTap: () {},
+                                      isRepeatingAnimation: false,
+                                      repeatForever: false,
+                                      animatedTexts: [
+                                        ColorizeAnimatedText(
+                                            'Standard\nJurisdiction',
+                                            textAlign: TextAlign.center,
+                                            textStyle: titleTextStyle,
+                                            speed: const Duration(
+                                                milliseconds: 700),
+                                            colors: colorizeColors),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _buildFeatureItem(
+                                          context, 'Secure Treasury'),
+                                      _buildFeatureItem(
+                                          context, 'Passive Income'),
+                                      _buildFeatureItem(
+                                          context, 'Paid Representation'),
+                                      _buildFeatureItem(
+                                          context, 'DAO Inheritance'),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16)
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const Spacer(), // This pushes the next widget to the bottom
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                      child: Text(
-                        'Executive and Declarative.',
-                        textAlign: TextAlign.center,
-                        style: defaultTextStyle.copyWith(
-                            color: Theme.of(context).indicatorColor),
+                    SizedBox(
+                      width: 340,
+                      height: 400,
+                      child: Padding(
+                        padding: const EdgeInsets.all(18.0),
+                        child: TextButton(
+                          style: ButtonStyle(
+                            overlayColor: WidgetStateProperty.all(
+                              const Color.fromARGB(
+                                  40, 36, 36, 36), // Corrected hover color
+                            ),
+                            shape: WidgetStateProperty.all(
+                              const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.zero, // no rounded corners
+                              ),
+                            ),
+                          ),
+                          onPressed: () {
+                            provider.daoType = 'Economy DAO';
+                            provider.nextStep();
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.all(12.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color:
+                                      const Color.fromARGB(255, 134, 134, 134)),
+                            ),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 22),
+                                const Icon(Icons.monetization_on,
+                                    size: 44, color: Colors.white),
+                                const SizedBox(height: 14),
+                                SizedBox(
+                                  height: 70,
+                                  child: Center(
+                                    child: AnimatedTextKit(
+                                      onTap: () {},
+                                      isRepeatingAnimation: false,
+                                      repeatForever: false,
+                                      animatedTexts: [
+                                        ColorizeAnimatedText(
+                                            'Trustless\nEconomy',
+                                            textAlign: TextAlign.center,
+                                            textStyle: titleTextStyle,
+                                            speed: const Duration(
+                                                milliseconds: 700),
+                                            colors: colorizeColors),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _buildFeatureItem(
+                                          context, 'Secure Treasury'),
+                                      _buildFeatureItem(
+                                          context, 'Passive Income'),
+                                      _buildFeatureItem(
+                                          context, 'Paid Representation'),
+                                      _buildFeatureItem(
+                                          context, 'Economic Layer'),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16)
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16)
                   ],
+                );
+              },
+            ),
+            const SizedBox(height: 30),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color.fromARGB(255, 194, 194, 194),
                 ),
+                children: [
+                  const TextSpan(
+                      text: 'Learn more about the organizational framework '),
+                  TextSpan(
+                    text: 'here',
+                    style: TextStyle(
+                      color: Theme.of(context).indicatorColor,
+                      decoration: TextDecoration.underline,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        launchUrl(Uri.parse('https://example.com'));
+                      },
+                  ),
+                  const TextSpan(text: '.'),
+                ],
               ),
             ),
-          ),
-        ),
-        SizedBox(
-          width: 340,
-          height: 310,
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: TextButton(
-                style: ButtonStyle(
-    overlayColor: WidgetStateProperty.all(
-      const Color.fromARGB(40, 255, 255, 255), // custom hover highlight
-    ),
-    shape: WidgetStateProperty.all(
-      const RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero, // no rounded corners
-      ),
-    ),
-  ),
-              onPressed: null,
-              child: Tooltip(
-                decoration: BoxDecoration(
-                    color: Theme.of(context).canvasColor),
-                message: "Soon...",
-                textStyle: const TextStyle(
-                  fontSize: 30,
-                  color: Color.fromARGB(255, 216, 216, 216),
-                ),
-                child: Container(
-                  margin: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: const Color.fromARGB(255, 134, 134, 134)),
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 22),
-                      const Icon(Icons.forum, size: 44, color: Colors.white),
-                      const SizedBox(height: 14),
-                      // Ensure title container has same height for alignment
-                      SizedBox(
-                        width: 150,
-                        height: 30,
-                        child: Center(
-                          child: Text('Debates',
-                              style: meniu.copyWith(fontSize: 23.5)),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          'Tokenized collective debates with fractal topology.',
-                          textAlign: TextAlign.center,
-                          style: defaultTextStyle.copyWith(height: 1.3),
-                        ),
-                      ),
-                      const Spacer(), // This pushes the next widget to the bottom
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                        child: Text(
-                          'Declarative only.',
-                          textAlign: TextAlign.center,
-                          style: defaultTextStyle.copyWith(
-                              color: Theme.of(context).indicatorColor),
-                        ),
-                      ),
-                      const SizedBox(height: 10)
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  },
-),
-
           ],
         ),
       ),
     );
   }
 }
+// lib/src/features/dao_creator/screens/screen1_dao_type.dart

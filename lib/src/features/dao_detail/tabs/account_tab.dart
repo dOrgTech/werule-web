@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
+import 'package:werule/src/features/dao_detail/widgets/token_bridge_widget.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/member_provider.dart';
@@ -44,7 +45,10 @@ class AccountTab extends StatelessWidget {
           }
           
           final isMember = provider.personalBalance > BigInt.zero;
-          final canShowBridge = dao.underlyingToken != null && dao.underlyingToken!.isNotEmpty;
+          final canShowBridge = dao.underlyingToken != null &&
+                                dao.underlyingToken!.isNotEmpty &&
+                                dao.underlyingToken != "None" &&
+                                dao.underlyingToken!.startsWith('0x');
 
           if (!isMember) {
             return SingleChildScrollView(
@@ -490,6 +494,13 @@ class _TokenBridgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final userAddress = auth.selectedAccount;
+
+    if (userAddress == null) {
+      return const SizedBox.shrink();
+    }
+
     return Card(
       color: const Color(0xff2c2c2c),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
@@ -504,11 +515,9 @@ class _TokenBridgeCard extends StatelessWidget {
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 16),
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Text("Token Bridge UI Coming Soon", style: TextStyle(color: Colors.grey)),
-              ),
+            TokenBridgeWidget(
+              dao: dao,
+              userAddress: userAddress,
             ),
           ],
         ),

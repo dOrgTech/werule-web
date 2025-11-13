@@ -64,7 +64,7 @@ class Org {
       registryAddress: json['registryAddress'] as String? ?? '',
       govTokenAddress: json['token'] ?? '',
       totalSupply: json['totalSupply']?.toString() ?? '0',
-      underlyingToken: json['underlying_token'], 
+      underlyingToken: json['underlyingToken'] ?? json['underlying'], 
       votingDelay: json['votingDelay'] ?? 0,
       votingDuration: json['votingDuration'] ?? 0,
       // THE FIX: Populate the registry map from the Firestore document.

@@ -52,6 +52,8 @@ class _Screen5MembersState extends State<Screen5Members> {
           amountController: TextEditingController(text: amountString),
         );
       }).toList();
+      // THE FIX: Persist the view state if members already exist.
+      isManualEntry = true;
     }
     _calculateTotalTokens();
   }
@@ -63,7 +65,7 @@ class _Screen5MembersState extends State<Screen5Members> {
         address: entry.addressController.text,
         amount: int.tryParse(amountText) ?? 0,
         personalBalance: amountText +
-            "0" * (widget.provider.numberOfDecimals ?? 0),
+            "0" * 18, // Decimals are now hardcoded to 18
         votingWeight: "0", // Default or to be calculated later
       );
     }).toList();
@@ -283,53 +285,57 @@ class _Screen5MembersState extends State<Screen5Members> {
   }
 
   Widget _buildMembersListFromCsv() {
-    return Column(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black12,
-            border: Border.all(color: Colors.grey.shade700),
+    // THE FIX: Constrain the width of the CSV list to match the manual entry view.
+    return SizedBox(
+      width: 700,
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.black12,
+              border: Border.all(color: Colors.grey.shade700),
+            ),
+            height: 300,
+            child: _paginatedEntries.isEmpty
+                ? const Center(child: Text("No members found in CSV."))
+                : ListView.builder(
+                    itemCount: _paginatedEntries.length,
+                    itemBuilder: (context, index) {
+                      final memberEntry = _paginatedEntries[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0, vertical: 4.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 7,
+                              child: TextFormField(
+                                controller: memberEntry.addressController,
+                                decoration: const InputDecoration(
+                                    labelText: 'Member Address'),
+                                readOnly: true,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 3,
+                              child: TextFormField(
+                                controller: memberEntry.amountController,
+                                decoration:
+                                    const InputDecoration(labelText: 'Amount'),
+                                readOnly: true,
+                              ),
+                            ),
+                            const SizedBox(width: 48),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
           ),
-          height: 300,
-          child: _paginatedEntries.isEmpty
-              ? const Center(child: Text("No members found in CSV."))
-              : ListView.builder(
-                  itemCount: _paginatedEntries.length,
-                  itemBuilder: (context, index) {
-                    final memberEntry = _paginatedEntries[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 4.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 7,
-                            child: TextFormField(
-                              controller: memberEntry.addressController,
-                              decoration: const InputDecoration(
-                                  labelText: 'Member Address'),
-                              readOnly: true,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 3,
-                            child: TextFormField(
-                              controller: memberEntry.amountController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Amount'),
-                              readOnly: true,
-                            ),
-                          ),
-                          const SizedBox(width: 48),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-        ),
-        _buildPaginationControls(),
-      ],
+          _buildPaginationControls(),
+        ],
+      ),
     );
   }
 

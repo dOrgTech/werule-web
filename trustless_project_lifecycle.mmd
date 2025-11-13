@@ -1,0 +1,118 @@
+%% The Trustless Project Lifecycle (minimal text, landscape-friendly)
+flowchart LR
+  classDef actor fill:#111,stroke:#444,color:#6cf,stroke-width:1px
+  classDef contract fill:#0b132b,stroke:#3a506b,color:#fff,stroke-width:1px
+  classDef sys fill:#102a43,stroke:#4f6d7a,color:#fff,stroke-width:1px
+  classDef event fill:#1b263b,stroke:#4361ee,color:#fff
+  classDef state fill:#14213d,stroke:#f77f00,color:#f77f00
+  classDef warn fill:#2d1f1f,stroke:#e63946,color:#e63946
+  classDef ok fill:#0f3d3e,stroke:#2a9d8f,color:#2a9d8f
+
+  %% Swimlanes via subgraphs (actors top to bottom)
+  subgraph A[Author]
+    direction TB
+    A1[createProject / createERC20Project\n+ stake 1/2 ArbFee]:::actor
+  end
+
+  subgraph B[Backer / Contributor]
+    direction TB
+    B1[sendFunds]:::actor
+    B2[voteRelease]:::actor
+    B3[voteDispute]:::actor
+    B4[withdrawRefund]:::actor
+  end
+
+  subgraph C[Contractor]
+    direction TB
+    C1[signContract\n+ stake 1/2 ArbFee]:::actor
+    C2[withdrawAsContractor]:::actor
+    C3[disputeAsContractor]:::actor
+    C4[reclaimArbFee]:::actor
+  end
+
+  subgraph D[Arbiter]
+    direction TB
+    D1[arbitrate %]:::actor
+    D2[gets ArbFee]:::actor
+  end
+
+  subgraph E[DAO Member (RepTokens)]
+    direction TB
+    E1[appeal]:::actor
+  end
+
+  subgraph F[DAO Timelock]
+    direction TB
+    F1[daoOverrule %]:::actor
+    F2[daoVeto]:::warn
+  end
+
+  subgraph PC[Project Contract]
+    direction TB
+    PC0((Open)):::state
+    PC1((Pending)):::state
+    PC2((Ongoing)):::state
+    PC3((Dispute)):::state
+    PC4((Appealable)):::state
+    PC5((Appeal)):::state
+    PC6((Closed)):::state
+  end
+
+  subgraph EC[Economy Contract]
+    direction TB
+    EC0[deploy Project]:::sys
+    EC1[fee config\n(platform/author/arb)]:::sys
+    EC2[Treasury]:::sys
+  end
+
+  %% Flows
+  A1 --> EC0
+  EC0 --> PC0
+  B1 --> PC0
+  C1 --> PC2
+  PC0 -->|cooldown| PC1
+  PC1 --> PC2
+
+  %% Decision: work OK?
+  PC2 -->|review| G{OK?}
+  G -->|Yes| PC6
+  G -->|No| PC3
+
+  %% Happy path approvals
+  B2 --> PC2
+  PC2 -->|>= quorum| PC6
+  C2 --> PC6
+
+  %% Fees on close (happy)
+  PC6 -.->|fees| EC2
+  PC6 -.->|author fee| A
+  PC6 -.->|contractor| C2
+
+  %% Dispute path
+  B3 --> PC3
+  C3 --> PC3
+  D1 --> PC4
+  PC4 -->|appealPeriod| H{Appealed?}
+  H -->|No| PC6
+  H -->|Yes| PC5
+  E1 --> PC5
+  F1 --> PC6
+
+  %% Post-dispute withdrawals
+  C2 -.->|% ruling| PC6
+  B4 -.-> PC6
+  D2 -.-> PC6
+
+  %% DAO veto anytime before Closed
+  F2 -.->|full refunds| PC0
+
+  %% Read fees/config from Economy
+  EC1 -. config .- PC2
+
+  %% Cross-diagram pointer
+  EC1 -. "DAO Governance" .- GOV[DAO System]:::event
+
+  %% Styling classes
+  class A1,B1,B2,B3,B4,C1,C2,C3,C4,D1,D2,E1,F1,F2 actor
+  class PC0,PC1,PC2,PC3,PC4,PC5,PC6 state
+  class EC0,EC1,EC2 sys

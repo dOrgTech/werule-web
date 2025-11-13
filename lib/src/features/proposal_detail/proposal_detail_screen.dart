@@ -573,24 +573,24 @@ class _ProposalHeaderState extends State<_ProposalHeader> {
       );
     }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-      color: const Color(0xff2c2c2c),
-      child: Column(
-        children: [
-          titleWidget,
-          const SizedBox(height: 12),
-          metadataRow,
-          const SizedBox(height: 24),
-          descriptionWidget,
-          const SizedBox(height: 12),
-          discussionWidget,
-        ],
-      ),
-    );
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+        color: const Color(0xff2c2c2c),
+        child: Column(
+          children: [
+            titleWidget,
+            const SizedBox(height: 12),
+            metadataRow,
+            const SizedBox(height: 24),
+            descriptionWidget,
+            const SizedBox(height: 12),
+            discussionWidget,
+          ],
+        ),
+      );
+    }
   }
-}
 
 
 class _AnimatedFadeIn extends StatelessWidget {

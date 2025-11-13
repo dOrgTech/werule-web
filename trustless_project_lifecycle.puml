@@ -1,0 +1,74 @@
+@startuml
+title The Trustless Project Lifecycle
+
+start
+
+partition Author {
+  :createProject / createERC20Project;
+}
+
+partition Economy {
+  :deploy Project Contract;
+}
+
+partition Backer {
+  :sendFunds;
+  :voteRelease;
+  :voteDispute;
+  :withdrawRefund;
+}
+
+partition Contractor {
+  :signContract;
+  :withdrawAsContractor;
+  :disputeAsContractor;
+  :reclaimArbitrationFee;
+}
+
+partition Arbiter {
+  :arbitrate (percentage);
+  :receive Arbitration Fee;
+}
+
+partition DAO_Member {
+  :appeal;
+}
+
+partition DAO_Timelock {
+  :daoOverrule (percentage);
+  :daoVeto;
+}
+
+partition Project_Contract {
+  :Open;
+  :Pending;
+  :Ongoing;
+  :Dispute;
+  :Appealable;
+  :Appeal;
+  :Closed;
+}
+
+:Project created;
+:Funds sent;
+:Contract signed;
+
+if ("Work OK?") then ("Yes")
+  :voteRelease >= quorum;
+  :Closed (happy path);
+else ("No")
+  :Dispute;
+  :Arbitrate;
+  if ("Appealed?") then ("Yes")
+    :DAO Appeal;
+    :DAO Overrule;
+  else ("No")
+    :Finalize Arbitration;
+  endif
+  :Closed (dispute path);
+endif
+
+:Withdrawals + Fee distribution;
+
+stop
+@enduml

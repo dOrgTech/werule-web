@@ -1,0 +1,50 @@
+@startuml
+title DAO Control over the Trustless Economy
+
+start
+
+partition Member {
+  :use platform;
+  :claimReputation;
+  :propose;
+  :castVote;
+}
+
+partition Governor {
+  :Active;
+  :Succeeded;
+  :Defeated;
+  :queue;
+  :execute;
+}
+
+partition Timelock {
+  :Queued;
+  :delay;
+  :release;
+}
+
+partition Economy {
+  :activity ledger;
+  :update parameters;
+}
+
+Member -> Economy: use platform;
+Member -> Member: claim reputation (RepTokens minted);
+
+Member -> Governor: propose change;
+Member -> Governor: castVote;
+
+if ("vote passes?") then ("Yes")
+  Governor -> Timelock: queue;
+  Timelock -> Timelock: delay;
+  Timelock -> Economy: execute change;
+  Economy -> Economy: update parameters;
+else ("No")
+  Governor -> Governor: Defeated;
+endif
+
+Economy -> Member: rewards affect RepTokens;
+
+stop
+@enduml

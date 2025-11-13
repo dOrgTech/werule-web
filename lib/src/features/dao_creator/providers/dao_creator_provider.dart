@@ -1,6 +1,6 @@
 // lib/src/features/dao_creator/providers/dao_creator_provider.dart
-
 import 'dart:async';
+import 'dart:js_util';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:werule/src/features/dao_creator/models/creator_member.dart';
@@ -34,27 +34,34 @@ class DaoCreatorProvider extends ChangeNotifier {
   int _maxStepReached = 0;
   int get maxStepReached => _maxStepReached;
 
+  // Common properties
   String? daoType;
   String? daoName;
   String? daoDescription;
-  DaoTokenDeploymentMechanism tokenDeploymentMechanism =
-      DaoTokenDeploymentMechanism.deployNewStandardToken;
   String? tokenSymbol;
-  int? numberOfDecimals;
-  bool nonTransferrable = true;
-  String? underlyingTokenAddress;
-  String? wrappedTokenName;
-  String? wrappedTokenSymbol;
   String? totalSupply;
+  bool isTransferrable = false; // Default to non-transferable (soulbound)
+  bool useWrappedToken = false; // Whether to wrap an existing ERC20
+  String? underlyingTokenAddress; // For wrapped tokens
   Map<String, String> registry = {};
   int proposalThreshold = 1;
   int quorumThreshold = 4;
   double supermajority = 75.0;
-  Duration votingDuration = Duration.zero;
+  Duration votingDuration = const Duration(days: 7);
   Duration votingDelay = Duration.zero;
-  Duration executionDelay = Duration.zero;
+  Duration executionDelay = const Duration(days: 1);
   List<Member> members = [];
   
+  // Economy DAO specific fields
+  double platformFee = 1.5;
+  double authorFee = 2.0;
+  double arbitrationFee = 5.0;
+  Duration coolingOffPeriod = const Duration(hours: 24);
+  int backerVotingQuorum = 70;
+  int projectCreationThreshold = 1000;
+  // THE FIX: Default value is calculated from other durations + a 2-day buffer.
+  Duration disputeAndAppealPeriod = const Duration(days: 7) + const Duration(days: 1) + const Duration(days: 2);
+
   bool _isDeploying = false;
   bool get isDeploying => _isDeploying;
   String? _deploymentError;
@@ -69,6 +76,22 @@ class DaoCreatorProvider extends ChangeNotifier {
 
   Timer? _pollingTimer;
 
+  // Helper to determine if Members screen should be shown
+  bool get shouldShowMembers => !useWrappedToken;
+
+  // Dynamic Stepper Logic
+  int get reviewStepIndex {
+    int baseIndex = 6; // Standard DAO: Type, Setup, Quorums, Durations, Members, Registry
+    if (!shouldShowMembers) baseIndex--; // Skip Members
+    if (daoType == 'Economy DAO') baseIndex += 3; // Add Economy screens
+    return baseIndex;
+  }
+
+  int get deployingStepIndex => reviewStepIndex + 1;
+  int get completeStepIndex => reviewStepIndex + 2;
+  int get totalSteps => completeStepIndex + 1;
+
+
   @override
   void dispose() {
     _pollingTimer?.cancel();
@@ -76,8 +99,7 @@ class DaoCreatorProvider extends ChangeNotifier {
   }
 
   void nextStep() {
-    // The highest index is 8 (for Screen9DeploymentComplete)
-    if (_currentStep < 8) {
+    if (_currentStep < totalSteps - 1) {
       _currentStep++;
       if (_currentStep > _maxStepReached) {
         _maxStepReached = _currentStep;
@@ -94,7 +116,7 @@ class DaoCreatorProvider extends ChangeNotifier {
   }
 
   void goToStep(int step) {
-    if (step >= 0 && step <= 8) {
+    if (step >= 0 && step < totalSteps) {
       if (step > _maxStepReached) _maxStepReached = step;
       _currentStep = step;
       notifyListeners();
@@ -104,27 +126,20 @@ class DaoCreatorProvider extends ChangeNotifier {
   void updateBasicInfo({
     required String name,
     required String description,
-    required DaoTokenDeploymentMechanism mechanism,
-    String? symbol,
-    int? decimals,
-    bool? isNonTransferrable,
-    String? underlyingAddress,
-    String? wrappedSymbol,
+    required String? symbol,
+    required bool transferrable,
+    bool? wrappedToken,
+    String? underlyingToken,
   }) {
     daoName = name;
     daoDescription = description;
-    tokenDeploymentMechanism = mechanism;
-    if (mechanism == DaoTokenDeploymentMechanism.deployNewStandardToken) {
-      tokenSymbol = symbol;
-      numberOfDecimals = decimals;
-      nonTransferrable = isNonTransferrable ?? true;
-    } else {
-      underlyingTokenAddress = underlyingAddress;
-      wrappedTokenSymbol = wrappedSymbol;
-      wrappedTokenName = "Wrapped ${wrappedTokenSymbol ?? "Token"}";
-      members = [];
-      totalSupply = "0";
-    }
+    tokenSymbol = symbol;
+    isTransferrable = transferrable;
+    useWrappedToken = wrappedToken ?? false;
+    underlyingTokenAddress = underlyingToken;
+    // Reset members if token symbol changes, as supply is dependent on it.
+    members = [];
+    totalSupply = "0";
     notifyListeners();
   }
 
@@ -143,14 +158,12 @@ class DaoCreatorProvider extends ChangeNotifier {
 
   void updateMembers(List<Member> newMembers) {
     members = newMembers;
-    if (tokenDeploymentMechanism ==
-        DaoTokenDeploymentMechanism.deployNewStandardToken) {
-      int total = 0;
-      for (var member in members) {
-        total += member.amount;
-      }
-      totalSupply = total.toString() + "0" * (numberOfDecimals ?? 0);
+    int total = 0;
+    for (var member in members) {
+      total += member.amount;
     }
+    // Decimals are hardcoded to 18 for all new tokens.
+    totalSupply = total.toString() + "0" * 18;
     notifyListeners();
   }
 
@@ -158,14 +171,43 @@ class DaoCreatorProvider extends ChangeNotifier {
     registry = newRegistry;
     notifyListeners();
   }
+  
+  void updateEconomyFees({
+    required double platFee,
+    required double authFee,
+    required double arbFee,
+  }) {
+    platformFee = platFee;
+    authorFee = authFee;
+    arbitrationFee = arbFee;
+    notifyListeners();
+  }
+  
+  void updateProjectThresholds({
+    required int backerQuorum,
+    required int creationThreshold,
+  }) {
+    backerVotingQuorum = backerQuorum;
+    projectCreationThreshold = creationThreshold;
+    notifyListeners();
+  }
+  
+  void updateProjectDurations({
+    required Duration coolingOff,
+    required Duration disputePeriod,
+  }) {
+    coolingOffPeriod = coolingOff;
+    disputeAndAppealPeriod = disputePeriod;
+    notifyListeners();
+  }
 
   Future<void> deployDao() async {
-    // 1. Set state and go to the "Deploying..." screen (index 7).
+    // 1. Set state and go to the "Deploying..." screen.
     _isDeploying = true;
     _isIndexed = false;
     _deploymentError = null;
     _deploymentStatusMessage = "Preparing transaction...";
-    goToStep(7); // THE FIX: Use the correct index for the "Deploying" screen.
+    goToStep(deployingStepIndex);
     
     // 2. Wait for the UI to redraw.
     await Future.delayed(Duration.zero);
@@ -185,22 +227,50 @@ class DaoCreatorProvider extends ChangeNotifier {
       _deploymentStatusMessage = "Please confirm the transaction in your wallet...";
       notifyListeners();
 
-      final deployedAddress = await createDAOFromWizard(
-        factoryAddress: network.wrapper, 
-        name: daoName ?? '',
-        symbol: tokenSymbol ?? '',
-        description: daoDescription ?? '',
-        decimals: numberOfDecimals ?? 18,
-        executionDelay: executionDelay.inSeconds,
-        initialMembers: members.map((m) => m.address).toList(),
-        memberBalances: memberBalances,
-        votingDelay: votingDelay.inMinutes,
-        votingDuration: votingDuration.inMinutes,
-        proposalThreshold: proposalThreshold,
-        quorum: quorumThreshold,
-        registry: registry,
-        isTransferrable: !nonTransferrable,
-      );
+      final String deployedAddress;
+
+      // Check if we're wrapping an existing ERC20 token
+      if (useWrappedToken) {
+        // Use wrapped token factory
+        final factoryAddress = network.wrapperW;
+
+        deployedAddress = await createDAOWithWrappedToken(
+          factoryAddress: factoryAddress,
+          name: daoName ?? '',
+          symbol: tokenSymbol ?? '',
+          description: daoDescription ?? '',
+          executionDelay: executionDelay.inSeconds,
+          underlyingTokenAddress: underlyingTokenAddress ?? '',
+          votingDelay: votingDelay.inMinutes,
+          votingDuration: votingDuration.inMinutes,
+          proposalThreshold: proposalThreshold,
+          quorum: quorumThreshold,
+          registry: registry,
+          transferrableStr: isTransferrable ? 'true' : 'false',
+        );
+      } else {
+        // Choose the correct wrapper contract based on transferability
+        // wrapper = non-transferable (soulbound), wrapperT = transferable
+        final factoryAddress = isTransferrable ? network.wrapperT : network.wrapper;
+
+        // NOTE: This call will need to be updated when backend supports Economy DAO.
+        // For now, we only call the standard DAO creation.
+        deployedAddress = await createDAOFromWizard(
+          factoryAddress: factoryAddress,
+          name: daoName ?? '',
+          symbol: tokenSymbol ?? '',
+          description: daoDescription ?? '',
+          decimals: 18, // Hardcoded
+          executionDelay: executionDelay.inSeconds,
+          initialMembers: members.map((m) => m.address).toList(),
+          memberBalances: memberBalances,
+          votingDelay: votingDelay.inMinutes,
+          votingDuration: votingDuration.inMinutes,
+          proposalThreshold: proposalThreshold,
+          quorum: quorumThreshold,
+          registry: registry,
+        );
+      }
       
       _newDaoAddress = deployedAddress;
       
@@ -210,9 +280,17 @@ class DaoCreatorProvider extends ChangeNotifier {
       await _startPollingForDao(deployedAddress);
 
     } catch (e) {
+      // Log error to browser console for easy copying
+      final console = getProperty(globalThis, 'console');
+      callMethod(console, 'error', ["=== DAO DEPLOYMENT ERROR (Provider) ==="]);
+      callMethod(console, 'error', ["Error caught in deployDao():"]);
+      callMethod(console, 'error', [e.toString()]);
+      callMethod(console, 'dir', [e]);
+      callMethod(console, 'error', ["========================================="]);
+
       _deploymentError = e.toString();
       _isDeploying = false;
-      // Stay on screen 7 to show the error.
+      // Stay on screen to show the error.
       notifyListeners();
     }
   }
@@ -244,9 +322,9 @@ class DaoCreatorProvider extends ChangeNotifier {
         timer.cancel();
         _isDeploying = false;
         _isIndexed = true;
-        // THE FIX: Go to the "Complete" screen (index 8) upon success.
-        goToStep(8); 
+        goToStep(completeStepIndex); 
       }
     });
   }
 }
+// lib/src/features/dao_creator/providers/dao_creator_provider.dart

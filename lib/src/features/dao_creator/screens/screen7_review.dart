@@ -55,51 +55,9 @@ class Screen7Review extends StatelessWidget {
     );
   }
 
-  Widget _buildTokenDetailItem(
-      BuildContext context, String label, String valueText) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 180,
-            child: Text(
-              '$label:',
-              textAlign: TextAlign.right,
-              style:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              valueText,
-              style: TextStyle(
-                color: Theme.of(context).indicatorColor,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    String proposalThresholdTokenSymbol = "tokens";
-    if (provider.tokenDeploymentMechanism ==
-        DaoTokenDeploymentMechanism.deployNewStandardToken) {
-      proposalThresholdTokenSymbol =
-          provider.tokenSymbol?.isNotEmpty == true ? provider.tokenSymbol! : "tokens";
-    } else {
-      proposalThresholdTokenSymbol = provider.wrappedTokenSymbol?.isNotEmpty == true
-          ? provider.wrappedTokenSymbol!
-          : "tokens";
-    }
-
+    final proposalThresholdTokenSymbol = provider.tokenSymbol ?? 'tokens';
     const double contentMaxWidth = 650.0;
 
     return SingleChildScrollView(
@@ -117,7 +75,7 @@ class Screen7Review extends StatelessWidget {
                 const SizedBox(height: 5),
                 Row(
                   children: [
-                    Text('On-Chain Organization',
+                    Text('${provider.daoType ?? "On-Chain"} Organization',
                         style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(width: 8),
                     Icon(Icons.security,
@@ -136,26 +94,49 @@ class Screen7Review extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                if (provider.tokenDeploymentMechanism ==
-                    DaoTokenDeploymentMechanism.deployNewStandardToken) ...[
-                  _buildTokenDetailItem(
-                      context, "Token Type", "New Standard Token"),
-                  _buildTokenDetailItem(
-                      context, "Ticker Symbol", provider.tokenSymbol ?? "N/A"),
-                  _buildTokenDetailItem(context, "Decimals",
-                      provider.numberOfDecimals?.toString() ?? "N/A"),
-                  _buildTokenDetailItem(context, "Non-Transferable",
-                      provider.nonTransferrable ? 'Yes' : 'No'),
+                // Token information - different for wrapped vs standard tokens
+                if (provider.useWrappedToken) ...[
+                  _buildReviewItem(
+                      context, "Token Type", "Wrapped ERC20 Token"),
+                  _buildReviewItem(
+                      context, "Wrapped Token Symbol", provider.tokenSymbol ?? "N/A"),
+                  _buildReviewItem(
+                      context, "Underlying Token", provider.underlyingTokenAddress ?? "N/A"),
+                  _buildReviewItem(
+                      context, "Decimals", "Inherited from underlying token"),
+                  _buildReviewItem(
+                      context, "Transferable", provider.isTransferrable ? 'Yes' : 'No'),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Users will need to deposit the underlying token to receive wrapped governance tokens.',
+                            style: TextStyle(fontSize: 13, color: Colors.grey[300]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ] else ...[
-                  _buildTokenDetailItem(
-                      context, "Token Type", "Wrap Existing Token"),
-                  _buildTokenDetailItem(context, "Underlying Token",
-                      provider.underlyingTokenAddress ?? "N/A"),
-                  _buildTokenDetailItem(context, "Wrapped Symbol",
-                      provider.wrappedTokenSymbol ?? "N/A"),
-                  _buildTokenDetailItem(
-                      context, "Decimals", "(Matches Underlying Token)"),
+                  _buildReviewItem(
+                      context, "Token Type", "New Standard Token"),
+                  _buildReviewItem(
+                      context, "Ticker Symbol", provider.tokenSymbol ?? "N/A"),
+                  _buildReviewItem(context, "Decimals", "18"),
+                  _buildReviewItem(
+                      context, "Transferable", provider.isTransferrable ? 'Yes' : 'No'),
                 ],
+
                 const SizedBox(height: 20),
 
                 _buildReviewItem(
@@ -170,9 +151,23 @@ class Screen7Review extends StatelessWidget {
                     formatDuration(provider.executionDelay)),
                 const SizedBox(height: 25),
 
-                if (provider.tokenDeploymentMechanism ==
-                        DaoTokenDeploymentMechanism.deployNewStandardToken &&
-                    provider.members.isNotEmpty) ...[
+                if (provider.daoType == 'Economy DAO') ...[
+                  const Text('Economy Parameters:',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  _buildReviewItem(context, "Platform Fee", "${provider.platformFee}%"),
+                  _buildReviewItem(context, "Author Fee", "${provider.authorFee}%"),
+                  _buildReviewItem(context, "Arbitration Fee", "${provider.arbitrationFee}%"),
+                  _buildReviewItem(context, "Backer Voting Quorum", "${provider.backerVotingQuorum}%"),
+                  _buildReviewItem(context, "Project Creation Threshold", "${provider.projectCreationThreshold} $proposalThresholdTokenSymbol"),
+                  _buildReviewItem(context, "Cooling-Off Period", formatDuration(provider.coolingOffPeriod)),
+                  _buildReviewItem(context, "Dispute & Appeal Period", formatDuration(provider.disputeAndAppealPeriod)),
+                  const SizedBox(height: 25),
+                ],
+
+                // Only show members section for non-wrapped tokens
+                if (provider.shouldShowMembers && provider.members.isNotEmpty) ...[
                   Text('Initial Members (${provider.members.length}):',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 15)),
@@ -229,7 +224,6 @@ class Screen7Review extends StatelessWidget {
                                 style: valueStyle)),
                           ]));
                         }
-                        // THE FIX: This return statement was missing, causing the UI to crash on rebuild.
                         return displayedRows;
                       }
                     })(),
@@ -302,3 +296,4 @@ class Screen7Review extends StatelessWidget {
     );
   }
 }
+// lib/src/features/dao_creator/screens/screen7_review.dart

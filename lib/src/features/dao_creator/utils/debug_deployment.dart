@@ -56,9 +56,12 @@ Future<void> hardcodedDeploy(BuildContext context) async {
   );
 
   try {
+    // Choose the correct wrapper contract based on transferability
+    final factoryAddress = isTransferrable ? network.wrapperT : network.wrapper;
+
     // THE FIX: Call the new, isolated `createDAOFromWizard` function directly.
     final newDaoAddress = await createDAOFromWizard(
-      factoryAddress: network.wrapper,
+      factoryAddress: factoryAddress,
       name: name,
       symbol: symbol,
       description: description,
@@ -71,7 +74,6 @@ Future<void> hardcodedDeploy(BuildContext context) async {
       proposalThreshold: proposalThreshold,
       quorum: quorum,
       registry: registry,
-      isTransferrable: isTransferrable,
     );
 
     if (kDebugMode) {

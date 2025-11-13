@@ -1,0 +1,307 @@
+%% DAO Control over the Trustless Economy (minimal text, landscape-friendly)
+flowchart LR
+  classDef actor fill:#111,stroke:#444,color:#6cf,stroke-width:1px
+  classDef contract fill:#0b132b,stroke:#3a506b,color:#fff,stroke-width:1px
+  classDef shield fill:#14213d,stroke:#f77f00,color:#f77f00,stroke-dasharray: 3 3
+  classDef state fill:#1b263b,stroke:#4361ee,color:#fff
+  classDef ok fill:#0f3d3e,stroke:#2a9d8f,color:#2a9d8f
+
+  %% Swimlanes (subgraphs)
+  subgraph M[DAO Member (RepToken)]
+    direction TB
+    M0[use platform]:::actor
+    M1[claimReputation]:::actor
+    M2[propose]:::actor
+    M3[castVote]:::actor
+  end
+
+  subgraph G[DAO Governor]
+    direction TB
+    G1[(Active)]:::state
+    G2[(Succeeded)]:::state
+    G3[(Defeated)]:::state
+    G4[queue]:::contract
+    G5[execute]:::contract
+  end
+
+  subgraph T[Timelock]
+    direction TB
+    T1[(Queued)]:::state
+    T2[delay]:::contract
+    T3[release]:::contract
+  end
+
+  subgraph E[Economy Contract]Here are the full specifications for two diagrams. Someone with design or diagramming software (like Lucidchart, Miro, Figma, or even PowerPoint) can use these detailed instructions to create accurate and informative flowcharts.
+Diagram 1: Project & Economy Operating Model
+Title: The Trustless Project Lifecycle
+Objective: To illustrate the complete journey of a project from creation to completion, showing both the successful "happy path" and the full dispute resolution and appeals process.
+Key Actors (to be used as Swimlanes):
+Author
+Backer / Contributor
+Contractor
+Arbiter
+DAO Member (with RepTokens)
+DAO Timelock
+Project Smart Contract (as a central object)
+Economy Smart Contract (as a system)
+Process Flow Specification:
+Phase 1: Project Setup
+Author: Initiates the process.
+[Action] Calls createProject or createERC20Project on the Economy Contract.
+[Input] Provides project details (name, parties) and stakes their half of the Arbitration Fee.
+[Result] The Economy Contract deploys a new Project Contract.
+The Project Contract is now in the (Open) or (Pending) state.
+Backer(s): Fund the project.
+[Action] Call sendFunds on the Project Contract.
+[Result] Funds (ETH or ERC20) are transferred to and held by the Project Contract. Project value increases. This can happen while the project is (Open) or (Pending).
+Contractor: Agrees to the terms and starts the project.
+[Action] Calls signContract on the Project Contract after the cooling-off period ends.
+[Input] Stakes their half of the Arbitration Fee.
+[Result] The Project Contract transitions to the (Ongoing) state.
+Phase 2: Project Execution & Decision
+Contractor: Completes the work.
+Backer(s): Review the completed work. This leads to a critical decision point.
+Decision Gateway: Is the work satisfactory?
+YES (Happy Path) -> Go to Phase 3.
+NO (Dispute Path) -> Go to Phase 4.
+Phase 3: Successful Completion (The Happy Path)
+Backer(s):
+[Action] Call voteToReleasePayment on the Project Contract.
+[Logic] If the total value of backers voting to release meets the backerQuorum (e.g., 70%), the project is approved.
+[Result] The Project Contract transitions to the (Closed) state.
+Contractor:
+[Action] Calls withdrawAsContractor on the Project Contract.
+[Result] The contract calculates and distributes the funds:
+A Platform Fee is sent to the Economy Contract (DAO Treasury).
+An Author Fee is sent to the Author.
+The remaining balance is sent to the Contractor.
+Author & Contractor:
+[Action] Both parties call reclaimArbitrationFee on the Project Contract.
+[Result] Their initial fee stakes are returned to them.
+Phase 4: Dispute, Arbitration, and Appeal
+Backer(s) or Contractor:
+[Action] Call voteToDispute (Backer) or disputeAsContractor (Contractor).
+[Result] If quorum is met, the Project Contract transitions to the (Dispute) state.
+Arbiter:
+[Action] Calls arbitrate on the Project Contract, providing a ruling.
+[Input] A percentage (e.g., 80) indicating how much of the project value the contractor should receive.
+[Result] The Project Contract transitions to the (Appealable) state. The appealPeriod timer starts.
+Decision Gateway: Is the ruling appealed by the DAO?
+NO (Appeal Period Expires):
+Anyone can [Action] call finalizeArbitration.
+[Result] The project transitions to (Closed) with the Arbiter's original ruling. -> Go to Phase 5.
+YES (DAO Intervenes):
+DAO Member: [Action] Calls appeal on the Project Contract. Must have enough RepTokens (projectCreationThreshold).
+[Result] Project transitions to (Appeal) state.
+DAO Timelock: [Action] Calls daoOverrule with a new percentage.
+[Result] Project transitions to (Closed) with the DAO's new ruling. -> Go to Phase 5.
+Phase 5: Post-Dispute Payouts
+Arbiter:
+[Result] The Project Contract automatically transfers the full Arbitration Fee to the Arbiter for their service.
+Contractor:
+[Action] Calls withdrawAsContractor.
+[Result] Receives the percentage of funds specified in the final ruling (minus platform/author fees).
+Backer(s):
+[Action] Call withdrawAsContributor.
+[Result] Receive the remaining percentage of funds as a refund.
+Key Interactions & Callouts to Highlight on the Diagram:
+The DAO Timelock has a special power: it can [Action] call daoVeto at any point before (Closed) to cancel the project and ensure full refunds.
+Show the fee percentages (Platform Fee %, Author Fee %, Arbitration Fee %) as configurable rules read from the Economy Contract.
+Diagram 2: DAO Governance Operating Model
+Title: DAO Control over the Trustless Economy
+Objective: To illustrate how DAO members can propose, vote on, and execute changes to the rules of the Economy contract.
+Key Actors (Swimlanes):
+DAO Member (RepToken Holder)
+DAO Governor Contract
+Timelock Contract
+Economy Contract
+User (of the Economy)
+Process Flow Specification:Here are the full specifications for two diagrams. Someone with design or diagramming software (like Lucidchart, Miro, Figma, or even PowerPoint) can use these detailed instructions to create accurate and informative flowcharts.
+Diagram 1: Project & Economy Operating Model
+Title: The Trustless Project Lifecycle
+Objective: To illustrate the complete journey of a project from creation to completion, showing both the successful "happy path" and the full dispute resolution and appeals process.
+Key Actors (to be used as Swimlanes):
+Author
+Backer / Contributor
+Contractor
+Arbiter
+DAO Member (with RepTokens)
+DAO Timelock
+Project Smart Contract (as a central object)
+Economy Smart Contract (as a system)
+
+Process Flow Specification:
+Phase 1: Project Setup
+Author: Initiates the process.
+[Action] Calls createProject or createERC20Project on the Economy Contract.
+[Input] Provides project details (name, parties) and stakes their half of the Arbitration Fee.
+[Result] The Economy Contract deploys a new Project Contract.
+The Project Contract is now in the (Open) or (Pending) state.
+Backer(s): Fund the project.
+[Action] Call sendFunds on the Project Contract.
+[Result] Funds (ETH or ERC20) are transferred to and held by the Project Contract. Project value increases. This can happen while the project is (Open) or (Pending).
+Contractor: Agrees to the terms and starts the project.
+[Action] Calls signContract on the Project Contract after the cooling-off period ends.
+[Input] Stakes their half of the Arbitration Fee.
+[Result] The Project Contract transitions to the (Ongoing) state.
+Phase 2: Project Execution & Decision
+Contractor: Completes the work.
+Backer(s): Review the completed work. This leads to a critical decision point.
+Decision Gateway: Is the work satisfactory?
+YES (Happy Path) -> Go to Phase 3.
+NO (Dispute Path) -> Go to Phase 4.
+Phase 3: Successful Completion (The Happy Path)
+Backer(s):
+[Action] Call voteToReleasePayment on the Project Contract.
+[Logic] If the total value of backers voting to release meets the backerQuorum (e.g., 70%), the project is approved.
+[Result] The Project Contract transitions to the (Closed) state.
+Contractor:
+[Action] Calls withdrawAsContractor on the Project Contract.
+[Result] The contract calculates and distributes the funds:
+A Platform Fee is sent to the Economy Contract (DAO Treasury).
+An Author Fee is sent to the Author.
+The remaining balance is sent to the Contractor.
+Author & Contractor:
+[Action] Both parties call reclaimArbitrationFee on the Project Contract.
+[Result] Their initial fee stakes are returned to them.
+Phase 4: Dispute, Arbitration, and Appeal
+Backer(s) or Contractor:
+[Action] Call voteToDispute (Backer) or disputeAsContractor (Contractor).
+[Result] If quorum is met, the Project Contract transitions to the (Dispute) state.
+Arbiter:
+[Action] Calls arbitrate on the Project Contract, providing a ruling.
+[Input] A percentage (e.g., 80) indicating how much of the project value the contractor should receive.
+[Result] The Project Contract transitions to the (Appealable) state. The appealPeriod timer starts.
+Decision Gateway: Is the ruling appealed by the DAO?
+NO (Appeal Period Expires):
+Anyone can [Action] call finalizeArbitration.
+[Result] The project transitions to (Closed) with the Arbiter's original ruling. -> Go to Phase 5.
+YES (DAO Intervenes):
+DAO Member: [Action] Calls appeal on the Project Contract. Must have enough RepTokens (projectCreationThreshold).
+[Result] Project transitions to (Appeal) state.
+DAO Timelock: [Action] Calls daoOverrule with a new percentage.
+[Result] Project transitions to (Closed) with the DAO's new ruling. -> Go to Phase 5.
+Phase 5: Post-Dispute Payouts
+Arbiter:
+[Result] The Project Contract automatically transfers the full Arbitration Fee to the Arbiter for their service.
+Contractor:
+[Action] Calls withdrawAsContractor.
+[Result] Receives the percentage of funds specified in the final ruling (minus platform/author fees).
+Backer(s):
+[Action] Call withdrawAsContributor.
+[Result] Receive the remaining percentage of funds as a refund.
+Key Interactions & Callouts to Highlight on the Diagram:
+The DAO Timelock has a special power: it can [Action] call daoVeto at any point before (Closed) to cancel the project and ensure full refunds.
+Show the fee percentages (Platform Fee %, Author Fee %, Arbitration Fee %) as configurable rules read from the Economy Contract.
+Diagram 2: DAO Governance Operating Model
+Title: DAO Control over the Trustless Economy
+Objective: To illustrate how DAO members can propose, vote on, and execute changes to the rules of the Economy contract.
+Key Actors (Swimlanes):
+DAO Member (RepToken Holder)
+DAO Governor Contract
+Timelock Contract
+Economy Contract
+User (of the Economy)
+Process Flow Specification:
+Phase 1: The Governance Loop (Input)
+User / DAO Member: Interacts with the platform and identifies a rule in the Economy Contract that needs changing (e.g., "The platform fee is too high").
+DAO Member: Earns governance power.
+[Action] Calls claimReputationFromEconomy on the RepToken Contract.
+[Logic] The RepToken contract reads the member's financial history (earnings/spendings) from the Economy Contract.
+[Result] New RepTokens are minted to the member, increasing their voting power.
+Phase 2: Proposal Lifecycle
+DAO Member: Creates a proposal.
+[Action] Calls propose on the DAO Governor.
+[Input] The proposal must contain:
+Target: The address of the Economy Contract.
+Calldata: The exact function call to be executed, e.g., the data for setPlatformFee(150).
+Description: A human-readable summary of the change.
+[Requirement] The member must hold enough RepTokens to meet the proposalThreshold.
+[Result] The proposal is created and enters the (Active) state. The votingPeriod begins.
+All DAO Members:
+[Action] Call castVote on the DAO Governor (For, Against, or Abstain).
+Decision Gateway: Does the vote pass?
+[Logic] At the end of the votingPeriod, the DAO Governor checks if the "For" votes have surpassed the quorumFraction and represent a majority.
+NO: The proposal state becomes (Defeated). The process ends.
+YES: The proposal state becomes (Succeeded).
+Phase 3: Execution via Timelock
+Anyone:
+[Action] Calls queue on the DAO Governor.
+[Result] The DAO Governor sends the proposal's Target and Calldata to the Timelock Contract. The proposal is now in the (Queued) state, and the timelockDelay begins.
+Wait for timelockDelay to pass.
+Anyone:
+[Action] Calls execute on the DAO Governor.
+[Result] The DAO Governor instructs the Timelock Contract to proceed.
+Timelock Contract:
+[Action] The Timelock Contract executes the transaction. It calls the Economy Contract with the stored Calldata (setPlatformFee(150)).
+Economy Contract:
+[Result] The platformFeeBps state variable is updated from its old value to 150. The rule change is now live.
+The proposal state is now (Executed).
+Key Interactions & Callouts to Highlight on the Diagram:
+Draw a "protected shield" icon around the setter functions on the Economy Contract (e.g., setPlatformFee, setAuthorFee).
+Draw a single, bold arrow from the Timelock Contract to this shield, labeled "Only Authorized Caller," to emphasize that only the Timelock can change the rules.
+Show a feedback loop: Economic activity in the Economy Contract leads to RepTokens, which grant voting power in the DAO Governor, which in turn controls the rules of the Economy Contract.
+Phase 1: The Governance Loop (Input)
+User / DAO Member: Interacts with the platform and identifies a rule in the Economy Contract that needs changing (e.g., "The platform fee is too high").
+DAO Member: Earns governance power.
+[Action] Calls claimReputationFromEconomy on the RepToken Contract.
+[Logic] The RepToken contract reads the member's financial history (earnings/spendings) from the Economy Contract.
+[Result] New RepTokens are minted to the member, increasing their voting power.
+Phase 2: Proposal Lifecycle
+DAO Member: Creates a proposal.
+[Action] Calls propose on the DAO Governor.
+[Input] The proposal must contain:
+Target: The address of the Economy Contract.
+Calldata: The exact function call to be executed, e.g., the data for setPlatformFee(150).
+Description: A human-readable summary of the change.
+[Requirement] The member must hold enough RepTokens to meet the proposalThreshold.
+[Result] The proposal is created and enters the (Active) state. The votingPeriod begins.
+All DAO Members:
+[Action] Call castVote on the DAO Governor (For, Against, or Abstain).
+Decision Gateway: Does the vote pass?
+[Logic] At the end of the votingPeriod, the DAO Governor checks if the "For" votes have surpassed the quorumFraction and represent a majority.
+NO: The proposal state becomes (Defeated). The process ends.
+YES: The proposal state becomes (Succeeded).
+Phase 3: Execution via Timelock
+Anyone:
+[Action] Calls queue on the DAO Governor.
+[Result] The DAO Governor sends the proposal's Target and Calldata to the Timelock Contract. The proposal is now in the (Queued) state, and the timelockDelay begins.
+Wait for timelockDelay to pass.
+Anyone:
+[Action] Calls execute on the DAO Governor.
+[Result] The DAO Governor instructs the Timelock Contract to proceed.
+Timelock Contract:
+[Action] The Timelock Contract executes the transaction. It calls the Economy Contract with the stored Calldata (setPlatformFee(150)).
+Economy Contract:
+[Result] The platformFeeBps state variable is updated from its old value to 150. The rule change is now live.
+The proposal state is now (Executed).
+Key Interactions & Callouts to Highlight on the Diagram:
+Draw a "protected shield" icon around the setter functions on the Economy Contract (e.g., setPlatformFee, setAuthorFee).
+Draw a single, bold arrow from the Timelock Contract to this shield, labeled "Only Authorized Caller," to emphasize that only the Timelock can change the rules.
+Show a feedback loop: Economic activity in the Economy Contract leads to RepTokens, which grant voting power in the DAO Governor, which in turn controls the rules of the Economy Contract.
+    direction TB
+    E0[activity ledger]:::contract
+    E1[[setters\nsetPlatformFee\nsetAuthorFee\n...]]:::shield
+    E2[platformFeeBps]:::contract
+  end
+
+  %% Reputation loop
+  M0 --> E0
+  M1 -->|mint Rep| R[RepToken]:::contract
+  R --> M
+
+  %% Proposal lifecycle
+  M2 -->|target=Economy\ncalldata| G1
+  M3 --> G1
+  G1 -->|pass| G2
+  G1 -->|fail| G3
+
+  %% Timelock execution
+  G2 --> G4 --> T1 --> T2 --> G5 --> T3 -->|only| E1
+  E1 -->|apply| E2
+
+  %% Feedback loop
+  E2 -->|new rules| E0 -->|earn/spend| M1
+
+  %% Cross-diagram pointer
+  E0 -. "Projects" .- P[Project Contracts]:::state
