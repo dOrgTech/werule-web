@@ -136,14 +136,7 @@ class _DAOCardState extends State<DAOCard> {
             ),
           ),
           _buildTopRightIcon(),
-          // --- MODIFIED: The old positioned widgets are replaced by a single info row ---
           _buildBottomInfoRow(context),
-          if (widget.org.underlyingToken != null && widget.org.underlyingToken!.isNotEmpty)
-            const Positioned(
-              bottom: 10,
-              right: 10,
-              child: Opacity(opacity: 0.6, child: Icon(Icons.token, size: 20)),
-            ),
         ],
       ),
     );
@@ -190,9 +183,19 @@ class _DAOCardState extends State<DAOCard> {
   // _buildBottomLeftMembers() has been removed.
 
   Widget _buildTopRightIcon() {
-    Widget typeIcon = widget.org.debatesOnly
-        ? Image.asset("assets/img/debate_tree_icon.png", height: 29)
-        : const Icon(Icons.security, size: 25);
+    Widget typeIcon;
+    List<Color> gradientColors;
+
+    if (widget.org.debatesOnly) {
+      typeIcon = Image.asset("assets/img/debate_tree_icon.png", height: 29);
+      gradientColors = [const Color.fromARGB(255, 156, 214, 229), const Color.fromARGB(255, 206, 206, 206)];
+    } else if (widget.org.isEconomyDao) {
+      typeIcon = const Icon(Icons.attach_money, size: 28);
+      gradientColors = [const Color.fromARGB(255, 130, 200, 130), const Color.fromARGB(255, 206, 206, 206)];
+    } else {
+      typeIcon = const Icon(Icons.security, size: 25);
+      gradientColors = [const Color.fromARGB(255, 205, 176, 96), const Color.fromARGB(255, 206, 206, 206)];
+    }
 
     return Positioned(
       top: 10,
@@ -200,9 +203,7 @@ class _DAOCardState extends State<DAOCard> {
       child: ShaderMask(
         shaderCallback: (Rect bounds) {
           return LinearGradient(
-            colors: widget.org.debatesOnly
-                ? [const Color.fromARGB(255, 156, 214, 229), const Color.fromARGB(255, 206, 206, 206)]
-                : [const Color.fromARGB(255, 205, 176, 96), const Color.fromARGB(255, 206, 206, 206)],
+            colors: gradientColors,
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ).createShader(bounds);

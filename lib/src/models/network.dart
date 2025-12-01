@@ -6,6 +6,7 @@ const Map<String, int> knownChainIds = {
   'Etherlink': 42793,
 };
 
+
 class Network {
   final String name;
   final String rpcUrl;
@@ -13,6 +14,9 @@ class Network {
   final String wrapper; // Non-transferable token wrapper contract address
   final String wrapperT; // Transferable token wrapper contract address
   final String wrapperW; // Wrapped ERC20 token wrapper contract address
+  final String wrapperTrustless; // Economy DAO (Trustless Business) factory address
+  final String nativeProjectImpl; // NativeProject implementation for Economy DAOs
+  final String erc20ProjectImpl; // ERC20Project implementation for Economy DAOs
   final int chainId;
   final String nativeCurrencyName;
   final String nativeCurrencySymbol;
@@ -25,6 +29,9 @@ class Network {
     required this.wrapper,
     required this.wrapperT,
     required this.wrapperW,
+    required this.wrapperTrustless,
+    required this.nativeProjectImpl,
+    required this.erc20ProjectImpl,
     required this.chainId,
     required this.nativeCurrencyName,
     required this.nativeCurrencySymbol,
@@ -39,6 +46,9 @@ class Network {
       wrapper: data['wrapper'] ?? '',
       wrapperT: data['wrapper_t'] ?? '',
       wrapperW: data['wrapper_w'] ?? '',
+      wrapperTrustless: data['wrapper_trustless'] ?? '',
+      nativeProjectImpl: data['nativeProjectImpl'] ?? '',
+      erc20ProjectImpl: data['erc20ProjectImpl'] ?? '',
       chainId: data['chainId'] ?? knownChainIds[docId] ?? 0,
       nativeCurrencyName: data['nativeCurrency'] ?? 'ETH', // Fallback
       nativeCurrencySymbol: data['symbol'] ?? 'ETH', // Fallback

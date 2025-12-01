@@ -1,25 +1,55 @@
 // lib/src/services/registry_service.dart
 
-import 'package:werule/src/models/registry_item.dart';
+import 'package:http/http.dart' as http;
+import 'package:web3dart/web3dart.dart';
+import 'package:werule/src/services/treasury_abi.dart';
 
 class RegistryService {
-  // This is a placeholder. In a real app, this would query a block explorer
-  // API for events or storage from the registry contract.
-  Future<List<RegistryItem>> getRegistryItems(String registryAddress, String blockExplorerUrl) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    // Mock data
-    if (registryAddress.isEmpty) {
-      return [];
+  /// Fetches registry items directly from the treasury/registry contract
+  /// using the getAllKeys() and getAllValues() functions.
+  ///
+  /// [treasuryAddress] - The address of the treasury/registry contract
+  /// [rpcUrl] - The RPC endpoint URL for the network
+  Future<Map<String, String>> getRegistryItems(String treasuryAddress, String rpcUrl) async {
+    if (treasuryAddress.isEmpty) {
+      return {};
     }
-    return [
-      RegistryItem(key: "dao.name", value: "Example DAO Name"),
-      RegistryItem(key: "dao.description", value: "This is a longer description for an example decentralized autonomous organization."),
-      RegistryItem(key: "website", value: "https://example.com"),
-      RegistryItem(key: "documentation", value: "https://docs.example.com/dao-info-and-rules"),
-      RegistryItem(key: "external.api.key", value: "0xabc123def456ghi789jkl012mno345pqr678stu901vwx234yz567abc890def123"),
-    ];
+
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        TreasuryAbi.abi,
+        EthereumAddress.fromHex(treasuryAddress),
+      );
+
+      // Call getAllKeys()
+      final keysFunction = contract.function('getAllKeys');
+      final keysResult = await client.call(
+        contract: contract,
+        function: keysFunction,
+        params: [],
+      );
+      final List<String> keys = (keysResult[0] as List).cast<String>();
+
+      // Call getAllValues()
+      final valuesFunction = contract.function('getAllValues');
+      final valuesResult = await client.call(
+        contract: contract,
+        function: valuesFunction,
+        params: [],
+      );
+      final List<String> values = (valuesResult[0] as List).cast<String>();
+
+      // Build the map
+      final Map<String, String> registry = {};
+      for (int i = 0; i < keys.length; i++) {
+        registry[keys[i]] = values[i];
+      }
+
+      return registry;
+    } finally {
+      await client.dispose();
+    }
   }
 }
 // lib/src/services/registry_service.dart

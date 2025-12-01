@@ -23,6 +23,7 @@ class Org {
   final bool debatesOnly;
   final String description;
   final Map<String, String> registry; // THE FIX: Added the registry field.
+  final String? economy; // Economy DAO contract address (null for standard DAOs)
 
   Org({
     required this.name,
@@ -45,6 +46,7 @@ class Org {
     this.debatesOnly = false,
     required this.description,
     required this.registry, // THE FIX: Added to constructor.
+    this.economy,
   });
 
   factory Org.fromFirestore(Map<String, dynamic> json, String docId) {
@@ -69,7 +71,11 @@ class Org {
       votingDuration: json['votingDuration'] ?? 0,
       // THE FIX: Populate the registry map from the Firestore document.
       registry: json['registry'] != null ? Map<String, String>.from(json['registry']) : {},
+      economy: json['economy'],
     );
   }
+
+  /// Returns true if this is an Economy DAO
+  bool get isEconomyDao => economy != null && economy!.isNotEmpty;
 }
 // lib/src/models/org.dart

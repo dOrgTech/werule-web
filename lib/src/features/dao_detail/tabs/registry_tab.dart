@@ -1,8 +1,11 @@
 // lib/src/features/dao_detail/tabs/registry_tab.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:werule/src/features/dao_detail/tabs/proposals_tab.dart';
 import 'package:werule/src/models/org.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/services/registry_service.dart';
 
 // Simple model for a registry item
 class RegistryItem {
@@ -13,7 +16,6 @@ class RegistryItem {
 
 class RegistryTab extends StatefulWidget {
   final Org dao;
-  // THE FIX: networkName is no longer needed here.
   const RegistryTab({super.key, required this.dao});
 
   @override
@@ -22,21 +24,49 @@ class RegistryTab extends StatefulWidget {
 
 class _RegistryTabState extends State<RegistryTab> {
   final _searchController = TextEditingController();
+  final _registryService = RegistryService();
+  late Future<Map<String, String>> _registryFuture;
   List<RegistryItem> _filteredItems = [];
   List<RegistryItem> _allItems = [];
+  bool _isDataLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    // THE FIX: Load items directly from the dao object, no async needed.
-    _allItems = widget.dao.registry.entries
-        .map((entry) => RegistryItem(key: entry.key, value: entry.value))
-        .toList();
-    _filteredItems = _allItems;
     _searchController.addListener(_filterItems);
+    // Fetch registry items from the contract
+    _registryFuture = _fetchRegistry();
+  }
+
+  Future<Map<String, String>> _fetchRegistry() async {
+    final networkProvider = context.read<NetworkProvider>();
+    final network = networkProvider.selectedNetwork;
+
+    if (network == null) {
+      throw Exception("No network selected");
+    }
+
+    // The registry is on the treasury contract (they're the same)
+    final registry = await _registryService.getRegistryItems(
+      widget.dao.registryAddress,
+      network.rpcUrl,
+    );
+
+    // Load the items into state once
+    if (!_isDataLoaded) {
+      _allItems = registry.entries
+          .map((entry) => RegistryItem(key: entry.key, value: entry.value))
+          .toList();
+      _filteredItems = _allItems;
+      _isDataLoaded = true;
+    }
+
+    return registry;
   }
 
   void _filterItems() {
+    if (!_isDataLoaded) return;
+
     final query = _searchController.text.toLowerCase();
     setState(() {
       if (query.isEmpty) {
@@ -58,34 +88,56 @@ class _RegistryTabState extends State<RegistryTab> {
 
   @override
   Widget build(BuildContext context) {
-    // THE FIX: Removed the FutureBuilder and now build the layout directly.
-    return LayoutBuilder(builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 700;
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-        child: Column(
-          children: [
-            _buildControls(isMobile),
-            const SizedBox(height: 24),
-            if (_filteredItems.isEmpty)
-              Expanded(
-                child: Center(
-                  child: Text(
-                    _allItems.isEmpty
-                        ? "There are no items in this DAO's registry."
-                        : "No registry items match your search.",
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: isMobile ? _buildMobileList() : _buildDesktopTable(),
-              )
-          ],
-        ),
-      );
-    });
+    return FutureBuilder<Map<String, String>>(
+      future: _registryFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Error loading registry: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        // Data is already loaded into _allItems and _filteredItems by _fetchRegistry
+        return LayoutBuilder(builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 700;
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            child: Column(
+              children: [
+                _buildControls(isMobile),
+                const SizedBox(height: 24),
+                if (_filteredItems.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        _allItems.isEmpty
+                            ? "There are no items in this DAO's registry."
+                            : "No registry items match your search.",
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: isMobile ? _buildMobileList() : _buildDesktopTable(),
+                  )
+              ],
+            ),
+          );
+        });
+      },
+    );
   }
 
   Widget _buildControls(bool isMobile) {

@@ -38,8 +38,14 @@ class RegistryProvider extends ChangeNotifier {
         return;
       }
 
-      final fetchedItems = await _registryService.getRegistryItems(registryAddress, _network.blockExplorerUrl);
-      _items = fetchedItems;
+      // Fetch registry from contract (returns Map<String, String>)
+      final fetchedRegistry = await _registryService.getRegistryItems(registryAddress, _network.rpcUrl);
+
+      // Convert to List<RegistryItem>
+      _items = fetchedRegistry.entries
+          .map((entry) => RegistryItem(key: entry.key, value: entry.value))
+          .toList();
+
       _state = DataState.loaded;
 
     } catch(e) {

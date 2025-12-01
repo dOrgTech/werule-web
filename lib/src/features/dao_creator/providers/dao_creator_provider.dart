@@ -208,10 +208,10 @@ class DaoCreatorProvider extends ChangeNotifier {
     _deploymentError = null;
     _deploymentStatusMessage = "Preparing transaction...";
     goToStep(deployingStepIndex);
-    
+
     // 2. Wait for the UI to redraw.
     await Future.delayed(Duration.zero);
-    
+
     // 3. Proceed with the blockchain call.
     final network = _networkProvider.selectedNetwork;
     if (network == null) {
@@ -220,7 +220,7 @@ class DaoCreatorProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    
+
     try {
       final memberBalances = members.map((m) => m.personalBalance ?? "0").toList();
 
@@ -229,8 +229,80 @@ class DaoCreatorProvider extends ChangeNotifier {
 
       final String deployedAddress;
 
-      // Check if we're wrapping an existing ERC20 token
-      if (useWrappedToken) {
+      // Check if this is an Economy DAO
+      if (daoType == 'Economy DAO') {
+        // Use the trustless factory for Economy DAOs
+        final factoryAddress = network.wrapperTrustless;
+
+        // Debug logging
+        final console = getProperty(globalThis, 'console');
+        callMethod(console, 'log', ["=== ECONOMY DAO DEBUG ==="]);
+        callMethod(console, 'log', ["Network name: ${network.name}"]);
+        callMethod(console, 'log', ["Factory address: $factoryAddress"]);
+        callMethod(console, 'log', ["Native project impl: ${network.nativeProjectImpl}"]);
+        callMethod(console, 'log', ["ERC20 project impl: ${network.erc20ProjectImpl}"]);
+        callMethod(console, 'log', ["DAO name: $daoName"]);
+        callMethod(console, 'log', ["Token symbol: $tokenSymbol"]);
+        callMethod(console, 'log', ["Members: ${members.length}"]);
+        callMethod(console, 'log', ["Member addresses: ${members.map((m) => m.address).toList()}"]);
+        callMethod(console, 'log', ["Member balances: $memberBalances"]);
+        callMethod(console, 'log', ["Execution delay (minutes): ${executionDelay.inMinutes}"]);
+        callMethod(console, 'log', ["Voting duration (minutes): ${votingDuration.inMinutes}"]);
+        callMethod(console, 'log', ["Proposal threshold: $proposalThreshold"]);
+        callMethod(console, 'log', ["Quorum threshold: $quorumThreshold"]);
+        callMethod(console, 'log', ["Platform fee: $platformFee"]);
+        callMethod(console, 'log', ["Author fee: $authorFee"]);
+        callMethod(console, 'log', ["Cooling off (seconds): ${coolingOffPeriod.inSeconds}"]);
+        callMethod(console, 'log', ["Backer voting quorum: $backerVotingQuorum"]);
+        callMethod(console, 'log', ["Project creation threshold: $projectCreationThreshold"]);
+        callMethod(console, 'log', ["Dispute/appeal period (seconds): ${disputeAndAppealPeriod.inSeconds}"]);
+        callMethod(console, 'log', ["==========================="]);
+
+        if (factoryAddress.isEmpty) {
+          throw Exception("Economy DAO factory not configured for this network.");
+        }
+
+        if (network.nativeProjectImpl.isEmpty || network.erc20ProjectImpl.isEmpty) {
+          throw Exception("Project implementation addresses not configured for this network.");
+        }
+
+        // Convert fee percentages to basis points (multiply by 100)
+        final arbitrationFeeBps = (arbitrationFee * 100).round();
+        final platformFeeBps = (platformFee * 100).round();
+        final authorFeeBps = (authorFee * 100).round();
+        // backersQuorumBps is already in percentage, convert to basis points
+        final backersQuorumBps = backerVotingQuorum * 100;
+        // Convert project creation threshold to wei (18 decimals)
+        final projectThresholdWei = projectCreationThreshold;
+
+        callMethod(console, 'log', ["Calling createEconomyDAO..."]);
+
+        deployedAddress = await createEconomyDAO(
+          factoryAddress: factoryAddress,
+          tokenName: daoName ?? '',
+          tokenSymbol: tokenSymbol ?? '',
+          initialMembers: members.map((m) => m.address).toList(),
+          memberBalances: memberBalances,
+          timelockDelayMinutes: executionDelay.inMinutes,
+          votingPeriodMinutes: votingDuration.inMinutes,
+          proposalThreshold: proposalThreshold,
+          quorumFraction: quorumThreshold,
+          arbitrationFeeBps: arbitrationFeeBps,
+          platformFeeBps: platformFeeBps,
+          authorFeeBps: authorFeeBps,
+          coolingOffPeriodSeconds: coolingOffPeriod.inSeconds,
+          backersQuorumBps: backersQuorumBps,
+          projectThresholdWei: projectThresholdWei,
+          appealPeriodSeconds: disputeAndAppealPeriod.inSeconds,
+          nativeProjectImpl: network.nativeProjectImpl,
+          erc20ProjectImpl: network.erc20ProjectImpl,
+          registry: registry,
+          onProgress: (message) {
+            _deploymentStatusMessage = message;
+            notifyListeners();
+          },
+        );
+      } else if (useWrappedToken) {
         // Use wrapped token factory
         final factoryAddress = network.wrapperW;
 
@@ -249,12 +321,10 @@ class DaoCreatorProvider extends ChangeNotifier {
           transferrableStr: isTransferrable ? 'true' : 'false',
         );
       } else {
-        // Choose the correct wrapper contract based on transferability
+        // Standard DAO: Choose the correct wrapper contract based on transferability
         // wrapper = non-transferable (soulbound), wrapperT = transferable
         final factoryAddress = isTransferrable ? network.wrapperT : network.wrapper;
 
-        // NOTE: This call will need to be updated when backend supports Economy DAO.
-        // For now, we only call the standard DAO creation.
         deployedAddress = await createDAOFromWizard(
           factoryAddress: factoryAddress,
           name: daoName ?? '',
@@ -271,9 +341,9 @@ class DaoCreatorProvider extends ChangeNotifier {
           registry: registry,
         );
       }
-      
+
       _newDaoAddress = deployedAddress;
-      
+
       _deploymentStatusMessage = "Transaction confirmed. Waiting for indexer...";
       notifyListeners();
 

@@ -12,14 +12,14 @@
 .swiftpm/
 migrate_working_dir/
 /lib/firebase_options.dart
-
+.firebaserc
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
 werule_new.md
-
+claude/
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.

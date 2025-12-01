@@ -120,11 +120,18 @@ Widget _buildHeader(BuildContext context) {
                   label: 'Treasury',
                   address: dao.registryAddress,
                   isShort: false),
-                  SizedBox(height: 10),
+              const SizedBox(height: 10),
               _AddressLine(
                   label: '${dao.symbol} Token',
                   address: dao.govTokenAddress,
                   isShort: false),
+              if (dao.isEconomyDao) ...[
+                const SizedBox(height: 10),
+                _AddressLine(
+                    label: 'Economy',
+                    address: dao.economy!,
+                    isShort: false),
+              ],
             ],
           ),
         ),
@@ -165,6 +172,11 @@ Widget _buildHeader(BuildContext context) {
             label: '${dao.symbol} Token',
             address: dao.govTokenAddress,
             isShort: true),
+        if (dao.isEconomyDao)
+          _AddressLine(
+              label: 'Economy',
+              address: dao.economy!,
+              isShort: true),
         const SizedBox(height: 24),
         Text(
           dao.description,
