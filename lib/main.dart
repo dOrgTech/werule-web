@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/config/local_test_config.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/dao_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
@@ -21,6 +23,13 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Connect to Firestore emulator in local test mode
+  if (LocalTestConfig.enabled) {
+    debugPrint('[main] Local test mode enabled - connecting to Firestore emulator');
+    FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
+  }
+
   runApp(const MyApp());
 }
 

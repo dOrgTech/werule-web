@@ -4,6 +4,7 @@
 const Map<String, int> knownChainIds = {
   'Etherlink-Testnet': 128123,
   'Etherlink': 42793,
+  'Localhost': 31337,
 };
 
 
