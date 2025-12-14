@@ -29,6 +29,9 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
   late bool _isTransferrable;
   late bool _useWrappedToken;
 
+  // Economy DAOs always use non-transferable, non-wrapped tokens
+  bool get _isEconomyDao => widget.provider.daoType == 'Economy DAO';
+
   @override
   void initState() {
     super.initState();
@@ -39,8 +42,9 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
         TextEditingController(text: widget.provider.tokenSymbol);
     _underlyingTokenAddressController =
         TextEditingController(text: widget.provider.underlyingTokenAddress);
-    _isTransferrable = widget.provider.isTransferrable;
-    _useWrappedToken = widget.provider.useWrappedToken;
+    // For Economy DAO, force non-transferable and non-wrapped
+    _isTransferrable = _isEconomyDao ? false : widget.provider.isTransferrable;
+    _useWrappedToken = _isEconomyDao ? false : widget.provider.useWrappedToken;
   }
 
   @override
@@ -107,135 +111,165 @@ class _Screen2BasicSetupState extends State<Screen2BasicSetup> {
                   Text("Governance Token",
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 20),
-                  // Radio buttons for token type selection
-                  RadioListTile<bool>(
-                    title: const Text('Deploy new standard token'),
-                    value: false,
-                    groupValue: _useWrappedToken,
-                    activeColor: Theme.of(context).indicatorColor,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _useWrappedToken = value ?? false;
-                      });
-                    },
-                  ),
-                  RadioListTile<bool>(
-                    title: const Text('Wrap existing ERC20 token'),
-                    value: true,
-                    groupValue: _useWrappedToken,
-                    activeColor: Theme.of(context).indicatorColor,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _useWrappedToken = value ?? true;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  // Conditional fields based on token type - with fixed height to prevent jumping
-                  SizedBox(
-                    height: 135, // Fixed height to accommodate the taller option (standard token with checkbox)
-                    child: _useWrappedToken
-                        ? // Wrapped token fields
-                        Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: TextFormField(
-                                  controller: _underlyingTokenAddressController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Underlying Token Address',
-                                    hintText: '0x...',
+                  // For Economy DAO, only show token symbol (non-transferable, non-wrapped is enforced)
+                  if (_isEconomyDao) ...[
+                    Text(
+                      'Economy DAOs use non-transferable tokens to ensure reputation-based governance.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: 150,
+                      child: TextFormField(
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z0-9]')),
+                          UpperCaseTextFormatter(),
+                        ],
+                        maxLength: 5,
+                        controller: _tokenSymbolController,
+                        decoration: const InputDecoration(
+                            counterText: "",
+                            labelText: 'Ticker Symbol'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Ticker required';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ] else ...[
+                    // Radio buttons for token type selection (Standard DAO only)
+                    RadioListTile<bool>(
+                      title: const Text('Deploy new standard token'),
+                      value: false,
+                      groupValue: _useWrappedToken,
+                      activeColor: Theme.of(context).indicatorColor,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _useWrappedToken = value ?? false;
+                        });
+                      },
+                    ),
+                    RadioListTile<bool>(
+                      title: const Text('Wrap existing ERC20 token'),
+                      value: true,
+                      groupValue: _useWrappedToken,
+                      activeColor: Theme.of(context).indicatorColor,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _useWrappedToken = value ?? true;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    // Conditional fields based on token type - with fixed height to prevent jumping
+                    SizedBox(
+                      height: 135, // Fixed height to accommodate the taller option (standard token with checkbox)
+                      child: _useWrappedToken
+                          ? // Wrapped token fields
+                          Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: TextFormField(
+                                    controller: _underlyingTokenAddressController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Underlying Token Address',
+                                      hintText: '0x...',
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter the underlying token address';
+                                      }
+                                      // Basic Ethereum address validation
+                                      if (!RegExp(r'^0x[a-fA-F0-9]{40}$')
+                                          .hasMatch(value)) {
+                                        return 'Invalid Ethereum address';
+                                      }
+                                      return null;
+                                    },
                                   ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter the underlying token address';
-                                    }
-                                    // Basic Ethereum address validation
-                                    if (!RegExp(r'^0x[a-fA-F0-9]{40}$')
-                                        .hasMatch(value)) {
-                                      return 'Invalid Ethereum address';
-                                    }
-                                    return null;
-                                  },
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                flex: 1,
-                                child: TextFormField(
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'[a-zA-Z0-9]')),
-                                    UpperCaseTextFormatter(),
-                                  ],
-                                  maxLength: 5,
-                                  controller: _tokenSymbolController,
-                                  decoration: const InputDecoration(
-                                    counterText: "",
-                                    labelText: 'Symbol',
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          )
-                        : // Standard token field
-                        Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(
-                                width: 150,
-                                child: TextFormField(
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'[a-zA-Z0-9]')),
-                                    UpperCaseTextFormatter(),
-                                  ],
-                                  maxLength: 5,
-                                  controller: _tokenSymbolController,
-                                  decoration: const InputDecoration(
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  flex: 1,
+                                  child: TextFormField(
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z0-9]')),
+                                      UpperCaseTextFormatter(),
+                                    ],
+                                    maxLength: 5,
+                                    controller: _tokenSymbolController,
+                                    decoration: const InputDecoration(
                                       counterText: "",
-                                      labelText: 'Ticker Symbol'),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Ticker required';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                height: 40,
-                                width: 300,
-                                child: CheckboxListTile(
-                                  title: const Text('Transferable'),
-                                  subtitle: Text(
-                                    _isTransferrable
-                                        ? 'Members can transfer tokens freely'
-                                        : 'Tokens are soulbound (non-transferable)',
-                                    style: TextStyle(
-                                        fontSize: 12, color: Colors.grey[600]),
+                                      labelText: 'Symbol',
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Required';
+                                      }
+                                      return null;
+                                    },
                                   ),
-                                  value: _isTransferrable,
-                                  activeColor: Theme.of(context).indicatorColor,
-                                  checkColor: Colors.black,
-                                  onChanged: (bool? value) {
-                                    setState(() {
-                                      _isTransferrable = value ?? false;
-                                    });
-                                  },
                                 ),
-                              ),
-                            ],
-                          ),
-                  ),
+                              ],
+                            )
+                          : // Standard token field
+                          Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 150,
+                                  child: TextFormField(
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z0-9]')),
+                                      UpperCaseTextFormatter(),
+                                    ],
+                                    maxLength: 5,
+                                    controller: _tokenSymbolController,
+                                    decoration: const InputDecoration(
+                                        counterText: "",
+                                        labelText: 'Ticker Symbol'),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Ticker required';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  height: 40,
+                                  width: 300,
+                                  child: CheckboxListTile(
+                                    title: const Text('Transferable'),
+                                    subtitle: Text(
+                                      _isTransferrable
+                                          ? 'Members can transfer tokens freely'
+                                          : 'Tokens are soulbound (non-transferable)',
+                                      style: TextStyle(
+                                          fontSize: 12, color: Colors.grey[600]),
+                                    ),
+                                    value: _isTransferrable,
+                                    activeColor: Theme.of(context).indicatorColor,
+                                    checkColor: Colors.black,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        _isTransferrable = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ],
                   const SizedBox(height: 56),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

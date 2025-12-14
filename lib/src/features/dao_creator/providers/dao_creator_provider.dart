@@ -134,9 +134,16 @@ class DaoCreatorProvider extends ChangeNotifier {
     daoName = name;
     daoDescription = description;
     tokenSymbol = symbol;
-    isTransferrable = transferrable;
-    useWrappedToken = wrappedToken ?? false;
-    underlyingTokenAddress = underlyingToken;
+    // Economy DAOs always use non-transferable, non-wrapped tokens
+    if (daoType == 'Economy DAO') {
+      isTransferrable = false;
+      useWrappedToken = false;
+      underlyingTokenAddress = null;
+    } else {
+      isTransferrable = transferrable;
+      useWrappedToken = wrappedToken ?? false;
+      underlyingTokenAddress = underlyingToken;
+    }
     // Reset members if token symbol changes, as supply is dependent on it.
     members = [];
     totalSupply = "0";
@@ -275,6 +282,12 @@ class DaoCreatorProvider extends ChangeNotifier {
         // Convert project creation threshold to wei (18 decimals)
         final projectThresholdWei = projectCreationThreshold;
 
+        // Add description to registry so it can be read by the indexer
+        final economyRegistry = Map<String, String>.from(registry);
+        if (daoDescription != null && daoDescription!.isNotEmpty) {
+          economyRegistry['description'] = daoDescription!;
+        }
+
         callMethod(console, 'log', ["Calling createEconomyDAO..."]);
 
         deployedAddress = await createEconomyDAO(
@@ -296,7 +309,7 @@ class DaoCreatorProvider extends ChangeNotifier {
           appealPeriodSeconds: disputeAndAppealPeriod.inSeconds,
           nativeProjectImpl: network.nativeProjectImpl,
           erc20ProjectImpl: network.erc20ProjectImpl,
-          registry: registry,
+          registry: economyRegistry,
           onProgress: (message) {
             _deploymentStatusMessage = message;
             notifyListeners();
