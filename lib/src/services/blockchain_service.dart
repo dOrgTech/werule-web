@@ -10,7 +10,9 @@ import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 import 'package:werule/src/services/erc20_gov_abi.dart';
+import 'package:werule/src/services/economy_abi.dart';
 import 'package:werule/src/services/governor_abi.dart';
+import 'package:werule/src/services/reptoken_abi.dart';
 import '../models/network.dart';
 
 class AccountMismatchException implements Exception {
@@ -254,4 +256,262 @@ class BlockchainService {
       await client.dispose();
     }
   }
+
+  // --- Economy Contract Methods ---
+
+  /// Gets user's financial profile from Economy contract
+  Future<EconomyUserProfile> getEconomyUserProfile(String economyAddress, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(EconomyAbi.abi, EthereumAddress.fromHex(economyAddress));
+      final func = contract.function('getUser');
+      final result = await client.call(contract: contract, function: func, params: [EthereumAddress.fromHex(userAddress)]);
+
+      // Result is a tuple: (earnedTokens[], earnedAmounts[], spentTokens[], spentAmounts[], projectsAsAuthor[], projectsAsContractor[], projectsAsArbiter[])
+      final profile = result[0] as List<dynamic>;
+
+      final earnedTokens = (profile[0] as List<dynamic>).map((e) => (e as EthereumAddress).hex).toList();
+      final earnedAmounts = (profile[1] as List<dynamic>).map((e) => e as BigInt).toList();
+      final spentTokens = (profile[2] as List<dynamic>).map((e) => (e as EthereumAddress).hex).toList();
+      final spentAmounts = (profile[3] as List<dynamic>).map((e) => e as BigInt).toList();
+      final projectsAsAuthor = (profile[4] as List<dynamic>).map((e) => (e as EthereumAddress).hex).toList();
+      final projectsAsContractor = (profile[5] as List<dynamic>).map((e) => (e as EthereumAddress).hex).toList();
+      final projectsAsArbiter = (profile[6] as List<dynamic>).map((e) => (e as EthereumAddress).hex).toList();
+
+      return EconomyUserProfile(
+        earnedTokens: earnedTokens,
+        earnedAmounts: earnedAmounts,
+        spentTokens: spentTokens,
+        spentAmounts: spentAmounts,
+        projectsAsAuthor: projectsAsAuthor,
+        projectsAsContractor: projectsAsContractor,
+        projectsAsArbiter: projectsAsArbiter,
+      );
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // --- RepToken Methods ---
+
+  /// Gets current passive income epoch ID
+  Future<BigInt> getCurrentPassiveIncomeEpoch(String tokenAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('currentPassiveIncomeEpoch');
+      final result = await client.call(contract: contract, function: func, params: []);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets current delegate reward epoch ID
+  Future<BigInt> getCurrentDelegateRewardEpoch(String tokenAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('currentDelegateRewardEpoch');
+      final result = await client.call(contract: contract, function: func, params: []);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets passive income epoch details
+  Future<RewardEpoch> getPassiveIncomeEpoch(String tokenAddress, BigInt epochId, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('passiveIncomeEpochs');
+      final result = await client.call(contract: contract, function: func, params: [epochId]);
+      return RewardEpoch(
+        budget: result[0] as BigInt,
+        paymentToken: (result[1] as EthereumAddress).hex,
+        startTimestamp: result[2] as BigInt,
+      );
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets delegate reward epoch details
+  Future<RewardEpoch> getDelegateRewardEpoch(String tokenAddress, BigInt epochId, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('delegateRewardEpochs');
+      final result = await client.call(contract: contract, function: func, params: [epochId]);
+      return RewardEpoch(
+        budget: result[0] as BigInt,
+        paymentToken: (result[1] as EthereumAddress).hex,
+        startTimestamp: result[2] as BigInt,
+      );
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Checks if user has claimed passive income for epoch
+  Future<bool> hasClaimedPassiveIncome(String tokenAddress, BigInt epochId, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('hasClaimedPassiveIncome');
+      final result = await client.call(contract: contract, function: func, params: [epochId, EthereumAddress.fromHex(userAddress)]);
+      return result[0] as bool;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Checks if user has claimed delegate reward for epoch
+  Future<bool> hasClaimedDelegateReward(String tokenAddress, BigInt epochId, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('hasClaimedDelegateReward');
+      final result = await client.call(contract: contract, function: func, params: [epochId, EthereumAddress.fromHex(userAddress)]);
+      return result[0] as bool;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets amount of earnings user has already claimed for a token
+  Future<BigInt> getClaimedEarnings(String tokenAddress, String userAddress, String earnedTokenAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('claimedEarnings');
+      final result = await client.call(contract: contract, function: func, params: [
+        EthereumAddress.fromHex(userAddress),
+        EthereumAddress.fromHex(earnedTokenAddress),
+      ]);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets amount of spendings user has already claimed for a token
+  Future<BigInt> getClaimedSpendings(String tokenAddress, String userAddress, String spentTokenAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('claimedSpendings');
+      final result = await client.call(contract: contract, function: func, params: [
+        EthereumAddress.fromHex(userAddress),
+        EthereumAddress.fromHex(spentTokenAddress),
+      ]);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets past total supply at a specific timepoint
+  Future<BigInt> getPastTotalSupply(String tokenAddress, BigInt timepoint, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('getPastTotalSupply');
+      final result = await client.call(contract: contract, function: func, params: [timepoint]);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets total supply of RepToken
+  Future<BigInt> getTotalSupply(String tokenAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(RepTokenAbi.abi, EthereumAddress.fromHex(tokenAddress));
+      final func = contract.function('totalSupply');
+      final result = await client.call(contract: contract, function: func, params: []);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  // --- RepToken Write Methods ---
+
+  /// Claims reputation from economy (converts economic activity to governance tokens)
+  Future<String> claimReputationFromEconomy(String tokenAddress, String signerAddress) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(tokenAddress, RepTokenAbi.abiJson, signer);
+    final tx = await contract.send('claimReputationFromEconomy', []);
+    await tx.wait();
+    return tx.hash;
+  }
+
+  /// Claims passive income for a specific epoch
+  Future<String> claimPassiveIncome(String tokenAddress, BigInt epochId, String signerAddress) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(tokenAddress, RepTokenAbi.abiJson, signer);
+    final tx = await contract.send('claimPassiveIncome', [epochId.toInt()]);
+    await tx.wait();
+    return tx.hash;
+  }
+
+  /// Claims representation reward for a specific epoch
+  Future<String> claimRepresentationReward(String tokenAddress, BigInt epochId, String signerAddress) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(tokenAddress, RepTokenAbi.abiJson, signer);
+    final tx = await contract.send('claimRepresentationReward', [epochId.toInt()]);
+    await tx.wait();
+    return tx.hash;
+  }
+}
+
+/// Represents a user's economic profile from the Economy contract
+class EconomyUserProfile {
+  final List<String> earnedTokens;
+  final List<BigInt> earnedAmounts;
+  final List<String> spentTokens;
+  final List<BigInt> spentAmounts;
+  final List<String> projectsAsAuthor;
+  final List<String> projectsAsContractor;
+  final List<String> projectsAsArbiter;
+
+  EconomyUserProfile({
+    required this.earnedTokens,
+    required this.earnedAmounts,
+    required this.spentTokens,
+    required this.spentAmounts,
+    required this.projectsAsAuthor,
+    required this.projectsAsContractor,
+    required this.projectsAsArbiter,
+  });
+}
+
+/// Represents a reward epoch (passive income or delegate reward)
+class RewardEpoch {
+  final BigInt budget;
+  final String paymentToken;
+  final BigInt startTimestamp;
+
+  RewardEpoch({
+    required this.budget,
+    required this.paymentToken,
+    required this.startTimestamp,
+  });
+
+  bool get isValid => startTimestamp > BigInt.zero;
 }

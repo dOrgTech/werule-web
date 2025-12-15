@@ -1,10 +1,13 @@
 // lib/src/features/dao_detail/tabs/account_tab.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:werule/src/features/dao_detail/widgets/claim_reputation_card.dart';
+import 'package:werule/src/features/dao_detail/widgets/economy_benefits_card.dart';
 import 'package:werule/src/features/dao_detail/widgets/proposal_list_item.dart';
 import 'package:werule/src/features/dao_detail/widgets/token_bridge_widget.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/providers/auth_provider.dart';
+import 'package:werule/src/providers/economy_provider.dart';
 import 'package:werule/src/providers/member_provider.dart';
 import 'package:werule/src/providers/network_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
@@ -125,6 +128,33 @@ class _AccountView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEconomyDao = dao.isEconomyDao;
+
+    // For Economy DAOs, wrap with EconomyProvider
+    if (isEconomyDao) {
+      return ChangeNotifierProvider(
+        create: (context) => EconomyProvider(
+          authProvider: context.read<AuthProvider>(),
+          blockchainService: context.read<BlockchainService>(),
+          org: dao,
+          network: context.read<NetworkProvider>().selectedNetwork!,
+        ),
+        child: _AccountViewContent(dao: dao, canShowBridge: canShowBridge, isEconomyDao: true),
+      );
+    }
+
+    return _AccountViewContent(dao: dao, canShowBridge: canShowBridge, isEconomyDao: false);
+  }
+}
+
+class _AccountViewContent extends StatelessWidget {
+  final Org dao;
+  final bool canShowBridge;
+  final bool isEconomyDao;
+  const _AccountViewContent({required this.dao, required this.canShowBridge, required this.isEconomyDao});
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
       child: Column(
@@ -135,6 +165,13 @@ class _AccountView extends StatelessWidget {
           if (canShowBridge) ...[
             const SizedBox(height: 16),
             _TokenBridgeCard(dao: dao),
+          ],
+          // Economy DAO specific sections
+          if (isEconomyDao) ...[
+            const SizedBox(height: 16),
+            ClaimReputationCard(dao: dao),
+            const SizedBox(height: 16),
+            EconomyBenefitsCard(dao: dao),
           ],
           const SizedBox(height: 16),
           _ActivityHistoryCard(dao: dao, networkName: context.read<NetworkProvider>().selectedNetwork!.name),
