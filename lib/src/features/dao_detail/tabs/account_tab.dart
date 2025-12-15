@@ -54,6 +54,11 @@ class AccountTab extends StatelessWidget {
                                 dao.underlyingToken!.startsWith('0x');
 
           if (!isMember) {
+            // For Economy DAOs, show claim section even to non-members
+            // (they may have economic activity to claim)
+            if (dao.isEconomyDao) {
+              return _NonMemberEconomyView(dao: dao, canShowBridge: canShowBridge);
+            }
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -118,6 +123,68 @@ class _NotAMemberView extends StatelessWidget {
   }
 }
 
+/// View for non-members of Economy DAOs who may have claimable economic activity
+class _NonMemberEconomyView extends StatelessWidget {
+  final Org dao;
+  final bool canShowBridge;
+  const _NonMemberEconomyView({required this.dao, required this.canShowBridge});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => EconomyProvider(
+        authProvider: context.read<AuthProvider>(),
+        blockchainService: context.read<BlockchainService>(),
+        org: dao,
+        network: context.read<NetworkProvider>().selectedNetwork!,
+      ),
+      child: Consumer<EconomyProvider>(
+        builder: (context, economyProvider, child) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+            child: Column(
+              children: [
+                // Show token bridge if available
+                if (canShowBridge) ...[
+                  _TokenBridgeCard(dao: dao),
+                  const SizedBox(height: 16),
+                ],
+                // Always show the claim reputation card for Economy DAOs
+                ClaimReputationCard(dao: dao),
+                const SizedBox(height: 16),
+                // Show a helpful message
+                Card(
+                  color: const Color(0xff2c2c2c),
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        Icon(Icons.info_outline, size: 40, color: Colors.blue[300]),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Not a member yet",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "You don't have any governance tokens yet. If you've participated in projects "
+                          "(as a contractor, author, or backer), you can claim reputation above to become a member.",
+                          style: TextStyle(color: Colors.grey[400], height: 1.4),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
 
 // --- Main Account View ---
 
