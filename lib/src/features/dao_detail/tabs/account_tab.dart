@@ -149,8 +149,8 @@ class _NonMemberEconomyView extends StatelessWidget {
                   _TokenBridgeCard(dao: dao),
                   const SizedBox(height: 16),
                 ],
-                // Always show the claim reputation card for Economy DAOs
-                ClaimReputationCard(dao: dao),
+                // Economy claims and benefits section (side by side)
+                _EconomySectionRow(dao: dao),
                 const SizedBox(height: 16),
                 // Show a helpful message
                 Card(
@@ -233,16 +233,70 @@ class _AccountViewContent extends StatelessWidget {
             const SizedBox(height: 16),
             _TokenBridgeCard(dao: dao),
           ],
-          // Economy DAO specific sections
+          // Economy DAO specific sections - side by side layout
           if (isEconomyDao) ...[
             const SizedBox(height: 16),
-            ClaimReputationCard(dao: dao),
-            const SizedBox(height: 16),
-            EconomyBenefitsCard(dao: dao),
+            _EconomySectionRow(dao: dao),
           ],
           const SizedBox(height: 16),
           _ActivityHistoryCard(dao: dao, networkName: context.read<NetworkProvider>().selectedNetwork!.name),
         ],
+      ),
+    );
+  }
+}
+
+// --- Economy Section (Side by Side) ---
+
+class _EconomySectionRow extends StatelessWidget {
+  final Org dao;
+  const _EconomySectionRow({required this.dao});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xff2c2c2c),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Economy Claims & Benefits", style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 8),
+            Text(
+              "Claim governance tokens from your economic activity, or claim payment tokens from DAO benefits.",
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 24),
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 700;
+
+              if (isMobile) {
+                return Column(
+                  children: [
+                    ClaimReputationCard(dao: dao, compact: true),
+                    const SizedBox(height: 16),
+                    EconomyBenefitsCard(dao: dao, compact: true),
+                  ],
+                );
+              }
+
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: ClaimReputationCard(dao: dao)),
+                    const SizedBox(width: 24),
+                    Expanded(child: EconomyBenefitsCard(dao: dao)),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

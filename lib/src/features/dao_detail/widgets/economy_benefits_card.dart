@@ -6,9 +6,12 @@ import 'package:werule/src/providers/economy_provider.dart';
 import 'package:werule/src/services/economy_abi.dart';
 import 'package:werule/src/utils/reusable.dart';
 
+/// Card for claiming DAO benefits: passive income and delegation rewards.
+/// These are payment tokens (not governance tokens) distributed based on epochs.
 class EconomyBenefitsCard extends StatelessWidget {
   final Org dao;
-  const EconomyBenefitsCard({super.key, required this.dao});
+  final bool compact;
+  const EconomyBenefitsCard({super.key, required this.dao, this.compact = false});
 
   void _showSnackbar(BuildContext context, String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -22,237 +25,238 @@ class EconomyBenefitsCard extends StatelessWidget {
     final provider = context.watch<EconomyProvider>();
 
     if (provider.isLoading) {
-      return const Card(
-        color: Color(0xff2c2c2c),
-        child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: Center(child: CircularProgressIndicator()),
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.2),
+          border: Border.all(width: 0.3, color: const Color.fromARGB(255, 105, 105, 105)),
         ),
+        padding: const EdgeInsets.all(24.0),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    final hasPassiveIncomeEpochs = provider.passiveIncomeEpochs.isNotEmpty;
-    final hasDelegateRewardEpochs = provider.delegateRewardEpochs.isNotEmpty;
-
-    if (!hasPassiveIncomeEpochs && !hasDelegateRewardEpochs) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      color: const Color(0xff2c2c2c),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("DAO Benefits", style: TextStyle(fontSize: 20)),
-            const SizedBox(height: 8),
-            Text(
-              "Claim your share of rewards distributed by the DAO based on your participation.",
-              style: TextStyle(color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 24),
-            LayoutBuilder(builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 850;
-
-              final passiveIncomeSection = _BenefitsSection(
-                icon: Icons.savings_outlined,
-                title: "PASSIVE\nINCOME",
-                description: "Rewards distributed to all reputation holders based on their share of the total supply. Hold reputation to earn.",
-                epochs: provider.passiveIncomeEpochs,
-                isPassiveIncome: true,
-                isActionBusy: provider.isActionBusy,
-                onClaim: (epochId) async {
-                  try {
-                    await provider.claimPassiveIncome(epochId);
-                    if (context.mounted) {
-                      _showSnackbar(context, "Passive income claimed successfully!");
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      _showSnackbar(context, e.toString(), isError: true);
-                    }
-                  }
-                },
-              );
-
-              final delegateRewardSection = _BenefitsSection(
-                icon: Icons.group_outlined,
-                title: "REPRESENTATION\nREWARDS",
-                description: "Rewards for delegates who represent other members. Earn by having voting power delegated to you.",
-                epochs: provider.delegateRewardEpochs,
-                isPassiveIncome: false,
-                isActionBusy: provider.isActionBusy,
-                onClaim: (epochId) async {
-                  try {
-                    await provider.claimDelegateReward(epochId);
-                    if (context.mounted) {
-                      _showSnackbar(context, "Representation reward claimed successfully!");
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      _showSnackbar(context, e.toString(), isError: true);
-                    }
-                  }
-                },
-              );
-
-              if (isMobile) {
-                return Column(
-                  children: [
-                    if (hasPassiveIncomeEpochs) passiveIncomeSection,
-                    if (hasPassiveIncomeEpochs && hasDelegateRewardEpochs) const SizedBox(height: 24),
-                    if (hasDelegateRewardEpochs) delegateRewardSection,
-                  ],
-                );
-              } else {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (hasPassiveIncomeEpochs) Flexible(child: passiveIncomeSection),
-                    if (hasPassiveIncomeEpochs && hasDelegateRewardEpochs) const SizedBox(width: 40),
-                    if (hasDelegateRewardEpochs) Flexible(child: delegateRewardSection),
-                  ],
-                );
-              }
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BenefitsSection extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final List<ClaimableEpoch> epochs;
-  final bool isPassiveIncome;
-  final bool isActionBusy;
-  final Future<void> Function(BigInt epochId) onClaim;
-
-  const _BenefitsSection({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.epochs,
-    required this.isPassiveIncome,
-    required this.isActionBusy,
-    required this.onClaim,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final claimableEpochs = epochs.where((e) => e.canClaim).toList();
-    final hasClaimable = claimableEpochs.isNotEmpty;
+    final hasAnyEpochs = provider.passiveIncomeEpochs.isNotEmpty || provider.delegateRewardEpochs.isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
+        color: Colors.black.withValues(alpha: 0.2),
         border: Border.all(width: 0.3, color: const Color.fromARGB(255, 105, 105, 105)),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      padding: EdgeInsets.all(compact ? 16.0 : 24.0),
       child: Column(
         children: [
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 50),
-              const SizedBox(width: 16),
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.left),
+              const Icon(Icons.card_giftcard, size: 40),
+              const SizedBox(width: 12),
+              Text(
+                "CLAIM\nBENEFITS",
+                style: TextStyle(fontSize: compact ? 16 : 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.left,
+              ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(description, style: TextStyle(color: Colors.grey[300], fontSize: 15, height: 1.4), textAlign: TextAlign.center),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              "Claim payment tokens based on your rep balance and voting power.",
+              style: TextStyle(color: Colors.grey[300], fontSize: 14, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
           ),
           const SizedBox(height: 20),
-          if (epochs.isEmpty)
+
+          if (!hasAnyEpochs)
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "No reward epochs have been created yet.",
-                style: TextStyle(color: Colors.grey[500], fontStyle: FontStyle.italic),
+              child: Column(
+                children: [
+                  Icon(Icons.hourglass_empty, size: 36, color: Colors.grey[600]),
+                  const SizedBox(height: 8),
+                  Text(
+                    "No benefit epochs created yet",
+                    style: TextStyle(color: Colors.grey[500], fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             )
-          else
-            ...epochs.map((epoch) => _EpochListItem(
-                  epoch: epoch,
-                  isActionBusy: isActionBusy,
-                  onClaim: () => onClaim(epoch.epochId),
-                )),
-          const SizedBox(height: 16),
-          if (hasClaimable && !isActionBusy)
-            ElevatedButton(
-              onPressed: () async {
-                // Claim all available
-                for (final epoch in claimableEpochs) {
-                  await onClaim(epoch.epochId);
+          else ...[
+            // Passive Income Section
+            _BenefitTypeSection(
+              icon: Icons.savings_outlined,
+              label: "Passive Income",
+              description: "Based on rep balance",
+              epochs: provider.passiveIncomeEpochs,
+              isActionBusy: provider.isActionBusy,
+              onClaim: (epochId) async {
+                try {
+                  await provider.claimPassiveIncome(epochId);
+                  if (context.mounted) {
+                    _showSnackbar(context, "Passive income claimed!");
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    _showSnackbar(context, e.toString(), isError: true);
+                  }
                 }
               },
-              child: const Text("Claim All Available"),
-            )
-          else if (isActionBusy)
-            const CircularProgressIndicator()
-          else if (!hasClaimable && epochs.isNotEmpty)
-            Text(
-              "No rewards available to claim",
-              style: TextStyle(color: Colors.grey[500]),
             ),
+            const SizedBox(height: 12),
+            // Delegation Rewards Section
+            _BenefitTypeSection(
+              icon: Icons.group_outlined,
+              label: "Delegation Rewards",
+              description: "Based on voting power",
+              epochs: provider.delegateRewardEpochs,
+              isActionBusy: provider.isActionBusy,
+              onClaim: (epochId) async {
+                try {
+                  await provider.claimDelegateReward(epochId);
+                  if (context.mounted) {
+                    _showSnackbar(context, "Delegation reward claimed!");
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    _showSnackbar(context, e.toString(), isError: true);
+                  }
+                }
+              },
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _EpochListItem extends StatelessWidget {
+class _BenefitTypeSection extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String description;
+  final List<ClaimableEpoch> epochs;
+  final bool isActionBusy;
+  final Future<void> Function(BigInt epochId) onClaim;
+
+  const _BenefitTypeSection({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.epochs,
+    required this.isActionBusy,
+    required this.onClaim,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final claimableCount = epochs.where((e) => e.canClaim).length;
+    final hasClaimable = claimableCount > 0;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: hasClaimable
+            ? Colors.green.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: hasClaimable
+              ? Colors.green.withValues(alpha: 0.5)
+              : Colors.grey.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: hasClaimable ? Colors.green : Colors.grey[500]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: hasClaimable ? Colors.white : Colors.grey[400],
+                      ),
+                    ),
+                    Text(
+                      description,
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasClaimable)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    "$claimableCount available",
+                    style: const TextStyle(fontSize: 11, color: Colors.green),
+                  ),
+                )
+              else if (epochs.isEmpty)
+                Text(
+                  "No epochs",
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                )
+              else
+                Text(
+                  "None available",
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                ),
+            ],
+          ),
+          // Show claimable epochs
+          if (hasClaimable) ...[
+            const SizedBox(height: 12),
+            ...epochs.where((e) => e.canClaim).map((epoch) => _ClaimableEpochItem(
+              epoch: epoch,
+              isActionBusy: isActionBusy,
+              onClaim: () => onClaim(epoch.epochId),
+            )),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ClaimableEpochItem extends StatelessWidget {
   final ClaimableEpoch epoch;
   final bool isActionBusy;
   final VoidCallback onClaim;
 
-  const _EpochListItem({
+  const _ClaimableEpochItem({
     required this.epoch,
     required this.isActionBusy,
     required this.onClaim,
   });
 
-  String _formatTimestamp(BigInt timestamp) {
-    final date = DateTime.fromMillisecondsSinceEpoch(timestamp.toInt() * 1000);
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
-
   String _getTokenSymbol(String tokenAddress) {
     if (tokenAddress.toLowerCase() == EconomyAbi.nativeCurrencyAddress.toLowerCase()) {
-      return 'Native';
+      return 'XTZ';
     }
     return shortenString(tokenAddress);
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = epoch.hasClaimed
-        ? Colors.green
-        : epoch.canClaim
-            ? Colors.amber
-            : Colors.grey;
-    final statusText = epoch.hasClaimed
-        ? "Claimed"
-        : epoch.canClaim
-            ? "Available"
-            : "Not eligible";
-
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -263,46 +267,30 @@ class _EpochListItem extends StatelessWidget {
               children: [
                 Text(
                   "Epoch #${epoch.epochId}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 4),
                 Text(
-                  "Started: ${_formatTimestamp(epoch.epoch.startTimestamp)}",
-                  style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                  "${formatTotalSupply(epoch.estimatedReward.toString(), 18)} ${_getTokenSymbol(epoch.epoch.paymentToken)}",
+                  style: const TextStyle(fontSize: 13, color: Colors.green),
                 ),
-                if (epoch.canClaim) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    "Est. reward: ${formatTotalSupply(epoch.estimatedReward.toString(), 18)} ${_getTokenSymbol(epoch.epoch.paymentToken)}",
-                    style: const TextStyle(fontSize: 12, color: Colors.amber),
-                  ),
-                ],
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(fontSize: 12, color: statusColor),
-                ),
+          if (isActionBusy)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            TextButton(
+              onPressed: onClaim,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                minimumSize: Size.zero,
               ),
-              if (epoch.canClaim && !isActionBusy) ...[
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: onClaim,
-                  child: const Text("Claim"),
-                ),
-              ],
-            ],
-          ),
+              child: const Text("Claim"),
+            ),
         ],
       ),
     );
