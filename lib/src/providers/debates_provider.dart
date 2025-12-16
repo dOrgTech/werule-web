@@ -6,6 +6,7 @@ import 'package:werule/src/models/network.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/utils/reusable.dart';
 
 /// Provider for managing debates state
 class DebatesProvider extends ChangeNotifier {
@@ -128,6 +129,15 @@ class DebatesProvider extends ChangeNotifier {
       return "Please connect your wallet";
     }
 
+    // Pre-flight check: ensure user has voting power
+    if (_userTotalVotingPower <= BigInt.zero) {
+      return "You have no voting power. Make sure you have delegated your tokens.";
+    }
+
+    if (rootWeight > _userTotalVotingPower) {
+      return "Insufficient voting power. You have ${formatTotalSupply(_userTotalVotingPower.toString(), 18)} ${_org.symbol} available.";
+    }
+
     _isActionBusy = true;
     _error = null;
     notifyListeners();
@@ -146,8 +156,16 @@ class DebatesProvider extends ChangeNotifier {
       await fetchDebates();
       return null; // Success
     } catch (e) {
-      _error = "Failed to create debate: $e";
-      debugPrint(_error);
+      final errorStr = e.toString();
+      // Try to provide more helpful error messages
+      if (errorStr.contains('InsufficientVotingPower') || errorStr.contains('insufficient')) {
+        _error = "Insufficient voting power. Make sure you have delegated your tokens.";
+      } else if (errorStr.contains('UNPREDICTABLE_GAS_LIMIT') || errorStr.contains('execution reverted')) {
+        _error = "Transaction would fail. This usually means insufficient voting power or tokens not delegated.";
+      } else {
+        _error = "Failed to create debate: $errorStr";
+      }
+      debugPrint("Create debate error: $e");
       return _error;
     } finally {
       _isActionBusy = false;
