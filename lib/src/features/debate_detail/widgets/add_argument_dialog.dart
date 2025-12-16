@@ -1,6 +1,7 @@
 // lib/src/features/debate_detail/widgets/add_argument_dialog.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/models/debate.dart';
 import 'package:werule/src/models/org.dart';
@@ -162,13 +163,17 @@ class _AddArgumentDialogState extends State<AddArgumentDialog> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                  ],
                   onChanged: (value) => _weight = value,
                   validator: (value) {
                     if (value == null || value.isEmpty) return 'Weight is required';
                     final parsed = double.tryParse(value);
-                    if (parsed == null || parsed <= 0) return 'Must be a positive number';
+                    if (parsed == null) return 'Must be a valid number';
+                    if (parsed <= 0) return 'Must be greater than 0';
                     final weightBigInt = BigInt.from(parsed * 1e18);
-                    if (weightBigInt > remainingPower) return 'Exceeds your remaining voting power';
+                    if (weightBigInt > remainingPower) return 'Exceeds your remaining voting power ($remainingFormatted ${widget.org.symbol})';
                     return null;
                   },
                 ),

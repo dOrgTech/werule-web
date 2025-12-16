@@ -1,6 +1,7 @@
 // lib/src/features/create_debate/create_debate_dialog.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/providers/debates_provider.dart';
@@ -203,13 +204,17 @@ class _CreateDebateDialogState extends State<CreateDebateDialog> {
             helperText: 'Your available voting power: $maxWeight ${widget.org.symbol}',
           ),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+          ],
           onChanged: (value) => _initialWeight = value,
           validator: (value) {
             if (value == null || value.isEmpty) return 'Weight is required';
             final parsed = double.tryParse(value);
-            if (parsed == null || parsed <= 0) return 'Must be a positive number';
+            if (parsed == null) return 'Must be a valid number';
+            if (parsed <= 0) return 'Must be greater than 0';
             final weightBigInt = BigInt.from(parsed * 1e18);
-            if (weightBigInt > votes) return 'Exceeds your voting power';
+            if (weightBigInt > votes) return 'Exceeds your voting power ($maxWeight ${widget.org.symbol})';
             return null;
           },
         ),
