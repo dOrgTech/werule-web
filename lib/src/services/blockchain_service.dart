@@ -9,10 +9,12 @@ import 'package:http/http.dart' as http;
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
+import 'package:werule/src/services/debates_abi.dart';
 import 'package:werule/src/services/erc20_gov_abi.dart';
 import 'package:werule/src/services/economy_abi.dart';
 import 'package:werule/src/services/governor_abi.dart';
 import 'package:werule/src/services/reptoken_abi.dart';
+import '../models/debate.dart';
 import '../models/network.dart';
 
 class AccountMismatchException implements Exception {
@@ -255,6 +257,175 @@ class BlockchainService {
     } finally {
       await client.dispose();
     }
+  }
+
+  // --- Debates Contract Methods ---
+
+  /// Gets list of debates for a DAO's governance token
+  Future<List<DebateListItem>> getDebateListByToken(String factoryAddress, String tokenAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        ContractAbi.fromJson(DebatesAbi.getDebateListByToken, 'DebatesFactory'),
+        EthereumAddress.fromHex(factoryAddress),
+      );
+      final func = contract.function('getDebateListByToken');
+      final result = await client.call(contract: contract, function: func, params: [EthereumAddress.fromHex(tokenAddress)]);
+
+      final debates = (result[0] as List).map((data) {
+        final tuple = data as List;
+        return DebateListItem(
+          debateAddress: (tuple[0] as EthereumAddress).hex,
+          title: tuple[1] as String,
+          creator: (tuple[2] as EthereumAddress).hex,
+          createdAt: tuple[3] as BigInt,
+          argumentCount: tuple[4] as BigInt,
+          sentiment: tuple[5] as BigInt,
+          isOpen: tuple[6] as bool,
+        );
+      }).toList();
+
+      return debates;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets debate count for a token
+  Future<BigInt> getDebateCountByToken(String factoryAddress, String tokenAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        ContractAbi.fromJson(DebatesAbi.getDebateCountByToken, 'DebatesFactory'),
+        EthereumAddress.fromHex(factoryAddress),
+      );
+      final func = contract.function('getDebateCountByToken');
+      final result = await client.call(contract: contract, function: func, params: [EthereumAddress.fromHex(tokenAddress)]);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets full debate with all arguments
+  Future<Debate> getFullDebate(String debateAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        ContractAbi.fromJson(DebatesAbi.getFullDebate, 'Debate'),
+        EthereumAddress.fromHex(debateAddress),
+      );
+      final func = contract.function('getFullDebate');
+      final result = await client.call(contract: contract, function: func, params: []);
+
+      final data = result[0] as List;
+      final argumentsData = data[9] as List;
+      final arguments = argumentsData.map((argData) {
+        final arg = argData as List;
+        return DebateArgument(
+          id: arg[0] as BigInt,
+          parentId: arg[1] as BigInt,
+          argType: (arg[2] as BigInt).toInt() == 0 ? ArgumentType.pro : ArgumentType.con,
+          author: (arg[3] as EthereumAddress).hex,
+          content: arg[4] as String,
+          directWeight: arg[5] as BigInt,
+          netScore: arg[6] as BigInt,
+          proChildIds: (arg[7] as List).map((e) => e as BigInt).toList(),
+          conChildIds: (arg[8] as List).map((e) => e as BigInt).toList(),
+          isValid: arg[9] as bool,
+        );
+      }).toList();
+
+      return Debate(
+        debateAddress: (data[0] as EthereumAddress).hex,
+        title: data[1] as String,
+        token: (data[2] as EthereumAddress).hex,
+        referenceBlock: data[3] as BigInt,
+        totalSupplyAtCreation: data[4] as BigInt,
+        totalStakedWeight: data[5] as BigInt,
+        argumentCount: data[6] as BigInt,
+        debateSentiment: data[7] as BigInt,
+        isOpen: data[8] as bool,
+        arguments: arguments,
+      );
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Gets user's remaining voting power in a debate
+  Future<BigInt> getDebateRemainingVotingPower(String debateAddress, String userAddress, String rpcUrl) async {
+    final client = Web3Client(rpcUrl, http.Client());
+    try {
+      final contract = DeployedContract(
+        ContractAbi.fromJson(DebatesAbi.getRemainingVotingPower, 'Debate'),
+        EthereumAddress.fromHex(debateAddress),
+      );
+      final func = contract.function('getRemainingVotingPower');
+      final result = await client.call(contract: contract, function: func, params: [EthereumAddress.fromHex(userAddress)]);
+      return result[0] as BigInt;
+    } finally {
+      await client.dispose();
+    }
+  }
+
+  /// Creates a new debate
+  Future<String> createDebate(
+    String factoryAddress,
+    String tokenAddress,
+    String title,
+    String rootArgument,
+    BigInt rootWeight,
+    String signerAddress,
+  ) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(factoryAddress, DebatesAbi.createDebate, signer);
+    final tx = await contract.send('createDebate', [tokenAddress, title, rootArgument, rootWeight.toString()]);
+    await tx.wait();
+    return tx.hash;
+  }
+
+  /// Adds an argument to a debate
+  Future<String> addDebateArgument(
+    String debateAddress,
+    BigInt parentId,
+    ArgumentType argType,
+    BigInt weight,
+    String content,
+    String signerAddress,
+  ) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(debateAddress, DebatesAbi.addArgument, signer);
+    final argTypeInt = argType == ArgumentType.pro ? 0 : 1;
+    final tx = await contract.send('addArgument', [parentId.toString(), argTypeInt, weight.toString(), content]);
+    await tx.wait();
+    return tx.hash;
+  }
+
+  /// Adds weight to an existing argument
+  Future<String> addDebateWeight(
+    String debateAddress,
+    BigInt argumentId,
+    BigInt additionalWeight,
+    String signerAddress,
+  ) async {
+    if (!web3.Ethereum.isSupported || web3.ethereum == null) {
+      throw Exception("A web3 wallet is required for this action.");
+    }
+    final provider = web3.Web3Provider(web3.ethereum!);
+    final signer = provider.getSigner();
+    final contract = web3.Contract(debateAddress, DebatesAbi.addWeight, signer);
+    final tx = await contract.send('addWeight', [argumentId.toString(), additionalWeight.toString()]);
+    await tx.wait();
+    return tx.hash;
   }
 
   // --- Economy Contract Methods ---

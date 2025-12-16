@@ -172,18 +172,33 @@ Future<Org?> getDao(String networkDaoCollection, String daoAddress) async {
   Future<MemberActivity> getMemberActivity(String networkDaoCollection, String daoAddress, String memberAddress) async {
     final path = '$networkDaoCollection/$daoAddress/members/$memberAddress';
     if (kDebugMode) print('[FirestoreService] Querying member activity at path: $path');
-    
+
     try {
       final doc = await _db.collection(networkDaoCollection).doc(daoAddress).collection('members').doc(memberAddress).get();
-      
+
       if (doc.exists) {
         return MemberActivity.fromFirestore(doc);
       }
-      
+
       return MemberActivity.empty();
     } catch(e) {
       if (kDebugMode) print('[FirestoreService] Error fetching member activity: $e');
       throw Exception('Failed to load member activity from Firestore.');
+    }
+  }
+
+  /// Gets the debates factory address for a network
+  Future<String?> getDebatesFactoryAddress(String networkName) async {
+    try {
+      final doc = await _db.collection('contracts').doc(networkName).get();
+      if (doc.exists) {
+        final data = doc.data();
+        return data?['debatesFactory'] as String?;
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) print('[FirestoreService] Error fetching debates factory address: $e');
+      return null;
     }
   }
 }
