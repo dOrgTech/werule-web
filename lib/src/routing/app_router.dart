@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/dao_creator/dao_creator_screen.dart';
 import 'package:werule/src/features/dao_detail/dao_detail_screen.dart';
+import 'package:werule/src/features/debate_detail/debate_detail_screen.dart';
 import 'package:werule/src/features/explorer/explorer_screen.dart';
 import 'package:werule/src/features/proposal_detail/proposal_detail_screen.dart';
 import 'package:werule/src/providers/network_provider.dart';
@@ -101,6 +102,24 @@ final appRouter = GoRouter(
                     networkName: networkName,
                     daoAddress: daoAddress,
                     proposalId: proposalId,
+                  ),
+                );
+              },
+            ),
+            // Debate Detail route: '/:networkName/:daoAddress/debates/:debateAddress'
+            GoRoute(
+              path: 'debates/:debateAddress',
+              pageBuilder: (context, state) {
+                final networkName = state.pathParameters['networkName']!;
+                final daoAddress = state.pathParameters['daoAddress']!;
+                final debateAddress = state.pathParameters['debateAddress']!;
+                return _buildFadeTransitionPage(
+                  context: context,
+                  state: state,
+                  child: DebateDetailScreen(
+                    networkName: networkName,
+                    daoAddress: daoAddress,
+                    debateAddress: debateAddress,
                   ),
                 );
               },

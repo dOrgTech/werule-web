@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/dao_detail/tabs/account_tab.dart';
+import 'package:werule/src/features/dao_detail/tabs/debates_tab.dart';
 import 'package:werule/src/features/dao_detail/tabs/members_tab.dart';
 import 'package:werule/src/features/dao_detail/tabs/overview_tab.dart';
 import 'package:werule/src/features/dao_detail/tabs/proposals_tab.dart';
@@ -80,7 +81,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
 
           final Org dao = snapshot.data!['dao'];
           final List<Proposal> proposals = snapshot.data!['proposals'];
-          const tabCount = 5;
+          const tabCount = 6;
           const double tabBarAreaVerticalPadding = 16.0;
 
           return DefaultTabController(
@@ -124,6 +125,7 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                           tabs: [
                                             _buildTab("Overview", Icons.dashboard, isMobile),
                                             _buildTab("Proposals", Icons.front_hand, isMobile),
+                                            _buildTab("Debates", Icons.forum, isMobile),
                                             _buildTab("Registry", Icons.list, isMobile),
                                             _buildTab("Members", Icons.people, isMobile),
                                             _buildTab("Account", Icons.person, isMobile),
@@ -145,6 +147,10 @@ class _DaoDetailScreenState extends State<DaoDetailScreen> {
                                     children: [
                                       OverviewTab(dao: dao, proposals: proposals),
                                       ProposalsTab(
+                                        org: dao,
+                                        networkName: widget.networkName,
+                                      ),
+                                      DebatesTab(
                                         org: dao,
                                         networkName: widget.networkName,
                                       ),

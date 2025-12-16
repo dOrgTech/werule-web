@@ -1,10 +1,9 @@
 // lib/src/features/dao_detail/widgets/debate_list_item.dart
 
 import 'package:flutter/material.dart';
-import 'package:werule/src/features/debate_detail/debate_detail_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:werule/src/models/debate.dart';
 import 'package:werule/src/models/org.dart';
-import 'package:werule/src/providers/debates_provider.dart';
 import 'package:werule/src/utils/reusable.dart';
 
 /// Widget for displaying a debate item in the list
@@ -12,14 +11,12 @@ class DebateListItemWidget extends StatelessWidget {
   final DebateListItem debate;
   final Org org;
   final String networkName;
-  final DebatesProvider debatesProvider;
 
   const DebateListItemWidget({
     super.key,
     required this.debate,
     required this.org,
     required this.networkName,
-    required this.debatesProvider,
   });
 
   String _formatDate(DateTime date) {
@@ -33,16 +30,7 @@ class DebateListItemWidget extends StatelessWidget {
   }
 
   void _navigateToDebate(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => DebateDetailScreen(
-          debateAddress: debate.debateAddress,
-          org: org,
-          networkName: networkName,
-          debatesProvider: debatesProvider,
-        ),
-      ),
-    );
+    context.go('/$networkName/${org.address}/debates/${debate.debateAddress}');
   }
 
   @override

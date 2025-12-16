@@ -1,5 +1,6 @@
 // lib/src/features/debate_detail/debate_detail_screen.dart
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:werule/src/features/debate_detail/widgets/add_argument_dialog.dart';
@@ -8,21 +9,23 @@ import 'package:werule/src/models/debate.dart';
 import 'package:werule/src/models/org.dart';
 import 'package:werule/src/providers/auth_provider.dart';
 import 'package:werule/src/providers/debates_provider.dart';
+import 'package:werule/src/providers/network_provider.dart';
+import 'package:werule/src/services/blockchain_service.dart';
+import 'package:werule/src/services/firestore_service.dart';
+import 'package:werule/src/shared_widgets/shared_app_bar.dart';
 import 'package:werule/src/utils/reusable.dart';
 
 /// Screen for viewing and interacting with a debate
 class DebateDetailScreen extends StatefulWidget {
-  final String debateAddress;
-  final Org org;
   final String networkName;
-  final DebatesProvider debatesProvider;
+  final String daoAddress;
+  final String debateAddress;
 
   const DebateDetailScreen({
     super.key,
-    required this.debateAddress,
-    required this.org,
     required this.networkName,
-    required this.debatesProvider,
+    required this.daoAddress,
+    required this.debateAddress,
   });
 
   @override
@@ -30,21 +33,93 @@ class DebateDetailScreen extends StatefulWidget {
 }
 
 class _DebateDetailScreenState extends State<DebateDetailScreen> {
+  Org? _org;
+  DebatesProvider? _debatesProvider;
   DebateArgument? _currentArgument;
+  bool _isInitializing = true;
+  String? _initError;
 
   @override
   void initState() {
     super.initState();
-    _loadDebate();
+    _initializeScreen();
   }
 
-  Future<void> _loadDebate() async {
-    await widget.debatesProvider.loadDebate(widget.debateAddress);
-    if (mounted && widget.debatesProvider.currentDebate?.rootArgument != null) {
-      setState(() {
-        _currentArgument = widget.debatesProvider.currentDebate!.rootArgument;
-      });
+  Future<void> _initializeScreen() async {
+    try {
+      // Load DAO from Firestore
+      final firestoreService = context.read<FirestoreService>();
+      final collectionName = 'idaos${widget.networkName}';
+      final org = await firestoreService.getDao(collectionName, widget.daoAddress);
+
+      if (org == null) {
+        setState(() {
+          _initError = "DAO not found";
+          _isInitializing = false;
+        });
+        return;
+      }
+
+      // Get network
+      final network = context.read<NetworkProvider>().networks.firstWhereOrNull(
+            (n) => n.name == widget.networkName,
+          );
+
+      if (network == null) {
+        setState(() {
+          _initError = "Network not found";
+          _isInitializing = false;
+        });
+        return;
+      }
+
+      // Get debates factory address
+      final debatesFactory = await firestoreService.getDebatesFactoryAddress(widget.networkName);
+      if (debatesFactory == null || debatesFactory.isEmpty) {
+        setState(() {
+          _initError = "Debates not available on this network";
+          _isInitializing = false;
+        });
+        return;
+      }
+
+      if (!mounted) return;
+
+      // Create provider
+      _org = org;
+      _debatesProvider = DebatesProvider(
+        blockchainService: context.read<BlockchainService>(),
+        authProvider: context.read<AuthProvider>(),
+        org: org,
+        network: network,
+        debatesFactoryAddress: debatesFactory,
+      );
+
+      // Load the debate
+      await _debatesProvider!.loadDebate(widget.debateAddress);
+
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+          if (_debatesProvider!.currentDebate?.rootArgument != null) {
+            _currentArgument = _debatesProvider!.currentDebate!.rootArgument;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _initError = "Failed to load debate: $e";
+          _isInitializing = false;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _debatesProvider?.dispose();
+    super.dispose();
   }
 
   void _navigateToArgument(DebateArgument arg) {
@@ -74,19 +149,19 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => ChangeNotifierProvider.value(
-        value: widget.debatesProvider,
+        value: _debatesProvider!,
         child: AddArgumentDialog(
-          debate: widget.debatesProvider.currentDebate!,
+          debate: _debatesProvider!.currentDebate!,
           parentArgument: _currentArgument!,
           argType: argType,
-          org: widget.org,
+          org: _org!,
           onSuccess: () {
             // Refresh and stay on current argument (or its equivalent after refresh)
             final currentId = _currentArgument?.id;
-            widget.debatesProvider.refreshCurrentDebate().then((_) {
+            _debatesProvider!.refreshCurrentDebate().then((_) {
               if (mounted && currentId != null) {
                 // Find the argument with the same ID after refresh
-                final debate = widget.debatesProvider.currentDebate;
+                final debate = _debatesProvider!.currentDebate;
                 if (debate != null) {
                   final arg = debate.arguments.firstWhere(
                     (a) => a.id == currentId,
@@ -105,65 +180,100 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Debate'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => widget.debatesProvider.refreshCurrentDebate(),
-            tooltip: 'Refresh debate',
-          ),
-        ],
-      ),
-      body: ListenableBuilder(
-        listenable: widget.debatesProvider,
-        builder: (context, _) {
-          if (widget.debatesProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      backgroundColor: const Color(0xff222222),
+      appBar: const SharedAppBar(),
+      endDrawer: const MobileDrawer(isNetworkSelectorEnabled: false),
+      body: _buildBody(),
+    );
+  }
 
-          final debate = widget.debatesProvider.currentDebate;
-          if (debate == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(widget.debatesProvider.error ?? 'Failed to load debate'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadDebate,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
+  Widget _buildBody() {
+    if (_isInitializing) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-          // Set current argument to root if not set
-          if (_currentArgument == null && debate.rootArgument != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                setState(() => _currentArgument = debate.rootArgument);
-              }
-            });
-            return const Center(child: CircularProgressIndicator());
-          }
+    if (_initError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(_initError!, style: TextStyle(color: Colors.grey[400])),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isInitializing = true;
+                  _initError = null;
+                });
+                _initializeScreen();
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
 
-          return Column(
-            children: [
-              _buildDebateHeader(debate),
-              const Divider(height: 1),
-              Expanded(
-                child: _currentArgument != null
-                    ? _buildArgumentView(debate, _currentArgument!)
-                    : const Center(child: Text('No arguments')),
-              ),
-            ],
+    if (_debatesProvider == null || _org == null) {
+      return const Center(child: Text('Failed to initialize'));
+    }
+
+    return ListenableBuilder(
+      listenable: _debatesProvider!,
+      builder: (context, _) {
+        if (_debatesProvider!.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final debate = _debatesProvider!.currentDebate;
+        if (debate == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(_debatesProvider!.error ?? 'Failed to load debate'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _debatesProvider!.loadDebate(widget.debateAddress),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
           );
-        },
-      ),
+        }
+
+        // Set current argument to root if not set
+        if (_currentArgument == null && debate.rootArgument != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() => _currentArgument = debate.rootArgument);
+            }
+          });
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: Column(
+              children: [
+                _buildDebateHeader(debate),
+                const Divider(height: 1),
+                Expanded(
+                  child: _currentArgument != null
+                      ? _buildArgumentView(debate, _currentArgument!)
+                      : const Center(child: Text('No arguments')),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -182,12 +292,24 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
         children: [
           Row(
             children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: 'Back',
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   debate.title,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => _debatesProvider!.refreshCurrentDebate(),
+                tooltip: 'Refresh debate',
+              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -207,7 +329,9 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
             children: [
               _buildStatChip(
                 icon: Icons.trending_up,
@@ -217,14 +341,12 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
                     : debate.sentimentFormatted.toStringAsFixed(2),
                 color: sentimentColor,
               ),
-              const SizedBox(width: 16),
               _buildStatChip(
                 icon: Icons.comment_outlined,
                 label: 'Arguments',
                 value: '${debate.argumentCount}',
                 color: Colors.grey,
               ),
-              const SizedBox(width: 16),
               _buildStatChip(
                 icon: Icons.how_to_vote,
                 label: 'Total Staked',
@@ -295,37 +417,63 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
           // Current Argument Card
           ArgumentDetailCard(
             argument: argument,
-            org: widget.org,
+            org: _org!,
             isRoot: argument.isRoot,
           ),
           const SizedBox(height: 24),
 
-          // Pro/Con Sections
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Pro Arguments
-              Expanded(
-                child: _buildArgumentSection(
-                  title: 'Supporting Arguments',
-                  arguments: argument.proChildren,
-                  color: Colors.green,
-                  argType: ArgumentType.pro,
-                  debate: debate,
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Con Arguments
-              Expanded(
-                child: _buildArgumentSection(
-                  title: 'Opposing Arguments',
-                  arguments: argument.conChildren,
-                  color: Colors.red,
-                  argType: ArgumentType.con,
-                  debate: debate,
-                ),
-              ),
-            ],
+          // Pro/Con Sections - responsive layout
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 700;
+
+              if (isMobile) {
+                return Column(
+                  children: [
+                    _buildArgumentSection(
+                      title: 'Supporting Arguments',
+                      arguments: argument.proChildren,
+                      color: Colors.green,
+                      argType: ArgumentType.pro,
+                      debate: debate,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildArgumentSection(
+                      title: 'Opposing Arguments',
+                      arguments: argument.conChildren,
+                      color: Colors.red,
+                      argType: ArgumentType.con,
+                      debate: debate,
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildArgumentSection(
+                      title: 'Supporting Arguments',
+                      arguments: argument.proChildren,
+                      color: Colors.green,
+                      argType: ArgumentType.pro,
+                      debate: debate,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildArgumentSection(
+                      title: 'Opposing Arguments',
+                      arguments: argument.conChildren,
+                      color: Colors.red,
+                      argType: ArgumentType.con,
+                      debate: debate,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -402,7 +550,7 @@ class _DebateDetailScreenState extends State<DebateDetailScreen> {
                 final arg = arguments[index];
                 return ArgumentListItem(
                   argument: arg,
-                  org: widget.org,
+                  org: _org!,
                   onTap: () => _navigateToArgument(arg),
                 );
               },
