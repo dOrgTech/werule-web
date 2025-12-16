@@ -271,7 +271,7 @@ class _CreateDebateDialogState extends State<CreateDebateDialog> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Once created, debates cannot be deleted. Your voting power will be locked for this debate.',
+                  'Once created, debates cannot be deleted. A snapshot of your current voting power will determine how much you can stake in this debate.',
                   style: TextStyle(fontSize: 13, color: Colors.grey[300]),
                 ),
               ),
